@@ -35,7 +35,7 @@ class BuoyTaskAction(object):
             self._as.set_preempted()
             return
         rospy.loginfo("Tapping cutie")
-        self.xPub.publish(20, LinearCommand.FORCE)
+        self.xPub.publish(10, LinearCommand.FORCE)
         rospy.sleep(4)
         self.xPub.publish(0, LinearCommand.FORCE)
 
@@ -44,12 +44,12 @@ class BuoyTaskAction(object):
         yaw = rospy.wait_for_message("/state/imu", Imu).rpy_deg.z
         if goal.isCutieLeft:
             moveAction(-0.5, -1.5).wait_for_result()
-            moveAction(5.5, 0).wait_for_result()
+            moveAction(4, 0).wait_for_result()
             yawAction(angleAdd(yaw, 180)).wait_for_result()
             self.yPub.publish(-20, LinearCommand.FORCE)
         else:
             moveAction(-0.5, 1.5).wait_for_result()
-            moveAction(5.5, 0).wait_for_result()
+            moveAction(4, 0).wait_for_result()
             yawAction(angleAdd(yaw, 180)).wait_for_result()
             self.yPub.publish(20, LinearCommand.FORCE)
         
