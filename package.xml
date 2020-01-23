@@ -73,5 +73,10 @@
   <export>
     <!-- Other tools can request additional information be placed here -->
 
+    <flexbe_behaviors />
+    <flexbe_behaviors />
+    <flexbe_behaviors />
+    <flexbe_behaviors />
+    <flexbe_behaviors />
   </export>
 </package>

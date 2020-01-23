@@ -37,3 +37,5 @@ catkin_package(
   CATKIN_DEPENDS
     actionlib_msgs)
 
+
+catkin_python_setup()
