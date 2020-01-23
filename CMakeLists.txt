@@ -29,6 +29,8 @@ add_action_files(
   GarlicTask.action
 )
 
+catkin_python_setup()
+
 generate_messages(
   DEPENDENCIES actionlib_msgs
 )
@@ -38,4 +40,4 @@ catkin_package(
     actionlib_msgs)
 
 
-catkin_python_setup()
+
