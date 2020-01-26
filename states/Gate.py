@@ -14,27 +14,15 @@ def main():
                                 transitions={'Success': 'done',
                                             'Failure': 'fail'},
                                 remapping={'type':'type','args':'args'})
+        sm.execute()
         sm.userdata.type = 'depth'
-        smach.StateMachine.add('MOVE', Move(),
-                                transitions={'Success': 'done',
-                                            'Failure': 'fail'},
-                                remapping={'type':'type','args':'args'})
+        sm.execute()
         sm.userdata.type = 'yaw'
-        smach.StateMachine.add('MOVE', Move(),
-                                transitions={'Success': 'done',
-                                            'Failure': 'fail'},
-                                remapping={'type':'type','args':'args'})
+        sm.execute()
         sm.userdata.type = 'pitch'
-        smach.StateMachine.add('MOVE', Move(),
-                                transitions={'Success': 'done',
-                                            'Failure': 'fail'},
-                                remapping={'type':'type','args':'args'})
+        sm.execute()
         sm.userdata.type = 'roll'
-        smach.StateMachine.add('MOVE', Move(),
-                                transitions={'Success': 'done',
-                                            'Failure': 'fail'},
-                                remapping={'type':'type','args':'args'})
-    outcome = sm.execute()
+        sm.execute()
 
 if __name__ == '__main__':
     main()
