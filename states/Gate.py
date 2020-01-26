@@ -12,7 +12,7 @@ def main():
         smach.StateMachine.add('MOVE', Move(),
                                 transitions={'Success': 'done',
                                             'Failure': 'fail'},
-                                remapping={'type','type','args':'args'})
+                                remapping={'type':'type','args':'args'})
     outcome = sm.execute()
 
 if __name__ == '__main__':

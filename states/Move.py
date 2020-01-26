@@ -13,9 +13,15 @@ class Move(smach.State):
             rospy.loginfo('Moving by vector <%f, %f>'%(userdata.args.x, userdata.args.y))
             moveAction(userdata.args.x, userdata.args.x).wait_for_result()
         elif type == 'depth':
-            rospy.loginfo('Moving down %f'%userdata.args.depth)
+            rospy.loginfo('Moving to depth %f'%userdata.args.depth)
             depthAction(userdata.args.depth)
         elif type == 'yaw':
-            rospy.loginfo('Moving with angle %f'%userdata.args.angle)
+            rospy.loginfo('Yawing with angle %f'%userdata.args.angle)
             yawAction(userdata.args.angle)
+        elif type == 'pitch':
+            rospy.loginfo('Pitching with angle %f'%userdata.args.angle)
+            pitchAction(userdata.args.angle)
+        elif type == 'roll':
+            rospy.loginfo('Rolling with angle %f'%userdata.args.angle)
+            rollAction(userdata.args.angle)
         return 'Success'
