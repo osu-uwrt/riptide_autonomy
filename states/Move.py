@@ -2,36 +2,65 @@
 
 import rospy
 import smach
-from actionTools import *
+from MovementTools.Translate import Translate
+from MovementTools.Depth import Depth
+from MovementTools.Pitch import Pitch
+from MovementTools.Roll import Roll
+from MovementTools.Yaw import Yaw
 
 class Move(smach.State):
+    """
+    Handles all possible movements of the robot given the proper movement data.
+
+    @param type => String
+        indication of what type of movement to call via this statemachine
+    @param args => Dictionary
+        maps the required data types for that movement. See substates for details.
+    
+    """
     def __init__(self):
         smach.State.__init__(self, 
             outcomes=['Success', 'Failure'],
             input_keys=['type','args'])
     
     def execute(self, userdata):
-        status = 'Failure'
-        if userdata.type == 'move':
-            rospy.loginfo('Moving by vector <%f, %f>'%(userdata.args['x'], userdata.args['y']))
-            moveAction(userdata.args['x'], userdata.args['y'])
-            status = 'Success'
+        status = 'Success'
+        sm = smach.StateMachine(outcomes=['Success', 'Failure'])
+        sm.userdata.args = userdata.args
+        if userdata.type == 'translate':
+            with sm:
+                smach.StateMachine.add('TRANSLATION', Translate(),
+                                        transitions={'Success': 'Success', 'Failure' : 'Failure'},
+                                        remapping={'args':'args'})
+                status = sm.execute()
+        elif userdata.type == 'lqr':
+            #TODO Implement LQR
+            rospy.loginfo('ERROR: LQR is not implemented yet')
+            status = 'Failure'
         elif userdata.type == 'depth':
-            rospy.loginfo('Moving to depth %f'%userdata.args['depth'])
-            depthAction(userdata.args['depth'])
-            status = 'Success'
+            with sm:
+                smach.StateMachine.add('DEPTH', Depth(),
+                                        transitions={'Success': 'Success', 'Failure' : 'Failure'},
+                                        remapping={'args':'args'})
+                status = sm.execute()
         elif userdata.type == 'yaw':
-            rospy.loginfo('Yawing with angle %f'%userdata.args['angle'])
-            yawAction(userdata.args['angle'])
-            status = 'Success'
+            with sm:
+                smach.StateMachine.add('YAW', Yaw(),
+                                        transitions={'Success': 'Success', 'Failure' : 'Failure'},
+                                        remapping={'args':'args'})
+                status = sm.execute()
         elif userdata.type == 'pitch':
-            rospy.loginfo('Pitching with angle %f'%userdata.args['angle'])
-            pitchAction(userdata.args['angle'])
-            status = 'Success'
+            with sm:
+                smach.StateMachine.add('PITCH', Pitch(),
+                                        transitions={'Success': 'Success', 'Failure' : 'Failure'},
+                                        remapping={'args':'args'})
+                status = sm.execute()
         elif userdata.type == 'roll':
-            rospy.loginfo('Rolling with angle %f'%userdata.args['angle'])
-            rollAction(userdata.args['angle'])
-            status = 'Success'
+            with sm:
+                smach.StateMachine.add('ROLL', Roll(),
+                                        transitions={'Success': 'Success', 'Failure' : 'Failure'},
+                                        remapping={'args':'args'})
+                status = sm.execute()
         else:
             rospy.loginfo('ERROR: type of %s not recognized'%userdata.type)
         return status
