@@ -1,3 +1,5 @@
 <launch>
-  <node pkg="riptide_autonomy" type="Gate.py" name="gate" output="screen" />
+  <group ns="puddles">
+    <node pkg="riptide_autonomy" type="Gate.py" name="gate" output="screen" />
+  </group>
 </launch>

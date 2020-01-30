@@ -7,7 +7,7 @@ from Move import Move
 def main():
     rospy.init_node('movement_test')
     sm = smach.StateMachine(outcomes=['done', 'fail'])
-    sm.userdata.args = {'x' : 2, 'y' : 2, 'angle' : 36.4, 'depth' : 3.14}
+    sm.userdata.args = {'x' : 2, 'y' : 2, 'angle' : 36.4, 'depth' : -3.14}
     with sm:
         sm.userdata.type = 'translate'
         smach.StateMachine.add('MOVE', Move(),
