@@ -2,6 +2,8 @@
 
 import rospy
 import smach
+from Move import Move
+from SearchTools.Distance import Distance
 
 class Search(smach.State):
     """
@@ -21,6 +23,24 @@ class Search(smach.State):
         status = 'Success'
         sm = smach.StateMachine(outcomes=['Success', 'Failure'])
         sm.userdata.args = userdata.args
-        
+        if userdata.search_object == 'Gate':
+            with sm:
+                sm.userdata.type = 'depth'
+                sm.userdata.args = {'depth': .65, 'x': 2, 'y': -.8}
+                smach.StateMachine.add('MOVE', Move(),
+                                transitions={'Success': 'Success',
+                                            'Failure': 'Failure'},
+                                remapping={'type':'type','args':'args'})
+                sm.execute()
+                sm.userdata.type = 'translate'
+                sm.execute()
+                sm.userdata.obj = 'Gate'
+                sm.userdata.distance = 0
+                smach.StateMachine.add('DISTANCE', Distance(),
+                                transitions={'Success': 'Success',
+                                            'Failure': 'Failure'},
+                                remapping={'obj' : 'obj', 'distance' : 'distance'})
+
+
 
         return status
