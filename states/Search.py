@@ -31,16 +31,23 @@ class Search(smach.State):
                                 transitions={'Success': 'Success',
                                             'Failure': 'Failure'},
                                 remapping={'type':'type','args':'args'})
-                sm.execute()
-                sm.userdata.type = 'translate'
-                sm.execute()
-                sm.userdata.obj = 'Gate'
-                sm.userdata.distance = 0
+
+                
+
                 smach.StateMachine.add('DISTANCE', Distance(),
                                 transitions={'Success': 'Success',
                                             'Failure': 'Failure'},
-                                remapping={'obj' : 'obj', 'distance' : 'distance'})
+                                remapping={'obj': 'obj', 
+                                            'type': 'type',
+                                            'args': 'args'})
 
+                smach.StateMachine.add('MOVE', Move(),
+                                transitions={'Success': 'Success',
+                                            'Failure': 'Failure'},
+                                remapping={'type':'type','args':'args'})
+                
+                sm.execute()
+                
 
 
         return status

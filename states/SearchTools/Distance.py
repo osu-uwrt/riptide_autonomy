@@ -18,7 +18,7 @@ class Distance(smach.State):
         smach.State.__init__(self, 
             outcomes=['Success', 'Failure'],
             input_keys=['obj'],
-            output_keys=['distance'])
+            output_keys=['type', 'args'])
     
     def execute(self, userdata):
         status = 'Success'
@@ -27,5 +27,7 @@ class Distance(smach.State):
         client.wait_for_server()
         client.send_goal(riptide_controllers.msg.GetDistanceGoal(userdata.obj))
         client.wait_for_result()
-        userdata.distance = client.get_result().distance
+        dist = client.get_result().distance
+        userdata.type = 'translate'
+        userdata.args = {'x': dist - 2, 'y': 0}
         return status
