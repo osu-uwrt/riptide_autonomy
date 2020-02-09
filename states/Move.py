@@ -7,6 +7,7 @@ from MovementTools.Depth import Depth
 from MovementTools.Pitch import Pitch
 from MovementTools.Roll import Roll
 from MovementTools.Yaw import Yaw
+from MovementTools.GateManuever import GateManuever
 
 class Move(smach.State):
     """
@@ -60,6 +61,11 @@ class Move(smach.State):
                 smach.StateMachine.add('ROLL', Roll(),
                                         transitions={'Success': 'Success', 'Failure' : 'Failure'},
                                         remapping={'args':'args'})
+                status = sm.execute()
+        elif userdata.type == 'gateManuever':
+            with sm:
+                smach.StateMachine.add('GATEMANUEVER', GateManuever(),
+                                        transitions={'Success':'Success', 'Failure':'Failure'})
                 status = sm.execute()
         else:
             rospy.loginfo('ERROR: type of %s not recognized'%userdata.type)
