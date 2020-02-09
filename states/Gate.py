@@ -5,6 +5,9 @@ import smach
 from Move import Move
 from Search import Search
 
+"""
+This class runs through the entire gate manuever.
+"""
 def main():
     rospy.init_node('gate_task')
     sm = smach.StateMachine(outcomes=['done', 'fail'])
