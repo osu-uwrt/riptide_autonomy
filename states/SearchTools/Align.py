@@ -23,9 +23,13 @@ class Align(smach.State):
     def __init__(self):
         smach.State.__init__(self, 
             outcomes=['Success', 'Failure'],
-            input_keys=['obj'],
-            output_keys=['type', 'args'])
+            input_keys=['args'])
     
     def execute(self, userdata):
         status = 'Success'
+        rospy.loginfo('Aligning robot')
+        client = actionlib.SimpleActionClient(
+            "align", riptide_controllers.msg.AlignAction)
+        client.wait_for_server()
+        client.send_goal(riptide_controllers.msg.AlignGoal(userdata.args['obj'], userdata.args['bboxWidth'], userdata.args['hold']))
         return status

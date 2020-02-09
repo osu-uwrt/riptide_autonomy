@@ -4,6 +4,7 @@ import rospy
 import smach
 from Move import Move
 from SearchTools.Distance import Distance
+from SearchTools.Align import Align
 
 class Search(smach.State):
     """
@@ -26,28 +27,27 @@ class Search(smach.State):
         if userdata.search_object == 'Gate':
             with sm:
                 sm.userdata.type = 'depth'
-                sm.userdata.args = {'depth': .65, 'x': 2, 'y': -.8}
-                smach.StateMachine.add('MOVE', Move(),
+                sm.userdata.args = {'depth': .65, 
+                                    'x': 2, 'y': -.8, 
+                                    'obj':'Gate', 
+                                    'bboxWidth':.07, 
+                                    'hold':True}
+                smach.StateMachine.add('MOVE_DOWN', Move(),
                                 transitions={'Success': 'Success',
                                             'Failure': 'Failure'},
                                 remapping={'type':'type','args':'args'})
-
-                
-
+                smach.StateMachine.add('ALIGN', Align(), 
+                                            transitions={'Success': 'Success',
+                                            'Failure': 'Failure'})
                 smach.StateMachine.add('DISTANCE', Distance(),
                                 transitions={'Success': 'Success',
                                             'Failure': 'Failure'},
-                                remapping={'obj': 'obj', 
-                                            'type': 'type',
+                                remapping={ 'type': 'type',
                                             'args': 'args'})
-
-                smach.StateMachine.add('MOVE', Move(),
+                smach.StateMachine.add('MOVE_AWAY', Move(),
                                 transitions={'Success': 'Success',
                                             'Failure': 'Failure'},
-                                remapping={'type':'type','args':'args'})
-                
+                                remapping={'type':'type',
+                                        'args':'args'})
                 sm.execute()
-                
-
-
         return status

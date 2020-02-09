@@ -17,15 +17,16 @@ class Distance(smach.State):
     def __init__(self):
         smach.State.__init__(self, 
             outcomes=['Success', 'Failure'],
-            input_keys=['obj'],
+            input_keys=['args'],
             output_keys=['type', 'args'])
     
     def execute(self, userdata):
         status = 'Success'
+        rospy.loginfo('Moving %f m away from %s'%(2, userdata.args['obj']))
         client = actionlib.SimpleActionClient(
         "get_distance", riptide_controllers.msg.GetDistanceAction)
         client.wait_for_server()
-        client.send_goal(riptide_controllers.msg.GetDistanceGoal(userdata.obj))
+        client.send_goal(riptide_controllers.msg.GetDistanceGoal(userdata.args['obj']))
         client.wait_for_result()
         dist = client.get_result().distance
         userdata.type = 'translate'
