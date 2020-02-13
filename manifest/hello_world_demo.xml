@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="Hello World Demo">
+
+	<executable package_path="riptide_autonomy.hello_world_demo_sm" class="HelloWorldDemoSM" />
+	<tagstring></tagstring>
+	<author>noah</author>
+	<date>Fri Feb 07 2020</date>
+	<description>
+		Behavior created in the FlexBE tutorial
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+	<params>
+
+		<param type="numeric" name="waiting_time" default="2" label="waiting_time" hint="defines the time to wait at start">
+			<min value="1" />
+			<max value="5" />
+		</param>
+
+	</params>
+
+
+</behavior>
