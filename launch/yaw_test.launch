@@ -1,0 +1,5 @@
+<launch>
+  <group ns="puddles">
+    <node pkg="riptide_autonomy" type="yaw_test.py" name="ytest" output="screen" />
+  </group>
+</launch>
