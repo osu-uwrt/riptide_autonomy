@@ -1,6 +1,6 @@
 import sys
 sys.path.insert(0, '../states/')
-from states import Move
+from Move import Move
 import smach
 import rospy
 import time
