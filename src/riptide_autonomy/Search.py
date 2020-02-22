@@ -5,6 +5,8 @@ import smach
 from Move import Move
 from SearchTools.Distance import Distance
 from SearchTools.Align import Align
+from flexbe_core import EventState, Logger
+from flexbe_core.proxy import ProxyActionClient
 
 class Search(smach.State):
     """
@@ -48,6 +50,6 @@ class Search(smach.State):
                                         'args':'args'})
             status = sm.execute()
         else:
-            rospy.loginfo('object does not exist')
+            Logger.loginfo('object does not exist')
             status = 'Failure'
         return status

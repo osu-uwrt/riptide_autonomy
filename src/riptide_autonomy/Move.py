@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-import rospy
+#import rospy
 import smach
+from flexbe_core import EventState, Logger
 from MovementTools.Translate import Translate
 from MovementTools.Depth import Depth
 from MovementTools.Pitch import Pitch
@@ -9,7 +10,7 @@ from MovementTools.Roll import Roll
 from MovementTools.Yaw import Yaw
 from MovementTools.GateManuever import GateManuever
 
-class Move(smach.State):
+class Move(EventState):
     """
     Handles all possible movements of the robot given the proper movement data.
 
@@ -19,7 +20,7 @@ class Move(smach.State):
         maps the required data types for that movement. See substates for details.
     
     """
-    def __init__(self):
+    def __init__(self,target_time):
         smach.State.__init__(self, 
             outcomes=['Success', 'Failure'],
             input_keys=['type','args'])
@@ -36,7 +37,7 @@ class Move(smach.State):
                 status = sm.execute()
         elif userdata.type == 'lqr':
             #TODO Implement LQR
-            rospy.loginfo('ERROR: LQR is not implemented yet')
+            Logger.loginfo('ERROR: LQR is not implemented yet')
             status = 'Failure'
         elif userdata.type == 'depth':
             with sm:
@@ -68,5 +69,5 @@ class Move(smach.State):
                                         transitions={'Success':'Success', 'Failure':'Failure'})
                 status = sm.execute()
         else:
-            rospy.loginfo('ERROR: type of %s not recognized'%userdata.type)
+            Logger.loginfo('ERROR: type of %s not recognized'%userdata.type)
         return status
