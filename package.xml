@@ -73,6 +73,6 @@
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <flexbe_behaviors />
-    <flexbe_states />
+    <!--<flexbe_states />-->
   </export>
 </package>

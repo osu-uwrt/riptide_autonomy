@@ -8,9 +8,11 @@
 ###########################################################
 
 from flexbe_core import Behavior, Autonomy, OperatableStateMachine, ConcurrencyContainer, PriorityContainer, Logger
-from flexbe_states.input_state import InputState
-from flexbe_states.decision_state import DecisionState
-from flexbe_states.calculation_state import CalculationState
+from riptide_states.big_depth_state import BigDepthState
+from riptide_states.big_translate_state import BigTranslateState
+from riptide_states.big_align_state import BigAlignState
+from riptide_states.big_distance_state import BigDistanceState
+from riptide_states.big_gate_maneuver_state import BigGateManeuverState
 # Additional imports can be added inside the following tags
 # [MANUAL_IMPORT]
 
@@ -18,21 +20,20 @@ from flexbe_states.calculation_state import CalculationState
 
 
 '''
-Created on Wed Feb 05 2020
-@author: uwrt
+Created on Sun Feb 23 2020
+@author: BigDawgsUWRT
 '''
 class gate_taskSM(Behavior):
 	'''
-	gate task
+	does the gate task, badly
 	'''
 
 
 	def __init__(self):
 		super(gate_taskSM, self).__init__()
-		self.name = 'test_behavior'
+		self.name = 'gate_task'
 
 		# parameters of this behavior
-		self.add_parameter('yes', False)
 
 		# references to used behaviors
 
@@ -46,8 +47,14 @@ class gate_taskSM(Behavior):
 
 
 	def create(self):
-		# x:30 y:365, x:599 y:427
+		# x:186 y:551, x:842 y:576
 		_state_machine = OperatableStateMachine(outcomes=['finished', 'failed'])
+		_state_machine.userdata.depth = -0.65
+		_state_machine.userdata.x_start = 3
+		_state_machine.userdata.y_start = 0
+		_state_machine.userdata.bboxWidth = 0.07
+		_state_machine.userdata.hold = True
+		_state_machine.userdata.obj = 'Gate'
 
 		# Additional creation code can be added inside the following tags
 		# [MANUAL_CREATE]
@@ -56,19 +63,46 @@ class gate_taskSM(Behavior):
 
 
 		with _state_machine:
-			# x:378 y:183
-			OperatableStateMachine.add('start',
-										InputState(request=integer, message=eeeee),
-										transitions={'received': 'eeeeeeeeeee', 'aborted': 'failed', 'no_connection': 'eeeeeeeeeee', 'data_error': 'finished'},
-										autonomy={'received': Autonomy.Off, 'aborted': Autonomy.Off, 'no_connection': Autonomy.Off, 'data_error': Autonomy.Off},
-										remapping={'data': 'data'})
+			# x:225 y:136
+			OperatableStateMachine.add('gotoDepth',
+										BigDepthState(topic=go_to_depth),
+										transitions={'Success': 'translate', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
+										remapping={'depth': 'depth'})
 
-			# x:1115 y:242
-			OperatableStateMachine.add('eeeeeeeeeee',
-										DecisionState(outcomes="LOL", conditions=input_value > 0),
-										transitions={'LOL': 'failed'},
-										autonomy={'LOL': Autonomy.Off},
-										remapping={'input_value': 'data'})
+			# x:445 y:133
+			OperatableStateMachine.add('translate',
+										BigTranslateState(topic=move_distance),
+										transitions={'Success': 'align', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
+										remapping={'x': 'x_start', 'y': 'y_start'})
+
+			# x:664 y:132
+			OperatableStateMachine.add('align',
+										BigAlignState(topic=align),
+										transitions={'Success': 'distance', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
+										remapping={'obj': 'obj', 'bboxWidth': 'bboxWidth', 'hold': 'hold'})
+
+			# x:655 y:278
+			OperatableStateMachine.add('distance',
+										BigDistanceState(topic=get_distance),
+										transitions={'Success': 'translate2', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
+										remapping={'object': 'obj', 'dist': 'dist'})
+
+			# x:441 y:268
+			OperatableStateMachine.add('translate2',
+										BigTranslateState(topic=move_distance),
+										transitions={'Success': 'gateManeuver', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
+										remapping={'x': 'dist', 'y': 'y_start'})
+
+			# x:193 y:268
+			OperatableStateMachine.add('gateManeuver',
+										BigGateManeuverState(topic=gate_maneuver),
+										transitions={'Success': 'finished', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
 
 		return _state_machine
