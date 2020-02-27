@@ -65,42 +65,42 @@ class gate_taskSM(Behavior):
 		with _state_machine:
 			# x:225 y:136
 			OperatableStateMachine.add('gotoDepth',
-										BigDepthState(topic=go_to_depth),
+										BigDepthState(topic="/puddles/go_to_depth"),
 										transitions={'Success': 'translate', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
 										remapping={'depth': 'depth'})
 
 			# x:445 y:133
 			OperatableStateMachine.add('translate',
-										BigTranslateState(topic=move_distance),
+										BigTranslateState(topic="puddles/move_distance"),
 										transitions={'Success': 'align', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
 										remapping={'x': 'x_start', 'y': 'y_start'})
 
 			# x:664 y:132
 			OperatableStateMachine.add('align',
-										BigAlignState(topic=align),
+										BigAlignState(topic="/puddles/align"),
 										transitions={'Success': 'distance', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
 										remapping={'obj': 'obj', 'bboxWidth': 'bboxWidth', 'hold': 'hold'})
 
 			# x:655 y:278
 			OperatableStateMachine.add('distance',
-										BigDistanceState(topic=get_distance),
+										BigDistanceState(topic="/puddles/get_distance"),
 										transitions={'Success': 'translate2', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
 										remapping={'object': 'obj', 'dist': 'dist'})
 
 			# x:441 y:268
 			OperatableStateMachine.add('translate2',
-										BigTranslateState(topic=move_distance),
+										BigTranslateState(topic="/puddles/move_distance"),
 										transitions={'Success': 'gateManeuver', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
 										remapping={'x': 'dist', 'y': 'y_start'})
 
 			# x:193 y:268
 			OperatableStateMachine.add('gateManeuver',
-										BigGateManeuverState(topic=gate_maneuver),
+										BigGateManeuverState(topic="/puddles/gate_maneuver"),
 										transitions={'Success': 'finished', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
