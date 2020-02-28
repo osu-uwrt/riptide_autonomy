@@ -61,6 +61,7 @@ class gate_taskSM(Behavior):
 		_state_machine.userdata.initRollAngle = 0
 		_state_machine.userdata.initPitchAngle = 0
 		_state_machine.userdata.initYawAngle = 0
+		_state_machine.userdata.gateLeft = .45
 
 		# Additional creation code can be added inside the following tags
 		# [MANUAL_CREATE]
@@ -93,11 +94,11 @@ class gate_taskSM(Behavior):
 			# x:655 y:278
 			OperatableStateMachine.add('distance',
 										BigDistanceState(topic="/puddles/get_distance"),
-										transitions={'Success': 'translate2', 'Failure': 'failed'},
+										transitions={'Success': 'translateLeftofGate', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
 										remapping={'object': 'obj', 'dist': 'dist'})
 
-			# x:441 y:268
+			# x:443 y:271
 			OperatableStateMachine.add('translate2',
 										BigTranslateState(topic="/puddles/move_distance"),
 										transitions={'Success': 'gateManeuver', 'Failure': 'failed'},
@@ -130,6 +131,13 @@ class gate_taskSM(Behavior):
 										transitions={'Success': 'translate', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
 										remapping={'angle': 'initYawAngle'})
+
+			# x:403 y:433
+			OperatableStateMachine.add('translateLeftofGate',
+										BigTranslateState(topic="/puddles/move_distance"),
+										transitions={'Success': 'translate2', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
+										remapping={'x': 'x_start', 'y': 'gateLeft'})
 
 
 		return _state_machine
