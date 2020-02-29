@@ -60,7 +60,7 @@ class gate_taskSM(Behavior):
 		_state_machine.userdata.obj = 'Gate'
 		_state_machine.userdata.initRollAngle = 0
 		_state_machine.userdata.initPitchAngle = 0
-		_state_machine.userdata.initYawAngle = -66.5
+		_state_machine.userdata.initYawAngle = 76.66
 		_state_machine.userdata.gateLeft = .45
 
 		# Additional creation code can be added inside the following tags
