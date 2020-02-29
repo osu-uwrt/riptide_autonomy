@@ -52,7 +52,7 @@ class gate_taskSM(Behavior):
 	def create(self):
 		# x:186 y:551, x:842 y:576
 		_state_machine = OperatableStateMachine(outcomes=['finished', 'failed'])
-		_state_machine.userdata.depth = -0.65
+		_state_machine.userdata.depth = -3.3
 		_state_machine.userdata.x_start = 3
 		_state_machine.userdata.y_start = 0
 		_state_machine.userdata.bboxWidth = 0.07
@@ -60,7 +60,7 @@ class gate_taskSM(Behavior):
 		_state_machine.userdata.obj = 'Gate'
 		_state_machine.userdata.initRollAngle = 0
 		_state_machine.userdata.initPitchAngle = 0
-		_state_machine.userdata.initYawAngle = 0
+		_state_machine.userdata.initYawAngle = -66.5
 		_state_machine.userdata.gateLeft = .45
 
 		# Additional creation code can be added inside the following tags
