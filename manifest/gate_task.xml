@@ -12,7 +12,31 @@
 
 
 	<!-- Contained Behaviors -->
+	<contains name="DepthParameter" />
+	<contains name="YawBehavior" />
+	<contains name="RollBehavior" />
+	<contains name="PitchBehavior" />
+	<contains name="TranslateBehavior" />
 
 	<!-- Available Parameters -->
+	<params>
+
+		<param type="numeric" name="yaw_init" default="0" label="yaw_init" hint="Sets the yaw_init">
+			<min value="-360" />
+			<max value="360" />
+		</param>
+
+		<param type="numeric" name="depth_init" default="-3.3" label="depth_init" hint="Sets the depth_init">
+			<min value="-10" />
+			<max value="10" />
+		</param>
+
+		<param type="numeric" name="x_start" default="0" label="x_start" hint="Sets the x_start">
+			<min value="-10" />
+			<max value="10" />
+		</param>
+
+	</params>
+
 
 </behavior>
