@@ -1,0 +1,5 @@
+<launch>
+  <group ns="puddles">
+    <node pkg="riptide_autonomy" type="depth_test.py" name="dtest" output="screen" />
+  </group>
+</launch>

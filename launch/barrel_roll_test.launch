@@ -1,0 +1,5 @@
+<launch>
+  <group ns="puddles">
+    <node pkg="riptide_autonomy" type="barrel_roll_test.py" name="brtest" output="screen" />
+  </group>
+</launch>

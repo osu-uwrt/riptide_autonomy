@@ -1,0 +1,5 @@
+<launch>
+  <group ns="puddles">
+    <node pkg="riptide_autonomy" type="translation_test.py" name="ttest" output="screen" />
+  </group>
+</launch>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="RollBehavior">
+
+	<executable package_path="riptide_autonomy.rollbehavior_sm" class="RollBehaviorSM" />
+	<tagstring></tagstring>
+	<author>UWRT</author>
+	<date>Sun Mar 01 2020</date>
+	<description>
+		Roll with paramters
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+	<params>
+
+		<param type="numeric" name="angle" default="0" label="angle" hint="Sets the angle">
+			<min value="-180" />
+			<max value="180" />
+		</param>
+
+		<param type="text" name="topic" default="/puddles/go_to_roll" label="topic" hint="Sets the topic" />
+
+	</params>
+
+
+</behavior>
