@@ -2,7 +2,7 @@
 import rospy
 import actionlib
 
-from riptide_msgs.msg import AlignmentCommand, LinearCommand
+from riptide_msgs.msg import AlignmentCommand, LinearCommand, Depth
 import riptide_autonomy.msg
 
 from actionTools import *
@@ -23,7 +23,9 @@ class GateTaskAction(object):
         alignAction("Gate", .07, True).wait_for_result()
         distance = getResult(getDistanceAction("Gate")).distance
         self.alignPub.publish("", 0)
-        depthAction(.65).wait_for_result()
+        rospy.sleep(0.1)
+        depthMsg = rospy.wait_for_message("/state/depth", Depth)
+        depthAction(depthMsg.depth + .4).wait_for_result()
         # Get 2.0 meters away from the gate
         if goal.isLeft:
             rospy.loginfo("Moving left")
