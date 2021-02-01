@@ -44,8 +44,7 @@ class BigSearchSM(Behavior):
 
 		# Additional initialization code can be added inside the following tags
 		# [MANUAL_INIT]
-        smach.State.__init__(self,
-        outcomes=['finished', 'failed'], io_keys{'searchForObject'})
+        smach.State.__init__(self,outcomes=['finished', 'failed'], io_keys{'searchForObject'})
 		# [/MANUAL_INIT]
 
 		# Behavior comments:

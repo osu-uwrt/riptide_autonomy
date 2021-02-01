@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="Rectangles">
+
+	<executable package_path="riptide_autonomy.rectangles_sm" class="RectanglesSM" />
+	<tagstring></tagstring>
+	<author>Toby</author>
+	<date>Wed Nov 11 2020</date>
+	<description>
+		Heh
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+
+</behavior>
