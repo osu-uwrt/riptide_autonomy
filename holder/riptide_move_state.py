@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import riptide_controllers.msg
 import riptide_autonomy.msg
 import actionlib

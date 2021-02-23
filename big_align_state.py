@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from flexbe_core import EventState, Logger
 import rospy
