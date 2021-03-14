@@ -8,7 +8,6 @@
 ###########################################################
 
 from flexbe_core import Behavior, Autonomy, OperatableStateMachine, ConcurrencyContainer, PriorityContainer, Logger
-from riptide_autonomy.bigsearch_sm import BigSearchSM
 from riptide_states.GetFrontOf import GetFrontOf
 from riptide_states.TransferToGlobal import TransferToGlobal
 from riptide_states.big_move_state import BigMoveState
@@ -36,7 +35,6 @@ class GateTaskSM(Behavior):
 		# parameters of this behavior
 
 		# references to used behaviors
-		self.add_behavior(BigSearchSM, 'BigSearch')
 
 		# Additional initialization code can be added inside the following tags
 		# [MANUAL_INIT]
@@ -54,7 +52,6 @@ class GateTaskSM(Behavior):
 		_state_machine.userdata.y = 0
 		_state_machine.userdata.z = 0
 		_state_machine.userdata.orientation = None
-		_state_machine.userdata.rollAngle = 90
 
 		# Additional creation code can be added inside the following tags
 		# [MANUAL_CREATE]
@@ -67,13 +64,6 @@ class GateTaskSM(Behavior):
 			OperatableStateMachine.add('GuessFrontOfGate',
 										GetFrontOf(target="gate_frame"),
 										transitions={'Success': 'Move'},
-										autonomy={'Success': Autonomy.Off},
-										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
-
-			# x:699 y:91
-			OperatableStateMachine.add('Get Front of Gate',
-										GetFrontOf(target="gate_frame"),
-										transitions={'Success': 'MoveToGate'},
 										autonomy={'Success': Autonomy.Off},
 										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
@@ -107,39 +97,45 @@ class GateTaskSM(Behavior):
 
 			# x:327 y:86
 			OperatableStateMachine.add('Move',
-										BigMoveState(x=x, y=y, z=z, orientation=None),
-										transitions={'done': 'BigSearch', 'failed': 'failed'},
-										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off})
+										BigMoveState(),
+										transitions={'done': 'Get Front of Gate', 'failed': 'failed'},
+										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
+										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 			# x:1086 y:217
 			OperatableStateMachine.add('Move I',
-										BigMoveState(x=0, y=1, z=0, orientation=None),
+										BigMoveState(),
 										transitions={'done': 'Roll I', 'failed': 'failed'},
-										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off})
+										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
+										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 			# x:929 y:514
 			OperatableStateMachine.add('Move II',
-										BigMoveState(x=x, y=y, z=z, orientation=orientation),
+										BigMoveState(),
 										transitions={'done': 'Roll II', 'failed': 'failed'},
-										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off})
+										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
+										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 			# x:542 y:577
 			OperatableStateMachine.add('Move III',
-										BigMoveState(x=x, y=y, z=z, orientation=orientation),
+										BigMoveState(),
 										transitions={'done': 'Roll III', 'failed': 'failed'},
-										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off})
+										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
+										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 			# x:187 y:522
 			OperatableStateMachine.add('Move IIII',
-										BigMoveState(x=x, y=y, z=z, orientation=orientation),
+										BigMoveState(),
 										transitions={'done': 'Roll IIII', 'failed': 'failed'},
-										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off})
+										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
+										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 			# x:914 y:100
 			OperatableStateMachine.add('MoveToGate',
-										BigMoveState(x=x, y=y, z=z, orientation=orientation),
+										BigMoveState(),
 										transitions={'done': 'MakeGlobal I', 'failed': 'failed'},
-										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off})
+										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
+										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 			# x:1091 y:322
 			OperatableStateMachine.add('Roll I',
@@ -165,11 +161,12 @@ class GateTaskSM(Behavior):
 										transitions={'Success': 'finished', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
-			# x:506 y:72
-			OperatableStateMachine.add('BigSearch',
-										self.use_behavior(BigSearchSM, 'BigSearch'),
-										transitions={'finished': 'Get Front of Gate', 'failed': 'failed'},
-										autonomy={'finished': Autonomy.Inherit, 'failed': Autonomy.Inherit})
+			# x:571 y:80
+			OperatableStateMachine.add('Get Front of Gate',
+										GetFrontOf(target="gate_frame"),
+										transitions={'Success': 'MoveToGate'},
+										autonomy={'Success': Autonomy.Off},
+										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 
 		return _state_machine
