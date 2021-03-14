@@ -12,7 +12,6 @@
 
 
 	<!-- Contained Behaviors -->
-	<contains name="BigSearch" />
 
 	<!-- Available Parameters -->
 
