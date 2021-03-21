@@ -69,14 +69,14 @@ class GateTaskSM(Behavior):
 
 			# x:1061 y:117
 			OperatableStateMachine.add('MakeGlobal I',
-										TransferToGlobal(x=1, y=0, z=0, orientation=None),
+										TransferToGlobal(x=2, y=0, z=0, orientation=None),
 										transitions={'Success': 'Move I'},
 										autonomy={'Success': Autonomy.Off},
 										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 			# x:1051 y:440
 			OperatableStateMachine.add('MakeGlobal II',
-										TransferToGlobal(x=1, y=0, z=0, orientation=None),
+										TransferToGlobal(x=2, y=0, z=0, orientation=None),
 										transitions={'Success': 'Move II'},
 										autonomy={'Success': Autonomy.Off},
 										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
@@ -126,7 +126,7 @@ class GateTaskSM(Behavior):
 			# x:187 y:522
 			OperatableStateMachine.add('Move IIII',
 										BigMoveState(),
-										transitions={'done': 'Roll IIII', 'failed': 'failed'},
+										transitions={'done': 'finished', 'failed': 'failed'},
 										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
 										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
@@ -139,7 +139,7 @@ class GateTaskSM(Behavior):
 
 			# x:1091 y:322
 			OperatableStateMachine.add('Roll I',
-										BigRollState(angle=90),
+										BigRollState(angle=180),
 										transitions={'Success': 'MakeGlobal II', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
@@ -155,13 +155,7 @@ class GateTaskSM(Behavior):
 										transitions={'Success': 'MakeGlobal IIII', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
-			# x:102 y:460
-			OperatableStateMachine.add('Roll IIII',
-										BigRollState(angle=90),
-										transitions={'Success': 'finished', 'Failure': 'failed'},
-										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
-
-			# x:571 y:80
+			# x:699 y:91
 			OperatableStateMachine.add('Get Front of Gate',
 										GetFrontOf(target="gate_frame"),
 										transitions={'Success': 'MoveToGate'},

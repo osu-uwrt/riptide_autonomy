@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="prequal">
+
+	<executable package_path="riptide_autonomy.prequal_sm" class="prequalSM" />
+	<tagstring></tagstring>
+	<author>Parth Parekh</author>
+	<date>Tue Mar 16 2021</date>
+	<description>
+		Prequalification task
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+
+</behavior>
