@@ -8,8 +8,9 @@
 ###########################################################
 
 from flexbe_core import Behavior, Autonomy, OperatableStateMachine, ConcurrencyContainer, PriorityContainer, Logger
+from riptide_states.GetFrontOf import GetFrontOf
 from riptide_states.big_move_state import BigMoveState
-from riptide_states.find_task_location import FindTaskLocation
+from riptide_states.flatten_state import FlattenState
 from riptide_states.position_parameter_state import PositionParameterState
 from riptide_states.relative_move_state import RelativeMoveState
 # Additional imports can be added inside the following tags
@@ -60,17 +61,17 @@ class PreQualBehvaiorSM(Behavior):
 
 
 		with _state_machine:
-			# x:177 y:37
-			OperatableStateMachine.add('Submerge',
-										RelativeMoveState(x=0, y=0, z=-1),
-										transitions={'Success': 'GetPoleLocation', 'Failure': 'failed'},
+			# x:30 y:40
+			OperatableStateMachine.add('Flatten',
+										FlattenState(),
+										transitions={'Success': 'Submerge', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
-			# x:440 y:41
-			OperatableStateMachine.add('GetPoleLocation',
-										FindTaskLocation(target="pole_frame"),
-										transitions={'Success': 'MoveToPole', 'Failed': 'failed'},
-										autonomy={'Success': Autonomy.Off, 'Failed': Autonomy.Off},
+			# x:594 y:466
+			OperatableStateMachine.add('GetOrigin',
+										PositionParameterState(x=0, y=0, z=-1),
+										transitions={'Success': 'GoBackToGate', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
 										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 			# x:363 y:489
@@ -105,11 +106,17 @@ class PreQualBehvaiorSM(Behavior):
 										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
 										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
-			# x:594 y:466
-			OperatableStateMachine.add('GetOrigin',
-										PositionParameterState(x=0, y=0, z=-1),
-										transitions={'Success': 'GoBackToGate', 'Failure': 'failed'},
-										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off},
+			# x:177 y:37
+			OperatableStateMachine.add('Submerge',
+										RelativeMoveState(x=0, y=0, z=-1),
+										transitions={'Success': 'Find Pole', 'Failure': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
+
+			# x:384 y:41
+			OperatableStateMachine.add('Find Pole',
+										GetFrontOf(target="pole_frame"),
+										transitions={'Success': 'MoveToPole'},
+										autonomy={'Success': Autonomy.Off},
 										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 
