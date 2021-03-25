@@ -16,21 +16,20 @@ from riptide_states.big_move_state import BigMoveState
 
 
 '''
-Created on Wed Feb 05 2020
-@author: cedric
+Created on Fri Mar 19 2021
+@author: Me
 '''
-class test_behaviorSM(Behavior):
+class MoveSM(Behavior):
 	'''
-	testtttttttttttttttttttt
+	Move to a position
 	'''
 
 
 	def __init__(self):
-		super(test_behaviorSM, self).__init__()
-		self.name = 'test_behavior'
+		super(MoveSM, self).__init__()
+		self.name = 'Move'
 
 		# parameters of this behavior
-		self.add_parameter('yes', False)
 
 		# references to used behaviors
 
@@ -44,8 +43,12 @@ class test_behaviorSM(Behavior):
 
 
 	def create(self):
-		# x:30 y:365, x:599 y:427
+		# x:30 y:463, x:130 y:463
 		_state_machine = OperatableStateMachine(outcomes=['finished', 'failed'])
+		_state_machine.userdata.x = 0
+		_state_machine.userdata.y = 0
+		_state_machine.userdata.z = -1
+		_state_machine.userdata.orientation = None
 
 		# Additional creation code can be added inside the following tags
 		# [MANUAL_CREATE]
@@ -54,11 +57,12 @@ class test_behaviorSM(Behavior):
 
 
 		with _state_machine:
-			# x:210 y:144
-			OperatableStateMachine.add('move',
-										BigMoveState(x=4, y=1, z=3, orientation=None),
+			# x:261 y:97
+			OperatableStateMachine.add('Move',
+										BigMoveState(),
 										transitions={'done': 'finished', 'failed': 'failed'},
-										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off})
+										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
+										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
 
 
 		return _state_machine

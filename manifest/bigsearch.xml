@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="BigSearch">
+
+	<executable package_path="riptide_autonomy.bigsearch_sm" class="BigSearchSM" />
+	<tagstring></tagstring>
+	<author>Toby McGuire</author>
+	<date>Mon Jan 18 2021</date>
+	<description>
+		Search
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+
+</behavior>

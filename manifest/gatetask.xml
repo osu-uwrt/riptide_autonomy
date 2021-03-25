@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="GateTask">
+
+	<executable package_path="riptide_autonomy.gatetask_sm" class="GateTaskSM" />
+	<tagstring></tagstring>
+	<author>Toby McGuire</author>
+	<date>Mon Feb 01 2021</date>
+	<description>
+		does the gate task, better
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+
+</behavior>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="Test">
+
+	<executable package_path="riptide_autonomy.test_sm" class="TestSM" />
+	<tagstring></tagstring>
+	<author>The big dogs</author>
+	<date>Sun Oct 18 2020</date>
+	<description>
+		big dogs
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+
+</behavior>

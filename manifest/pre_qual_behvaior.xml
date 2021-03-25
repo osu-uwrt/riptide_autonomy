@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="Pre-Qual Behvaior">
+
+	<executable package_path="riptide_autonomy.pre_qual_behvaior_sm" class="PreQualBehvaiorSM" />
+	<tagstring></tagstring>
+	<author>Toby McGuire</author>
+	<date>Sat Mar 20 2021</date>
+	<description>
+		Does the pre qualification movement
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+
+</behavior>

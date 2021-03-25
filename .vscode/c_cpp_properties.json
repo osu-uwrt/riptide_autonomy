@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/toby/osu-uwrt/riptide_software/devel/include/**",
+        "/home/toby/osu-uwrt/dependencies/install/include/**",
+        "/home/toby/osu-uwrt/dependencies/MYNT/wrappers/ros/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/toby/osu-uwrt/riptide_software/src/riptide_vision/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}
