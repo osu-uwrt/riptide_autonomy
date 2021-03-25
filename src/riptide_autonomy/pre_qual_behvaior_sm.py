@@ -64,7 +64,7 @@ class PreQualBehvaiorSM(Behavior):
 			# x:30 y:40
 			OperatableStateMachine.add('Flatten',
 										FlattenState(),
-										transitions={'Success': 'Submerge', 'Failure': 'failed'},
+										transitions={'Success': 'Find Pole', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
 			# x:594 y:466
@@ -83,19 +83,19 @@ class PreQualBehvaiorSM(Behavior):
 
 			# x:827 y:138
 			OperatableStateMachine.add('MovePoleBehind',
-										RelativeMoveState(x=3, y=-3, z=0),
+										RelativeMoveState(x=1, y=-1, z=0),
 										transitions={'Success': 'MovePoleRight', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
 			# x:720 y:48
 			OperatableStateMachine.add('MovePoleLeft',
-										RelativeMoveState(x=3, y=3, z=0),
+										RelativeMoveState(x=1, y=1, z=0),
 										transitions={'Success': 'MovePoleBehind', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
 			# x:774 y:303
 			OperatableStateMachine.add('MovePoleRight',
-										RelativeMoveState(x=-3, y=3, z=0),
+										RelativeMoveState(x=-1, y=-1, z=0),
 										transitions={'Success': 'GetOrigin', 'Failure': 'failed'},
 										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
@@ -105,12 +105,6 @@ class PreQualBehvaiorSM(Behavior):
 										transitions={'done': 'MovePoleLeft', 'failed': 'failed'},
 										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off},
 										remapping={'x': 'x', 'y': 'y', 'z': 'z', 'orientation': 'orientation'})
-
-			# x:177 y:37
-			OperatableStateMachine.add('Submerge',
-										RelativeMoveState(x=0, y=0, z=-1),
-										transitions={'Success': 'Find Pole', 'Failure': 'failed'},
-										autonomy={'Success': Autonomy.Off, 'Failure': Autonomy.Off})
 
 			# x:384 y:41
 			OperatableStateMachine.add('Find Pole',
