@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ###########################################################
 #               WARNING: Generated code!                  #
@@ -8,7 +8,7 @@
 ###########################################################
 
 from flexbe_core import Behavior, Autonomy, OperatableStateMachine, ConcurrencyContainer, PriorityContainer, Logger
-from riptide_states.big_move_state import BigMoveState
+from riptide_states.big_rectangle_state import BigRectangleState
 # Additional imports can be added inside the following tags
 # [MANUAL_IMPORT]
 
@@ -16,21 +16,20 @@ from riptide_states.big_move_state import BigMoveState
 
 
 '''
-Created on Wed Feb 05 2020
-@author: cedric
+Created on Sun Oct 18 2020
+@author: The big dogs
 '''
-class test_behaviorSM(Behavior):
+class TestSM(Behavior):
 	'''
-	testtttttttttttttttttttt
+	big dogs
 	'''
 
 
 	def __init__(self):
-		super(test_behaviorSM, self).__init__()
-		self.name = 'test_behavior'
+		super(TestSM, self).__init__()
+		self.name = 'Test'
 
 		# parameters of this behavior
-		self.add_parameter('yes', False)
 
 		# references to used behaviors
 
@@ -44,8 +43,10 @@ class test_behaviorSM(Behavior):
 
 
 	def create(self):
-		# x:30 y:365, x:599 y:427
-		_state_machine = OperatableStateMachine(outcomes=['finished', 'failed'])
+		# x:30 y:365, x:131 y:365
+		_state_machine = OperatableStateMachine(outcomes=['finished', 'failed'], output_keys=['xout', 'yout'])
+		_state_machine.userdata.xout = 0
+		_state_machine.userdata.yout = 0
 
 		# Additional creation code can be added inside the following tags
 		# [MANUAL_CREATE]
@@ -54,11 +55,12 @@ class test_behaviorSM(Behavior):
 
 
 		with _state_machine:
-			# x:210 y:144
-			OperatableStateMachine.add('move',
-										BigMoveState(x=4, y=1, z=3, orientation=None),
-										transitions={'done': 'finished', 'failed': 'failed'},
-										autonomy={'done': Autonomy.Off, 'failed': Autonomy.Off})
+			# x:514 y:87
+			OperatableStateMachine.add('Rectangle',
+										BigRectangleState(topic=/puddles/state/bboxes, threshold=.65, time=3, target=cutie, timeout=5),
+										transitions={'Success': 'finished', 'Failed': 'failed'},
+										autonomy={'Success': Autonomy.Off, 'Failed': Autonomy.Off},
+										remapping={'x': 'xout', 'y': 'yout'})
 
 
 		return _state_machine
