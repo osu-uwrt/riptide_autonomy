@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(riptide_autonomy)
+cmake_minimum_required(VERSION 3.5)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+project(riptide_autonomy)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -10,34 +10,16 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslint
-  riptide_msgs
   geometry_msgs
   sensor_msgs
-  actionlib_msgs
-  darknet_ros_msgs
-)
-
-add_action_files(
-  DIRECTORY action
-  FILES Prequalify.action
-  GateTask.action
-  BuoyTask.action
-  DecapTask.action
-  GoToFinals.action
-  Search.action
-  ExposeTask.action
-  GarlicTask.action
+  behaviortree_cpp_v3
 )
 
 catkin_python_setup()
 
-generate_messages(
-  DEPENDENCIES actionlib_msgs
-)
-
 catkin_package(
   CATKIN_DEPENDS
-    actionlib_msgs)
+    behaviortree_cpp_v3)
 
-
+# target_link_libraries(${PROJECT_NAME} BT::behaviortree_cpp_v3)
 

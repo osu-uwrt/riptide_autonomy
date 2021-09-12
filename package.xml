@@ -58,6 +58,7 @@
   <build_depend>cv_bridge</build_depend>
   <build_depend>actionlib_msgs</build_depend>
   <build_depend>flexbe-behavior-engine</build_depend>
+  <build_depend>behaviortree_cpp_v3</build_depend>
 
   <run_depend>rospy</run_depend>
   <run_depend>smach</run_depend>
@@ -68,7 +69,7 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>actionlib_msgs</run_depend>
-  
+  <run_depend>behaviortree_cpp_v3</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
