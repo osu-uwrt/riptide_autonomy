@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   behaviortree_cpp_v3
+  moveit_ros_planning_interface
 )
 
 catkin_python_setup()
@@ -21,5 +22,13 @@ catkin_package(
   CATKIN_DEPENDS
     behaviortree_cpp_v3)
 
-# target_link_libraries(${PROJECT_NAME} BT::behaviortree_cpp_v3)
+include_directories("include")
+include_directories(${catkin_INCLUDE_DIRS})
 
+add_library(states STATIC
+  src/riptide_autonomy/big_move_state.cpp
+  src/riptide_autonomy/util.cpp
+)
+
+add_executable(move src/riptide_autonomy/move.cpp)
+target_link_libraries(move behaviortree_cpp_v3 states ${catkin_LIBRARIES})

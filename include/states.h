@@ -5,6 +5,7 @@
  * States (also called nodes) header file.
  */
 
+#include <iostream>
 #include "behaviortree_cpp_v3/behavior_tree.h"
 #include "behaviortree_cpp_v3/bt_factory.h"
 #include "std_msgs/Bool.h"
@@ -17,6 +18,8 @@
 #include "ros/ros.h"
 
 namespace states {
+
+
     class big_move_state : public BT::SyncActionNode {
         public:
         big_move_state(const std::string& name, const BT::NodeConfiguration& config)
@@ -34,7 +37,7 @@ namespace states {
         bool onEnter();
         
         static const int CACHE_SIZE = 256;
-        static const double threshold = 0.4;
+        static constexpr double threshold = 0.4;
 
         const std::string
             steadyTopic = "/puddles/steady",
@@ -54,5 +57,10 @@ namespace states {
 
     };
 }
+
+class Util {
+    public:
+    static geometry_msgs::Quaternion quaternionFromString(std::string str);
+};
 
 #endif
