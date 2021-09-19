@@ -31,4 +31,4 @@ add_library(states STATIC
 )
 
 add_executable(move src/riptide_autonomy/move.cpp)
-target_link_libraries(move behaviortree_cpp_v3 states ${catkin_LIBRARIES})
+target_link_libraries(move states ${catkin_LIBRARIES})

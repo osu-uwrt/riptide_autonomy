@@ -2,12 +2,12 @@
 <root main_tree_to_execute="BehaviorTree">
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
-        <Action ID="BigMoveState" orientation="0,0,0,0" x="10" y="10" z="-20"/>
+        <Action ID="BigMoveState" orientation="0,0,0,1" x="1" y="1" z="-2"/>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="BigMoveState">
-            <input_port default="0,0,0,0" name="orientation">x,y,z,w</input_port>
+            <input_port default="0,0,0,1" name="orientation">x,y,z,w</input_port>
             <input_port default="0" name="x"/>
             <input_port default="0" name="y"/>
             <input_port default="-1" name="z"/>

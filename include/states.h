@@ -15,6 +15,7 @@
 #include "moveit/moveit_cpp/moveit_cpp.h"
 #include "moveit/planning_scene_interface/planning_scene_interface.h"
 #include "moveit/move_group_interface/move_group_interface.h"
+#include <moveit/moveit_cpp/planning_component.h>
 #include "ros/ros.h"
 
 namespace states {
@@ -52,6 +53,7 @@ namespace states {
         double x, y, z;
         geometry_msgs::Quaternion orientation;
 
+        ros::NodeHandle n;
         std_msgs::Bool::ConstPtr latestSteadyMessage;
         nav_msgs::Odometry::ConstPtr latestLocMessage;
 

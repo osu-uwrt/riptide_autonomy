@@ -25,7 +25,6 @@ void big_move_state::locCallback(const nav_msgs::Odometry::ConstPtr& msg) {
  */
 void big_move_state::init() {
     //create cached subscriber
-    ros::NodeHandle n;
     this->steadySubscriber = n.subscribe(steadyTopic, CACHE_SIZE, &states::big_move_state::steadyCallback, this);
     this->locSubscriber    = n.subscribe(locTopic, CACHE_SIZE, &states::big_move_state::locCallback, this);
     
@@ -89,7 +88,6 @@ NodeStatus big_move_state::tick() {
  * Returns true if successful, false otherwise.
  */
 bool big_move_state::onEnter() {
-    //tmp TODO: ASK PARTH ABOUT THIS. WHAT SPINS?
     ros::AsyncSpinner spinner(1);
     spinner.start();
   
@@ -97,17 +95,17 @@ bool big_move_state::onEnter() {
     ros::Rate errPrintRate(2); //2 hz
 
     //wait for the position to be steady
-    bool steady = false;
-    if(!steady) {
-        if(steady != 0) { //if steady message exists...
-            steady = latestSteadyMessage->data;
-        } else {
-            ROS_WARN("Steady Message %s not there!", steadyTopic.c_str());
-            errPrintRate.sleep();
-        }
-    }
+    // bool steady = false;
+    // while(!steady) {
+    //     if(steady != 0) { //if steady message exists...
+    //         steady = latestSteadyMessage->data;
+    //     } else {
+    //         ROS_WARN("Steady Message %s not there!", steadyTopic.c_str());
+    //         errPrintRate.sleep();
+    //     }
+    // }
 
-    //assign steady odometry data
+    //assign goal odometry data
     x = getInput<double>("x").value();
     y = getInput<double>("y").value();
     z = getInput<double>("z").value();
@@ -117,18 +115,18 @@ bool big_move_state::onEnter() {
 
     //create path
     moveit::planning_interface::MoveGroupInterface moveGroup(groupName);
-    moveit::planning_interface::PlanningSceneInterface planningSceneInterface;
     
     //define a JointModelGroup for performance improvement
     const robot_state::JointModelGroup* jointModelGroup = 
         moveGroup.getCurrentState()->getJointModelGroup(groupName);
     
-    //define goal position and orientation
-    geometry_msgs::Pose jointGoal;
-    jointGoal.orientation = orientation;
-    jointGoal.position.x = x;
-    jointGoal.position.y = y;
-    jointGoal.position.z = z;
+    // //define goal position and orientation
+    geometry_msgs::PoseStamped jointGoal;
+    jointGoal.header.frame_id = groupName;
+    jointGoal.pose.orientation.w = 1;
+    jointGoal.pose.position.x = 0;
+    jointGoal.pose.position.y = 0;
+    jointGoal.pose.position.z = 0;
 
     moveGroup.setPlanningTime(1); //1 second to plan
 
@@ -136,14 +134,27 @@ bool big_move_state::onEnter() {
     moveGroup.setWorkspace(-50, -50, -30, 50, 50, 0);
 
     //plan the path
-    moveit::planning_interface::MoveGroupInterface::Plan movePlan;
-    moveit::planning_interface::MoveItErrorCode planResult = moveGroup.plan(movePlan);
-    if(planResult == moveit::planning_interface::MoveItErrorCode::FAILURE) {
-        ROS_ERROR("Path Planning Failed!");
-        return false;
-    }
+    // moveit::planning_interface::MoveGroupInterface::Plan movePlan;
+    // moveGroup.setPoseTarget(jointGoal);
+
+    // moveit::planning_interface::MoveItErrorCode planResult = moveGroup.plan(movePlan);
+    // if(planResult == moveit::planning_interface::MoveItErrorCode::FAILURE) {
+    //     ROS_ERROR("Path Planning Failed!");
+    //     return false;
+    // }
 
     //make the robot move
-    moveGroup.execute(movePlan);
+    // moveGroup.move();
+
+    auto moveit_cpp_ptr = std::make_shared<moveit_cpp::MoveItCpp>(n);
+    auto planning_components = std::make_shared<moveit_cpp::PlanningComponent>(groupName, moveit_cpp_ptr);
+    auto start_state = planning_components->getStartState();
+    planning_components->setStartStateToCurrentState();
+    planning_components->setGoal(jointGoal, groupName);
+
+    auto planSolution = planning_components->plan();
+    if(planSolution) {
+        planning_components->execute();
+    }
     return true;
 }
