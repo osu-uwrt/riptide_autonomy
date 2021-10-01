@@ -35,7 +35,7 @@ namespace states {
         BT::NodeStatus tick() override;
 
         private:
-        bool onEnter();
+        void onEnter();
         
         static const int CACHE_SIZE = 256;
         static constexpr double threshold = 0.4;
@@ -43,15 +43,27 @@ namespace states {
         const std::string
             steadyTopic = "/puddles/steady",
             locTopic = "/puddles/odometry/filtered",
+            positionTopic = "/puddles/position",
+            orientationTopic = "/puddles/orientation",
             groupName = "puddles_base";
 
         ros::Subscriber
             steadySubscriber,
             locSubscriber;
 
-        bool hasEntered;
+        ros::Publisher 
+            positionPublisher,
+            orientationPublisher;
+
+        bool
+            hasEntered,
+            steady,
+            locExists;
+
         double x, y, z;
         geometry_msgs::Quaternion orientation;
+
+        geometry_msgs::Pose goal;
 
         ros::NodeHandle n;
         std_msgs::Bool::ConstPtr latestSteadyMessage;
