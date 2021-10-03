@@ -17,7 +17,7 @@ void big_move_state::steadyCallback(const std_msgs::Bool::ConstPtr& msg) {
 }
 
 void big_move_state::locCallback(const nav_msgs::Odometry::ConstPtr& msg) {
-    latestLocMessage = msg;
+    latestLocData = msg->pose.pose;
     locExists = true;
 }
 
@@ -40,10 +40,13 @@ void big_move_state::init() {
  */
 PortsList big_move_state::providedPorts() {
     return { 
-        InputPort<double>("x"),
-        InputPort<double>("y"),
-        InputPort<double>("z"),
-        InputPort<std::string>("orientation")
+        InputPort<std::string>("x"),
+        InputPort<std::string>("y"),
+        InputPort<std::string>("z"),
+        InputPort<std::string>("orientation_x"),
+        InputPort<std::string>("orientation_y"),
+        InputPort<std::string>("orientation_z"),
+        InputPort<std::string>("orientation_w")
     };
 }
 
@@ -51,40 +54,51 @@ PortsList big_move_state::providedPorts() {
  * Executes the command
  */
 NodeStatus big_move_state::tick() {
+    // ros::AsyncSpinner spinner(1);
+    // spinner.start();
+    
     while(ros::ok()) {
+        ros::spinOnce();
+
         //run onEnter if this is the first time this command is being ticked
-        if(!hasEntered) {
-            onEnter();
-            hasEntered = true;
+        if(!hasEntered) { 
+            hasEntered = onEnter();
+            continue; //this avoids checking if the command is finished if we havent entered yethasEntered = onEnter();
         }
 
+        //commands has entered, goal has been set.
         positionPublisher.publish(goal.position);
         orientationPublisher.publish(goal.orientation);
+
+        // ROS_INFO (
+        //     "Currently at position %f, %f, %f and orientation %f, %f, %f, %f",
+        //     latestLocData.position.x,
+        //     latestLocData.position.y,
+        //     latestLocData.position.z,
+        //     latestLocData.orientation.x,
+        //     latestLocData.orientation.y,
+        //     latestLocData.orientation.z,
+        //     latestLocData.orientation.w
+        // );
 
         //the controller is currently handling movement (was stated in onEnter()).
         //here, we basically check to see if the position is acheived.
         //when the robot is steady within the target threshold, command ends
         if(locExists) { //if latest loc message exists...
-            nav_msgs::Odometry::ConstPtr pos = latestLocMessage; //current localization data
-            geometry_msgs::Point position = pos->pose.pose.position;
+            geometry_msgs::Point position = latestLocData.position;
 
             bool
                 xGood = abs(position.x - goal.position.x) < threshold,
                 yGood = abs(position.y - goal.position.y) < threshold,
-                zGood = abs(position.z - goal.position.z) < threshold,
-                isSteady = steady;
-
-            if(xGood && yGood && zGood && isSteady) {
+                zGood = abs(position.z - goal.position.z) < threshold;
+           
+            if(xGood && yGood && zGood && steady) { //if it's steady then the orientation will be good as well
+                ROS_INFO("Move finished!");
                 break; 
             }
-        } else {
-            // ROS_ERROR("Localization Message %s not there!", locTopic.c_str());
         }
-
-        ros::spinOnce();
     }
 
-    ROS_INFO("command finished!");
     return NodeStatus::SUCCESS; // command finishes!
 }
 
@@ -93,23 +107,71 @@ NodeStatus big_move_state::tick() {
  * Called just before the first tick is run
  * Returns true if successful, false otherwise.
  */
-void big_move_state::onEnter() {
-    ros::AsyncSpinner spinner(1);
-    spinner.start();
-  
-    ROS_INFO("Robot is %s", (steady ? std::string("Steady").c_str() : std::string("NOT STEADY").c_str()));
+bool big_move_state::onEnter() {
+    //wait for the robot to be steady
+    if(!steady) {
+        return false;
+    }
 
-    //assign goal odometry data
-    x = getInput<double>("x").value();
-    y = getInput<double>("y").value();
-    z = getInput<double>("z").value();
-    orientation = Util::quaternionFromString(getInput<std::string>("orientation").value());
+    //wait for odometry data to exist
+    if(!locExists) {
+        return false;
+    }
 
-    ROS_INFO("Moving to position %f, %f, %f with orientation %s", x, y, z, getInput<std::string>("orientation").value().c_str());
+    //now that the robot is steady, capture its current odometry data
+    geometry_msgs::Pose currentPose = latestLocData;
 
-    //assign data to goal pose
-    goal.orientation.w = 1;
-    goal.position.x = x;
-    goal.position.y = y;
-    goal.position.z = z;
+    //pull inputs from behaviortree
+    Optional<std::string> 
+        x = getInput<std::string>("x"),
+        y = getInput<std::string>("y"),
+        z = getInput<std::string>("z"),
+        ox = getInput<std::string>("orientation_x"),
+        oy = getInput<std::string>("orientation_y"),
+        oz = getInput<std::string>("orientation_z"),
+        ow = getInput<std::string>("orientation_w");
+
+    ROS_INFO("ox value: %s, oy value: %s, oz value: %s", ox.value().c_str(), oy.value().c_str(), oz.value().c_str());
+    
+    double
+        xValue = std::stod(x.value()),
+        yValue = std::stod(y.value()),
+        zValue = std::stod(z.value()),
+        oxValue = std::stod(ox.value()),
+        oyValue = std::stod(oy.value()),
+        ozValue = std::stod(oz.value()),
+        owValue = std::stod(ow.value());
+
+    //assign position data to goal pose
+    if(x.has_value() && y.has_value() && z.has_value()) { //position fully defined, set it as goal position
+        goal.position.x = xValue;
+        goal.position.y = yValue;
+        goal.position.z = zValue;
+    } else { // position not fully defined, fall back to current position
+        ROS_INFO("Goal Position not fully specified. Falling back to current position.");
+        goal.position = currentPose.position;
+    }
+
+    //assign orientation data to goal pose
+    if(ox.has_value() && oy.has_value() && oz.has_value() && ow.has_value()) { //orientation fully defined
+        goal.orientation.x = oxValue;
+        goal.orientation.y = oyValue;
+        goal.orientation.z = ozValue;
+        goal.orientation.w = owValue;
+    } else { //orientation not fully defined, fall back to current orientation
+        ROS_INFO("Goal Orientation not fully specified. Falling back to current orientation");
+        goal.orientation = currentPose.orientation;
+    }
+
+    ROS_INFO (
+        "Moving to position %f, %f, %f with orientation %f, %f, %f, %f",
+        goal.position.x,
+        goal.position.y,
+        goal.position.z,
+        goal.orientation.x,
+        goal.orientation.y,
+        goal.orientation.z,
+        goal.orientation.w
+    );
+    return true;
 }
