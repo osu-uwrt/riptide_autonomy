@@ -70,17 +70,6 @@ NodeStatus big_move_state::tick() {
         positionPublisher.publish(goal.position);
         orientationPublisher.publish(goal.orientation);
 
-        // ROS_INFO (
-        //     "Currently at position %f, %f, %f and orientation %f, %f, %f, %f",
-        //     latestLocData.position.x,
-        //     latestLocData.position.y,
-        //     latestLocData.position.z,
-        //     latestLocData.orientation.x,
-        //     latestLocData.orientation.y,
-        //     latestLocData.orientation.z,
-        //     latestLocData.orientation.w
-        // );
-
         //the controller is currently handling movement (was stated in onEnter()).
         //here, we basically check to see if the position is acheived.
         //when the robot is steady within the target threshold, command ends
@@ -130,8 +119,6 @@ bool big_move_state::onEnter() {
         oy = getInput<std::string>("orientation_y"),
         oz = getInput<std::string>("orientation_z"),
         ow = getInput<std::string>("orientation_w");
-
-    ROS_INFO("ox value: %s, oy value: %s, oz value: %s", ox.value().c_str(), oy.value().c_str(), oz.value().c_str());
     
     double
         xValue = std::stod(x.value()),

@@ -10,13 +10,13 @@ using namespace states;
 PortsList to_world_frame_state::providedPorts() {
     return {
         InputPort<std::string>("object"),
-        InputPort<double>("relative_x"),
-        InputPort<double>("relative_y"),
-        InputPort<double>("relative_z"),
-        InputPort<double>("relative_orientation_x"),
-        InputPort<double>("relative_orientation_y"),
-        InputPort<double>("relative_orientation_z"),
-        InputPort<double>("relative_orientation_w"),
+        InputPort<std::string>("relative_x"),
+        InputPort<std::string>("relative_y"),
+        InputPort<std::string>("relative_z"),
+        InputPort<std::string>("relative_orientation_x"),
+        InputPort<std::string>("relative_orientation_y"),
+        InputPort<std::string>("relative_orientation_z"),
+        InputPort<std::string>("relative_orientation_w"),
         OutputPort<std::string>("world_x"),
         OutputPort<std::string>("world_y"),
         OutputPort<std::string>("world_z"),
@@ -38,13 +38,13 @@ NodeStatus to_world_frame_state::tick() {
     geometry_msgs::Pose currentPose;
     geometry_msgs::Pose desiredPose;
 
-    currentPose.position.x = getInput<double>("relative_x").value();
-    currentPose.position.y = getInput<double>("relative_y").value();
-    currentPose.position.z = getInput<double>("relative_z").value();
-    currentPose.orientation.x = getInput<double>("relative_orientation_x").value();
-    currentPose.orientation.y = getInput<double>("relative_orientation_y").value();
-    currentPose.orientation.z = getInput<double>("relative_orientation_z").value();
-    currentPose.orientation.w = getInput<double>("relative_orientation_w").value();
+    currentPose.position.x = std::stod(getInput<std::string>("relative_x").value());
+    currentPose.position.y = std::stod(getInput<std::string>("relative_y").value());
+    currentPose.position.z = std::stod(getInput<std::string>("relative_z").value());
+    currentPose.orientation.x = std::stod(getInput<std::string>("relative_orientation_x").value());
+    currentPose.orientation.y = std::stod(getInput<std::string>("relative_orientation_y").value());
+    currentPose.orientation.z = std::stod(getInput<std::string>("relative_orientation_z").value());
+    currentPose.orientation.w = std::stod(getInput<std::string>("relative_orientation_w").value());
 
     tf2::doTransform(currentPose, desiredPose, transform);
 
