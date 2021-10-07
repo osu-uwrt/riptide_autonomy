@@ -24,6 +24,9 @@
 namespace states {
     static const int CACHE_SIZE = 256;
 
+    /**
+     * Moves the robot to a certain position.
+     */
     class big_move_state : public BT::SyncActionNode {
         public:
         big_move_state(const std::string& name, const BT::NodeConfiguration& config)
@@ -69,6 +72,9 @@ namespace states {
 
     };
 
+    /**
+     * Calculates the necessary pose to "flatten" the robot.
+     */
     class flatten_calculation_state : public BT::SyncActionNode {
         public:
         flatten_calculation_state(const std::string& name, const BT::NodeConfiguration& config) 
@@ -93,7 +99,9 @@ namespace states {
         ros::NodeHandle n;
     };
 
-
+    /**
+     * Transforms relative coordinates to global space.
+     */
     class to_world_frame_state : public BT::SyncActionNode {
         public:
         to_world_frame_state(const std::string& name, const BT::NodeConfiguration& config)
@@ -102,11 +110,6 @@ namespace states {
         
         static BT::PortsList providedPorts();
         BT::NodeStatus tick() override;
-
-        private:
-        void init();
-        
-        ros::NodeHandle n;
     };
 }
 

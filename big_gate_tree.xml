@@ -5,7 +5,9 @@
         <Sequence>
             <Action ID="FlattenCalculationState" depth="-1" orientation_w="{f_o_w}" orientation_x="{f_o_x}" orientation_y="{f_o_y}" orientation_z="{f_o_z}" x="{f_x}" y="{f_y}" z="{f_z}"/>
             <Action ID="BigMoveState" orientation_w="{f_o_w}" orientation_x="{f_o_x}" orientation_y="{f_o_y}" orientation_z="{f_o_z}" x="{f_x}" y="{f_y}" z="{f_z}"/>
-            <Action ID="toWorldFrameState" object="gate_frame" relative_orientation_w="{f_o_w}" relative_orientation_x="{f_o_x}" relative_orientation_y="{f_o_y}" relative_orientation_z="{f_o_z}" relative_x="{f_x}" relative_y="{f_y}" relative_z="{f_z}" world_orientation_w="{w_o_w}" world_orientation_x="{w_o_x}" world_orientation_y="{w_o_y}" world_orientation_z="{w_o_z}" world_x="{w_x}" world_y="{w_y}" world_z="{w_z}"/>
+            <Action ID="toWorldFrameState" object="gate_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="1.5" relative_y="2" relative_z="0.5" world_orientation_w="{w_o_w}" world_orientation_x="{w_o_x}" world_orientation_y="{w_o_y}" world_orientation_z="{w_o_z}" world_x="{w_x}" world_y="{w_y}" world_z="{w_z}"/>
+            <Action ID="BigMoveState" orientation_w="{w_o_w}" orientation_x="{w_o_x}" orientation_y="{w_o_y}" orientation_z="{w_o_z}" x="{w_x}" y="{w_y}" z="{w_z}"/>
+            <Action ID="toWorldFrameState" object="gate_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="1" relative_orientation_z="-1" relative_x="1.5" relative_y="-2" relative_z="0.5" world_orientation_w="{w_o_w}" world_orientation_x="{w_o_x}" world_orientation_y="{w_o_y}" world_orientation_z="{w_o_z}" world_x="{w_x}" world_y="{w_y}" world_z="{w_z}"/>
             <Action ID="BigMoveState" orientation_w="{w_o_w}" orientation_x="{w_o_x}" orientation_y="{w_o_y}" orientation_z="{w_o_z}" x="{w_x}" y="{w_y}" z="{w_z}"/>
         </Sequence>
     </BehaviorTree>
