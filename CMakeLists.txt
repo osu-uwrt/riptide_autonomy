@@ -32,11 +32,8 @@ add_library(states STATIC
   src/riptide_autonomy/big_move_state.cpp
   src/riptide_autonomy/flatten_calculation_state.cpp
   src/riptide_autonomy/to_world_frame_state.cpp
+  src/riptide_autonomy/velocity_state.cpp
 )
 
-add_executable(move src/riptide_autonomy/move.cpp)
-add_executable(flatten src/riptide_autonomy/flatten.cpp)
-add_executable(gate src/riptide_autonomy/gate_task.cpp)
-target_link_libraries(move states ${catkin_LIBRARIES})
-target_link_libraries(flatten states ${catkin_LIBRARIES})
-target_link_libraries(gate states ${catkin_LIBRARIES})
+add_executable(doTask src/riptide_autonomy/do_task.cpp)
+target_link_libraries(doTask states ${catkin_LIBRARIES})

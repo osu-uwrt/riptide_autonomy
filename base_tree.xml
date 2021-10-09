@@ -4,15 +4,27 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
             <SubTree ID="Flatten"/>
-            <SubTree ID="GoToGate"/>
-            <SubTree ID="GoThroughGate"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="Flatten">
         <Sequence>
-            <Action ID="FlattenCalculationState" depth="-1" orientation_w="{f_o_w}" orientation_x="{f_o_x}" orientation_y="{f_o_y}" orientation_z="{f_o_z}" x="{f_x}" y="{f_y}" z="{f_z}"/>
-            <Action ID="BigMoveState" orientation_w="{f_o_w}" orientation_x="{f_o_x}" orientation_y="{f_o_y}" orientation_z="{f_o_z}" v_pitch="" v_roll="" v_yaw="" x="{f_x}" y="{f_y}" z="{f_z}"/>
+            <Action ID="FlattenCalculationState" depth="-1" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
+            <Action ID="BigMoveState" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" v_pitch="" v_roll="" v_yaw="" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="GoToCutie">
+        <Sequence>
+            <Action ID="toWorldFrameState" object="cutie_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="0" relative_y="1" relative_z="0" world_orientation_w="{c_o_w}" world_orientation_x="{c_o_x}" world_orientation_y="{c_o_y}" world_orientation_z="{c_o_z}" world_x="{c_x}" world_y="{c_y}" world_z="{c_z}"/>
+            <Action ID="BigMoveState" orientation_w="{c_o_w}" orientation_x="{c_o_x}" orientation_y="{c_o_y}" orientation_z="{c_o_z}" v_pitch="" v_roll="" v_yaw="" x="{c_x}" y="{c_y}" z="{c_z}"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="TouchThing">
+        <Sequence>
+            <Action ID="VelocityState" time="4" x_velocity="0.25" y_velocity="0" z_velocity="0"/>
+            <Action ID="VelocityState" time="1.5" x_velocity="-0.3" y_velocity="0" z_velocity="0"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -42,7 +54,7 @@
             <input_port name="v_yaw"/>
             <input_port default="0" name="x"/>
             <input_port default="0" name="y"/>
-            <input_port default="-1" name="z"/>
+            <input_port default="1" name="z"/>
         </Action>
         <SubTree ID="Flatten"/>
         <Action ID="FlattenCalculationState">
@@ -56,7 +68,15 @@
             <output_port default="-1" name="z"/>
         </Action>
         <SubTree ID="GoThroughGate"/>
+        <SubTree ID="GoToCutie"/>
         <SubTree ID="GoToGate"/>
+        <SubTree ID="TouchThing"/>
+        <Action ID="VelocityState">
+            <input_port default="1" name="time">Time to drive for. Required</input_port>
+            <input_port default="1" name="x_velocity">Required</input_port>
+            <input_port default="0" name="y_velocity">Required</input_port>
+            <input_port default="0" name="z_velocity">Required</input_port>
+        </Action>
         <Action ID="toWorldFrameState">
             <input_port name="object"/>
             <input_port name="relative_orientation_w"/>
@@ -77,4 +97,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-

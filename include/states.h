@@ -42,6 +42,8 @@ namespace states {
         bool onEnter();
         void steadyCallback(const std_msgs::Bool::ConstPtr& msg);
         void locCallback(const nav_msgs::Odometry::ConstPtr& msg);
+        void publishGoalPose();
+        geometry_msgs::Vector3 toRPY(geometry_msgs::Quaternion orientation);
         
         static constexpr double threshold = 0.4;
 
@@ -49,7 +51,8 @@ namespace states {
             steadyTopic = "/puddles/steady",
             locTopic = "/puddles/odometry/filtered",
             positionTopic = "/puddles/position",
-            orientationTopic = "/puddles/orientation";
+            orientationTopic = "/puddles/orientation",
+            angVelocityTopic = "/puddles/angular_velocity";
 
         ros::Subscriber
             steadySubscriber,
@@ -57,16 +60,24 @@ namespace states {
 
         ros::Publisher 
             positionPublisher,
-            orientationPublisher;
+            orientationPublisher,
+            angVelocityPublisher;
 
         bool
             hasEntered,
             steady,
-            locExists;
+            locExists,
+            publishPosition,
+            publishOrientation,
+            publishAngVelocity;
 
         geometry_msgs::Pose 
             latestLocData, //current position and orientation
-            goal; //goal position and orientation
+            goal;
+
+        geometry_msgs::Vector3 
+            angVelocity,
+            goalOrientationRPY;
  
         ros::NodeHandle n;
 
@@ -110,6 +121,32 @@ namespace states {
         
         static BT::PortsList providedPorts();
         BT::NodeStatus tick() override;
+    };
+
+    /**
+     * Drives the robot forward with a certain velocity for a certain time
+     */
+    class velocity_state : public BT::SyncActionNode {
+        public:
+        velocity_state(const std::string& name, const BT::NodeConfiguration& config)
+         : BT::SyncActionNode(name, config) {
+             init();
+         }
+        
+        static BT::PortsList providedPorts();
+        BT::NodeStatus tick() override;
+
+        private:
+        void init();
+
+        const std::string velocityTopic = "/puddles/linear_velocity";
+
+        ros::Publisher velocityPublisher;
+        geometry_msgs::Vector3 velocities;
+        bool hasEntered;
+        int startTime;
+
+        ros::NodeHandle n;
     };
 }
 

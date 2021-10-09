@@ -2,6 +2,6 @@
     <arg name="robot" default="puddles" doc="Which robot to simulate" />
     
     <group ns="$(arg robot)">
-        <node pkg="riptide_autonomy" type="doTask" args="big_flatten_tree.xml" name="flatten_test" output="screen" />
+        <node pkg="riptide_autonomy" type="doTask" args="big_cutie_tree.xml" name="cutie_task" output="screen" />
     </group>
 </launch>
