@@ -33,6 +33,8 @@ add_library(states STATIC
   src/riptide_autonomy/flatten_calculation_state.cpp
   src/riptide_autonomy/to_world_frame_state.cpp
   src/riptide_autonomy/velocity_state.cpp
+  src/riptide_autonomy/search_state.cpp
+  src/riptide_autonomy/torpedo_align_state.cpp
 )
 
 add_executable(doTask src/riptide_autonomy/do_task.cpp)

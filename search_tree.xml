@@ -4,6 +4,7 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
             <SubTree ID="Flatten"/>
+            <Action ID="SearchState" frame="gate_frame" target_error="0.5"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->

@@ -1,5 +1,7 @@
 <launch>
-  <group ns="puddles">
-    <node pkg="riptide_autonomy" type="search_test.py" name="stest" output="screen" />
+  <arg name="robot" default="puddles" doc="Which robot to simulate" />
+  
+  <group ns="$(arg robot)">
+      <node pkg="riptide_autonomy" type="doTask" args="search_tree.xml" name="cutie_task" output="screen" />
   </group>
 </launch>

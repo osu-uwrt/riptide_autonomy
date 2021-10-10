@@ -4,6 +4,7 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
             <SubTree ID="Flatten"/>
+            <Action ID="TorpedoAlignState"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->

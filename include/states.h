@@ -148,6 +148,46 @@ namespace states {
 
         ros::NodeHandle n;
     };
+
+    class search_state : public BT::SyncActionNode {
+        public:
+        search_state(const std::string& name, const BT::NodeConfiguration& config)
+         : BT::SyncActionNode(name, config) {
+             init();
+         }
+        
+        static BT::PortsList providedPorts();
+        BT::NodeStatus tick() override;
+        
+        private:
+        void init();
+
+        const std::string
+            positionTopic = "/puddles/position";
+
+        ros::Publisher positionPublisher;
+
+        ros::NodeHandle n;
+    };
+
+    class torpedo_align_state : public BT::SyncActionNode {
+        public:
+        torpedo_align_state(const std::string& name, const BT::NodeConfiguration& config)
+         : BT::SyncActionNode(name, config) {
+             init();
+         }
+
+        static BT::PortsList providedPorts();
+        BT::NodeStatus tick() override;
+
+        private:
+        void init();
+
+        const std::string positionTopic = "/puddles/position";
+        ros::Publisher positionPublisher;
+
+        ros::NodeHandle n;
+    };
 }
 
 #endif
