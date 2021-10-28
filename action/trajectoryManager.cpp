@@ -5,6 +5,7 @@
 #include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/conversions.h>
 #include <fcl/fcl.h>
+#include <ompl-1.5/ompl/base/State.h>
 
 /**
  * Source file for the OSU-UWRT trajectory manager action server.
@@ -65,6 +66,14 @@ class TrajectoryAction {
     }
 
     /**
+     * Returns true if the ompl path is valid, false otherwise.
+     */
+    bool pathValid(const ompl::base::State *state) {
+
+        return false;
+    }
+
+    /**
      * When subscriber gets data
      */
     void octomapCallback(const octomap_msgs::Octomap::ConstPtr &msg) {
@@ -74,6 +83,7 @@ class TrajectoryAction {
             environmentIsPublished = true;
         }
     }
+
 };
 
 int main(int argc, char *argv[]) {
