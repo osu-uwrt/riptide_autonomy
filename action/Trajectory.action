@@ -1,0 +1,7 @@
+#goal definition
+geometry_msgs/Point point
+---
+#result definition
+---
+#feedback
+nav_msgs/Path path

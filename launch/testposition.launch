@@ -1,0 +1,7 @@
+<launch>
+    <arg name="robot" default="puddles" doc="Which robot to simulate" />
+    
+    <group ns="$(arg robot)">
+        <node pkg="riptide_autonomy" type="testposition.py" name="testpos" output="screen" />
+    </group>
+</launch>
