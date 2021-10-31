@@ -17,16 +17,34 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface
   tf2
   tf2_ros
+  nav_msgs
+)
+
+# find_package(
+#   Boost REQUIRED COMPONENTS system
+# )
+
+add_action_files(
+  DIRECTORY action
+  FILES Trajectory.action
 )
 
 catkin_python_setup()
 
+generate_messages(
+  DEPENDENCIES actionlib_msgs
+  geometry_msgs
+  nav_msgs
+)
+
 catkin_package(
   CATKIN_DEPENDS
-    behaviortree_cpp_v3)
+    behaviortree_cpp_v3
+    actionlib_msgs)
 
 include_directories("include")
 include_directories(${catkin_INCLUDE_DIRS})
+
 
 add_library(states STATIC
   src/riptide_autonomy/big_move_state.cpp
@@ -37,5 +55,14 @@ add_library(states STATIC
   src/riptide_autonomy/torpedo_align_state.cpp
 )
 
+
 add_executable(doTask src/riptide_autonomy/do_task.cpp)
+add_executable(trajectoryManager action/trajectoryManager.cpp)
+
 target_link_libraries(doTask states ${catkin_LIBRARIES})
+target_link_libraries(trajectoryManager ${catkin_LIBRARIES})
+
+add_dependencies(
+  trajectoryManager
+  ${riptide_autonomy_EXPORTED_TARGETS}
+)
