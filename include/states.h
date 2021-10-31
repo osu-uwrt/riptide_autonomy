@@ -83,6 +83,7 @@ namespace states {
 
     };
 
+
     /**
      * Calculates the necessary pose to "flatten" the robot.
      */
@@ -142,6 +143,7 @@ namespace states {
         const std::string velocityTopic = "/puddles/linear_velocity";
 
         ros::Publisher velocityPublisher;
+        
         geometry_msgs::Vector3 velocities;
         bool hasEntered;
         int startTime;
@@ -161,11 +163,19 @@ namespace states {
         
         private:
         void init();
+        void guessCallback(const geometry_msgs::PoseWithCovarianceStamped& msg);
+        void locCallback(const geometry_msgs::PoseWithCovarianceStamped& msg);
+        double distance(geometry_msgs::Vector3 point1, geometry_msgs::Vector3 point2);
 
         const std::string
-            positionTopic = "/puddles/position";
+            positionTopic = "/puddles/position",
+            orientationTopic = "/puddles/orientation",
+            locTopic = "/puddles/odometry/filtered";
 
         ros::Publisher positionPublisher;
+        ros::Publisher orientationPublisher;
+        ros::Subscriber guessSubscriber;
+        ros::Subscriber locSubscriber;
 
         ros::NodeHandle n;
     };
