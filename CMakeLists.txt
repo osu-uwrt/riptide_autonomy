@@ -52,7 +52,7 @@ add_library(states STATIC
   src/riptide_autonomy/to_world_frame_state.cpp
   src/riptide_autonomy/velocity_state.cpp
   src/riptide_autonomy/search_state.cpp
-  src/riptide_autonomy/torpedo_align_state.cpp
+  #src/riptide_autonomy/torpedo_align_state.cpp
 )
 
 

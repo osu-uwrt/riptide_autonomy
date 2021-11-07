@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<to_world_frame_state>("toWorldFrameState");
     factory.registerNodeType<velocity_state>("VelocityState");
     factory.registerNodeType<search_state>("SearchState");
-    factory.registerNodeType<torpedo_align_state>("TorpedoAlignState");
+    //factory.registerNodeType<torpedo_align_state>("TorpedoAlignState");
 
     ROS_INFO("Creating tree");
 
