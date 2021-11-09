@@ -29,14 +29,14 @@ PortsList torpedo_align_state::providedPorts() {
 NodeStatus torpedo_align_state::tick() {
     ROS_INFO("BIG Align");
     //We loop until we close
-    while(pos<threshold){
-        //take image update from our subscriber
-        //check if its new
-        // find the centroid of the dark spot
-        // make that centroid line up with our torpedo mechanism (use TF)
-        // update puddles/position
+    // while(pos<threshold){
+    //     //take image update from our subscriber
+    //     //check if its new
+    //     // find the centroid of the dark spot
+    //     // make that centroid line up with our torpedo mechanism (use TF)
+    //     // update puddles/position
 
-    }
+    // }
     //fire
     return NodeStatus::SUCCESS;
 }

@@ -40,10 +40,10 @@ void search_state::guessCallback(const geometry_msgs::PoseWithCovarianceStamped&
     recievedGuess = true;
 }
 
-void search_state::locCallback(const geometry_msgs::PoseWithCovarianceStamped& msg) { //Not sure the message type
-    robotLoc.x = msg.pose.pose.position.x;
-    robotLoc.y = msg.pose.pose.position.y;
-    robotLoc.z = msg.pose.pose.position.z;
+void search_state::locCallback(const nav_msgs::Odometry::ConstPtr& msg) { //Not sure the message type
+    robotLoc.x = msg -> pose.pose.position.x;
+    robotLoc.y = msg -> pose.pose.position.y;
+    robotLoc.z = msg -> pose.pose.position.z;
     recievedPos = true;
 }
 
@@ -62,7 +62,7 @@ NodeStatus search_state::tick() {
     ROS_INFO("BIG Search");
     bool sunnyDay = true;
 
-    std::string target = getInput<std::string>("target").value();
+    std::string target = getInput<std::string>("frame").value();
     std::string frame = target + "_frame";
     double target_error = stod(getInput<std::string>("target_error").value());
     double update_sec = stod(getInput<std::string>("update_sec").value());

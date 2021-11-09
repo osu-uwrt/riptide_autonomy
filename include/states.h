@@ -48,11 +48,11 @@ namespace states {
         static constexpr double threshold = 0.4;
 
         const std::string
-            steadyTopic = "/puddles/steady",
-            locTopic = "/puddles/odometry/filtered",
-            positionTopic = "/puddles/position",
-            orientationTopic = "/puddles/orientation",
-            angVelocityTopic = "/puddles/angular_velocity";
+            steadyTopic = "steady",
+            locTopic = "odometry/filtered",
+            positionTopic = "position",
+            orientationTopic = "orientation",
+            angVelocityTopic = "angular_velocity";
 
         ros::Subscriber
             steadySubscriber,
@@ -102,7 +102,7 @@ namespace states {
         void locCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
         const std::string
-            locTopic = "/puddles/odometry/filtered";
+            locTopic = "odometry/filtered";
 
         ros::Subscriber locSubcriber;
         geometry_msgs::Pose latestLocData;
@@ -140,7 +140,7 @@ namespace states {
         private:
         void init();
 
-        const std::string velocityTopic = "/puddles/linear_velocity";
+        const std::string velocityTopic = "linear_velocity";
 
         ros::Publisher velocityPublisher;
         
@@ -164,13 +164,13 @@ namespace states {
         private:
         void init();
         void guessCallback(const geometry_msgs::PoseWithCovarianceStamped& msg);
-        void locCallback(const geometry_msgs::PoseWithCovarianceStamped& msg);
+        void locCallback(const nav_msgs::Odometry::ConstPtr& msg);
         double distance(geometry_msgs::Vector3 point1, geometry_msgs::Vector3 point2);
 
         const std::string
-            positionTopic = "/puddles/position",
-            orientationTopic = "/puddles/orientation",
-            locTopic = "/puddles/odometry/filtered";
+            positionTopic = "position",
+            orientationTopic = "orientation",
+            locTopic = "odometry/filtered";
 
         ros::Publisher positionPublisher;
         ros::Publisher orientationPublisher;
@@ -193,7 +193,7 @@ namespace states {
         private:
         void init();
 
-        const std::string positionTopic = "/puddles/position";
+        const std::string positionTopic = "position";
         ros::Publisher positionPublisher;
 
         ros::NodeHandle n;
