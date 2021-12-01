@@ -43,6 +43,9 @@ int main(int argc, char *argv[]) {
     std::string treePath = packagePath + "/" + treeFileName;
     Tree tree = factory.createTreeFromFile(treePath);
 
+    ROS_INFO("Loading Monitor");
+    PublisherZMQ publisher_zmq(tree);
+
     ROS_INFO("Running tree");
 
     tree.tickRoot();

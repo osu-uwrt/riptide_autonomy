@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_action_files(
   DIRECTORY action
   FILES Trajectory.action
+  TaskActionListener.action
 )
 
 catkin_python_setup()
