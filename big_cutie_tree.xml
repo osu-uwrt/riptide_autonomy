@@ -18,7 +18,7 @@
     <!-- ////////// -->
     <BehaviorTree ID="GoToCutie">
         <Sequence>
-            <Action ID="toWorldFrameState" object="cutie_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="0" relative_y="1" relative_z="0" world_orientation_w="{c_o_w}" world_orientation_x="{c_o_x}" world_orientation_y="{c_o_y}" world_orientation_z="{c_o_z}" world_x="{c_x}" world_y="{c_y}" world_z="{c_z}"/>
+            <Action ID="SearchState" frame="cutie" target_error="0.5" update_sec="0.25"/>
             <Action ID="BigMoveState" orientation_w="{c_o_w}" orientation_x="{c_o_x}" orientation_y="{c_o_y}" orientation_z="{c_o_z}" v_pitch="" v_roll="" v_yaw="" x="{c_x}" y="{c_y}" z="{c_z}"/>
         </Sequence>
     </BehaviorTree>
@@ -57,6 +57,11 @@
         <SubTree ID="GoThroughGate"/>
         <SubTree ID="GoToCutie"/>
         <SubTree ID="GoToGate"/>
+        <Action ID="SearchState">
+            <input_port default="cutie_frame" name="frame"/>
+            <input_port default="0.5" name="target_error"/>
+            <input_port default="0.25" name="update_sec"/>
+        </Action>
         <SubTree ID="Touch"/>
         <Action ID="VelocityState">
             <input_port default="1" name="time">Time to drive for. Required</input_port>
