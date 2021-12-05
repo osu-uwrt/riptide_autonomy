@@ -72,11 +72,28 @@ NodeStatus search_state::tick() {
     //Robot position subscriber
     locSubscriber = n.subscribe(locTopic, CACHE_SIZE, &states::search_state::locCallback, this);
 
+    //create buffer server to look for frame transform
+    ROS_INFO("Starting TF2 Buffer Server");
+    tf2_ros::BufferClient buffer("tf2_buffer_server");
+    buffer.waitForServer();
+    ROS_INFO("TF2 Buffer Server connected.");
 
-    tf2_ros::Buffer buffer;
-    tf2_ros::TransformListener listener(buffer);
+    // tf2_ros::TransformListener listener(buffer);
 
-    geometry_msgs::TransformStamped transform = buffer.lookupTransform("world",frame, ros::Time(0), ros::Duration(1.0));
+    geometry_msgs::TransformStamped transform;
+
+    ROS_INFO("Doing transform lookup");
+    while(ros::ok()) {
+        try {
+            geometry_msgs::TransformStamped transform = buffer.lookupTransform("world",frame, ros::Time(0), ros::Duration(1.0));
+            break; 
+        } catch(tf2::TransformException ex) {
+            ROS_WARN("%s", ex.what());
+        }
+    }
+
+    ROS_INFO("Lookup Complete");
+
     geometry_msgs::Pose currentPose; //Pose in the frame of the object to find
 
     //Get one foot infront of the object, facing it
@@ -85,8 +102,8 @@ NodeStatus search_state::tick() {
     currentPose.position.z = 0;
     currentPose.orientation.x = 0;
     currentPose.orientation.y = 0;
-    currentPose.orientation.z = 1;
-    currentPose.orientation.w = 0;
+    currentPose.orientation.z = 0;
+    currentPose.orientation.w = 1;
 
     geometry_msgs::Pose worldGuessPos;
     tf2::doTransform(currentPose, worldGuessPos, transform);
