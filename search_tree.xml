@@ -5,6 +5,7 @@
         <Sequence>
             <SubTree ID="Flatten"/>
             <Action ID="SearchState" frame="cutie" target_error="0" update_sec="0.5"/>
+            <SubTree ID="GoToCutie"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -46,20 +47,20 @@
     <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="BigMoveState">
-            <input_port default="1" name="orientation_w"/>
-            <input_port default="0" name="orientation_x"/>
-            <input_port default="0" name="orientation_y"/>
-            <input_port default="0" name="orientation_z"/>
-            <input_port name="v_pitch"/>
-            <input_port name="v_roll"/>
-            <input_port name="v_yaw"/>
-            <input_port default="0" name="x"/>
-            <input_port default="0" name="y"/>
-            <input_port default="1" name="z"/>
+            <input_port default="1" name="orientation_w">optional</input_port>
+            <input_port default="0" name="orientation_x">optional</input_port>
+            <input_port default="0" name="orientation_y">optional</input_port>
+            <input_port default="0" name="orientation_z">optional</input_port>
+            <input_port name="v_pitch">optional</input_port>
+            <input_port name="v_roll">optional</input_port>
+            <input_port name="v_yaw">optional</input_port>
+            <input_port default="0" name="x">optional</input_port>
+            <input_port default="0" name="y">optional</input_port>
+            <input_port default="-1" name="z">optional</input_port>
         </Action>
         <SubTree ID="Flatten"/>
         <Action ID="FlattenCalculationState">
-            <input_port default="-1" name="depth">Depth the robot sinks to</input_port>
+            <input_port default="-1" name="depth">Depth the robot sinks to. Required</input_port>
             <output_port default="1" name="orientation_w"/>
             <output_port default="0" name="orientation_x"/>
             <output_port default="0" name="orientation_y"/>
@@ -74,9 +75,9 @@
         <Action ID="SearchState">
             <input_port name="frame">The frame to search for</input_port>
             <input_port name="target_error">The goal amount of error for the state to succeed.</input_port>
-            <input_port name="update_sec">How long to wait for updates</input_port>
         </Action>
         <Action ID="TorpedoAlignState"/>
+        <SubTree ID="Touch"/>
         <SubTree ID="TouchThing"/>
         <Action ID="VelocityState">
             <input_port default="1" name="time">Time to drive for. Required</input_port>
@@ -85,14 +86,14 @@
             <input_port default="0" name="z_velocity">Required</input_port>
         </Action>
         <Action ID="toWorldFrameState">
-            <input_port name="object"/>
-            <input_port name="relative_orientation_w"/>
-            <input_port name="relative_orientation_x"/>
-            <input_port name="relative_orientation_y"/>
-            <input_port name="relative_orientation_z"/>
-            <input_port name="relative_x"/>
-            <input_port name="relative_y"/>
-            <input_port name="relative_z"/>
+            <input_port name="object">Object to calculate relative to. Required.</input_port>
+            <input_port name="relative_orientation_w">Orienation is relative to object. Required.</input_port>
+            <input_port name="relative_orientation_x">Required</input_port>
+            <input_port name="relative_orientation_y">Required</input_port>
+            <input_port name="relative_orientation_z">Required</input_port>
+            <input_port name="relative_x">Position is also relative to object. Required.</input_port>
+            <input_port name="relative_y">Required</input_port>
+            <input_port name="relative_z">Required</input_port>
             <output_port name="world_orientation_w"/>
             <output_port name="world_orientation_x"/>
             <output_port name="world_orientation_y"/>

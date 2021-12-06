@@ -26,6 +26,7 @@
     <!-- ////////// -->
     <BehaviorTree ID="GoToGate">
         <Sequence>
+            <Action ID="SearchState" frame="gate" target_error="0.125" update_sec="1"/>
             <Action ID="toWorldFrameState" object="gate_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="1.2" relative_y="2" relative_z="0.5" world_orientation_w="{o_w}" world_orientation_x="{o_x}" world_orientation_y="{o_y}" world_orientation_z="{o_z}" world_x="{x}" world_y="{y}" world_z="{z}"/>
             <Action ID="BigMoveState" orientation_w="{o_w}" orientation_x="{o_x}" orientation_y="{o_y}" orientation_z="{o_z}" v_pitch="" v_roll="" v_yaw="" x="{x}" y="{y}" z="{z}"/>
         </Sequence>
@@ -33,20 +34,20 @@
     <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="BigMoveState">
-            <input_port default="1" name="orientation_w"/>
-            <input_port default="0" name="orientation_x"/>
-            <input_port default="0" name="orientation_y"/>
-            <input_port default="0" name="orientation_z"/>
-            <input_port name="v_pitch"/>
-            <input_port name="v_roll"/>
-            <input_port name="v_yaw"/>
-            <input_port default="0" name="x"/>
-            <input_port default="0" name="y"/>
-            <input_port default="-1" name="z"/>
+            <input_port default="1" name="orientation_w">optional</input_port>
+            <input_port default="0" name="orientation_x">optional</input_port>
+            <input_port default="0" name="orientation_y">optional</input_port>
+            <input_port default="0" name="orientation_z">optional</input_port>
+            <input_port name="v_pitch">optional</input_port>
+            <input_port name="v_roll">optional</input_port>
+            <input_port name="v_yaw">optional</input_port>
+            <input_port default="0" name="x">optional</input_port>
+            <input_port default="0" name="y">optional</input_port>
+            <input_port default="-1" name="z">optional</input_port>
         </Action>
         <SubTree ID="Flatten"/>
         <Action ID="FlattenCalculationState">
-            <input_port default="-1" name="depth">Depth the robot sinks to</input_port>
+            <input_port default="-1" name="depth">Depth the robot sinks to. Required</input_port>
             <output_port default="1" name="orientation_w"/>
             <output_port default="0" name="orientation_x"/>
             <output_port default="0" name="orientation_y"/>
@@ -56,16 +57,29 @@
             <output_port default="-1" name="z"/>
         </Action>
         <SubTree ID="GoThroughGate"/>
+        <SubTree ID="GoToCutie"/>
         <SubTree ID="GoToGate"/>
+        <Action ID="SearchState">
+            <input_port default="cutie_frame" name="frame"/>
+            <input_port default="0.5" name="target_error"/>
+            <input_port default="0.25" name="update_sec"/>
+        </Action>
+        <SubTree ID="Touch"/>
+        <Action ID="VelocityState">
+            <input_port default="1" name="time">Time to drive for. Required</input_port>
+            <input_port default="1" name="x_velocity">Required</input_port>
+            <input_port default="0" name="y_velocity">Required</input_port>
+            <input_port default="0" name="z_velocity">Required</input_port>
+        </Action>
         <Action ID="toWorldFrameState">
-            <input_port name="object"/>
-            <input_port name="relative_orientation_w"/>
-            <input_port name="relative_orientation_x"/>
-            <input_port name="relative_orientation_y"/>
-            <input_port name="relative_orientation_z"/>
-            <input_port name="relative_x"/>
-            <input_port name="relative_y"/>
-            <input_port name="relative_z"/>
+            <input_port name="object">Object to calculate relative to. Required.</input_port>
+            <input_port name="relative_orientation_w">Orienation is relative to object. Required.</input_port>
+            <input_port name="relative_orientation_x">Required</input_port>
+            <input_port name="relative_orientation_y">Required</input_port>
+            <input_port name="relative_orientation_z">Required</input_port>
+            <input_port name="relative_x">Position is also relative to object. Required.</input_port>
+            <input_port name="relative_y">Required</input_port>
+            <input_port name="relative_z">Required</input_port>
             <output_port name="world_orientation_w"/>
             <output_port name="world_orientation_x"/>
             <output_port name="world_orientation_y"/>
