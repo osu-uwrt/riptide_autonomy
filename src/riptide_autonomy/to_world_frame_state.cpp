@@ -30,8 +30,12 @@ PortsList to_world_frame_state::providedPorts() {
 
 
 NodeStatus to_world_frame_state::tick() {
-    tf2_ros::Buffer buffer;
-    tf2_ros::TransformListener listener(buffer);
+    //start buffer client to look up transform
+    ROS_INFO("Starting TF2 Buffer Server");
+    tf2_ros::BufferClient buffer("tf2_buffer_server");
+    buffer.waitForServer();
+
+    ROS_INFO("TF2 Buffer Server connected.");
 
     //look up object (should be broadcasted from mapping)
     std::string objectName = getInput<std::string>("object").value();

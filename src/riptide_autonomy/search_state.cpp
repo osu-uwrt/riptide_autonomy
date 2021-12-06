@@ -78,14 +78,12 @@ NodeStatus search_state::tick() {
     buffer.waitForServer();
     ROS_INFO("TF2 Buffer Server connected.");
 
-    // tf2_ros::TransformListener listener(buffer);
-
+    //actually look up the transform of the frame we want
     geometry_msgs::TransformStamped transform;
-
     ROS_INFO("Doing transform lookup");
     while(ros::ok()) {
         try {
-            geometry_msgs::TransformStamped transform = buffer.lookupTransform("world",frame, ros::Time(0), ros::Duration(1.0));
+            transform = buffer.lookupTransform("world",frame, ros::Time(0), ros::Duration(1.0));
             break; 
         } catch(tf2::TransformException ex) {
             ROS_WARN("%s", ex.what());
@@ -107,11 +105,15 @@ NodeStatus search_state::tick() {
 
     geometry_msgs::Pose worldGuessPos;
     tf2::doTransform(currentPose, worldGuessPos, transform);
+
     geometry_msgs::Vector3 worldGuessV3;
     worldGuessV3.x = worldGuessPos.position.x;
     worldGuessV3.y = worldGuessPos.position.y;
     worldGuessV3.z = worldGuessPos.position.z;
-    geometry_msgs::Vector3 posToMoveTo = worldGuessV3;
+
+    //publish the initial estimate to the controller to move the robot to that pose
+    positionPublisher.publish(worldGuessV3);
+    orientationPublisher.publish(worldGuessPos.orientation);
     
     //Get a snapshot of the time at the start
     ros::Time begin = ros::Time::now();
@@ -138,15 +140,11 @@ NodeStatus search_state::tick() {
                 if(recievedPos && distance(worldGuessV3, robotLoc)<=1 && guessError>target_error){
                     sunnyDay = false;
                 }
+
+                begin = ros::Time::now();
             }
-
-            
-
-            begin = ros::Time::now();        
-        
         }
     }
-
 
     return NodeStatus::FAILURE;
 }
