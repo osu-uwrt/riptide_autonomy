@@ -26,7 +26,6 @@ class TaskActionListenerAction(object):
     def execute_cb(self, goal: riptide_autonomy.msg.TaskActionListenerGoal):
         # helper variables
         r = rospy.Rate(1)
-        success = True
         preempted = False
         
         self.cli_args[1] = goal.autonomy_launchfile
@@ -56,7 +55,6 @@ class TaskActionListenerAction(object):
             # check that preempt has not been requested by the client
             if self._as.is_preempt_requested():
                 rospy.logdebug('%s: Preempting...' % self._action_name)
-                success = False
                 preempted = True
                 break
             r.sleep()
@@ -65,14 +63,24 @@ class TaskActionListenerAction(object):
         self.parent.shutdown()
         while self.parent.pm.is_alive():
             r.sleep()
-
-        if success:
-            rospy.logdebug('%s: Succeeded' % self._action_name)
-            self._as.set_succeeded(self._result)
+        
         
         if preempted:
             rospy.logdebug('%s: Preempted' % self._action_name)
             self._as.set_preempted()
+        else:            
+            if len(self.parent.pm.dead_list) != 1 and len(self.parent.pm.procs) != 0:
+                rospy.logwarn("Expected only one process to be launched, %d found. Task success may be calculated wrong", len(self.parent.pm.dead_list) + len(self.parent.pm.procs))
+                
+            return_code = self.parent.pm.dead_list[0].exit_code
+
+            if return_code == 0:
+                rospy.logdebug('%s: Succeeded' % self._action_name)
+                self._as.set_succeeded(self._result)
+            else:
+                # Note: A return code of None means the process died
+                rospy.logdebug('%s: Failed, return code %s', self._action_name, str(return_code))
+                self._as.set_aborted()
 
 if __name__ == '__main__':
     rospy.init_node("task_action_listener")

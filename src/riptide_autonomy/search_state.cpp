@@ -95,7 +95,7 @@ NodeStatus search_state::tick() {
     geometry_msgs::Pose currentPose; //Pose in the frame of the object to find
 
     //Get one foot infront of the object, facing it
-    currentPose.position.x = 1;
+    currentPose.position.x = 0;
     currentPose.position.y = 0;
     currentPose.position.z = 0;
     currentPose.orientation.x = 0;
@@ -114,17 +114,22 @@ NodeStatus search_state::tick() {
     //publish the initial estimate to the controller to move the robot to that pose
     positionPublisher.publish(worldGuessV3);
     orientationPublisher.publish(worldGuessPos.orientation);
+
+    ROS_INFO("Going to %f, %f, %f", worldGuessV3.x, worldGuessV3.y, worldGuessV3.z);
     
     //Get a snapshot of the time at the start
     ros::Time begin = ros::Time::now();
 
     while(sunnyDay){
-        if(recievedGuess){
-            if(ros::Time::now()-begin >=ros::Duration(update_sec)){
+        // if(recievedGuess){
+            if(ros::Time::now()- begin >= ros::Duration(update_sec)){
                 //Get '1 foot infront of object' translated into the new frame of the new guess
                 tf2::doTransform(currentPose, worldGuessPos, transform);
 
+                ROS_INFO("Current Error: %f", guessError);
+
                 if(guessError <= target_error){ //Target_error is updated by the subscriber callback automatically
+                    ROS_INFO("Search Finihsed!");
                     return NodeStatus::SUCCESS;
                 } else {
                     
@@ -133,6 +138,8 @@ NodeStatus search_state::tick() {
                     worldGuessV3.z = worldGuessPos.position.z;
                     positionPublisher.publish(worldGuessV3); 
                     orientationPublisher.publish(worldGuessPos.orientation);
+
+                    ROS_INFO("Going to %f, %f, %f", worldGuessV3.x, worldGuessV3.y, worldGuessV3.z);
 
                 }
 
@@ -143,7 +150,7 @@ NodeStatus search_state::tick() {
 
                 begin = ros::Time::now();
             }
-        }
+        // }
     }
 
     return NodeStatus::FAILURE;

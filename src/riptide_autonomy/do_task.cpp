@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<velocity_state>("VelocityState");
     factory.registerNodeType<search_state>("SearchState");
     //factory.registerNodeType<torpedo_align_state>("TorpedoAlignState");
+    factory.registerNodeType<pos_based_align_calc_state>("PosBasedAlignCalcState");
 
     ROS_INFO("Creating tree");
 
@@ -48,6 +49,6 @@ int main(int argc, char *argv[]) {
 
     ROS_INFO("Running tree");
 
-    tree.tickRoot();
-    return 0;
+    NodeStatus result = tree.tickRoot();
+    return (result == NodeStatus::SUCCESS ? 0 : 1);
 }

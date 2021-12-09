@@ -62,6 +62,8 @@ PortsList big_move_state::providedPorts() {
 NodeStatus big_move_state::tick() {
     // ros::AsyncSpinner spinner(1);
     // spinner.start();
+
+    ROS_INFO("Entering Move State.");
     
     while(ros::ok()) {
         ros::spinOnce();
@@ -129,15 +131,15 @@ NodeStatus big_move_state::tick() {
  */
 bool big_move_state::onEnter() {
     //wait for the robot to be steady
-    if(!steady) {
-        return false;
-    }
+    // if(!steady) {
+    //     return false;
+    // }
 
     //wait for odometry data to exist
     if(!locExists) {
         return false;
     }
-
+    
     publishPosition = true;
     publishOrientation = true;
     publishAngVelocity = true;

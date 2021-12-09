@@ -65,5 +65,7 @@ NodeStatus to_world_frame_state::tick() {
     setOutput<std::string>("world_orientation_z", std::to_string(desiredPose.orientation.z));
     setOutput<std::string>("world_orientation_w", std::to_string(desiredPose.orientation.w));
 
+    ROS_INFO("World Frame Calculated.");
+
     return NodeStatus::SUCCESS;
 }

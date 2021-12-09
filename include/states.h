@@ -46,7 +46,7 @@ namespace states {
         void publishGoalPose();
         geometry_msgs::Vector3 toRPY(geometry_msgs::Quaternion orientation);
         
-        static constexpr double threshold = 0.4;
+        static constexpr double threshold = 0.1;
 
         const std::string
             steadyTopic = "steady",
@@ -196,6 +196,25 @@ namespace states {
 
         const std::string positionTopic = "position";
         ros::Publisher positionPublisher;
+
+        ros::NodeHandle n;
+    };
+
+    class pos_based_align_calc_state : public BT::SyncActionNode {
+        public:
+        pos_based_align_calc_state(const std::string& name, const BT::NodeConfiguration& config)
+         : BT::SyncActionNode(name, config) {
+         }
+
+        static BT::PortsList providedPorts();
+        BT::NodeStatus tick() override;
+
+        private:
+        void locCallback(const nav_msgs::Odometry::ConstPtr& msg);
+        const std::string locTopic = "odometry/filtered";
+
+        geometry_msgs::Pose latestLocData;
+        bool locExists;
 
         ros::NodeHandle n;
     };

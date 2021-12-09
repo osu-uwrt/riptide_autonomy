@@ -3,43 +3,31 @@
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SubTree ID="Flatten"/>
+            <Action ID="toWorldFrameState" object="bootlegger_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="0" relative_x="0" relative_y="0" relative_z="0" world_orientation_w="{w}" world_orientation_x="{x}" world_orientation_y="{y}" world_orientation_z="{z}" world_x="" world_y="" world_z=""/>
+            <Action ID="BigMoveState" orientation_w="{w}" orientation_x="{x}" orientation_y="{y}" orientation_z="{z}" v_pitch="" v_roll="" v_yaw="" x="" y="" z=""/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="Flatten">
         <Sequence>
-            <Action ID="FlattenCalculationState" depth="-1" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
-            <Action ID="BigMoveState" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" v_pitch="" v_roll="" v_yaw="" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
+            <Action ID="FlattenCalculationState" depth="-1" orientation_w="{f_o_w}" orientation_x="{f_o_x}" orientation_y="{f_o_y}" orientation_z="{f_o_z}" x="{f_x}" y="{f_y}" z="{f_z}"/>
+            <Action ID="BigMoveState" orientation_w="{f_o_w}" orientation_x="{f_o_x}" orientation_y="{f_o_y}" orientation_z="{f_o_z}" v_pitch="" v_roll="" v_yaw="" x="{f_x}" y="{f_y}" z="{f_z}"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="GoThroughGate">
         <Sequence>
-            <Action ID="toWorldFrameState" object="gate_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="1.5" relative_y="-2" relative_z="0.5" world_orientation_w="{g_o_w}" world_orientation_x="{g_o_x}" world_orientation_y="{g_o_y}" world_orientation_z="{g_o_z}" world_x="{g_x}" world_y="{g_y}" world_z="{g_z}"/>
+            <Action ID="toWorldFrameState" object="cutie_frame" relative_orientation_w="0.707" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="0.707" relative_x="-1" relative_y="1" relative_z="-0.5" world_orientation_w="{g_o_w}" world_orientation_x="{g_o_x}" world_orientation_y="{g_o_y}" world_orientation_z="{g_o_z}" world_x="{g_x}" world_y="{g_y}" world_z="{g_z}"/>
             <Action ID="BigMoveState" orientation_w="" orientation_x="" orientation_y="" orientation_z="" v_pitch="0" v_roll="10" v_yaw="0" x="{g_x}" y="{g_y}" z="{g_z}"/>
             <Action ID="BigMoveState" orientation_w="{g_o_w}" orientation_x="{g_o_x}" orientation_y="{g_o_y}" orientation_z="{g_o_z}" v_pitch="" v_roll="" v_yaw="" x="{g_x}" y="{g_y}" z="{g_z}"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
-    <BehaviorTree ID="GoToCutie">
-        <Sequence>
-            <Action ID="toWorldFrameState" object="cutie_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="0" relative_y="1" relative_z="0" world_orientation_w="{c_o_w}" world_orientation_x="{c_o_x}" world_orientation_y="{c_o_y}" world_orientation_z="{c_o_z}" world_x="{c_x}" world_y="{c_y}" world_z="{c_z}"/>
-            <Action ID="BigMoveState" orientation_w="{c_o_w}" orientation_x="{c_o_x}" orientation_y="{c_o_y}" orientation_z="{c_o_z}" v_pitch="" v_roll="" v_yaw="" x="{c_x}" y="{c_y}" z="{c_z}"/>
-        </Sequence>
-    </BehaviorTree>
-    <!-- ////////// -->
     <BehaviorTree ID="GoToGate">
         <Sequence>
-            <Action ID="toWorldFrameState" object="gate_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="1.2" relative_y="2" relative_z="0.5" world_orientation_w="{o_w}" world_orientation_x="{o_x}" world_orientation_y="{o_y}" world_orientation_z="{o_z}" world_x="{x}" world_y="{y}" world_z="{z}"/>
+            <Action ID="SearchState" frame="cutie" target_error="0.125"/>
+            <Action ID="toWorldFrameState" object="cutie_frame" relative_orientation_w="0.707" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="0.707" relative_x="-1" relative_y="-1" relative_z="-0.5" world_orientation_w="{o_w}" world_orientation_x="{o_x}" world_orientation_y="{o_y}" world_orientation_z="{o_z}" world_x="{x}" world_y="{y}" world_z="{z}"/>
             <Action ID="BigMoveState" orientation_w="{o_w}" orientation_x="{o_x}" orientation_y="{o_y}" orientation_z="{o_z}" v_pitch="" v_roll="" v_yaw="" x="{x}" y="{y}" z="{z}"/>
-        </Sequence>
-    </BehaviorTree>
-    <!-- ////////// -->
-    <BehaviorTree ID="TouchThing">
-        <Sequence>
-            <Action ID="VelocityState" time="4" x_velocity="0.25" y_velocity="0" z_velocity="0"/>
-            <Action ID="VelocityState" time="1.5" x_velocity="-0.3" y_velocity="0" z_velocity="0"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
