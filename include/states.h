@@ -140,13 +140,26 @@ namespace states {
 
         private:
         void init();
+        void locCallback(const nav_msgs::Odometry::ConstPtr& data);
 
-        const std::string velocityTopic = "linear_velocity";
+        const std::string 
+            velocityTopic    = "linear_velocity",
+            orientationTopic = "orientation",
+            locTopic         = "odometry/filtered";
 
-        ros::Publisher velocityPublisher;
-        
+        ros::Publisher 
+            velocityPublisher,
+            orientationPublisher;
+
+        ros::Subscriber locSub; // will grab orientation at beginning of movement so that it can be maintained during movement
+        geometry_msgs::Pose currentPose; // current pose of the robot (updated in real time)
+
         geometry_msgs::Vector3 velocities;
-        bool hasEntered;
+        geometry_msgs::Quaternion orientation; //target orientation of the robot throughout movement
+        bool 
+            hasEntered,
+            locDataExists;
+
         int startTime;
 
         ros::NodeHandle n;

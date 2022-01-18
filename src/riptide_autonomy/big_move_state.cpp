@@ -81,7 +81,6 @@ NodeStatus big_move_state::tick() {
         //when the robot is steady within the target threshold, command ends
         if(locExists) { //if latest loc message exists...
             geometry_msgs::Point position = latestLocData.position;
-
             geometry_msgs::Quaternion orientation = latestLocData.orientation;
 
             bool
@@ -104,9 +103,7 @@ NodeStatus big_move_state::tick() {
                                && abs(goalRPY.z - currentRPY.z) < threshold;
             }
 
-            // ROS_INFO("Orientation: %f, %f, %f, %f", orientation.x, orientation.y, orientation.z, orientation.w);
-
-            if(positionGood && orientationGood) { //if it's steady then the orientation will be good as well
+            if(positionGood && orientationGood) {
                 ROS_INFO("Move finished!");
 
                 if(publishAngVelocity) {
@@ -130,10 +127,6 @@ NodeStatus big_move_state::tick() {
  * Returns true if successful, false otherwise.
  */
 bool big_move_state::onEnter() {
-    //wait for the robot to be steady
-    // if(!steady) {
-    //     return false;
-    // }
 
     //wait for odometry data to exist
     if(!locExists) {
@@ -250,7 +243,7 @@ void big_move_state::publishGoalPose() {
 }
 
 /**
- * Converts a quaternion to rpy.
+ * Converts a quaternion to roll-pitch-yaw.
  */
 geometry_msgs::Vector3 big_move_state::toRPY(geometry_msgs::Quaternion orientation) {
     tf2::Quaternion tf2Orientation;
