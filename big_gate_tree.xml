@@ -18,7 +18,7 @@
     <!-- ////////// -->
     <BehaviorTree ID="GoThroughGate">
         <Sequence>
-            <Action ID="toWorldFrameState" object="bootlegger_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="0" relative_x="2" relative_y="-1" relative_z="-1" world_orientation_w="{g_o_w}" world_orientation_x="{g_o_x}" world_orientation_y="{g_o_y}" world_orientation_z="{g_o_z}" world_x="{g_x}" world_y="{g_y}" world_z="{g_z}"/>
+            <Action ID="toWorldFrameState" object="gman_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="0" relative_x="2" relative_y="-1" relative_z="-1" world_orientation_w="{g_o_w}" world_orientation_x="{g_o_x}" world_orientation_y="{g_o_y}" world_orientation_z="{g_o_z}" world_x="{g_x}" world_y="{g_y}" world_z="{g_z}"/>
             <Action ID="BigMoveState" orientation_w="" orientation_x="" orientation_y="" orientation_z="" v_pitch="0" v_roll="10" v_yaw="0" x="{g_x}" y="{g_y}" z="{g_z}"/>
             <Action ID="BigMoveState" orientation_w="{g_o_w}" orientation_x="{g_o_x}" orientation_y="{g_o_y}" orientation_z="{g_o_z}" v_pitch="" v_roll="" v_yaw="" x="{g_x}" y="{g_y}" z="{g_z}"/>
         </Sequence>
@@ -26,8 +26,8 @@
     <!-- ////////// -->
     <BehaviorTree ID="GoToGate">
         <Sequence>
-            <Action ID="SearchState" frame="bootlegger" target_error="0.125" update_sec="1"/>
-            <Action ID="toWorldFrameState" object="bootlegger_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="0" relative_x="-1" relative_y="-2" relative_z="-1" world_orientation_w="{o_w}" world_orientation_x="{o_x}" world_orientation_y="{o_y}" world_orientation_z="{o_z}" world_x="{x}" world_y="{y}" world_z="{z}"/>
+            <Action ID="SearchState" frame="gman" target_error="0.125" update_sec="1"/>
+            <Action ID="toWorldFrameState" object="gman_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="0" relative_x="-1" relative_y="-2" relative_z="-1" world_orientation_w="{o_w}" world_orientation_x="{o_x}" world_orientation_y="{o_y}" world_orientation_z="{o_z}" world_x="{x}" world_y="{y}" world_z="{z}"/>
             <Action ID="BigMoveState" orientation_w="{o_w}" orientation_x="{o_x}" orientation_y="{o_y}" orientation_z="{o_z}" v_pitch="" v_roll="" v_yaw="" x="{x}" y="{y}" z="{z}"/>
         </Sequence>
     </BehaviorTree>

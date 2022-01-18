@@ -4,15 +4,15 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
             <SubTree ID="Flatten"/>
-            <Action ID="PosBasedAlignCalcState" extra_distance="4" frame="bootlegger_frame" x_out="{x}" y_out="{y}" z_out="{z}"/>
-            <Action ID="BigMoveState" orientation_w="" orientation_x="" orientation_y="" orientation_z="" v_pitch="0" v_roll="1" v_yaw="0" x="{x}" y="{y}" z="{z}"/>
+            <Action ID="PosBasedAlignCalcState" extra_distance="4" frame="gman_frame" x_out="{x}" y_out="{y}" z_out="{z}"/>
+            <Action ID="BigMoveState" orientation_w="" orientation_x="" orientation_y="" orientation_z="" v_pitch="" v_roll="" v_yaw="" x="{x}" y="{y}" z="{z}"/>
             <Action ID="BigMoveState" orientation_w="1" orientation_x="0" orientation_y="0" orientation_z="0" v_pitch="" v_roll="" v_yaw="" x="{x}" y="{y}" z="{z}"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="Flatten">
         <Sequence>
-            <Action ID="FlattenCalculationState" depth="-2" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
+            <Action ID="FlattenCalculationState" depth="-2.9" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
             <Action ID="BigMoveState" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" v_pitch="" v_roll="" v_yaw="" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
         </Sequence>
     </BehaviorTree>
