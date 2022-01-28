@@ -22,9 +22,25 @@ include_directories($(rclcpp_INCLUDE_DIRS))
 
 add_library(autonomy STATIC
   src/riptide_autonomy/UWRTSyncActionNode.cpp
+  src/riptide_autonomy/BigMoveState.cpp
+  src/riptide_autonomy/FlattenCalculationState.cpp
+  src/riptide_autonomy/LineDriveCalcState.cpp
+  src/riptide_autonomy/SearchState.cpp
+  src/riptide_autonomy/ToWorldFrameState.cpp
+  src/riptide_autonomy/VelocityState.cpp
 )
 
-ament_target_dependencies(autonomy rclcpp geometry_msgs std_msgs nav_msgs sensor_msgs behaviortree_cpp_v3 tf2 tf2_ros tf2_geometry_msgs)
+ament_target_dependencies(autonomy 
+  rclcpp
+  geometry_msgs 
+  std_msgs 
+  nav_msgs 
+  sensor_msgs 
+  behaviortree_cpp_v3 
+  tf2 
+  tf2_ros 
+  tf2_geometry_msgs
+)
 
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
 target_link_libraries(doTask autonomy ${colcon_LIBRARIES})

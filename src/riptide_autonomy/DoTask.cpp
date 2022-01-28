@@ -1,10 +1,4 @@
 #include "autonomy.h"
-#include "BigMoveState.hpp"
-#include "FlattenCalculationState.hpp"
-#include "LineDriveCalcState.hpp"
-#include "SearchState.hpp"
-#include "ToWorldFrameState.hpp"
-#include "VelocityState.hpp"
 #include "behaviortree_cpp_v3/loggers/bt_zmq_publisher.h"
 
 /**
