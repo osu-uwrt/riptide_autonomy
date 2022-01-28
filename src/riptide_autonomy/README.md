@@ -1,1 +1,0 @@
-Stores the states used to run the robot.

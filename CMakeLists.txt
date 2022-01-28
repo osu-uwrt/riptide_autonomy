@@ -1,70 +1,51 @@
-cmake_minimum_required(VERSION 3.5)
-
+cmake_minimum_required(VERSION 3.8)
 project(riptide_autonomy)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  roslint
-  geometry_msgs
-  tf2_geometry_msgs
-  sensor_msgs
-  behaviortree_cpp_v3
-  moveit_ros_planning_interface
-  tf2
-  tf2_ros
-  nav_msgs
-)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-# find_package(
-#   Boost REQUIRED COMPONENTS system
-# )
-
-add_action_files(
-  DIRECTORY action
-  FILES Trajectory.action
-  TaskActionListener.action
-)
-
-catkin_python_setup()
-
-generate_messages(
-  DEPENDENCIES actionlib_msgs
-  geometry_msgs
-  nav_msgs
-)
-
-catkin_package(
-  CATKIN_DEPENDS
-    behaviortree_cpp_v3
-    actionlib_msgs)
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(behaviortree_cpp_v3 REQUIRED)
 
 include_directories("include")
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories($(rclcpp_INCLUDE_DIRS))
 
-
-add_library(states STATIC
-  src/riptide_autonomy/big_move_state.cpp
-  src/riptide_autonomy/flatten_calculation_state.cpp
-  src/riptide_autonomy/to_world_frame_state.cpp
-  src/riptide_autonomy/velocity_state.cpp
-  src/riptide_autonomy/search_state.cpp
-  src/riptide_autonomy/pos_based_align_calc_state.cpp
-  #src/riptide_autonomy/torpedo_align_state.cpp
+add_library(autonomy STATIC
+  src/riptide_autonomy/UWRTSyncActionNode.cpp
 )
 
+ament_target_dependencies(autonomy rclcpp geometry_msgs std_msgs nav_msgs sensor_msgs behaviortree_cpp_v3 tf2 tf2_ros tf2_geometry_msgs)
 
-add_executable(doTask src/riptide_autonomy/do_task.cpp)
-add_executable(trajectoryManager action/trajectoryManager.cpp)
+add_executable(doTask src/riptide_autonomy/DoTask.cpp)
+target_link_libraries(doTask autonomy ${colcon_LIBRARIES})
 
-target_link_libraries(doTask states ${catkin_LIBRARIES})
-target_link_libraries(trajectoryManager ${catkin_LIBRARIES})
+install(TARGETS
+  doTask
+  DESTINATION lib/${PROJECT_NAME})
 
-add_dependencies(
-  trajectoryManager
-  ${riptide_autonomy_EXPORTED_TARGETS}
-)
+# uncomment the following section in order to fill in
+# further dependencies manually.
+# find_package(<dependency> REQUIRED)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # uncomment the line when a copyright and license is not present in all source files
+  #set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # uncomment the line when this package is not in a git repo
+  #set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+ament_package()
