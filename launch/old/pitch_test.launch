@@ -1,5 +1,0 @@
-<launch>
-  <group ns="puddles">
-    <node pkg="riptide_autonomy" type="pitch_test.py" name="ptest" output="screen" />
-  </group>
-</launch>

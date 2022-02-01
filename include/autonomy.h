@@ -52,6 +52,60 @@ class UWRTSyncActionNode : public BT::SyncActionNode {
 };
 
 /**
+ * @brief The base state template that you can copy and modify to create other states
+ * 
+ * When creating a new state, copy this template and rename the class and the constructor to
+ * the name of the state you are creating. For example, if you are writing a state that 
+ * aligns the robot to a thing, you might rename the class and constructor to "AlignState".
+ * 
+ * After renaming the class, be sure to define the providedPorts() method. Any input/output
+ * ports should be defined in this header to reduce verbosity in your source file.
+ * 
+ * After defining your ports, delete this comment and replace it with a description of your state.
+ * 
+ * DO NOT USE THIS CLASS OR ANY OF ITS METHODS AS A STATE. YOU WILL GET UNDEFINED REFERENCES
+ * BECAUSE THIS CLASS DOESN'T GET COMPILED.
+ * 
+ * TODO: Delete this comment and resolve other todos.
+ */
+class BaseState : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+    public:
+    BaseState(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts() {
+        return {
+            //TODO: define needed ports here...
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * IDLE or RUNNING.
+     * 
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
+};
+
+/**
  * @brief Move state.
  * 
  * This state moves the robot to a specified position and/or orientation. Optionally,

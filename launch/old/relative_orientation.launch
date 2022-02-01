@@ -1,7 +1,0 @@
-<launch>
-    <arg name="robot" default="puddles" doc="Which robot to simulate" />
-    
-    <group ns="$(arg robot)">
-        <node pkg="riptide_autonomy" type="doTask" args="relative_orientation_tree.xml" name="relative_orientation" output="screen" />
-    </group>
-</launch>

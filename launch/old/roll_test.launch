@@ -1,5 +1,0 @@
-<launch>
-  <group ns="puddles">
-    <node pkg="riptide_autonomy" type="roll_test.py" name="rtest" output="screen" />
-  </group>
-</launch>

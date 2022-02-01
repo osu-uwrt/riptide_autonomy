@@ -1,9 +1,0 @@
-<launch>
-    <arg name="robot" default="puddles" />
-    <!--<group ns="puddles">
-        <node pkg="riptide_autonomy" type="Gate.py" name="gate" output="screen" />
-    </group>-->
-    <node pkg="riptide_autonomy" type="taskActionListener.py" name="task_action_listener" output="screen">
-        <param name="robot" value="$(arg robot)" />
-    </node>
-</launch>

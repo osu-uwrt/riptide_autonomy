@@ -20,6 +20,11 @@ find_package(behaviortree_cpp_v3 REQUIRED)
 include_directories("include")
 include_directories($(rclcpp_INCLUDE_DIRS))
 
+#
+#
+# PUT YOUR STATE FILES HERE!!
+#
+#
 add_library(autonomy STATIC
   src/riptide_autonomy/util.cpp
   src/riptide_autonomy/UWRTSyncActionNode.cpp
@@ -52,6 +57,9 @@ install(TARGETS
   doTask
   transformTest
   DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME})
 
 # uncomment the following section in order to fill in
 # further dependencies manually.

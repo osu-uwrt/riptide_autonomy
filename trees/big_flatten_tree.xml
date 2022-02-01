@@ -31,7 +31,7 @@
             <output_port default="0" name="y"/>
             <output_port default="-1" name="z"/>
         </Action>
-        <Action ID="toWorldFrameState">
+        <Action ID="ToWorldFrameState">
             <input_port name="object"/>
             <input_port name="relative_orientation_w"/>
             <input_port name="relative_orientation_x"/>
