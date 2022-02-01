@@ -21,6 +21,7 @@ include_directories("include")
 include_directories($(rclcpp_INCLUDE_DIRS))
 
 add_library(autonomy STATIC
+  src/riptide_autonomy/util.cpp
   src/riptide_autonomy/UWRTSyncActionNode.cpp
   src/riptide_autonomy/BigMoveState.cpp
   src/riptide_autonomy/FlattenCalculationState.cpp
@@ -43,10 +44,13 @@ ament_target_dependencies(autonomy
 )
 
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
+add_executable(transformTest src/riptide_autonomy/doTransformTest.cpp)
 target_link_libraries(doTask autonomy ${colcon_LIBRARIES})
+target_link_libraries(transformTest autonomy ${colcon_LIBRARIES})
 
 install(TARGETS
   doTask
+  transformTest
   DESTINATION lib/${PROJECT_NAME})
 
 # uncomment the following section in order to fill in

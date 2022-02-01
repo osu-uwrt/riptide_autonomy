@@ -20,20 +20,19 @@ NodeStatus ToWorldFrameState::tick() {
     std::string objectName = getInput<std::string>("object").value();
     geometry_msgs::msg::TransformStamped transform = buffer.lookupTransform("world", objectName, tf2::TimePointZero, tf2::durationFromSec(1.0));
 
-    geometry_msgs::msg::Pose currentPose;
-    geometry_msgs::msg::Pose desiredPose;
+    geometry_msgs::msg::Pose relativePose;
     
     //get current pose to translate
-    currentPose.position.x = std::stod(getInput<std::string>("relative_x").value());
-    currentPose.position.y = std::stod(getInput<std::string>("relative_y").value());
-    currentPose.position.z = std::stod(getInput<std::string>("relative_z").value());
-    currentPose.orientation.x = std::stod(getInput<std::string>("relative_orientation_x").value());
-    currentPose.orientation.y = std::stod(getInput<std::string>("relative_orientation_y").value());
-    currentPose.orientation.z = std::stod(getInput<std::string>("relative_orientation_z").value());
-    currentPose.orientation.w = std::stod(getInput<std::string>("relative_orientation_w").value());
+    relativePose.position.x = std::stod(getInput<std::string>("relative_x").value());
+    relativePose.position.y = std::stod(getInput<std::string>("relative_y").value());
+    relativePose.position.z = std::stod(getInput<std::string>("relative_z").value());
+    relativePose.orientation.x = std::stod(getInput<std::string>("relative_orientation_x").value());
+    relativePose.orientation.y = std::stod(getInput<std::string>("relative_orientation_y").value());
+    relativePose.orientation.z = std::stod(getInput<std::string>("relative_orientation_z").value());
+    relativePose.orientation.w = std::stod(getInput<std::string>("relative_orientation_w").value());
 
     //transform the current pose into desired
-    tf2::doTransform(currentPose, desiredPose, transform);
+    geometry_msgs::msg::Pose desiredPose = doTransform(relativePose, transform);
 
     //output desired
     setOutput<std::string>("world_x", std::to_string(desiredPose.position.x));

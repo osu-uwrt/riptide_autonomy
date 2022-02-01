@@ -45,19 +45,18 @@ NodeStatus SearchState::tick() {
 
     RCLCPP_INFO(log, "Lookup Complete");
 
-    geometry_msgs::msg::Pose currentPose; //Pose in the frame of the object to find
+    geometry_msgs::msg::Pose relativePose; //Pose in the frame of the object to find
 
     //Get one foot infront of the object, facing it
-    currentPose.position.x = 0;
-    currentPose.position.y = 0;
-    currentPose.position.z = 0;
-    currentPose.orientation.x = 0;
-    currentPose.orientation.y = 0;
-    currentPose.orientation.z = 0;
-    currentPose.orientation.w = 1;
+    relativePose.position.x = 0;
+    relativePose.position.y = 0;
+    relativePose.position.z = 0;
+    relativePose.orientation.x = 0;
+    relativePose.orientation.y = 0;
+    relativePose.orientation.z = 0;
+    relativePose.orientation.w = 1;
 
-    geometry_msgs::msg::Pose worldGuessPos;
-    tf2::doTransform(currentPose, worldGuessPos, transform);
+    geometry_msgs::msg::Pose worldGuessPos = doTransform(relativePose, transform);
 
     geometry_msgs::msg::Point worldGuessPt;
     worldGuessPt.x = worldGuessPos.position.x;
@@ -76,7 +75,7 @@ NodeStatus SearchState::tick() {
     while(sunnyDay){
         if(rosnode->now() - begin >= rclcpp::Duration::from_seconds(update_sec)){
             //Get '1 foot infront of object' translated into the new frame of the new guess
-            tf2::doTransform(currentPose, worldGuessPos, transform);
+            worldGuessPos = doTransform(relativePose, transform);
 
             RCLCPP_INFO(log, "Current Error: %f", guessError);
 
@@ -95,7 +94,7 @@ NodeStatus SearchState::tick() {
             }
 
             //If the distance from the robot to the new location is < 1ft and the error is not low enough, sunnyDay = false;
-            if(receivedPos && distance(worldGuessPt, currentPose.position)<=1 && guessError>target_error){
+            if(receivedPos && distance(worldGuessPt, relativePose.position)<=1 && guessError>target_error){
                 sunnyDay = false;
             }
 

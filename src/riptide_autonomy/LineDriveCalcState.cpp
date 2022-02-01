@@ -28,10 +28,10 @@ NodeStatus LineDriveCalcState::tick() {
     //look up object (should be broadcasted from mapping)
     std::string objectName = getInput<std::string>("frame").value();
     geometry_msgs::msg::TransformStamped transform = buffer.lookupTransform("world", objectName, tf2::TimePointZero, tf2::durationFromSec(1.0));
+    geometry_msgs::msg::Vector3 translation = transform.transform.translation;
 
     geometry_msgs::msg::Pose relativePose; //we don't want a relative pose, we want the exact thing
-    geometry_msgs::msg::Pose objectPose; // will be the exact pose of the object
-    tf2::doTransform(relativePose, objectPose, transform);
+    geometry_msgs::msg::Pose objectPose = doTransform(relativePose, transform);
 
     double
         deltaY     = objectPose.position.y - currentPose.position.y,

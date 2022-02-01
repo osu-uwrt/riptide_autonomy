@@ -34,6 +34,8 @@ const std::string
     ANGULAR_VELOCITY_TOPIC = "angular_velocity",
     LINEAR_VELOCITY_TOPIC = "linear_velocity";
 
+geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose, geometry_msgs::msg::TransformStamped);
+
 /**
  * @brief A BT SyncActionNode with an init() method that takes a ROS node as a parameter.
  * This class should be inherited by every state used by the robot to avoid creating a new 
