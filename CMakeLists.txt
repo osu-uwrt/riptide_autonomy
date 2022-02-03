@@ -49,13 +49,16 @@ ament_target_dependencies(autonomy
 )
 
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
-add_executable(transformTest src/riptide_autonomy/doTransformTest.cpp)
+add_executable(transformTest src/riptide_autonomy/testscripts/doTransformTest.cpp)
+add_executable(frameCaster src/riptide_autonomy/testscripts/testFrameBroadcaster.cpp)
 target_link_libraries(doTask autonomy ${colcon_LIBRARIES})
 target_link_libraries(transformTest autonomy ${colcon_LIBRARIES})
+target_link_libraries(frameCaster autonomy ${colcon_LIBRARIES})
 
 install(TARGETS
   doTask
   transformTest
+  frameCaster
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch

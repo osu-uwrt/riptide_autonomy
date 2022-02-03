@@ -19,13 +19,25 @@ using namespace BT;
  * 
  * - Go to the CMakeLists.txt and add your new file to the add_library call.
  * 
+ * - Go to DoTask.cpp and the section of the code where nodes are registered. There should be a comment above it that says 
+ *   REGISTER NODES HERE.
+ * 
+ * - Add a line below the other factory.registerNodeType<>() lines. Between both the <> and (""), you should put the name of
+ *   your class. For example, if my state is named AlignState, the line would look like this:
+ *   factory.registerNodeType<AlignState>("AlignState");
+ * 
+ * - Open Groot and add a custom node. In the dialog box, make sure you use your class name as the node's name, and make sure
+ *   that you correctly define the ports that you declared in autonomy.h.
+ * 
  * - Resolve any other TODOs that are not resolved, then delete this comment and implement your init() and tick() methods. 
  *   If you need to add any other public or private methods (you will if you make a Subscription), feel free to add those!
  *   Make sure you also declare the method in the autonomy.h!
+ * 
+ *   TODO: DELETE THIS COMMENT
  */
 
 
-void BaseState::init(rclcpp::Node::SharedPtr node) { //TODO: Change BaseState to your new class name
+void BaseState::init(rclcpp::Node::SharedPtr node) { // TODO: Change BaseState to your new class name
     this->rosnode = node;
 
     //TODO: Define needed ros subscriptions and publishers here...

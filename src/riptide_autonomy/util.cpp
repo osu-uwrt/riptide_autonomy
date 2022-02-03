@@ -15,7 +15,21 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry
     tf2::fromMsg(relative.orientation, relativeQuat);
 
     tf2::Quaternion resultQuat = relativeQuat * transformQuat;
+    resultQuat.normalize();
     result.orientation = tf2::toMsg(resultQuat);
 
     return result;
+}
+
+geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion orientation) {
+    tf2::Quaternion tf2Orientation;
+    tf2::fromMsg(orientation, tf2Orientation);
+
+    geometry_msgs::msg::Vector3 rpy;
+    tf2::Matrix3x3(tf2Orientation).getEulerYPR(rpy.z, rpy.y, rpy.x);
+    return rpy;
+}
+
+double distance(geometry_msgs::msg::Point point1, geometry_msgs::msg::Point point2){
+    return sqrt(pow(point2.x - point1.x, 2) +pow(point2.y - point1.y, 2) + pow(point2.y - point1.y, 2));
 }

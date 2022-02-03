@@ -34,7 +34,32 @@ const std::string
     ANGULAR_VELOCITY_TOPIC = "angular_velocity",
     LINEAR_VELOCITY_TOPIC = "linear_velocity";
 
+/**
+ * 
+ * UTILITY METHODS
+ * 
+ */
+
+/**
+ * @brief Transforms a pose.
+ * 
+ * @return geometry_msgs::msg::Pose The 
+ */
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose, geometry_msgs::msg::TransformStamped);
+
+/**
+ * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles.
+ * 
+ * @return geometry_msgs::msg::Vector3 The orientation in roll pitch yaw.
+ */
+geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion);
+
+/**
+ * @brief Calculates the distance between two given points.
+ * 
+ * @return double The distance between point1 and point2.
+ */
+double distance(geometry_msgs::msg::Point, geometry_msgs::msg::Point);
 
 /**
  * @brief A BT SyncActionNode with an init() method that takes a ROS node as a parameter.
@@ -157,11 +182,6 @@ class BigMoveState : public UWRTSyncActionNode {
      * @brief Publishes the goal position, orientation, and/or angular velocity
      */
     void publishGoalInformation();
-    
-    /**
-     * @brief Converts a quaternion to euler angles
-     */
-    geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion);
     
     /**
      * @brief Called when odometry subscription received a message.
@@ -388,15 +408,6 @@ class SearchState : public UWRTSyncActionNode {
      * @param msg The received message.
      */
     void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
-
-    /**
-     * @brief Calculates the distance between two given points.
-     * 
-     * @param point1 The first point
-     * @param point2 The second point
-     * @return double The distance between point1 and point2.
-     */
-    double distance(geometry_msgs::msg::Point , geometry_msgs::msg::Point );
 
     //ROS node
     rclcpp::Node::SharedPtr rosnode;

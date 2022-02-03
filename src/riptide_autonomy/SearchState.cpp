@@ -38,7 +38,7 @@ NodeStatus SearchState::tick() {
         try {
             transform = buffer.lookupTransform("world",frame, tf2::TimePointZero, tf2::durationFromSec(1.0));
             break; 
-        } catch(tf2::TransformException ex) {
+        } catch(tf2::TransformException& ex) {
             RCLCPP_WARN(log, "%s", ex.what());
         }
     }
@@ -116,9 +116,4 @@ void SearchState::guessCallback(const geometry_msgs::msg::PoseWithCovarianceStam
 void SearchState::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) { 
     currentPose = msg->pose.pose;
     receivedPos = true;
-}
-
-
-double SearchState::distance(geometry_msgs::msg::Point point1, geometry_msgs::msg::Point point2){
-    return sqrt(pow(point2.x - point1.x, 2) +pow(point2.y - point1.y, 2) + pow(point2.y - point1.y, 2));
 }

@@ -24,13 +24,18 @@ int main(int argc, char *argv[]) {
 
     BehaviorTreeFactory factory;
     RCLCPP_INFO(log, "DoTask: Registering Nodes");
+
+    /**
+     * REGISTER NODES HERE
+     */
     factory.registerNodeType<BigMoveState>("BigMoveState");
     factory.registerNodeType<FlattenCalculationState>("FlattenCalculationState");
     factory.registerNodeType<ToWorldFrameState>("ToWorldFrameState");
     factory.registerNodeType<VelocityState>("VelocityState");
     factory.registerNodeType<SearchState>("SearchState");
     factory.registerNodeType<LineDriveCalcState>("LineDriveCalcState");
-
+    //your node here...
+    
     //figure out where the tree is based on where the package is (in ~/osu-uwrt/riptide_software/src/riptide_autonomy). Start with home
     const char *home = std::getenv("HOME");
     if(home == nullptr) {
@@ -57,5 +62,5 @@ int main(int argc, char *argv[]) {
     RCLCPP_INFO(log, "DoTask: Running tree");
 
     NodeStatus result = tree.tickRoot();
-    return (result == NodeStatus::SUCCESS ? 0 : 1);
+    return (result == NodeStatus::SUCCESS ? 0 : 1); //returns 0 if success and 1 if failure
 }

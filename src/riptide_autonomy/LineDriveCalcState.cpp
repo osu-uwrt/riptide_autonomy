@@ -30,12 +30,9 @@ NodeStatus LineDriveCalcState::tick() {
     geometry_msgs::msg::TransformStamped transform = buffer.lookupTransform("world", objectName, tf2::TimePointZero, tf2::durationFromSec(1.0));
     geometry_msgs::msg::Vector3 translation = transform.transform.translation;
 
-    geometry_msgs::msg::Pose relativePose; //we don't want a relative pose, we want the exact thing
-    geometry_msgs::msg::Pose objectPose = doTransform(relativePose, transform);
-
     double
-        deltaY     = objectPose.position.y - currentPose.position.y,
-        deltaX     = objectPose.position.x - currentPose.position.x,
+        deltaY     = translation.y - currentPose.position.y,
+        deltaX     = translation.x - currentPose.position.x,
         distance   = sqrt((deltaY * deltaY) + (deltaX * deltaX)),
         extraDistance = std::stod(getInput<std::string>("extra_distance").value()),
         distFactor = (distance + extraDistance) / distance;

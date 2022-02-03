@@ -93,16 +93,6 @@ void BigMoveState::publishGoalInformation() {
 }
 
 
-geometry_msgs::msg::Vector3 BigMoveState::toRPY(geometry_msgs::msg::Quaternion orientation) {
-    tf2::Quaternion tf2Orientation;
-    tf2::fromMsg(orientation, tf2Orientation);
-
-    geometry_msgs::msg::Vector3 rpy;
-    tf2::Matrix3x3(tf2Orientation).getEulerYPR(rpy.z, rpy.y, rpy.x);
-    return rpy;
-}
-
-
 void BigMoveState::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
     currentPose = msg->pose.pose;
     odomExists = true;
