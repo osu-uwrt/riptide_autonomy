@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(riptide_autonomy)
+project(riptide_autonomy2)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -49,24 +49,28 @@ ament_target_dependencies(autonomy
 )
 
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
+
 add_executable(transformTest src/riptide_autonomy/testscripts/doTransformTest.cpp)
 add_executable(frameCaster src/riptide_autonomy/testscripts/testFrameBroadcaster.cpp)
+add_executable(brtestpub src/riptide_autonomy/testscripts/basicrostestpub.cpp)
+add_executable(brtestsub src/riptide_autonomy/testscripts/basicrostestsub.cpp)
+
 target_link_libraries(doTask autonomy ${colcon_LIBRARIES})
 target_link_libraries(transformTest autonomy ${colcon_LIBRARIES})
 target_link_libraries(frameCaster autonomy ${colcon_LIBRARIES})
+target_link_libraries(brtestpub autonomy ${colcon_LIBRARIES})
+target_link_libraries(brtestsub autonomy ${colcon_LIBRARIES})
 
 install(TARGETS
   doTask
   transformTest
   frameCaster
+  brtestpub
+  brtestsub
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
-
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

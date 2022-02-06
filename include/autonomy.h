@@ -12,6 +12,7 @@
 #include "behaviortree_cpp_v3/behavior_tree.h"
 #include "behaviortree_cpp_v3/bt_factory.h"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "geometry_msgs/msg/pose_with_covariance.hpp"
@@ -19,11 +20,12 @@
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer_client.h"
 #include "rclcpp/rclcpp.hpp"
+#include "basicros.h"
 
 using namespace BT;
 
 //define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
-#define log rclcpp::get_logger("rclcpp")
+// #define log rclcpp::get_logger("rclcpp")
 
 //useful constant values for autonomy
 const std::string

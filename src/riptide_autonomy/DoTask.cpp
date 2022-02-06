@@ -14,11 +14,11 @@ const char *AUTONOMY_PATH_FROM_HOME = "/osu-uwrt/riptide_software/src/riptide_au
 
 int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
-    auto rosnode = std::make_shared<rclcpp::Node>("DoTask");
+    rclcpp::Node::SharedPtr rosnode = std::make_shared<rclcpp::Node>("DoTask");
 
     //get name of tree to run
     if(argc <= 1) {
-        RCLCPP_INFO(log, "DoTask: No Tree to run. do_task will exit.");
+        RCLCPP_INFO(log, "DoTask: No Tree to run. DoTask will exit.");
         return 1;
     }
 
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<VelocityState>("VelocityState");
     factory.registerNodeType<SearchState>("SearchState");
     factory.registerNodeType<LineDriveCalcState>("LineDriveCalcState");
-    //your node here...
+    //your node type here...
     
     //figure out where the tree is based on where the package is (in ~/osu-uwrt/riptide_software/src/riptide_autonomy). Start with home
     const char *home = std::getenv("HOME");
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     }
 
     RCLCPP_INFO(log, "DoTask: Loading Monitor");
-    PublisherZMQ publisher_zmq(tree);
+    PublisherZMQ zmq(tree);
 
     RCLCPP_INFO(log, "DoTask: Running tree");
 

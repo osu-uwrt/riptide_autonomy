@@ -15,7 +15,7 @@ using namespace BT;
  *   declaration (use ctrl-F!).
  * 
  * - Copy the BaseState class declaration, paste it at the bottom of the header file (BEFORE the #endif though!) and follow 
- *   the steps in the BaseState comment.
+ *   the steps in the BaseState header comment.
  * 
  * - Go to the CMakeLists.txt and add your new file to the add_library call.
  * 
