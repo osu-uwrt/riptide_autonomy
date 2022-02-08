@@ -11,6 +11,6 @@ def generate_launch_description():
             name='buoy_task',
             output='screen',
             
-            arguments=["big_flatten_tree.xml"]
+            arguments=["torpedo_tree.xml"]
         )
     ])

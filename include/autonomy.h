@@ -20,12 +20,11 @@
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer_client.h"
 #include "rclcpp/rclcpp.hpp"
-#include "basicros.h"
 
 using namespace BT;
 
 //define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
-// #define log rclcpp::get_logger("rclcpp")
+#define log rclcpp::get_logger("rclcpp")
 
 //useful constant values for autonomy
 const std::string
@@ -567,6 +566,46 @@ class VelocityState : public UWRTSyncActionNode {
         odomDataExists;
 
     int startTime;
+};
+
+/**
+ * @brief A state that shoots the robot's torpedos.
+ * 
+ */
+class ShootTorpedoState : public UWRTSyncActionNode {
+    public:
+    ShootTorpedoState(const std::string& name, const NodeConfiguration& config) 
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts() {
+        return {
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * IDLE or RUNNING.
+     * 
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
 };
 
 #endif // AUTONOMY_H

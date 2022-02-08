@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<VelocityState>("VelocityState");
     factory.registerNodeType<SearchState>("SearchState");
     factory.registerNodeType<LineDriveCalcState>("LineDriveCalcState");
+    factory.registerNodeType<ShootTorpedoState>("ShootTorpedoState");
     //your node type here...
     
     //figure out where the tree is based on where the package is (in ~/osu-uwrt/riptide_software/src/riptide_autonomy). Start with home

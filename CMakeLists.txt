@@ -34,6 +34,7 @@ add_library(autonomy STATIC
   src/riptide_autonomy/SearchState.cpp
   src/riptide_autonomy/ToWorldFrameState.cpp
   src/riptide_autonomy/VelocityState.cpp
+  src/riptide_autonomy/ShootTorpedoState.cpp
 )
 
 ament_target_dependencies(autonomy 
@@ -49,24 +50,10 @@ ament_target_dependencies(autonomy
 )
 
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
-
-add_executable(transformTest src/riptide_autonomy/testscripts/doTransformTest.cpp)
-add_executable(frameCaster src/riptide_autonomy/testscripts/testFrameBroadcaster.cpp)
-add_executable(brtestpub src/riptide_autonomy/testscripts/basicrostestpub.cpp)
-add_executable(brtestsub src/riptide_autonomy/testscripts/basicrostestsub.cpp)
-
 target_link_libraries(doTask autonomy ${colcon_LIBRARIES})
-target_link_libraries(transformTest autonomy ${colcon_LIBRARIES})
-target_link_libraries(frameCaster autonomy ${colcon_LIBRARIES})
-target_link_libraries(brtestpub autonomy ${colcon_LIBRARIES})
-target_link_libraries(brtestsub autonomy ${colcon_LIBRARIES})
 
 install(TARGETS
   doTask
-  transformTest
-  frameCaster
-  brtestpub
-  brtestsub
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch

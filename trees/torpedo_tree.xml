@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <SubTree ID="Flatten"/>
+            <SubTree ID="TorpedoAlign"/>
+            <Action ID="ShootTorpedoState"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="Flatten">
+        <Sequence>
+            <Action ID="FlattenCalculationState" depth="-1" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
+            <Action ID="BigMoveState" orientation_w="{goal_orientation_w}" orientation_x="{goal_orientation_x}" orientation_y="{goal_orientation_y}" orientation_z="{goal_orientation_z}" v_pitch="" v_roll="" v_yaw="" x="{goal_x}" y="{goal_y}" z="{goal_z}"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="GoThroughGate">
+        <Sequence>
+            <Action ID="ToWorldFrameState" object="gate_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="1.5" relative_y="-2" relative_z="0.5" world_orientation_w="{g_o_w}" world_orientation_x="{g_o_x}" world_orientation_y="{g_o_y}" world_orientation_z="{g_o_z}" world_x="{g_x}" world_y="{g_y}" world_z="{g_z}"/>
+            <Action ID="BigMoveState" orientation_w="" orientation_x="" orientation_y="" orientation_z="" v_pitch="0" v_roll="10" v_yaw="0" x="{g_x}" y="{g_y}" z="{g_z}"/>
+            <Action ID="BigMoveState" orientation_w="{g_o_w}" orientation_x="{g_o_x}" orientation_y="{g_o_y}" orientation_z="{g_o_z}" v_pitch="" v_roll="" v_yaw="" x="{g_x}" y="{g_y}" z="{g_z}"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="GoToCutie">
+        <Sequence>
+            <Action ID="ToWorldFrameState" object="cutie_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="0" relative_y="1" relative_z="0" world_orientation_w="{c_o_w}" world_orientation_x="{c_o_x}" world_orientation_y="{c_o_y}" world_orientation_z="{c_o_z}" world_x="{c_x}" world_y="{c_y}" world_z="{c_z}"/>
+            <Action ID="BigMoveState" orientation_w="{c_o_w}" orientation_x="{c_o_x}" orientation_y="{c_o_y}" orientation_z="{c_o_z}" v_pitch="" v_roll="" v_yaw="" x="{c_x}" y="{c_y}" z="{c_z}"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="GoToGate">
+        <Sequence>
+            <Action ID="ToWorldFrameState" object="gate_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="1.2" relative_y="2" relative_z="0.5" world_orientation_w="{o_w}" world_orientation_x="{o_x}" world_orientation_y="{o_y}" world_orientation_z="{o_z}" world_x="{x}" world_y="{y}" world_z="{z}"/>
+            <Action ID="BigMoveState" orientation_w="{o_w}" orientation_x="{o_x}" orientation_y="{o_y}" orientation_z="{o_z}" v_pitch="" v_roll="" v_yaw="" x="{x}" y="{y}" z="{z}"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="TorpedoAlign">
+        <Sequence>
+            <Action ID="SearchState" frame="torpedo" target_error="0.125" update_sec="1"/>
+            <Action ID="ToWorldFrameState" object="torpedo_frame" relative_orientation_w="1" relative_orientation_x="0" relative_orientation_y="0" relative_orientation_z="-1" relative_x="-0.25" relative_y="-0.25" relative_z="-0.25" world_orientation_w="{o_w}" world_orientation_x="{o_x}" world_orientation_y="{o_y}" world_orientation_z="{o_z}" world_x="{x}" world_y="{y}" world_z="{z}"/>
+            <Action ID="BigMoveState" orientation_w="{o_w}" orientation_x="{o_x}" orientation_y="{o_y}" orientation_z="{o_z}" v_pitch="" v_roll="" v_yaw="" x="{x}" y="{y}" z="{z}"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="TouchThing">
+        <Sequence>
+            <Action ID="VelocityState" time="4" x_velocity="0.25" y_velocity="0" z_velocity="0"/>
+            <Action ID="VelocityState" time="1.5" x_velocity="-0.3" y_velocity="0" z_velocity="0"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="BigMoveState">
+            <input_port default="1" name="orientation_w">optional</input_port>
+            <input_port default="0" name="orientation_x">optional</input_port>
+            <input_port default="0" name="orientation_y">optional</input_port>
+            <input_port default="0" name="orientation_z">optional</input_port>
+            <input_port name="v_pitch">optional</input_port>
+            <input_port name="v_roll">optional</input_port>
+            <input_port name="v_yaw">optional</input_port>
+            <input_port default="0" name="x">optional</input_port>
+            <input_port default="0" name="y">optional</input_port>
+            <input_port default="-1" name="z">optional</input_port>
+        </Action>
+        <SubTree ID="Flatten"/>
+        <Action ID="FlattenCalculationState">
+            <input_port default="-1" name="depth">Depth the robot sinks to. Required</input_port>
+            <output_port default="1" name="orientation_w"/>
+            <output_port default="0" name="orientation_x"/>
+            <output_port default="0" name="orientation_y"/>
+            <output_port default="0" name="orientation_z"/>
+            <output_port default="0" name="x"/>
+            <output_port default="0" name="y"/>
+            <output_port default="-1" name="z"/>
+        </Action>
+        <SubTree ID="GoThroughGate"/>
+        <SubTree ID="GoToCutie"/>
+        <SubTree ID="GoToGate"/>
+        <Action ID="SearchState">
+            <input_port name="frame">The frame to search for</input_port>
+            <input_port name="target_error">The goal amount of error for the state to succeed.</input_port>
+            <input_port name="update_sec">How much time to wait for update</input_port>
+        </Action>
+        <Action ID="ShootTorpedoState"/>
+        <Action ID="ToWorldFrameState">
+            <input_port name="object">Object to calculate relative to. Required.</input_port>
+            <input_port name="relative_orientation_w">Orienation is relative to object. Required.</input_port>
+            <input_port name="relative_orientation_x">Required</input_port>
+            <input_port name="relative_orientation_y">Required</input_port>
+            <input_port name="relative_orientation_z">Required</input_port>
+            <input_port name="relative_x">Position is also relative to object. Required.</input_port>
+            <input_port name="relative_y">Required</input_port>
+            <input_port name="relative_z">Required</input_port>
+            <output_port name="world_orientation_w"/>
+            <output_port name="world_orientation_x"/>
+            <output_port name="world_orientation_y"/>
+            <output_port name="world_orientation_z"/>
+            <output_port name="world_x"/>
+            <output_port name="world_y"/>
+            <output_port name="world_z"/>
+        </Action>
+        <SubTree ID="TorpedoAlign"/>
+        <Action ID="TorpedoAlignState"/>
+        <SubTree ID="Touch"/>
+        <SubTree ID="TouchThing"/>
+        <Action ID="VelocityState">
+            <input_port default="1" name="time">Time to drive for. Required</input_port>
+            <input_port default="1" name="x_velocity">Required</input_port>
+            <input_port default="0" name="y_velocity">Required</input_port>
+            <input_port default="0" name="z_velocity">Required</input_port>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+
