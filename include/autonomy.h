@@ -56,11 +56,26 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose, geometry_msgs::ms
 geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion);
 
 /**
+ * @brief Converts the passed point to a Vector3 message.
+ * 
+ * @return geometry_msgs::msg::Vector3 A Vector3 message that is equal to the passed Point.
+ */
+geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point);
+
+/**
+ * @brief Converts the passed Vector3 to a Point message.
+ * 
+ * @return geometry_msgs::msg::Point A Point message that is equal to the passed Vector3.
+ */
+geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3);
+
+/**
  * @brief Calculates the distance between two given points.
  * 
  * @return double The distance between point1 and point2.
  */
 double distance(geometry_msgs::msg::Point, geometry_msgs::msg::Point);
+double distance(geometry_msgs::msg::Vector3, geometry_msgs::msg::Vector3);
 
 /**
  * @brief A BT SyncActionNode with an init() method that takes a ROS node as a parameter.
@@ -222,7 +237,7 @@ class BigMoveState : public UWRTSyncActionNode {
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSubscriber;
 
     //ROS publishers
-    rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr    positionPub;
+    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr    positionPub;
     rclcpp::Publisher<geometry_msgs::msg::Quaternion>::SharedPtr orientationPub;
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr    angVelocityPub;
 };
@@ -418,7 +433,7 @@ class SearchState : public UWRTSyncActionNode {
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSub;
 
     //publishers
-    rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr positionPub;
+    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr positionPub;
     rclcpp::Publisher<geometry_msgs::msg::Quaternion>::SharedPtr orientationPub;
 
     //other things

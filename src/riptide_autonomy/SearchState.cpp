@@ -8,7 +8,7 @@ void SearchState::init(rclcpp::Node::SharedPtr node) {
     rosnode = node;
 
     odomSub        = node->create_subscription<nav_msgs::msg::Odometry>(ODOMETRY_TOPIC, 10, std::bind(&SearchState::odomCallback, this, _1));
-    positionPub    = node->create_publisher<geometry_msgs::msg::Point>(POSITION_TOPIC, 10);
+    positionPub    = node->create_publisher<geometry_msgs::msg::Vector3>(POSITION_TOPIC, 10);
     orientationPub = node->create_publisher<geometry_msgs::msg::Quaternion>(ORIENTATION_TOPIC, 10);
 }
 
@@ -58,16 +58,16 @@ NodeStatus SearchState::tick() {
 
     geometry_msgs::msg::Pose worldGuessPos = doTransform(relativePose, transform);
 
-    geometry_msgs::msg::Point worldGuessPt;
-    worldGuessPt.x = worldGuessPos.position.x;
-    worldGuessPt.y = worldGuessPos.position.y;
-    worldGuessPt.z = worldGuessPos.position.z;
+    geometry_msgs::msg::Vector3 worldGuessPtv3;
+    worldGuessPtv3.x = worldGuessPos.position.x;
+    worldGuessPtv3.y = worldGuessPos.position.y;
+    worldGuessPtv3.z = worldGuessPos.position.z;
 
     //publish the initial estimate to the controller to move the robot to that pose
-    positionPub->publish(worldGuessPt);
+    positionPub->publish(worldGuessPtv3);
     orientationPub->publish(worldGuessPos.orientation);
 
-    RCLCPP_INFO(log, "Going to %f, %f, %f", worldGuessPt.x, worldGuessPt.y, worldGuessPt.z);
+    RCLCPP_INFO(log, "Going to %f, %f, %f", worldGuessPtv3.x, worldGuessPtv3.y, worldGuessPtv3.z);
     
     //Get a snapshot of the time at the start
     rclcpp::Time begin = rosnode->now();
@@ -84,17 +84,17 @@ NodeStatus SearchState::tick() {
                 return NodeStatus::SUCCESS;
             } else {
                 
-                worldGuessPt.x = worldGuessPos.position.x;
-                worldGuessPt.y = worldGuessPos.position.y;
-                worldGuessPt.z = worldGuessPos.position.z;
-                positionPub->publish(worldGuessPt); 
+                worldGuessPtv3.x = worldGuessPos.position.x;
+                worldGuessPtv3.y = worldGuessPos.position.y;
+                worldGuessPtv3.z = worldGuessPos.position.z;
+                positionPub->publish(worldGuessPtv3); 
                 orientationPub->publish(worldGuessPos.orientation);
 
-                RCLCPP_INFO(log, "Going to %f, %f, %f", worldGuessPt.x, worldGuessPt.y, worldGuessPt.z);
+                RCLCPP_INFO(log, "Going to %f, %f, %f", worldGuessPtv3.x, worldGuessPtv3.y, worldGuessPtv3.z);
             }
 
             //If the distance from the robot to the new location is < 1ft and the error is not low enough, sunnyDay = false;
-            if(receivedPos && distance(worldGuessPt, relativePose.position)<=1 && guessError>target_error){
+            if(receivedPos && distance(vector3ToPoint(worldGuessPtv3), relativePose.position) <= 1 && guessError>target_error){
                 sunnyDay = false;
             }
 

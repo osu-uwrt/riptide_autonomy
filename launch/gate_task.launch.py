@@ -2,6 +2,8 @@ import launch
 import launch.actions
 from launch_ros.actions import Node
 
+robot = "tempest"
+
 def generate_launch_description():
     return launch.LaunchDescription([
         # create the nodes    
@@ -10,6 +12,7 @@ def generate_launch_description():
             executable='doTask',
             name='buoy_task',
             output='screen',
+            namespace=robot,
             
             arguments=["big_gate_tree.xml"]
         )

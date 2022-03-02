@@ -14,9 +14,12 @@ void FlattenCalculationState::init(rclcpp::Node::SharedPtr node) {
 
 NodeStatus FlattenCalculationState::tick() {
     //wait for loc to exist
+    RCLCPP_INFO(log, "Waiting for odom...");
     while(!odomExists) {
         rclcpp::spin_some(rosnode);
     }
+
+    RCLCPP_INFO(log, "Odom received.");
 
     geometry_msgs::msg::Pose goalPose;
 

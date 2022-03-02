@@ -3,11 +3,10 @@
 <package format="3">
   <name>riptide_autonomy2</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Package that contains all autonomous code that the robot runs</description>
   <maintainer email="brach2003@gmail.com">brach</maintainer>
   <license>TODO: License declaration</license>
-
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <author>Brach Knutson</author>
 
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>

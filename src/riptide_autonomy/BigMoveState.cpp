@@ -10,7 +10,7 @@ void BigMoveState::init(rclcpp::Node::SharedPtr node) {
     //create pubs and subs
     odomSubscriber = node->create_subscription<nav_msgs::msg::Odometry>(ODOMETRY_TOPIC, 10, std::bind(&BigMoveState::odomCallback, this, _1));
 
-    positionPub = node->create_publisher<geometry_msgs::msg::Point>(POSITION_TOPIC, 10);
+    positionPub = node->create_publisher<geometry_msgs::msg::Vector3>(POSITION_TOPIC, 10);
     orientationPub = node->create_publisher<geometry_msgs::msg::Quaternion>(ORIENTATION_TOPIC, 10);
     angVelocityPub = node->create_publisher<geometry_msgs::msg::Vector3>(ANGULAR_VELOCITY_TOPIC, 10);
 
@@ -80,7 +80,8 @@ NodeStatus BigMoveState::tick() {
 void BigMoveState::publishGoalInformation() {
     //commands has entered, goal has been set.
     if(publishPosition) {
-        positionPub->publish(goalPose.position);
+        geometry_msgs::msg::Vector3 posv3 = pointToVector3(goalPose.position);
+        positionPub->publish(posv3);
     }
 
     if(publishOrientation) {
