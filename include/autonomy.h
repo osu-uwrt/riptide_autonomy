@@ -18,7 +18,8 @@
 #include "geometry_msgs/msg/pose_with_covariance.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
-#include "tf2_ros/buffer_client.h"
+#include "tf2_ros/buffer.h"
+#include "tf2_msgs/action/lookup_transform.h"
 #include "rclcpp/rclcpp.hpp"
 
 using namespace BT;
@@ -44,7 +45,7 @@ const std::string
 /**
  * @brief Transforms a pose.
  * 
- * @return geometry_msgs::msg::Pose The 
+ * @return geometry_msgs::msg::Pose The original pose with the transform applied.
  */
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose, geometry_msgs::msg::TransformStamped);
 
@@ -78,14 +79,18 @@ double distance(geometry_msgs::msg::Point, geometry_msgs::msg::Point);
 double distance(geometry_msgs::msg::Vector3, geometry_msgs::msg::Vector3);
 
 /**
+ * STATES
+ */
+
+/**
  * @brief A BT SyncActionNode with an init() method that takes a ROS node as a parameter.
  * This class should be inherited by every state used by the robot to avoid creating a new 
  * ros node every time a state change happens.
  */
-class UWRTSyncActionNode : public BT::SyncActionNode {
+class UWRTSyncActionNode : public SyncActionNode {
     public:
-    UWRTSyncActionNode(const std::string& name, const BT::NodeConfiguration& config)
-     : BT::SyncActionNode(name, config) { };
+    UWRTSyncActionNode(const std::string& name, const NodeConfiguration& config)
+     : SyncActionNode(name, config) { };
 
     static PortsList providedPorts();
     NodeStatus tick() override;

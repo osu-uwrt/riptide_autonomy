@@ -25,21 +25,18 @@ NodeStatus SearchState::tick() {
     //Subscribe to the guess place (we initialize this here because we only now have read the behaviortree and know the frame name)
     guessSub = rosnode->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("mapping/" + target, 10, std::bind(&SearchState::guessCallback, this, _1));
 
-    //create buffer server to look for frame transform
-    RCLCPP_INFO(log, "Starting TF2 Buffer Server");
-    tf2_ros::BufferClient buffer(rosnode, "tf2_buffer_server");
-    buffer.waitForServer();
-    RCLCPP_INFO(log, "TF2 Buffer Server connected.");
-
     //actually look up the transform of the frame we want
+    tf2_ros::Buffer buffer(rosnode->get_clock());
+    tf2_ros::TransformListener tfListener(buffer);
     geometry_msgs::msg::TransformStamped transform;
     RCLCPP_INFO(log, "Doing transform lookup");
     while(rclcpp::ok()) {
         try {
-            transform = buffer.lookupTransform("world",frame, tf2::TimePointZero, tf2::durationFromSec(1.0));
+            transform = buffer.lookupTransform("world", frame, tf2::TimePointZero);
             break; 
         } catch(tf2::TransformException& ex) {
-            RCLCPP_WARN(log, "%s", ex.what());
+            RCLCPP_DEBUG(log, "%s", ex.what());
+            rclcpp::spin_some(rosnode);
         }
     }
 

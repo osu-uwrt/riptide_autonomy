@@ -10,15 +10,21 @@ void ToWorldFrameState::init(rclcpp::Node::SharedPtr node) {
 
 NodeStatus ToWorldFrameState::tick() {
     //start buffer client to look up transform
-    RCLCPP_INFO(log, "Starting TF2 Buffer Server");
-    tf2_ros::BufferClient buffer(rosnode, "tf2_buffer_server");
-    buffer.waitForServer();
-
-    RCLCPP_INFO(log, "TF2 Buffer Server connected.");
+    tf2_ros::Buffer buffer(rosnode->get_clock());
+    tf2_ros::TransformListener listener(buffer);
 
     //look up object (should be broadcasted from mapping)
     std::string objectName = getInput<std::string>("object").value();
-    geometry_msgs::msg::TransformStamped transform = buffer.lookupTransform("world", objectName, tf2::TimePointZero, tf2::durationFromSec(1.0));
+    geometry_msgs::msg::TransformStamped transform;
+    while(rclcpp::ok()) {
+        try {
+            transform = buffer.lookupTransform("world", objectName, tf2::TimePointZero);
+            break; 
+        } catch(tf2::TransformException& ex) {
+            RCLCPP_DEBUG(log, "%s", ex.what());
+            rclcpp::spin_some(rosnode);
+        }
+    }
 
     geometry_msgs::msg::Pose relativePose;
     

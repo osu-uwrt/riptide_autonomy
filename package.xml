@@ -4,7 +4,7 @@
   <name>riptide_autonomy2</name>
   <version>0.0.0</version>
   <description>Package that contains all autonomous code that the robot runs</description>
-  <maintainer email="brach2003@gmail.com">brach</maintainer>
+  <maintainer email="knutson.39@buckeyemail.osu.edu">Brach Knutson</maintainer>
   <license>TODO: License declaration</license>
   <author>Brach Knutson</author>
 
