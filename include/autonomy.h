@@ -16,6 +16,8 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "geometry_msgs/msg/pose_with_covariance.hpp"
+#include "riptide_msgs2/msg/actuator_command.hpp"
+#include "riptide_msgs2/msg/actuator_status.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
@@ -25,7 +27,7 @@
 using namespace BT;
 
 //define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
-#define log rclcpp::get_logger("rclcpp")
+#define log rclcpp::get_logger("autonomy")
 
 //useful constant values for autonomy
 const std::string
@@ -34,7 +36,9 @@ const std::string
     POSITION_TOPIC = "position",
     ORIENTATION_TOPIC = "orientation",
     ANGULAR_VELOCITY_TOPIC = "angular_velocity",
-    LINEAR_VELOCITY_TOPIC = "linear_velocity";
+    LINEAR_VELOCITY_TOPIC = "linear_velocity",
+    ACTUATOR_COMMAND_TOPIC = "command/actuators",
+    ACTUATOR_STATUS_TOPIC = "status/actuators";
 
 /**
  * 
@@ -589,12 +593,11 @@ class VelocityState : public UWRTSyncActionNode {
 };
 
 /**
- * @brief A state that shoots the robot's torpedos.
- * 
+ * State that actuates stuff on the robot
  */
-class ShootTorpedoState : public UWRTSyncActionNode {
+class ActuateState : public UWRTSyncActionNode {
     public:
-    ShootTorpedoState(const std::string& name, const NodeConfiguration& config) 
+    ActuateState(const std::string& name, const NodeConfiguration& config)
      : UWRTSyncActionNode(name, config) { }
 
     /**
@@ -603,6 +606,16 @@ class ShootTorpedoState : public UWRTSyncActionNode {
      */
     static PortsList providedPorts() {
         return {
+            InputPort<bool>("drop_1"),
+            InputPort<bool>("drop_2"),
+            InputPort<bool>("clear_dropper_status"),
+            InputPort<bool>("arm_torpedo"),
+            InputPort<bool>("disarm_torpedo"),
+            InputPort<bool>("fire_torpedo_1"),
+            InputPort<bool>("fire_torpedo_2"),
+            InputPort<bool>("open_claw"),
+            InputPort<bool>("close_claw"),
+            InputPort<bool>("reset_actuators")
         };
     }
 
@@ -626,6 +639,113 @@ class ShootTorpedoState : public UWRTSyncActionNode {
     private:
     //process node
     rclcpp::Node::SharedPtr rosnode;
+    rclcpp::Publisher<riptide_msgs2::msg::ActuatorCommand>::SharedPtr publisher;
+};
+
+/**
+ * @brief Reads out the status of the actuators into behaviortree ports
+ * 
+ */
+class GetActuatorStatus : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+    public:
+    GetActuatorStatus(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts() {
+        return {
+            OutputPort<int>("claw_state"),
+            OutputPort<int>("torpedo1_state"),
+            OutputPort<int>("torpedo2_state"),
+            OutputPort<int>("dropper1_state"),
+            OutputPort<int>("dropper2_state")
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * IDLE or RUNNING.
+     * 
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    void actuatorStateCallback(const riptide_msgs2::msg::ActuatorStatus::SharedPtr);
+
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
+    rclcpp::Subscription<riptide_msgs2::msg::ActuatorStatus>::SharedPtr statusSub;
+    riptide_msgs2::msg::ActuatorStatus latestStatus;
+    bool statusReceived;
+};
+
+class WaitState : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+    public:
+    WaitState(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts() {
+        return { 
+            InputPort<double>("seconds")
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * IDLE or RUNNING.
+     * 
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
+};
+
+class ActuatorStateCheckers {
+    public:
+    //register states
+    static void registerConditions(BT::BehaviorTreeFactory factory);
+
+    //some claw states
+    static BT::NodeStatus isClawUnknown(BT::TreeNode&);
+    static BT::NodeStatus isClawOpen(BT::TreeNode&);
+    static BT::NodeStatus isClawClosed(BT::TreeNode&);
+
+    //some torpedo states
+    static BT::NodeStatus isTorpedoCharged(BT::TreeNode&);
+    static BT::NodeStatus isTorpedoFired(BT::TreeNode&);
+
+    //some dropper states
+    static BT::NodeStatus isDropperReady(BT::TreeNode&);
+    static BT::NodeStatus isDropperDropped(BT::TreeNode&);
 };
 
 #endif // AUTONOMY_H

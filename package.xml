@@ -11,6 +11,7 @@
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>riptide_msgs2</depend>
   <depend>behaviortree_cpp_v3</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>

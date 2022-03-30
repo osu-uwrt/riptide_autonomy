@@ -15,6 +15,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(riptide_msgs2 REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 
 include_directories("include")
@@ -34,7 +35,10 @@ add_library(autonomy STATIC
   src/riptide_autonomy/SearchState.cpp
   src/riptide_autonomy/ToWorldFrameState.cpp
   src/riptide_autonomy/VelocityState.cpp
-  src/riptide_autonomy/ShootTorpedoState.cpp
+  src/riptide_autonomy/ActuateState.cpp
+  src/riptide_autonomy/GetActuatorStatus.cpp
+  src/riptide_autonomy/ActuatorStateCheckers.cpp
+  src/riptide_autonomy/WaitState.cpp
 )
 
 ament_target_dependencies(autonomy 
@@ -42,7 +46,8 @@ ament_target_dependencies(autonomy
   geometry_msgs 
   std_msgs 
   nav_msgs 
-  sensor_msgs 
+  sensor_msgs
+  riptide_msgs2 
   behaviortree_cpp_v3 
   tf2 
   tf2_ros 

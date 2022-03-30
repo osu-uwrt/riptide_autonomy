@@ -1,4 +1,40 @@
-<root>
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Fallback>
+            <Sequence>
+                <Action ID="Info" message="BT Started." name="Print that BT has started."/>
+                <Fallback>
+                    <RetryUntilSuccesful num_attempts="4">
+                        <Fallback>
+                            <Sequence>
+                                <Action ID="ActuateState" arm_torpedo="1" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
+                                <Action ID="GetActuatorStatus" claw_state="" dropper1_state="" dropper2_state="" torpedo1_state="{t}" torpedo2_state=""/>
+                                <IfThenElse>
+                                    <Condition ID="IsTorpedoCharged" torpedo_state="{t}"/>
+                                    <Action ID="Info" message="torpedo charged."/>
+                                    <ForceFailure name="Cause retry to tick again">
+                                        <Sequence>
+                                            <Action ID="ToString" double_in="" int_in="{t}" str_out="{str}"/>
+                                            <Action ID="Info" message="Torpedo not charged."/>
+                                        </Sequence>
+                                    </ForceFailure>
+                                </IfThenElse>
+                            </Sequence>
+                            <ForceFailure name="cause retry to tick again">
+                                <Action ID="Error" message="Timed out charging torpedo"/>
+                            </ForceFailure>
+                        </Fallback>
+                    </RetryUntilSuccesful>
+                    <Action ID="Error" message="Failed to charge torpedo!"/>
+                </Fallback>
+                <Action ID="Info" message="tree done."/>
+            </Sequence>
+            <Action ID="Error" message="Error Occurred! Tree has ended."/>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="ActuateState">
             <input_port name="arm_torpedo"/>
@@ -114,5 +150,6 @@
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
     </TreeNodesModel>
+    <!-- ////////// -->
 </root>
 
