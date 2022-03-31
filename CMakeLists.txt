@@ -28,7 +28,9 @@ include_directories($(rclcpp_INCLUDE_DIRS))
 #
 add_library(autonomy STATIC
   src/riptide_autonomy/util.cpp
+  src/riptide_autonomy/SimpleStates.cpp
   src/riptide_autonomy/UWRTSyncActionNode.cpp
+  src/riptide_autonomy/RetryUntilSuccessfulOrTimeout.cpp
   src/riptide_autonomy/BigMoveState.cpp
   src/riptide_autonomy/FlattenCalculationState.cpp
   src/riptide_autonomy/LineDriveCalcState.cpp

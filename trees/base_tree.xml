@@ -45,9 +45,6 @@
             <output_port name="torpedo1_state"/>
             <output_port name="torpedo2_state"/>
         </Action>
-        <SubTree ID="GoThroughGate"/>
-        <SubTree ID="GoToCutie"/>
-        <SubTree ID="GoToGate"/>
         <Action ID="Info">
             <input_port name="message">The message to print.</input_port>
         </Action>
@@ -100,10 +97,6 @@
             <output_port name="world_y"/>
             <output_port name="world_z"/>
         </Action>
-        <SubTree ID="TorpedoAlign"/>
-        <Action ID="TorpedoAlignState"/>
-        <SubTree ID="Touch"/>
-        <SubTree ID="TouchThing"/>
         <Action ID="VelocityState">
             <input_port default="1" name="time">Time to drive for. Required</input_port>
             <input_port default="1" name="x_velocity">Required</input_port>

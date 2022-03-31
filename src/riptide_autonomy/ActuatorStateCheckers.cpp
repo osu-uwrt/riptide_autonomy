@@ -22,16 +22,18 @@ BT::NodeStatus inputEquals(BT::TreeNode& node, std::string portName, int value) 
  * 
  * @param factory the factory to register the conditions with
  */
-void ActuatorStateCheckers::registerConditions(BT::BehaviorTreeFactory factory) {
-    factory.registerSimpleCondition("IsClawUnknown", ActuatorStateCheckers::isClawUnknown, { InputPort<int>("claw_state") });
-    factory.registerSimpleCondition("IsClawOpen", ActuatorStateCheckers::isClawOpen, { InputPort<int>("claw_state") });
-    factory.registerSimpleCondition("IsClawClosed", ActuatorStateCheckers::isClawClosed, { InputPort<int>("claw_state") });
+void ActuatorStateCheckers::registerConditions(BT::BehaviorTreeFactory *factory) {
+    factory->registerSimpleCondition("IsClawUnknown", ActuatorStateCheckers::isClawUnknown, { InputPort<int>("claw_state") });
+    factory->registerSimpleCondition("IsClawOpen", ActuatorStateCheckers::isClawOpen, { InputPort<int>("claw_state") });
+    factory->registerSimpleCondition("IsClawClosed", ActuatorStateCheckers::isClawClosed, { InputPort<int>("claw_state") });
 
-    factory.registerSimpleCondition("IsTorpedoCharged", ActuatorStateCheckers::isTorpedoCharged, { InputPort<int>("torpedo_state") });
-    factory.registerSimpleCondition("IsTorpedoFired", ActuatorStateCheckers::isTorpedoFired, { InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoError", ActuatorStateCheckers::isTorpedoError, { InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoCharging", ActuatorStateCheckers::isTorpedoCharging, { InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoCharged", ActuatorStateCheckers::isTorpedoCharged, { InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoFired", ActuatorStateCheckers::isTorpedoFired, { InputPort<int>("torpedo_state") });
 
-    factory.registerSimpleCondition("IsDropperReady", ActuatorStateCheckers::isDropperReady, { InputPort<int>("dropper_state") });
-    factory.registerSimpleCondition("IsDropperDropped", ActuatorStateCheckers::isDropperDropped, { InputPort<int>("dropper_state") });
+    factory->registerSimpleCondition("IsDropperReady", ActuatorStateCheckers::isDropperReady, { InputPort<int>("dropper_state") });
+    factory->registerSimpleCondition("IsDropperDropped", ActuatorStateCheckers::isDropperDropped, { InputPort<int>("dropper_state") });
 }
 
 BT::NodeStatus ActuatorStateCheckers::isClawUnknown(BT::TreeNode& node) {
@@ -44,6 +46,14 @@ BT::NodeStatus ActuatorStateCheckers::isClawOpen(BT::TreeNode& node) {
 
 BT::NodeStatus ActuatorStateCheckers::isClawClosed(BT::TreeNode& node) {
     return inputEquals(node, "claw_state", riptide_msgs2::msg::ActuatorStatus::CLAW_CLOSED);
+}
+
+BT::NodeStatus ActuatorStateCheckers::isTorpedoError(BT::TreeNode& node) {
+    return inputEquals(node, "torpedo_state", riptide_msgs2::msg::ActuatorStatus::TORPEDO_ERROR);
+}
+
+BT::NodeStatus ActuatorStateCheckers::isTorpedoCharging(BT::TreeNode& node) {
+    return inputEquals(node, "torpedo_state", riptide_msgs2::msg::ActuatorStatus::TORPEDO_CHARGING);
 }
 
 BT::NodeStatus ActuatorStateCheckers::isTorpedoCharged(BT::TreeNode& node) {

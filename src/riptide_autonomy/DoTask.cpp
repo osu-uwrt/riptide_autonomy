@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     /**
      * REGISTER NODES HERE
      */
+    factory.registerNodeType<RetryUntilSuccessfulOrTimeout>("RetryUntilSuccessfulOrTimeout");
     factory.registerNodeType<BigMoveState>("BigMoveState");
     factory.registerNodeType<FlattenCalculationState>("FlattenCalculationState");
     factory.registerNodeType<ToWorldFrameState>("ToWorldFrameState");
@@ -39,62 +40,11 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<WaitState>("WaitState");
     //your node type here...
 
-    /**
-     * CONDITIONS
-     */
-    factory.registerSimpleCondition("IsClawUnknown", ActuatorStateCheckers::isClawUnknown, { InputPort<int>("claw_state") });
-    factory.registerSimpleCondition("IsClawOpen", ActuatorStateCheckers::isClawOpen, { InputPort<int>("claw_state") });
-    factory.registerSimpleCondition("IsClawClosed", ActuatorStateCheckers::isClawClosed, { InputPort<int>("claw_state") });
+    //register simple actions
+    SimpleStates::registerSimpleActions(&factory);
 
-    factory.registerSimpleCondition("IsTorpedoCharged", ActuatorStateCheckers::isTorpedoCharged, { InputPort<int>("torpedo_state") });
-    factory.registerSimpleCondition("IsTorpedoFired", ActuatorStateCheckers::isTorpedoFired, { InputPort<int>("torpedo_state") });
-
-    factory.registerSimpleCondition("IsDropperReady", ActuatorStateCheckers::isDropperReady, { InputPort<int>("dropper_state") });
-    factory.registerSimpleCondition("IsDropperDropped", ActuatorStateCheckers::isDropperDropped, { InputPort<int>("dropper_state") });
-
-    /**
-     * SIMPLE ACTIONS
-     * TODO: move these to own class to declutter this file
-     */
-    //action to simply print whatever is passed to the port
-    factory.registerSimpleAction(
-        "Info", 
-        [] (BT::TreeNode& n) { //lambda that prints to info
-            RCLCPP_INFO(log, "%s", n.getInput<std::string>("message").value().c_str()); 
-            return NodeStatus::SUCCESS; 
-        },
-
-        { InputPort<std::string>("message") }
-    );
-
-    //action to print whatever is passed to the port to RCLCPP_ERROR
-    factory.registerSimpleAction(
-        "Error",
-        [] (BT::TreeNode& n) { //lambda that prints to error
-            RCLCPP_ERROR(log, "%s", n.getInput<std::string>("message").value().c_str());
-            return NodeStatus::SUCCESS;
-        },
-        
-        { InputPort<std::string>("message") }
-    );
-
-    factory.registerSimpleAction(
-        "ToString",
-        [] (BT::TreeNode& n) {
-            BT::Optional<double> doubleIn = n.getInput<double>("double_in");
-            BT::Optional<int> intIn = n.getInput<int>("int_in");
-
-            if(doubleIn.has_value()) {
-                n.setOutput<std::string>("str_out", std::to_string(doubleIn.value()));
-            } else if(intIn.has_value()) {
-                n.setOutput<std::string>("str_out", std::to_string(intIn.value()));
-            }
-
-            return NodeStatus::SUCCESS;
-        },
-
-        { InputPort<double>("double_in"), InputPort<int>("int_in"), OutputPort<std::string>("str_out") }
-    );
+    //register actuator conditions
+    ActuatorStateCheckers::registerConditions(&factory);
     
     //figure out where the tree is based on where the package is (in ~/osu-uwrt/riptide_software/src/riptide_autonomy). Start with home
     const char *home = std::getenv("HOME");

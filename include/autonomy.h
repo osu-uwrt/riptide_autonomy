@@ -87,6 +87,15 @@ double distance(geometry_msgs::msg::Vector3, geometry_msgs::msg::Vector3);
  */
 
 /**
+ * @brief Basic states that do not require a ROS node.
+ * These will be used for basic computations or prints to rclcpp.
+ */
+class SimpleStates {
+    public:
+    static void registerSimpleActions(BT::BehaviorTreeFactory *factory);
+};
+
+/**
  * @brief A BT SyncActionNode with an init() method that takes a ROS node as a parameter.
  * This class should be inherited by every state used by the robot to avoid creating a new 
  * ros node every time a state change happens.
@@ -99,6 +108,24 @@ class UWRTSyncActionNode : public SyncActionNode {
     static PortsList providedPorts();
     NodeStatus tick() override;
     virtual void init(rclcpp::Node::SharedPtr node) = 0;
+};
+
+/**
+ * @brief Class for a control node that retries its child until it times out or is successful.
+ */
+class RetryUntilSuccessfulOrTimeout : public BT::DecoratorNode {
+    public:
+    RetryUntilSuccessfulOrTimeout(const std::string& name, const NodeConfiguration& config)
+     : DecoratorNode(name, config) { };
+
+    static PortsList providedPorts() {
+        return {
+            InputPort<double>("num_seconds")
+        };
+    }
+
+    protected:
+    NodeStatus tick() override;
 };
 
 /**
@@ -732,7 +759,7 @@ class WaitState : public UWRTSyncActionNode { //TODO: Rename class to whatever y
 class ActuatorStateCheckers {
     public:
     //register states
-    static void registerConditions(BT::BehaviorTreeFactory factory);
+    static void registerConditions(BT::BehaviorTreeFactory *factory);
 
     //some claw states
     static BT::NodeStatus isClawUnknown(BT::TreeNode&);
@@ -740,6 +767,8 @@ class ActuatorStateCheckers {
     static BT::NodeStatus isClawClosed(BT::TreeNode&);
 
     //some torpedo states
+    static BT::NodeStatus isTorpedoError(BT::TreeNode&);
+    static BT::NodeStatus isTorpedoCharging(BT::TreeNode&);
     static BT::NodeStatus isTorpedoCharged(BT::TreeNode&);
     static BT::NodeStatus isTorpedoFired(BT::TreeNode&);
 
