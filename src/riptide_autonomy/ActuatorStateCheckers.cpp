@@ -23,6 +23,7 @@ BT::NodeStatus inputEquals(BT::TreeNode& node, std::string portName, int value) 
  * @param factory the factory to register the conditions with
  */
 void ActuatorStateCheckers::registerConditions(BT::BehaviorTreeFactory *factory) {
+    factory->registerSimpleCondition("IsClawError", ActuatorStateCheckers::isClawError, { InputPort<int>("claw_state") });
     factory->registerSimpleCondition("IsClawUnknown", ActuatorStateCheckers::isClawUnknown, { InputPort<int>("claw_state") });
     factory->registerSimpleCondition("IsClawOpen", ActuatorStateCheckers::isClawOpen, { InputPort<int>("claw_state") });
     factory->registerSimpleCondition("IsClawClosed", ActuatorStateCheckers::isClawClosed, { InputPort<int>("claw_state") });
@@ -32,8 +33,13 @@ void ActuatorStateCheckers::registerConditions(BT::BehaviorTreeFactory *factory)
     factory->registerSimpleCondition("IsTorpedoCharged", ActuatorStateCheckers::isTorpedoCharged, { InputPort<int>("torpedo_state") });
     factory->registerSimpleCondition("IsTorpedoFired", ActuatorStateCheckers::isTorpedoFired, { InputPort<int>("torpedo_state") });
 
+    factory->registerSimpleCondition("IsDropperError", ActuatorStateCheckers::isDropperError, { InputPort<int>("dropper_state") });
     factory->registerSimpleCondition("IsDropperReady", ActuatorStateCheckers::isDropperReady, { InputPort<int>("dropper_state") });
     factory->registerSimpleCondition("IsDropperDropped", ActuatorStateCheckers::isDropperDropped, { InputPort<int>("dropper_state") });
+}
+
+BT::NodeStatus ActuatorStateCheckers::isClawError(BT::TreeNode& node) {
+    return inputEquals(node, "claw_state", riptide_msgs2::msg::ActuatorStatus::CLAW_ERROR);
 }
 
 BT::NodeStatus ActuatorStateCheckers::isClawUnknown(BT::TreeNode& node) {
@@ -62,6 +68,10 @@ BT::NodeStatus ActuatorStateCheckers::isTorpedoCharged(BT::TreeNode& node) {
 
 BT::NodeStatus ActuatorStateCheckers::isTorpedoFired(BT::TreeNode& node) {
     return inputEquals(node, "torpedo_state", riptide_msgs2::msg::ActuatorStatus::TORPEDO_FIRED);
+}
+
+BT::NodeStatus ActuatorStateCheckers::isDropperError(BT::TreeNode& node) {
+    return inputEquals(node, "dropper_state", riptide_msgs2::msg::ActuatorStatus::DROPPER_ERROR);
 }
 
 BT::NodeStatus ActuatorStateCheckers::isDropperReady(BT::TreeNode& node) {

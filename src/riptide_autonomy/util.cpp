@@ -54,3 +54,49 @@ double distance(geometry_msgs::msg::Point point1, geometry_msgs::msg::Point poin
 double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 point2) {
     return distance(vector3ToPoint(point1), vector3ToPoint(point2));
 }
+
+template<typename T>
+bool getFromBlackboard(BT::TreeNode& n, std::string key, T *value) {
+    try {
+        if(n.config().blackboard.get()->get<T>(key, *value)) {
+            return true;
+        }
+    } catch (std::runtime_error const&) {
+        RCLCPP_ERROR(log, "Could not cast blackboard entry \"%s\" to the correct type.", key.c_str());
+    }
+
+    return false;
+}
+
+std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
+    std::string result = "";
+    int pos = 0;
+    while(str.find_first_of('{', pos) != std::string::npos) {
+        int lbpos = str.find_first_of("{", pos);
+        result += str.substr(pos, lbpos - pos); //add everything from pos up until the "{" to result
+
+        if(str.find_first_of("}", lbpos) != std::string::npos) {
+            int rbpos = str.find_first_of("}", lbpos);
+
+            std::string 
+                tokenWithBrackets = str.substr(lbpos, rbpos - lbpos + 1),
+                nameOfEntry = tokenWithBrackets.substr(1, tokenWithBrackets.length() - 2),
+                valueOfEntry;
+
+            //get the value of the entry
+            if(getFromBlackboard<std::string>(btNode, nameOfEntry, &valueOfEntry)) {
+                //if nameOfEntry exists, valueOfEntry was populated by the call above
+                result += valueOfEntry;
+            } else {
+                result += tokenWithBrackets; //put whole token in because it didn't lead anywhere
+            }
+
+            pos = rbpos + 1; //set position to after '}'
+        } else {
+            pos = lbpos + 1; //set position to after '{ (there is no '}')
+        }
+    }
+
+    result += str.substr(pos);
+    return result;
+}

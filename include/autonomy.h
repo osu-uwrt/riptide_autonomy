@@ -75,6 +75,21 @@ geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point);
 geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3);
 
 /**
+ * @brief Get a thing from the BT blackboard.
+ * 
+ * @return true if the operation succeeded, false otherwise.
+ */
+template<typename T>
+bool getFromBlackboard(BT::TreeNode&, std::string, T*);
+
+/**
+ * @brief Inserts blackboard entries, where applicable, into the given string.
+ * 
+ * @return std::string The string with the blackboard entries inserted
+ */
+std::string stringWithBlackboardEntries(std::string, BT::TreeNode&);
+
+/**
  * @brief Calculates the distance between two given points.
  * 
  * @return double The distance between point1 and point2.
@@ -762,6 +777,7 @@ class ActuatorStateCheckers {
     static void registerConditions(BT::BehaviorTreeFactory *factory);
 
     //some claw states
+    static BT::NodeStatus isClawError(BT::TreeNode&);
     static BT::NodeStatus isClawUnknown(BT::TreeNode&);
     static BT::NodeStatus isClawOpen(BT::TreeNode&);
     static BT::NodeStatus isClawClosed(BT::TreeNode&);
@@ -773,6 +789,7 @@ class ActuatorStateCheckers {
     static BT::NodeStatus isTorpedoFired(BT::TreeNode&);
 
     //some dropper states
+    static BT::NodeStatus isDropperError(BT::TreeNode&);
     static BT::NodeStatus isDropperReady(BT::TreeNode&);
     static BT::NodeStatus isDropperDropped(BT::TreeNode&);
 };

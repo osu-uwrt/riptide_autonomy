@@ -13,31 +13,33 @@
             <input_port name="reset_actuators"/>
         </Action>
         <Action ID="BigMoveState">
-            <input_port default="1" name="orientation_w">optional</input_port>
-            <input_port default="0" name="orientation_x">optional</input_port>
-            <input_port default="0" name="orientation_y">optional</input_port>
-            <input_port default="0" name="orientation_z">optional</input_port>
+            <input_port name="orientation_w" default="1">optional</input_port>
+            <input_port name="orientation_x" default="0">optional</input_port>
+            <input_port name="orientation_y" default="0">optional</input_port>
+            <input_port name="orientation_z" default="0">optional</input_port>
             <input_port name="v_pitch">optional</input_port>
             <input_port name="v_roll">optional</input_port>
             <input_port name="v_yaw">optional</input_port>
-            <input_port default="0" name="x">optional</input_port>
-            <input_port default="0" name="y">optional</input_port>
-            <input_port default="-1" name="z">optional</input_port>
+            <input_port name="x" default="0">optional</input_port>
+            <input_port name="y" default="0">optional</input_port>
+            <input_port name="z" default="-1">optional</input_port>
         </Action>
         <Action ID="Error">
             <input_port name="message">The message to print.</input_port>
         </Action>
-        <SubTree ID="Flatten"/>
         <Action ID="FlattenCalculationState">
-            <input_port default="-1" name="depth">Depth the robot sinks to. Required</input_port>
-            <output_port default="1" name="orientation_w"/>
-            <output_port default="0" name="orientation_x"/>
-            <output_port default="0" name="orientation_y"/>
-            <output_port default="0" name="orientation_z"/>
-            <output_port default="0" name="x"/>
-            <output_port default="0" name="y"/>
-            <output_port default="-1" name="z"/>
+            <input_port name="depth" default="-1">Depth the robot sinks to. Required</input_port>
+            <output_port name="orientation_w" default="1"/>
+            <output_port name="orientation_x" default="0"/>
+            <output_port name="orientation_y" default="0"/>
+            <output_port name="orientation_z" default="0"/>
+            <output_port name="x" default="0"/>
+            <output_port name="y" default="0"/>
+            <output_port name="z" default="-1"/>
         </Action>
+        <SubTree ID="GetActuatorStates">
+            <input_port name="__shared_blackboard" default="true">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+        </SubTree>
         <Action ID="GetActuatorStatus">
             <output_port name="claw_state"/>
             <output_port name="dropper1_state"/>
@@ -66,9 +68,23 @@
         <Condition ID="IsTorpedoCharged">
             <input_port name="torpedo_state"/>
         </Condition>
+        <SubTree ID="IsTorpedoChargedOrError">
+            <input_port name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="torpedo_id"/>
+            <input_port name="torpedo_state"/>
+        </SubTree>
+        <Condition ID="IsTorpedoCharging">
+            <input_port name="torpedo_state"/>
+        </Condition>
+        <Condition ID="IsTorpedoError">
+            <input_port name="torpedo_state"/>
+        </Condition>
         <Condition ID="IsTorpedoFired">
             <input_port name="torpedo_state"/>
         </Condition>
+        <Decorator ID="RetryUntilSuccessfulOrTimeout">
+            <input_port name="num_seconds">number of seconds until abandonment.</input_port>
+        </Decorator>
         <Action ID="SearchState">
             <input_port name="frame">The frame to search for</input_port>
             <input_port name="target_error">The goal amount of error for the state to succeed.</input_port>
@@ -98,10 +114,10 @@
             <output_port name="world_z"/>
         </Action>
         <Action ID="VelocityState">
-            <input_port default="1" name="time">Time to drive for. Required</input_port>
-            <input_port default="1" name="x_velocity">Required</input_port>
-            <input_port default="0" name="y_velocity">Required</input_port>
-            <input_port default="0" name="z_velocity">Required</input_port>
+            <input_port name="time" default="1">Time to drive for. Required</input_port>
+            <input_port name="x_velocity" default="1">Required</input_port>
+            <input_port name="y_velocity" default="0">Required</input_port>
+            <input_port name="z_velocity" default="0">Required</input_port>
         </Action>
         <Action ID="WaitState">
             <input_port name="seconds">number of seconds to wait.</input_port>

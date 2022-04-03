@@ -12,7 +12,8 @@ void SimpleStates::registerSimpleActions(BT::BehaviorTreeFactory *factory) {
     factory->registerSimpleAction(
         "Info", 
         [] (BT::TreeNode& n) { //lambda that prints to info
-            RCLCPP_INFO(log, "%s", n.getInput<std::string>("message").value().c_str()); 
+            std::string message = n.getInput<std::string>("message").value();
+            RCLCPP_INFO(log, "%s", stringWithBlackboardEntries(message, n).c_str()); 
             return NodeStatus::SUCCESS; 
         },
 
@@ -27,7 +28,8 @@ void SimpleStates::registerSimpleActions(BT::BehaviorTreeFactory *factory) {
     factory->registerSimpleAction(
         "Error",
         [] (BT::TreeNode& n) { //lambda that prints to error
-            RCLCPP_ERROR(log, "%s", n.getInput<std::string>("message").value().c_str());
+            std::string message = n.getInput<std::string>("message").value();
+            RCLCPP_ERROR(log, "%s", stringWithBlackboardEntries(message, n).c_str());
             return NodeStatus::SUCCESS;
         },
         
@@ -44,10 +46,10 @@ void SimpleStates::registerSimpleActions(BT::BehaviorTreeFactory *factory) {
         [] (BT::TreeNode& n) {
             BT::Optional<double> doubleIn = n.getInput<double>("double_in");
             BT::Optional<int> intIn = n.getInput<int>("int_in");
-
             if(doubleIn.has_value()) {
                 n.setOutput<std::string>("str_out", std::to_string(doubleIn.value()));
             } else if(intIn.has_value()) {
+                RCLCPP_INFO(log, "got intin as %i.", intIn.value());
                 n.setOutput<std::string>("str_out", std::to_string(intIn.value()));
             }
 
