@@ -1,11 +1,10 @@
 #! /usr/bin/env python3
 
 import cv2
-import sys
 import numpy as np
 import math
 
-DEBUG = True
+DEBUG = False
 
 def dist(pt1, pt2):
     return math.sqrt((pt1[0] * pt1[0]) + (pt2[0] * pt2[0]))
@@ -30,24 +29,10 @@ def numSegments(contour):
         if dist(prev, curr) > 250:
             longSegments.append([prev, curr])
             
-    #TODO figure out whether to delete or keep
-    # longSegments.append(longSegments[0])
-    
-    # for i in range(1, len(longSegments)):
-    #     seg1 = longSegments[i-1]
-    #     seg2 = longSegments[i]
-        
-    #     ang1 = angle(seg1[0], seg1[1])
-    #     ang2 = angle(seg2[0], seg2[1])
-                
-    #     if abs(math.degrees(ang1 - ang2)) > 35:
-    #         count += 1
-    
-    # return count
     return len(longSegments)
     
 
-def isPotentialTarget(contour):
+def fitsTargetShape(contour):
     (x, y), (w, h), a = cv2.minAreaRect(contour)
     
     #first test: is the object big enough?
@@ -64,23 +49,41 @@ def isPotentialTarget(contour):
             if abs(1 - (w / h)) < 0.3:
                 #fourth test: does it have the proper number of sides? TODO: figure out if this test is reliable
                 corners = numSegments(contour)
-                if corners == 10 or corners == 5 or corners == 8 or corners == 4:
+                if corners == 10 or corners == 8 or corners == 5 or corners == 4:
                     return True
 
     return False
 
 
-def getTargets(contours, hierarchy, i=0):
+def isTarget(contour, imgSize):
+    x, y, w, h = cv2.boundingRect(contour)
+    if w * h > 5000:
+        #create blank image to test contour on
+        canvas = np.zeros(shape=(imgSize[0], imgSize[1], 1), dtype="uint8")
+        
+        #redraw contour thicker to make it more perfect and fill any holes
+        canvas = cv2.drawContours(canvas, [contour], 0, (255), 15)
+        
+        postContours, _ = cv2.findContours(canvas, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        for postContour in postContours:
+            if fitsTargetShape(postContour):
+                return True
+        
+    return False
+
+
+def getTargets(contours, hierarchy, imgSize, i=0):
     targets = []
     contour = contours[i]
-    
-    if isPotentialTarget(contour) and hierarchy[i][2] > -1:
-        targets.append(contour)
+        
+    if isTarget(contour, imgSize):
+            targets.append(contour)
     elif hierarchy[i][2] > -1: #search children if the current contour is not a target
-        targets += getTargets(contours, hierarchy, hierarchy[i][2])
+        targets += getTargets(contours, hierarchy, imgSize, hierarchy[i][2])
     
     if hierarchy[i][0] > -1: #go to next contour
-        targets += getTargets(contours, hierarchy, hierarchy[i][0])
+        targets += getTargets(contours, hierarchy, imgSize, hierarchy[i][0])
         
     return targets
 
@@ -93,41 +96,23 @@ def processImage(img):
     edges = cv2.Canny(blurred, 15, 160)
     edges = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_RECT, (3,3)))
     
-    contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    hierarchy = hierarchy[0]
+    targets = getTargets(contours, hierarchy, (img.shape[0], img.shape[1]))
     
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
-        if w * h > 5000:
-            #create blank image to test contour on
-            canvas = np.zeros(shape=(img.shape[0], img.shape[1], 1), dtype="uint8")
-            canvas = cv2.drawContours(canvas, [contour], 0, (255), 5)
-            
-            postContours, _ = cv2.findContours(canvas, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            for postContour in postContours:
-                if isPotentialTarget(postContour):
-                    holes.append(postContour)
-            
-            #TODO: remove temporary debug code
-            # cv2.imshow("canvas", canvas)
-            # cv2.waitKey()
+    cv2.drawContours(out, targets, -1, (0, 0, 255), 2)
+    for target in targets:
+        x, y, w, h = cv2.boundingRect(target)
+        holes.append([x, y, w, h])
+        cv2.circle(out, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
     
     #print good contours on output image
     if DEBUG:
-        cv2.drawContours(out, holes, -1, (255, 0, 0))
-        for contour in holes:
-            x, y, w, h = cv2.boundingRect(contour)
+        for [x, y, w, h] in holes:
             cX = int(x + (w/2))
             cY = int(y + (h/2))
             
             cv2.circle(out, (cX, cY), 2, (0, 255, 0), 2)
-            
-            #draw all corners that approxpolydp could find?
-            arclength = cv2.arcLength(contour, True)
-            corners = cv2.approxPolyDP(contour, 0.04 * arclength, True)
-            
-            for corner in corners:
-                cv2.circle(out, (corner[0][0], corner[0][1]), 2, (255, 0, 0), 2)
         
         cv2.imshow("image", out)
         cv2.imshow("edges", edges)
@@ -136,17 +121,15 @@ def processImage(img):
     return holes
 
 
-def main():
+def test():
     for t in ["gman", "bootlegger"]:
         for i in range(1, 6):
             name = "testimages/" + t + "_" + str(i) + ".png"
             img = cv2.imread(name)
             holes = processImage(img)
-            
-            print(holes)
-            
+                        
             
 if __name__ == '__main__': #start here
-    sys.setrecursionlimit(2500) #this is needed because getTargets() uses some monster recursion to go through the contour tree
-    main()
+    # sys.setrecursionlimit(2500) 
+    test()
     

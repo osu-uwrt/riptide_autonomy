@@ -45,7 +45,7 @@ NodeStatus SearchState::tick() {
     geometry_msgs::msg::Pose relativePose; //Pose in the frame of the object to find
 
     //Get one foot infront of the object, facing it
-    relativePose.position.x = 0;
+    relativePose.position.x = 1;
     relativePose.position.y = 0;
     relativePose.position.z = 0;
     relativePose.orientation.x = 0;
@@ -72,6 +72,7 @@ NodeStatus SearchState::tick() {
     while(sunnyDay){
         if(rosnode->now() - begin >= rclcpp::Duration::from_seconds(update_sec)){
             //Get '1 foot infront of object' translated into the new frame of the new guess
+            RCLCPP_INFO(log, "relative pos: %f, %f, %f. Transform: %f, %f, %f", relativePose.position.x, relativePose.position.y, relativePose.position.z, transform.transform.translation.x, transform.transform.translation.y, transform.transform.translation.z);
             worldGuessPos = doTransform(relativePose, transform);
 
             RCLCPP_INFO(log, "Current Error: %f", guessError);

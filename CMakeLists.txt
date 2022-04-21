@@ -7,7 +7,9 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -22,7 +24,7 @@ include_directories("include")
 include_directories($(rclcpp_INCLUDE_DIRS))
 
 #
-#
+# autonomy library
 # PUT YOUR STATE FILES HERE!!
 #
 #
@@ -43,6 +45,7 @@ add_library(autonomy STATIC
   src/riptide_autonomy/WaitState.cpp
 )
 
+#deps
 ament_target_dependencies(autonomy 
   rclcpp
   geometry_msgs 
@@ -56,15 +59,28 @@ ament_target_dependencies(autonomy
   tf2_geometry_msgs
 )
 
+#add and link doTask executable
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
 target_link_libraries(doTask autonomy ${colcon_LIBRARIES})
 
+#install C++ stuff
 install(TARGETS
   doTask
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
+
+# Install Python executables
+install(PROGRAMS
+  src/riptide_autonomy/actions/AlignTorpedoAction.py 
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY 
+  src/riptide_autonomy/actions/utils
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -54,7 +54,7 @@ const std::string
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose, geometry_msgs::msg::TransformStamped);
 
 /**
- * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles.
+ * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles in radians.
  * 
  * @return geometry_msgs::msg::Vector3 The orientation in roll pitch yaw.
  */

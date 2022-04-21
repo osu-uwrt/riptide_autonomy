@@ -8,7 +8,10 @@
   <license>TODO: License declaration</license>
   <author>Brach Knutson</author>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>rclcpp</depend>
+  <depend>rclpy</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>riptide_msgs2</depend>

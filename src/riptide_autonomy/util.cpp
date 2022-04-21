@@ -3,12 +3,21 @@
 
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry_msgs::msg::TransformStamped transform) {
     geometry_msgs::msg::Pose result;
+
+    //rotate the position based on the transform rotation to the object
+    double yaw = toRPY(transform.transform.rotation).z;
     
+    geometry_msgs::msg::Vector3 newRelative;
+    newRelative.x = relative.position.x * cos(yaw) - relative.position.y * sin(yaw);
+    newRelative.y = relative.position.x * sin(yaw) + relative.position.y * cos(yaw);
+    
+    //translate point to new frame
     geometry_msgs::msg::Vector3 translation = transform.transform.translation;
-    result.position.x = relative.position.x + translation.x;
-    result.position.y = relative.position.y + translation.y;
+    result.position.x = newRelative.x + translation.x;
+    result.position.y = newRelative.y + translation.y;
     result.position.z = relative.position.z + translation.z;
 
+    //transform the orientation quaternions
     tf2::Quaternion transformQuat;
     tf2::fromMsg(transform.transform.rotation, transformQuat);
 
