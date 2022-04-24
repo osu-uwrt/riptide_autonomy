@@ -111,6 +111,17 @@ class SimpleStates {
 };
 
 /**
+ * @brief Basic conditions that do not require a ROS node.
+ * Used for basic computations that can be checked without using a publisher or subscriber.
+ * 
+ * TODO: move ActuatorStateCheckers here
+ */
+class SimpleConditions {
+    public:
+    static void registerConditions(BT::BehaviorTreeFactory *factory);
+};
+
+/**
  * @brief A BT SyncActionNode with an init() method that takes a ROS node as a parameter.
  * This class should be inherited by every state used by the robot to avoid creating a new 
  * ros node every time a state change happens.
@@ -787,6 +798,7 @@ class ActuatorStateCheckers {
     static BT::NodeStatus isTorpedoCharging(BT::TreeNode&);
     static BT::NodeStatus isTorpedoCharged(BT::TreeNode&);
     static BT::NodeStatus isTorpedoFired(BT::TreeNode&);
+    static BT::NodeStatus isTorpedoDisarmed(BT::TreeNode&);
 
     //some dropper states
     static BT::NodeStatus isDropperError(BT::TreeNode&);

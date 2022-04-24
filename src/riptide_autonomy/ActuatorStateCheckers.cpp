@@ -32,6 +32,7 @@ void ActuatorStateCheckers::registerConditions(BT::BehaviorTreeFactory *factory)
     factory->registerSimpleCondition("IsTorpedoCharging", ActuatorStateCheckers::isTorpedoCharging, { InputPort<int>("torpedo_state") });
     factory->registerSimpleCondition("IsTorpedoCharged", ActuatorStateCheckers::isTorpedoCharged, { InputPort<int>("torpedo_state") });
     factory->registerSimpleCondition("IsTorpedoFired", ActuatorStateCheckers::isTorpedoFired, { InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoDisarmed", ActuatorStateCheckers::isTorpedoDisarmed, { InputPort<int>("torpedo_state") });
 
     factory->registerSimpleCondition("IsDropperError", ActuatorStateCheckers::isDropperError, { InputPort<int>("dropper_state") });
     factory->registerSimpleCondition("IsDropperReady", ActuatorStateCheckers::isDropperReady, { InputPort<int>("dropper_state") });
@@ -68,6 +69,10 @@ BT::NodeStatus ActuatorStateCheckers::isTorpedoCharged(BT::TreeNode& node) {
 
 BT::NodeStatus ActuatorStateCheckers::isTorpedoFired(BT::TreeNode& node) {
     return inputEquals(node, "torpedo_state", riptide_msgs2::msg::ActuatorStatus::TORPEDO_FIRED);
+}
+
+BT::NodeStatus ActuatorStateCheckers::isTorpedoDisarmed(BT::TreeNode& node) {
+    return inputEquals(node, "torpedo_state", riptide_msgs2::msg::ActuatorStatus::TORPEDO_DISARMED);
 }
 
 BT::NodeStatus ActuatorStateCheckers::isDropperError(BT::TreeNode& node) {
