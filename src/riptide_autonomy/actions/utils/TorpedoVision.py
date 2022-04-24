@@ -1,10 +1,11 @@
 #! /usr/bin/env python3
 
 import cv2
+from matplotlib.pyplot import close
 import numpy as np
 import math
 
-DEBUG = False
+DEBUG = True
 
 def dist(pt1, pt2):
     return math.sqrt((pt1[0] * pt1[0]) + (pt2[0] * pt2[0]))
@@ -49,6 +50,10 @@ def fitsTargetShape(contour):
             if abs(1 - (w / h)) < 0.3:
                 #fourth test: does it have the proper number of sides? TODO: figure out if this test is reliable
                 corners = numSegments(contour)
+                
+                # 10 or 5 corners - star
+                # 8 corners - circle
+                # 4 corners - trapezoid
                 if corners == 10 or corners == 8 or corners == 5 or corners == 4:
                     return True
 
@@ -78,7 +83,7 @@ def getTargets(contours, hierarchy, imgSize, i=0):
     contour = contours[i]
         
     if isTarget(contour, imgSize):
-            targets.append(contour)
+        targets.append(contour)
     elif hierarchy[i][2] > -1: #search children if the current contour is not a target
         targets += getTargets(contours, hierarchy, imgSize, hierarchy[i][2])
     
@@ -88,18 +93,21 @@ def getTargets(contours, hierarchy, imgSize, i=0):
     return targets
 
 
-def processImage(img):
+def processImage(img: np.ndarray):
     out = img.copy()
-    holes = [] #array composed of contours that represent holes in the props
-    
+    holes = [] #array composed of contours that represent holes in the props            
+ 
     blurred = cv2.blur(img, (5,5))
     edges = cv2.Canny(blurred, 15, 160)
     edges = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_RECT, (3,3)))
     
     contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     hierarchy = hierarchy[0]
-    targets = getTargets(contours, hierarchy, (img.shape[0], img.shape[1]))
     
+    #look for potential targets
+    targets = getTargets(contours, hierarchy, (img.shape[0], img.shape[1]))
+        
+    #draw target contours on output image
     cv2.drawContours(out, targets, -1, (0, 0, 255), 2)
     for target in targets:
         x, y, w, h = cv2.boundingRect(target)
@@ -118,7 +126,7 @@ def processImage(img):
         cv2.imshow("edges", edges)
         cv2.waitKey()
     
-    return holes
+    return targets
 
 
 def test():
