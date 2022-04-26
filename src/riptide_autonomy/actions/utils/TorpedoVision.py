@@ -5,9 +5,9 @@ from matplotlib.pyplot import close
 import numpy as np
 import math
 
-DEBUG = True
+DEBUG = False
 
-def dist(pt1, pt2):
+def dist(pt1, pt2): #TODO: this is wrong. get rid of it or fix
     return math.sqrt((pt1[0] * pt1[0]) + (pt2[0] * pt2[0]))
 
 

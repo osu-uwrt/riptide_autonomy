@@ -28,38 +28,52 @@
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="id" value="1"/>
-            <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="id"/>
-            <Action ID="Info" message="Tree done."/>
+            <Action ID="Info" message="Begin BT"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="2" value="2"/>
+            <SubTree ID="ArmTorpedos"/>
+            <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="1"/>
+            <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="2"/>
+            <SubTree ID="DisarmTorpedos"/>
+            <Action ID="Info" message="End BT"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="DisarmTorpedos">
-        <Fallback>
-            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
-                <Sequence>
-                    <Action ID="ActuateState" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="1" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                    <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                    <Fallback>
-                        <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo1}"/>
-                        <Condition ID="IsTorpedoError" torpedo_state="{torpedo1}"/>
-                    </Fallback>
-                    <Fallback>
-                        <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo2}"/>
-                        <Condition ID="IsTorpedoError" torpedo_state="{torpedo2}"/>
-                    </Fallback>
-                </Sequence>
-            </Decorator>
-            <ForceFailure>
+        <Sequence>
+            <Action ID="Info" message="Disarming Torpedos."/>
+            <Fallback>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
+                    <Sequence>
+                        <Action ID="ActuateState" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="1" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
+                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
+                        <Fallback>
+                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo1_state}"/>
+                            <Condition ID="IsTorpedoError" torpedo_state="{torpedo1_state}"/>
+                        </Fallback>
+                        <Fallback>
+                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo2_state}"/>
+                            <Condition ID="IsTorpedoError" torpedo_state="{torpedo2_state}"/>
+                        </Fallback>
+                    </Sequence>
+                </Decorator>
                 <Action ID="Error" message="Failed to disarm torpedos!"/>
-            </ForceFailure>
-        </Fallback>
+            </Fallback>
+            <Action ID="Info" message="Disarmed torpedos."/>
+        </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="FireTorpedo">
         <Fallback>
             <Sequence>
                 <Action ID="Info" message="Attempting to fire torpedo {torpedo_id}"/>
+                <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
+                <Inverter>
+                    <Sequence>
+                        <Condition ID="IsTorpedoFired" torpedo_state="{torpedo_state}"/>
+                        <Action ID="Error" message="Torpedo {torpedo_id} is already fired!"/>
+                    </Sequence>
+                </Inverter>
                 <SubTree ID="WaitForTorpedoCharged" __shared_blackboard="false" torpedo_id="torpedo_id"/>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
                     <Sequence name="Attempt to fire torpedo">
@@ -75,18 +89,19 @@
                             <Condition ID="IsTorpedoFired" torpedo_state="{torpedo_state}"/>
                             <Sequence>
                                 <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
-                                <ForceFailure>
-                                    <Action ID="Error" message="Torpedo {torpedo_id} is in an error state!"/>
-                                </ForceFailure>
+                                <Action ID="Error" message="Torpedo {torpedo_id} is in an error state!"/>
                             </Sequence>
                         </Fallback>
                     </Sequence>
                 </Decorator>
-                <Action ID="Info" message="Successfully fired torpedo {torpedo_id}"/>
+                <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
+                <IfThenElse>
+                    <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
+                    <Action ID="Error" message="Failed to fire torpedo {torpedo_id}!"/>
+                    <Action ID="Info" message="Successfully fired torpedo {torpedo_id}"/>
+                </IfThenElse>
             </Sequence>
-            <ForceFailure>
-                <Action ID="Error" message="Failed to fire torpedo {torpedo_id}!"/>
-            </ForceFailure>
+            <Action ID="Error" message="Failed to fire torpedo {torpedo_id}!"/>
         </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
@@ -111,6 +126,12 @@
                 <SetBlackboard name="choose torpedo 1" output_key="torpedo_state" value="{torpedo1_state}"/>
                 <SetBlackboard name="choose torpedo 2" output_key="torpedo_state" value="{torpedo2_state}"/>
             </IfThenElse>
+            <ForceSuccess>
+                <Sequence>
+                    <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
+                    <Action ID="Error" message="Torpedo {torpedo_id} is in an error state!"/>
+                </Sequence>
+            </ForceSuccess>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->

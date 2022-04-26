@@ -25,38 +25,10 @@
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
-        <Fallback>
-            <Sequence>
-                <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                <Fallback>
-                    <Condition ID="IsTorpedoCharged" torpedo_state="{torpedo2_state}"/>
-                    <ForceFailure>
-                        <Action ID="Error" message="Torpedo 2 must be charged in order to fire it."/>
-                    </ForceFailure>
-                </Fallback>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
-                    <Sequence>
-                        <Action ID="WaitState" seconds="1"/>
-                        <Action ID="Info" message="Attempting to fire torpedo 2..."/>
-                        <Action ID="ActuateState" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators=""/>
-                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                        <Fallback>
-                            <Inverter>
-                                <Condition ID="IsTorpedoError" torpedo_state="{torpedo2_state}"/>
-                            </Inverter>
-                            <ForceFailure>
-                                <Action ID="Error" message="Torpedo 2 is in an error state!"/>
-                            </ForceFailure>
-                        </Fallback>
-                        <Condition ID="IsTorpedoFired" torpedo_state="{torpedo2_state}"/>
-                        <Action ID="Info" message="Torpedo 2 successfully fired."/>
-                    </Sequence>
-                </Decorator>
-            </Sequence>
-            <ForceFailure>
-                <Action ID="Error" message="Failed to fire torpedo 2!"/>
-            </ForceFailure>
-        </Fallback>
+        <Sequence>
+            <SubTree ID="Drop1"/>
+            <SubTree ID="Drop2"/>
+        </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="CloseClaw">
@@ -109,9 +81,7 @@
                 </Decorator>
                 <Action ID="Info" message="Successfully dropped dropper 1."/>
             </Sequence>
-            <ForceFailure>
-                <Action ID="Error" message="Failed to drop dropper 1!"/>
-            </ForceFailure>
+            <Action ID="Error" message="Failed to drop dropper 1!"/>
         </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
@@ -137,9 +107,7 @@
                 </Decorator>
                 <Action ID="Info" message="Successfully dropped dropper 2."/>
             </Sequence>
-            <ForceFailure>
-                <Action ID="Error" message="Failed to drop dropper 2!"/>
-            </ForceFailure>
+            <Action ID="Error" message="Failed to drop dropper 2!"/>
         </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
@@ -233,6 +201,41 @@
             </Sequence>
             <ForceFailure name="Forces subtree to fail">
                 <Action ID="Error" message="Failed to open claw!"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="idk">
+        <Fallback>
+            <Sequence>
+                <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
+                <Fallback>
+                    <Condition ID="IsTorpedoCharged" torpedo_state="{torpedo2_state}"/>
+                    <ForceFailure>
+                        <Action ID="Error" message="Torpedo 2 must be charged in order to fire it."/>
+                    </ForceFailure>
+                </Fallback>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
+                    <Sequence>
+                        <Action ID="WaitState" seconds="1"/>
+                        <Action ID="Info" message="Attempting to fire torpedo 2..."/>
+                        <Action ID="ActuateState" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators=""/>
+                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
+                        <Fallback>
+                            <Inverter>
+                                <Condition ID="IsTorpedoError" torpedo_state="{torpedo2_state}"/>
+                            </Inverter>
+                            <ForceFailure>
+                                <Action ID="Error" message="Torpedo 2 is in an error state!"/>
+                            </ForceFailure>
+                        </Fallback>
+                        <Condition ID="IsTorpedoFired" torpedo_state="{torpedo2_state}"/>
+                        <Action ID="Info" message="Torpedo 2 successfully fired."/>
+                    </Sequence>
+                </Decorator>
+            </Sequence>
+            <ForceFailure>
+                <Action ID="Error" message="Failed to fire torpedo 2!"/>
             </ForceFailure>
         </Fallback>
     </BehaviorTree>
@@ -377,6 +380,7 @@
         <Action ID="WaitState">
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
+        <SubTree ID="idk"/>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>

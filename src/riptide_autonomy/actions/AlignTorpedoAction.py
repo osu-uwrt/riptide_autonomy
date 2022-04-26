@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
 
-from ast import AsyncFunctionDef
 from math import cos, pi, sin, sqrt, tan
 from queue import Queue
 
 import cv2
 import numpy as np
 import rclpy
+import rclpy.time
 from rclpy.action import ActionServer
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.qos import qos_profile_system_default
@@ -20,7 +20,9 @@ from geometry_msgs.msg import Vector3
 from geometry_msgs.msg import Quaternion
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
+from tf2_ros import Time
 from tf_transformations import euler_from_quaternion
+from statistics import pstdev
 
 import utils.TorpedoVision as TorpedoVision
 
@@ -31,8 +33,8 @@ IMAGE_TOPIC = "stereo/left/image_color/compressed"
 # PROP_SIZE_y = 10 #also meters
 
 ROBOT_NAME = "tempest"
-CAMERA_FOV_X = 90 #degrees
-CAMERA_FOV_Y = 45 #degrees
+CAMERA_FOV_X = 81.25 #degrees
+CAMERA_FOV_Y = 45.7 #degrees
 
 class AlignTorpedosService(Node):
     
@@ -71,7 +73,7 @@ class AlignTorpedosService(Node):
         dist = 99999999999
         closest = None
         for (x, y, w, h) in rects:
-            d = TorpedoVision.dist((x, y), target)
+            d = self.dist((x, y), target)
             if d < dist:
                 dist = d
                 closest = (x, y, w, h)
@@ -79,14 +81,20 @@ class AlignTorpedosService(Node):
         return closest
     
     
-    def averageOfTuples(self, points):
-        res = [0] * len(points[0]) #array with same size as points
+    def averageOfTuples(self, points, tupleSize):
+        if len(points) == 0:
+            return [0.0] * tupleSize
+               
+        res = [0.0] * tupleSize
         for point in points:
             for i in range(0, len(point)):
                 res[i] += point[i]
                 
-        for comp in res:
-            comp /= len(points)
+        for i in range(0, len(res)):
+            res[i] /= len(points)
+        
+        # for comp in res:
+        #     comp /= len(res)
             
         return res
     
@@ -97,10 +105,31 @@ class AlignTorpedosService(Node):
         cY = y + (h/2)
         
         return (cX, cY)
+    
+    
+    def filterPoints(self, points, tupleSize):
+        if len(points) == 0:
+            return points
+        
+        avg = self.averageOfTuples(points, tupleSize)
+        
+        #get distance of each point from average point
+        dists = [self.dist(avg, pt) for pt in points]
+        avgDist = sum(dists) / len(dists)
+        stdev = pstdev(dists) #standard deviation
+        
+        # filter out all points that are more than a certain number of stdevs away from avg
+        goodPts = []
+        for i in range(0, len(dists)):
+            if abs(dists[i] - avgDist) < (stdev * 1.3):
+                goodPts.append(points[i])
+        
+        return goodPts
+        
             
     
     #TODO: maybe put a link to the picture of the math I did to get the formula for this
-    def pixelsToMeters(self, px, imgLen, fov):
+    def pixelsToMeters(self, px, imgLen, fov, dist):
         """Converts a measure of pixels in the direction of an axis (x, y) to meters.
 
         Args:
@@ -111,14 +140,29 @@ class AlignTorpedosService(Node):
         Returns:
             double: px converted to meters
         """
-        
+        #TODO: delete comments
         fovDeg = fov * (pi / 180.0)
-        return px / tan((px * imgLen) / fovDeg)
+        # print("px: " + str(px))
+        # print("fovdeg: " + str(fovDeg))
+        # print("imagelen: " + str(imgLen))
+        # print("px deg: " + str((px / imgLen) / fovDeg))
+        distPx = px / tan((px / imgLen) / fovDeg)
+        pixelsPerMeter = distPx / dist
+        # print("pix/m: " + str(pixelsPerMeter))
+        # print("m: " + str(px/pixelsPerMeter))
+        return px / pixelsPerMeter
     
     #basically this method should be the exact python version of doTransform() in util.cpp but without transforming the quaternion and returning a pose
     def transformPosition(self, coords, transform: TransformStamped) -> Vector3:
         #rotate point with transform orientation
-        rpy = euler_from_quaternion(transform.transform.rotation)
+        
+        rpy = euler_from_quaternion([
+            transform.transform.rotation.x,
+            transform.transform.rotation.y,
+            transform.transform.rotation.z,
+            transform.transform.rotation.w
+        ])
+        
         yaw = rpy[2]
         
         x = coords[0] * cos(yaw) - coords[1] * sin(yaw)
@@ -143,28 +187,27 @@ class AlignTorpedosService(Node):
         cY -= imgCenY
         
         #convert x and y to meters. This (with the distance) will be the location of the object in camera frame.
-        xMeters = self.pixelsToMeters(cX, imgShape[0], CAMERA_FOV_X)
-        yMeters = self.pixelsToMeters(cY, imgShape[1], CAMERA_FOV_Y)
+        xMeters = self.pixelsToMeters(cX, imgShape[0], CAMERA_FOV_X, distance)
+        yMeters = self.pixelsToMeters(cY, imgShape[1], CAMERA_FOV_Y, distance)
         
         #now all we need to do is convert that to world frame
         try:
             toFrame = "world"
             fromFrame = ROBOT_NAME + "/stereo/left_link"
-            now = self.get_clock().now()
             
             cameraToWorld = self.tfBuffer.lookup_transform(
                 toFrame,
                 fromFrame,
-                now
+                rclpy.time.Time()
             )
             
             #transform point (distance, xMeters, yMeters). distance is first because it is forwards/backwards, x is second because its left/right, y third because up/down
             globalCoords = self.transformPosition((distance, xMeters, yMeters), cameraToWorld)
-            return globalCoords
+            return [globalCoords.x, globalCoords.y, globalCoords.z]
         except TransformException as ex:
             self.get_logger().warn("Could not transform {} to {}! {}".format(toFrame, fromFrame, ex))
         
-        return (-1000, -1000, -1000) # error coords error coords
+        return (-1000.0, -1000.0, -1000.0) # error coords error coords
         
         
     #
@@ -187,7 +230,6 @@ class AlignTorpedosService(Node):
     def alignTorpedosCallback(self, goalHandle):
         self.get_logger().info("Starting align torpedos action.")
         distance = goalHandle.request.distance
-        torpedo = goalHandle.request.torpedo
         timeout = goalHandle.request.timeoutms
         
         startTime = self.get_clock().now()
@@ -202,40 +244,71 @@ class AlignTorpedosService(Node):
                         
             if img is not None:                
                 holes = TorpedoVision.processImage(img)
+                rects = [cv2.boundingRect(hole) for hole in holes]
                 
                 #find top leftmost and bottom rightmost point
-                topLeftmost = self.closestToPoint(holes, (0, 0))
-                bottomRightmost = self.closestToPoint(holes, (img.shape[0], img.shape[1]))
+                topLeftmost = self.closestToPoint(rects, (0, 0))
+                bottomRightmost = self.closestToPoint(rects, (img.shape[1], img.shape[0]))
+                                
+                # topLeftmostWorld = self.imageToGlobalCoordinates(self.centerOfRect(topLeftmost), distance, img.shape)
+                # bottomRightmostWorld = self.imageToGlobalCoordinates(self.centerOfRect(bottomRightmost), distance, img.shape)
                 
-                topLeftmostWorld = self.imageToGlobalCoordinates(self.centerOfRect(topLeftmost), distance, img.shape)
-                bottomRightmostWorld = self.imageToGlobalCoordinates(self.centerOfRect(bottomRightmost), distance, img.shape)
+                tlX = self.pixelsToMeters(topLeftmost[0], img.shape[1], CAMERA_FOV_X, distance)
+                tlY = self.pixelsToMeters(topLeftmost[1], img.shape[0], CAMERA_FOV_Y, distance)
                 
+                brX = self.pixelsToMeters(bottomRightmost[0], img.shape[1], CAMERA_FOV_X, distance)
+                brY = self.pixelsToMeters(bottomRightmost[1], img.shape[0], CAMERA_FOV_Y, distance)
+                
+                topLeftmostWorld = [distance, tlX, tlY]
+                bottomRightmostWorld = [distance, brX, brY]
+                
+                print("tlmw: " + str(topLeftmostWorld))
+                                
                 #put each coordinate in its respective list
                 if topLeftmost != bottomRightmost:
                     upperCoords.append(topLeftmostWorld)
                     lowerCoords.append(bottomRightmostWorld)
                 else: #since they are equal, put it in the list that it is closest to
-                    upperAvg = self.averageOfTuples(upperCoords)
-                    lowerAvg = self.averageOfTuples(lowerCoords)
+                    upperAvg = self.averageOfTuples(upperCoords, 3)
+                    lowerAvg = self.averageOfTuples(lowerCoords, 3)
                     
                     if self.dist(upperAvg, topLeftmostWorld) < self.dist(lowerAvg, topLeftmostWorld):
                         upperCoords.append(topLeftmostWorld)
                     else:
                         lowerCoords.append(topLeftmostWorld)
-                                
-                for [x, y, w, h] in holes:
+                        
+                for [x, y, w, h] in rects:
                     cv2.circle(img, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
                     
                 cv2.imshow("result", img)
                 cv2.waitKey(1)
         
         #analyze the target coordinates to figure out where the targets are in global space and which one to go to
-        upperPoint = self.averageOfTuples(upperCoords)
-        lowerPoint = self.averageOfTuples(lowerCoords)
+        print("num upper coords: " + str(len(upperCoords)))
+        goodUpperCoords = self.filterPoints(upperCoords, 3)
+        goodLowerCoords = self.filterPoints(lowerCoords, 3)
+        
+        self.get_logger().info("Have {} upper hole detections, and {} after filtering.".format(len(upperCoords), len(goodUpperCoords)))
+        self.get_logger().info("Have {} lower hole detections, and {} after filtering.".format(len(lowerCoords), len(goodLowerCoords)))
+        
+        if len(goodUpperCoords) == 0 and len(goodLowerCoords) > 0:
+            self.get_logger().error("Could not align! There were not enough consistent hole detections.")
+            goalHandle.abort()
+            return AlignTorpedos.Result()
+        
+        upperPoint = self.averageOfTuples(goodUpperCoords, 3)
+        lowerPoint = self.averageOfTuples(goodLowerCoords, 3)
+        
+        print(upperPoint)
+        
+        result = AlignTorpedos.Result()
+        result.coords.x = upperPoint[0]
+        result.coords.y = upperPoint[1]
+        result.coords.z = upperPoint[2]
                 
         goalHandle.succeed()
         self.get_logger().info("Torpedo alignment complete.")
-        return AlignTorpedos.Result()
+        return result
     
     
 def main(args=None):

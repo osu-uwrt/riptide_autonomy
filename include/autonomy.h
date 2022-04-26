@@ -37,8 +37,8 @@ const std::string
     ORIENTATION_TOPIC = "orientation",
     ANGULAR_VELOCITY_TOPIC = "angular_velocity",
     LINEAR_VELOCITY_TOPIC = "linear_velocity",
-    ACTUATOR_COMMAND_TOPIC = "command/actuators",
-    ACTUATOR_STATUS_TOPIC = "status/actuators";
+    ACTUATOR_COMMAND_TOPIC = "command/actuator",
+    ACTUATOR_STATUS_TOPIC = "state/actuator";
 
 /**
  * 
