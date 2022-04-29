@@ -36,6 +36,9 @@ ROBOT_NAME = "tempest"
 CAMERA_FOV_X = 81.25 #degrees
 CAMERA_FOV_Y = 45.7 #degrees
 
+GROUP_SIZE = 0.0625
+NON_CIRCLE_PRIORITY = 1.3 #measure of how much more "important" non-circle shapes are. this will affect how the alignment prioritizes the special shapes for more points
+
 class AlignTorpedosService(Node):
     
     def __init__(self):
@@ -177,7 +180,7 @@ class AlignTorpedosService(Node):
     
     
     #transforms image pixel coordinates to global coordinates in world frame. returns (-1000, -1000, -1000) if an error happens.
-    def imageToGlobalCoordinates(self, center, distance, imgShape):
+    def imageToWorldCoordinates(self, center, distance, imgShape):
         cX, cY = center
         imgCenX = imgShape[0] / 2
         imgCenY = imgShape[1] / 2
@@ -235,80 +238,76 @@ class AlignTorpedosService(Node):
         startTime = self.get_clock().now()
         
         #list that stores lists of target coordinates. (2d list! wow!)
-        upperCoords = [] #location of circles in world frame
-        lowerCoords = [] #location of special shapes in world frame
+        coords = [] #location of circles in world frame, paired with number of segments of that shape
         
         # collect 25 good detections or time out after the specified timeout time
-        while (len(upperCoords) < 25 or len(lowerCoords) < 25) and (self.get_clock().now() - startTime).to_msg().sec * 1000.0 < timeout:
+        while (len(coords) < 50) and (self.get_clock().now() - startTime).to_msg().sec * 1000.0 < timeout:
             img = self.waitForImage()
                         
-            if img is not None:                
-                holes = TorpedoVision.processImage(img)
-                rects = [cv2.boundingRect(hole) for hole in holes]
+            if img is not None:
+                #TODO: maybe instead of looking at corners, look at circularity instead
+                #peep this link: https://riptutorial.com/opencv/example/22518/circular-blob-detection
                 
-                #find top leftmost and bottom rightmost point
-                topLeftmost = self.closestToPoint(rects, (0, 0))
-                bottomRightmost = self.closestToPoint(rects, (img.shape[1], img.shape[0]))
-                                
-                # topLeftmostWorld = self.imageToGlobalCoordinates(self.centerOfRect(topLeftmost), distance, img.shape)
-                # bottomRightmostWorld = self.imageToGlobalCoordinates(self.centerOfRect(bottomRightmost), distance, img.shape)
+                holes = TorpedoVision.processImage(img) #returns a list of (contour, numCorners)
+                rects = [(cv2.boundingRect(hole), corners) for hole, corners in holes]
+                print(rects)
                 
-                tlX = self.pixelsToMeters(topLeftmost[0], img.shape[1], CAMERA_FOV_X, distance)
-                tlY = self.pixelsToMeters(topLeftmost[1], img.shape[0], CAMERA_FOV_Y, distance)
-                
-                brX = self.pixelsToMeters(bottomRightmost[0], img.shape[1], CAMERA_FOV_X, distance)
-                brY = self.pixelsToMeters(bottomRightmost[1], img.shape[0], CAMERA_FOV_Y, distance)
-                
-                topLeftmostWorld = [distance, tlX, tlY]
-                bottomRightmostWorld = [distance, brX, brY]
-                
-                print("tlmw: " + str(topLeftmostWorld))
-                                
-                #put each coordinate in its respective list
-                if topLeftmost != bottomRightmost:
-                    upperCoords.append(topLeftmostWorld)
-                    lowerCoords.append(bottomRightmostWorld)
-                else: #since they are equal, put it in the list that it is closest to
-                    upperAvg = self.averageOfTuples(upperCoords, 3)
-                    lowerAvg = self.averageOfTuples(lowerCoords, 3)
-                    
-                    if self.dist(upperAvg, topLeftmostWorld) < self.dist(lowerAvg, topLeftmostWorld):
-                        upperCoords.append(topLeftmostWorld)
-                    else:
-                        lowerCoords.append(topLeftmostWorld)
+                for ((x, y, w, h), segments) in rects:
+                    globalCoords = self.imageToWorldCoordinates((x, y), distance, img.shape)
+                    coords.append((globalCoords, segments))
                         
-                for [x, y, w, h] in rects:
+                for ((x, y, w, h), segments) in rects:
                     cv2.circle(img, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
                     
                 cv2.imshow("result", img)
                 cv2.waitKey(1)
         
-        #analyze the target coordinates to figure out where the targets are in global space and which one to go to
-        print("num upper coords: " + str(len(upperCoords)))
-        goodUpperCoords = self.filterPoints(upperCoords, 3)
-        goodLowerCoords = self.filterPoints(lowerCoords, 3)
+        print()
+        print()
         
-        self.get_logger().info("Have {} upper hole detections, and {} after filtering.".format(len(upperCoords), len(goodUpperCoords)))
-        self.get_logger().info("Have {} lower hole detections, and {} after filtering.".format(len(lowerCoords), len(goodLowerCoords)))
+        # group all detections into groups of detections that are close to each other. The radius of each group is determined by GROUP_SIZE
+        groups = [] #will be a list of (groups of coordinates that are close together, numSegments)
+        for (coord, segments) in coords:
+            #find all groups that the coordinate belongs to
+            foundGroup = False
+            for i in range(0, len(groups)):
+                (group, groupSegments) = groups[i]
+                if self.dist(coord, self.averageOfTuples(group, 3)) < GROUP_SIZE and segments == groupSegments:
+                    groups[i][0].append(coord)
+                    foundGroup = True
+
+            if not foundGroup:
+                groups.append(([coord], segments))
         
-        if len(goodUpperCoords) == 0 and len(goodLowerCoords) > 0:
-            self.get_logger().error("Could not align! There were not enough consistent hole detections.")
-            goalHandle.abort()
-            return AlignTorpedos.Result()
+        #find the average coordinate of each group
+        finalCoords = [] #will be list of (coord, numDetections, numSegments)
+        for (coords, segments) in groups:
+            finalCoords.append((self.averageOfTuples(coords, 3), len(coords), segments))
+            
+        print()
+        print()
+        print("RESULTS:")
+        for coord in finalCoords:
+            print(coord)
+            
+        #now score each group based on the shape and number of detections (circle is lower score and more detections is better)
+        scores = []
+        for (coord, numDetections, numSegments) in finalCoords:
+            multiplier = NON_CIRCLE_PRIORITY if numSegments != 8 else 1
+            scores.append(numDetections * multiplier)
+            
+        #find coordinate to align to by using the one with the highest score
+        index = scores.index(max(scores)) #index of max of scores
+        targetCoord = finalCoords[index][0]
+            
+        actionResult = AlignTorpedos.Result()
+        actionResult.coords.x = targetCoord[0]
+        actionResult.coords.y = targetCoord[1]
+        actionResult.coords.z = targetCoord[2]
         
-        upperPoint = self.averageOfTuples(goodUpperCoords, 3)
-        lowerPoint = self.averageOfTuples(goodLowerCoords, 3)
-        
-        print(upperPoint)
-        
-        result = AlignTorpedos.Result()
-        result.coords.x = upperPoint[0]
-        result.coords.y = upperPoint[1]
-        result.coords.z = upperPoint[2]
-                
         goalHandle.succeed()
         self.get_logger().info("Torpedo alignment complete.")
-        return result
+        return actionResult
     
     
 def main(args=None):

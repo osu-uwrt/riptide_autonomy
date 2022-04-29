@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -44,6 +45,7 @@ add_library(autonomy STATIC
   src/riptide_autonomy/GetActuatorStatus.cpp
   src/riptide_autonomy/ActuatorStateCheckers.cpp
   src/riptide_autonomy/WaitState.cpp
+  src/riptide_autonomy/AlignTorpedoState.cpp
 )
 
 #deps

@@ -18,11 +18,13 @@
 #include "geometry_msgs/msg/pose_with_covariance.hpp"
 #include "riptide_msgs2/msg/actuator_command.hpp"
 #include "riptide_msgs2/msg/actuator_status.hpp"
+#include "riptide_msgs2/action/align_torpedos.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_msgs/action/lookup_transform.h"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 
 using namespace BT;
 
@@ -757,6 +759,50 @@ class WaitState : public UWRTSyncActionNode { //TODO: Rename class to whatever y
     static PortsList providedPorts() {
         return { 
             InputPort<double>("seconds")
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * IDLE or RUNNING.
+     * 
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
+};
+
+/**
+ * @brief BT node that calls and returns the result of the AlignTorpedos action.
+ */
+class AlignTorpedos : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+    public:
+    AlignTorpedos(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts() {
+        return {
+            InputPort<double>("timeout"),
+            InputPort<double>("distance"),
+            OutputPort<double>("x"),
+            OutputPort<double>("y"),
+            OutputPort<double>("z")
         };
     }
 

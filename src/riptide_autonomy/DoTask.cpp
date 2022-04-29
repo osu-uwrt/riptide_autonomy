@@ -76,6 +76,7 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<ActuateState>("ActuateState");
     factory.registerNodeType<GetActuatorStatus>("GetActuatorStatus");
     factory.registerNodeType<WaitState>("WaitState");
+    factory.registerNodeType<AlignTorpedos>("AlignTorpedos");
     //your node type here...
 
     //register simple actions

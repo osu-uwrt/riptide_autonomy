@@ -44,7 +44,6 @@ def fitsTargetShape(contour):
         contourLength = cv2.arcLength(contour, True)
         hullLength = cv2.arcLength(hull, True)
         lengthRatio = contourLength / hullLength
-        corners = numSegments(contour)
         if abs(1 - lengthRatio) < 0.2:
             #third test: is the aspect ratio good?
             if abs(1 - (w / h)) < 0.3:
@@ -55,9 +54,9 @@ def fitsTargetShape(contour):
                 # 8 corners - circle
                 # 4 corners - trapezoid
                 if corners == 10 or corners == 8 or corners == 5 or corners == 4:
-                    return True
+                    return True, corners
 
-    return False
+    return False, -1
 
 
 def isTarget(contour, imgSize):
@@ -72,18 +71,20 @@ def isTarget(contour, imgSize):
         postContours, _ = cv2.findContours(canvas, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         for postContour in postContours:
-            if fitsTargetShape(postContour):
-                return True
+            fitsShape, corners = fitsTargetShape(postContour)
+            if fitsShape:
+                return True, corners
         
-    return False
+    return False, -1
 
 
 def getTargets(contours, hierarchy, imgSize, i=0):
     targets = []
     contour = contours[i]
-        
-    if isTarget(contour, imgSize):
-        targets.append(contour)
+    
+    isTarg, corners = isTarget(contour, imgSize)
+    if isTarg:
+        targets.append((contour, corners))
     elif hierarchy[i][2] > -1: #search children if the current contour is not a target
         targets += getTargets(contours, hierarchy, imgSize, hierarchy[i][2])
     
@@ -95,7 +96,6 @@ def getTargets(contours, hierarchy, imgSize, i=0):
 
 def processImage(img: np.ndarray):
     out = img.copy()
-    holes = [] #array composed of contours that represent holes in the props            
  
     blurred = cv2.blur(img, (5,5))
     edges = cv2.Canny(blurred, 15, 160)
@@ -105,23 +105,17 @@ def processImage(img: np.ndarray):
     hierarchy = hierarchy[0]
     
     #look for potential targets
-    targets = getTargets(contours, hierarchy, (img.shape[0], img.shape[1]))
+    targets = getTargets(contours, hierarchy, (img.shape[0], img.shape[1])) #list of (contour, numCorners)
         
     #draw target contours on output image
-    cv2.drawContours(out, targets, -1, (0, 0, 255), 2)
-    for target in targets:
+    for target, _ in targets:
+        cv2.drawContours(out, [target], 0, (0, 0, 255), 2)
+
         x, y, w, h = cv2.boundingRect(target)
-        holes.append([x, y, w, h])
         cv2.circle(out, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
     
     #print good contours on output image
-    if DEBUG:
-        for [x, y, w, h] in holes:
-            cX = int(x + (w/2))
-            cY = int(y + (h/2))
-            
-            cv2.circle(out, (cX, cY), 2, (0, 255, 0), 2)
-        
+    if DEBUG:        
         cv2.imshow("image", out)
         cv2.imshow("edges", edges)
         cv2.waitKey()
