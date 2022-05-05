@@ -25,25 +25,31 @@ NodeStatus AlignTorpedos::tick() {
     goal.timeoutms = timeout * 1000;
     goal.distance = distance;
 
-    RCLCPP_INFO(log, "Sending goal to AlignTorpedos client.");
-    auto future = client->async_send_goal(goal);
+    rclcpp_action::ClientGoalHandle<AlignTorpedos>::WrappedResult actionResult;
+    RCLCPP_INFO(log, "original result unknown: %s", (actionResult.code == rclcpp_action::ResultCode::UNKNOWN ? "true" : "false"));
+    auto options = rclcpp_action::Client<AlignTorpedos>::SendGoalOptions();
+    options.result_callback = 
+        [&actionResult] (const rclcpp_action::ClientGoalHandle<AlignTorpedos>::WrappedResult& result) {
+            RCLCPP_INFO(log, "Action completed.");
+            actionResult = result;
+        };
+    
 
-    //wait for action future to complete
-    rclcpp::FutureReturnCode futureResult = rclcpp::spin_until_future_complete(this->rosnode, future, std::chrono::duration<double>(timeout));
-    if(futureResult != rclcpp::FutureReturnCode::SUCCESS) {
-        RCLCPP_ERROR(log, "AlignTorpedos action did not return successfully.");
-        return NodeStatus::FAILURE;
+    RCLCPP_INFO(log, "Sending goal to AlignTorpedos client.");
+    auto future = client->async_send_goal(goal, options);
+
+    while(rclcpp::ok() && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) {
+        rclcpp::spin_some(rosnode);
     }
 
-    RCLCPP_INFO(log, "Attempting to grab AlignTorpedos result.");
-    auto result = client->async_get_result(future.get()).get();
-    RCLCPP_INFO(log, "Received alignment result.");
+    RCLCPP_INFO(log, "Processing result.");
+    RCLCPP_INFO(log, "action result code: %i", actionResult.code);
 
-    switch(result.code) {
+    switch(actionResult.code) {
         case rclcpp_action::ResultCode::SUCCEEDED: {
-            setOutput<double>("x", result.result->coords.x);
-            setOutput<double>("y", result.result->coords.y);
-            setOutput<double>("z", result.result->coords.z);
+            setOutput<double>("x", actionResult.result->coords.x);
+            setOutput<double>("y", actionResult.result->coords.y);
+            setOutput<double>("z", actionResult.result->coords.z);
             return NodeStatus::SUCCESS;
         }
         case rclcpp_action::ResultCode::ABORTED:

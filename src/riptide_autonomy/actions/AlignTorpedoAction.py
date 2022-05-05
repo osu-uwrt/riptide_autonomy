@@ -13,22 +13,20 @@ from rclpy.qos import qos_profile_system_default
 from cv_bridge import CvBridge
 from rclpy.node import Node
 from riptide_msgs2.action import AlignTorpedos
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image
 from tf2_ros import TransformException
 from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import Vector3
-from geometry_msgs.msg import Quaternion
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
-from tf2_ros import Time
 from tf_transformations import euler_from_quaternion
 from statistics import pstdev
 
 import utils.TorpedoVision as TorpedoVision
 
-IMAGE_TOPIC = "stereo/left/image_color/compressed"
+IMAGE_TOPIC = "/tempest/stereo/left/image_rect_color" #TODO: make this not an absolute namespace
 
-# #TODO: figure out to delete because we cannot reliably see the prop. if needed, figure out these values
+# #TODO: figure out to delete because we cannot reliably see the borders of the prop. if needed, figure out these values
 # PROP_SIZE_x = 10 #meters
 # PROP_SIZE_y = 10 #also meters
 
@@ -51,7 +49,7 @@ class AlignTorpedosService(Node):
         self.tfListener = TransformListener(self.tfBuffer, self)
         
         #subscribers
-        self.imageSub = self.create_subscription(CompressedImage, IMAGE_TOPIC, self.imageCallback, qos_profile_system_default)
+        self.imageSub = self.create_subscription(Image, IMAGE_TOPIC, self.imageCallback, qos_profile_system_default)
         self.imgQueue = Queue(1)
         
     #
@@ -143,16 +141,12 @@ class AlignTorpedosService(Node):
         Returns:
             double: px converted to meters
         """
-        #TODO: delete comments
+        if px == 0:
+            return dist * sin(fov / 2)
+        
         fovDeg = fov * (pi / 180.0)
-        # print("px: " + str(px))
-        # print("fovdeg: " + str(fovDeg))
-        # print("imagelen: " + str(imgLen))
-        # print("px deg: " + str((px / imgLen) / fovDeg))
         distPx = px / tan((px / imgLen) / fovDeg)
         pixelsPerMeter = distPx / dist
-        # print("pix/m: " + str(pixelsPerMeter))
-        # print("m: " + str(px/pixelsPerMeter))
         return px / pixelsPerMeter
     
     #basically this method should be the exact python version of doTransform() in util.cpp but without transforming the quaternion and returning a pose
@@ -196,6 +190,7 @@ class AlignTorpedosService(Node):
         #now all we need to do is convert that to world frame
         try:
             toFrame = "world"
+            # fromFrame = "tempest_left_camera_frame"
             fromFrame = ROBOT_NAME + "/stereo/left_link"
             
             cameraToWorld = self.tfBuffer.lookup_transform(
@@ -219,7 +214,7 @@ class AlignTorpedosService(Node):
         
     
     def imageCallback(self, msg):
-        img = self.cvBridge.compressed_imgmsg_to_cv2(msg)
+        img = self.cvBridge.imgmsg_to_cv2(msg)
         if self.imgQueue.full():
             self.imgQueue.get_nowait()
         
