@@ -4,7 +4,7 @@
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry_msgs::msg::TransformStamped transform) {
     geometry_msgs::msg::Pose result;
 
-    //rotate the position based on the transform rotation to the object
+    //rotate the position on the yaw based on the transform rotation to the object
     double yaw = toRPY(transform.transform.rotation).z;
     
     geometry_msgs::msg::Vector3 newRelative;
@@ -47,6 +47,10 @@ geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3 v) {
     return pt;
 }
 
+double vector3Length(geometry_msgs::msg::Vector3 v) {
+    return sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+}
+
 geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion orientation) {
     tf2::Quaternion tf2Orientation;
     tf2::fromMsg(orientation, tf2Orientation);
@@ -56,8 +60,16 @@ geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion orientation) {
     return rpy;
 }
 
+geometry_msgs::msg::Quaternion toQuat(geometry_msgs::msg::Vector3 rpy) {
+    tf2::Quaternion tf2Quat;
+    tf2Quat.setRPY(rpy.x, rpy.y, rpy.z);
+    tf2Quat.normalize();
+
+    return tf2::toMsg(tf2Quat);
+}
+
 double distance(geometry_msgs::msg::Point point1, geometry_msgs::msg::Point point2) {
-    return sqrt(pow(point2.x - point1.x, 2) +pow(point2.y - point1.y, 2) + pow(point2.y - point1.y, 2));
+    return sqrt(pow(point2.x - point1.x, 2) +pow(point2.y - point1.y, 2) + pow(point2.z - point1.z, 2));
 }
 
 double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 point2) {

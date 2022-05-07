@@ -5,19 +5,19 @@ using namespace BT;
 
 void GetActuatorStatus::init(rclcpp::Node::SharedPtr node) {
     this->rosnode = node;
-}
 
-
-NodeStatus GetActuatorStatus::tick() { 
     this->statusSub = rosnode->create_subscription<riptide_msgs2::msg::ActuatorStatus> (
         ACTUATOR_STATUS_TOPIC, 
         rclcpp::SensorDataQoS(),
         std::bind(&GetActuatorStatus::actuatorStateCallback, this, _1)
     );
+}
 
+
+NodeStatus GetActuatorStatus::tick() { 
     rclcpp::Time startTime = rosnode->get_clock()->now();
-
     statusReceived = false;
+
     while(!statusReceived) {
         rclcpp::spin_some(rosnode);
 
@@ -27,13 +27,11 @@ NodeStatus GetActuatorStatus::tick() {
         }
     }
 
-    riptide_msgs2::msg::ActuatorStatus status = latestStatus;
-
-    setOutput<int>("claw_state", status.claw_state);
-    setOutput<int>("torpedo1_state", status.torpedo1_state);
-    setOutput<int>("torpedo2_state", status.torpedo2_state);
-    setOutput<int>("dropper1_state", status.dropper1_state);
-    setOutput<int>("dropper2_state", status.dropper2_state);
+    setOutput<int>("claw_state", latestStatus.claw_state);
+    setOutput<int>("torpedo1_state", latestStatus.torpedo1_state);
+    setOutput<int>("torpedo2_state", latestStatus.torpedo2_state);
+    setOutput<int>("dropper1_state", latestStatus.dropper1_state);
+    setOutput<int>("dropper2_state", latestStatus.dropper2_state);
 
     return NodeStatus::SUCCESS;
 }

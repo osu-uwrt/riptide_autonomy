@@ -30,22 +30,27 @@ include_directories($(rclcpp_INCLUDE_DIRS))
 #
 #
 add_library(autonomy STATIC
+  #utilities
   src/riptide_autonomy/util.cpp
-  src/riptide_autonomy/SimpleStates.cpp
-  src/riptide_autonomy/SimpleConditions.cpp
-  src/riptide_autonomy/UWRTSyncActionNode.cpp
-  src/riptide_autonomy/RetryUntilSuccessfulOrTimeout.cpp
-  src/riptide_autonomy/BigMoveState.cpp
-  src/riptide_autonomy/FlattenCalculationState.cpp
-  src/riptide_autonomy/LineDriveCalcState.cpp
-  src/riptide_autonomy/SearchState.cpp
-  src/riptide_autonomy/ToWorldFrameState.cpp
-  src/riptide_autonomy/VelocityState.cpp
-  src/riptide_autonomy/ActuateState.cpp
-  src/riptide_autonomy/GetActuatorStatus.cpp
-  src/riptide_autonomy/ActuatorStateCheckers.cpp
-  src/riptide_autonomy/WaitState.cpp
-  src/riptide_autonomy/AlignTorpedoState.cpp
+
+  #bt actions / states
+  src/riptide_autonomy/bt_actions/Actuate.cpp
+  src/riptide_autonomy/bt_actions/AlignTorpedos.cpp
+  src/riptide_autonomy/bt_actions/GetActuatorStatus.cpp
+  src/riptide_autonomy/bt_actions/GetOdometry.cpp
+  src/riptide_autonomy/bt_actions/PublishToController.cpp
+  src/riptide_autonomy/bt_actions/Search.cpp
+  src/riptide_autonomy/bt_actions/SimpleActions.cpp
+  src/riptide_autonomy/bt_actions/TransformPose.cpp
+  src/riptide_autonomy/bt_actions/UWRTSyncActionNode.cpp
+  src/riptide_autonomy/bt_actions/Wait.cpp
+
+  #bt conditions
+  src/riptide_autonomy/bt_conditions/ActuatorConditions.cpp
+  src/riptide_autonomy/bt_conditions/SimpleConditions.cpp
+
+  #bt decorators
+  src/riptide_autonomy/bt_decorators/RetryUntilSuccessfulOrTimeout.cpp
 )
 
 #deps
@@ -76,12 +81,12 @@ install(DIRECTORY launch
 
 # Install Python executables
 install(PROGRAMS
-  src/riptide_autonomy/actions/AlignTorpedoAction.py 
+  src/riptide_autonomy/ros_actions/AlignTorpedoAction.py 
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY 
-  src/riptide_autonomy/actions/utils
+  src/riptide_autonomy/ros_actions/utils
   DESTINATION lib/${PROJECT_NAME}
 )
 

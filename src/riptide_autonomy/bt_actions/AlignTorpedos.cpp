@@ -43,7 +43,6 @@ NodeStatus AlignTorpedos::tick() {
     }
 
     RCLCPP_INFO(log, "Processing result.");
-    RCLCPP_INFO(log, "action result code: %i", actionResult.code);
 
     switch(actionResult.code) {
         case rclcpp_action::ResultCode::SUCCEEDED: {

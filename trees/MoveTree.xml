@@ -1,0 +1,289 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SetBlackboard output_key="0.5" value="0.5"/>
+            <SetBlackboard output_key="-0.5" value="-0.5"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="0" x="1" y="0" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="0" x="-1" y="0" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="0" x="0" y="0.5" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="0" x="0" y="-0.5" z="0"/>
+            <Action ID="GetOdometry" op="" or="" oy="" x="{x}" y="{y}" z="{z}"/>
+            <Action ID="Math" a="{x}" b="2" operator="+" out="{x}"/>
+            <Action ID="PublishToController" isOrientation="1" mode="2" x="1" y="0" z="0"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="x" y="y" z="z"/>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="Dive">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="{op}" or="{or}" oy="{oy}" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="oy" x="x" y="y" z="depth"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="KillController">
+        <Sequence>
+            <Action ID="PublishToController" isOrientation="1" mode="0" x="0" y="0" z="0"/>
+            <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="Move">
+        <Sequence>
+            <Action ID="Info" message="Moving to XYZ {x}, {y}, {z} with RPY {or}, {op}, {oy}"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
+            <Action ID="CalculateDistance" dist="{dist}" x1="{cx}" x2="{x}" y1="{cy}" y2="{y}" z1="0" z2="0"/>
+            <IfThenElse name="have robot face goal point if far away from it">
+                <Condition ID="CompareNums" a="{dist}" b="0.75" test="&gt;"/>
+                <Sequence name="Get yaw to face towards goal point">
+                    <Action ID="Math" a="{x}" b="{cx}" operator="-" out="{dx}"/>
+                    <Action ID="Math" a="{y}" b="{cy}" operator="-" out="{dy}"/>
+                    <Action ID="ComputeYawAngle" output="{yaw}" x="{dx}" y="{dy}"/>
+                    <SetBlackboard output_key="goal_yaw" value="{yaw}"/>
+                </Sequence>
+                <Sequence>
+                    <SetBlackboard output_key="goal_yaw" value="{coy}"/>
+                </Sequence>
+            </IfThenElse>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="goal_yaw"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="op" r="or" y="oy"/>
+            <Action ID="Info" message="Move Complete."/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="PrimitiveMoveOrientation">
+        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
+            <Sequence>
+                <Action ID="PublishToController" isOrientation="1" mode="3" x="{r}" y="{p}" z="{y}"/>
+                <Action ID="GetOdometry" name="Get Current RPY" op="{cp}" or="{cr}" oy="{cy}" x="" y="" z=""/>
+                <Condition ID="ApproxEqualTo" a="{cr}" b="{r}" name="At goal roll?" range="0.25"/>
+                <Condition ID="ApproxEqualTo" a="{cp}" b="{p}" name="At goal pitch?" range="0.25"/>
+                <Condition ID="ApproxEqualTo" a="{cy}" b="{y}" name="At goal yaw?" range="0.25"/>
+            </Sequence>
+        </Decorator>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="PrimitiveMovePosition">
+        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="30">
+            <Sequence>
+                <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="{y}" z="{z}"/>
+                <Action ID="GetOdometry" name="Get Current XYZ" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
+                <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="{cx}" y1="{y}" y2="{cy}" z1="{z}" z2="{cz}"/>
+                <Condition ID="CompareNums" a="{dist}" b="0.25" name="At goal point?" test="&lt;"/>
+            </Sequence>
+        </Decorator>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="RelativeMove">
+        <Sequence>
+            <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
+            <Action ID="Math" a="{cor}" b="{or}" operator="+" out="{gor}"/>
+            <Action ID="Math" a="{cop}" b="{op}" operator="+" out="{gop}"/>
+            <Action ID="Math" a="{coy}" b="{oy}" operator="+" out="{goy}"/>
+            <Action ID="Math" a="{cx}" b="{x}" operator="+" out="{gx}"/>
+            <Action ID="Math" a="{cy}" b="{y}" operator="+" out="{gy}"/>
+            <Action ID="Math" a="{cz}" b="{z}" operator="+" out="{gz}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="Actuate">
+            <input_port name="arm_torpedo"/>
+            <input_port name="clear_dropper_status"/>
+            <input_port name="close_claw"/>
+            <input_port name="disarm_torpedo"/>
+            <input_port name="drop_1"/>
+            <input_port name="drop_2"/>
+            <input_port name="fire_torpedo_1"/>
+            <input_port name="fire_torpedo_2"/>
+            <input_port name="open_claw"/>
+            <input_port name="reset_actuators"/>
+        </Action>
+        <Action ID="AlignTorpedos">
+            <input_port name="distance"/>
+            <input_port name="timeout"/>
+            <output_port name="x"/>
+            <output_port name="y"/>
+            <output_port name="z"/>
+        </Action>
+        <Condition ID="ApproxEqualTo">
+            <input_port name="a"/>
+            <input_port name="b"/>
+            <input_port name="range"/>
+        </Condition>
+        <Action ID="CalculateDistance">
+            <output_port name="dist"/>
+            <input_port name="x1"/>
+            <input_port name="x2"/>
+            <input_port name="y1"/>
+            <input_port name="y2"/>
+            <input_port name="z1"/>
+            <input_port name="z2"/>
+        </Action>
+        <Condition ID="CompareNums">
+            <input_port name="a"/>
+            <input_port name="b"/>
+            <input_port name="test">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+        </Condition>
+        <Action ID="ComputeYawAngle">
+            <output_port name="output"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+        </Action>
+        <SubTree ID="Dive">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="depth">depth to submerge to</input_port>
+        </SubTree>
+        <Action ID="Error">
+            <input_port name="message">The message to print.</input_port>
+        </Action>
+        <Action ID="GetActuatorStatus">
+            <output_port name="claw_state"/>
+            <output_port name="dropper1_state"/>
+            <output_port name="dropper2_state"/>
+            <output_port name="torpedo1_state"/>
+            <output_port name="torpedo2_state"/>
+        </Action>
+        <Action ID="GetOdometry">
+            <output_port name="op"/>
+            <output_port name="or"/>
+            <output_port name="oy"/>
+            <output_port name="x"/>
+            <output_port name="y"/>
+            <output_port name="z"/>
+        </Action>
+        <Action ID="Info">
+            <input_port name="message">The message to print.</input_port>
+        </Action>
+        <Condition ID="IsClawClosed">
+            <input_port name="claw_state"/>
+        </Condition>
+        <Condition ID="IsClawError">
+            <input_port name="claw_state"/>
+        </Condition>
+        <Condition ID="IsClawOpen">
+            <input_port name="claw_state"/>
+        </Condition>
+        <Condition ID="IsClawUnknown">
+            <input_port name="claw_state"/>
+        </Condition>
+        <Condition ID="IsDropperDropped">
+            <input_port name="dropper_state"/>
+        </Condition>
+        <Condition ID="IsDropperError">
+            <input_port name="dropper_state"/>
+        </Condition>
+        <Condition ID="IsDropperReady">
+            <input_port name="dropper_state"/>
+        </Condition>
+        <Condition ID="IsTorpedoCharged">
+            <input_port name="torpedo_state"/>
+        </Condition>
+        <Condition ID="IsTorpedoCharging">
+            <input_port name="torpedo_state"/>
+        </Condition>
+        <Condition ID="IsTorpedoDisarmed">
+            <input_port name="torpedo_state"/>
+        </Condition>
+        <Condition ID="IsTorpedoError">
+            <input_port name="torpedo_state"/>
+        </Condition>
+        <Condition ID="IsTorpedoFired">
+            <input_port name="torpedo_state"/>
+        </Condition>
+        <SubTree ID="KillController"/>
+        <Action ID="Math">
+            <input_port name="a"/>
+            <input_port name="b"/>
+            <input_port default="+" name="operator">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <output_port name="out"/>
+        </Action>
+        <SubTree ID="Move">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="op"/>
+            <input_port name="or"/>
+            <input_port name="oy"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <Condition ID="NumsEqual">
+            <input_port name="a"/>
+            <input_port name="b"/>
+        </Condition>
+        <SubTree ID="PrimitiveMoveOrientation">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="p"/>
+            <input_port name="r"/>
+            <input_port name="y"/>
+        </SubTree>
+        <SubTree ID="PrimitiveMovePosition">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <Action ID="PublishToController">
+            <input_port name="isOrientation"/>
+            <input_port name="mode"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </Action>
+        <SubTree ID="RelativeMove">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="op"/>
+            <input_port name="or"/>
+            <input_port name="oy"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <Decorator ID="RetryUntilSuccessfulOrTimeout">
+            <input_port name="num_seconds">number of seconds until abandonment.</input_port>
+        </Decorator>
+        <Action ID="Search">
+            <input_port name="frame">The frame to search for</input_port>
+            <input_port name="target_error">The goal amount of error for the state to succeed.</input_port>
+            <input_port name="update_sec">How much time to wait for update</input_port>
+        </Action>
+        <Action ID="ToString">
+            <input_port name="double_in">optional. use if value is a double</input_port>
+            <input_port name="int_in">optional. use if value is a string</input_port>
+            <output_port name="str_out">output.</output_port>
+        </Action>
+        <Action ID="TransformPose">
+            <input_port name="from_frame"/>
+            <input_port name="op"/>
+            <input_port name="or"/>
+            <output_port name="out_op"/>
+            <output_port name="out_or"/>
+            <output_port name="out_oy"/>
+            <output_port name="out_x"/>
+            <output_port name="out_y"/>
+            <output_port name="out_z"/>
+            <input_port name="oy"/>
+            <input_port name="to_frame"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </Action>
+        <Action ID="Wait">
+            <input_port name="seconds">number of seconds to wait.</input_port>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+

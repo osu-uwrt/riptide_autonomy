@@ -2,14 +2,14 @@
 
 using namespace BT;
 
-void ActuateState::init(rclcpp::Node::SharedPtr node) {
+void Actuate::init(rclcpp::Node::SharedPtr node) {
     this->rosnode = node;
     
     this->publisher = rosnode->create_publisher<riptide_msgs2::msg::ActuatorCommand>(ACTUATOR_COMMAND_TOPIC, 10);
 }
 
 
-NodeStatus ActuateState::tick() {
+NodeStatus Actuate::tick() {
     //get inputs from BT
     Optional<bool> 
         drop1                = getInput<bool>("drop_1"),

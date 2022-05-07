@@ -66,25 +66,24 @@ int main(int argc, char *argv[]) {
     /**
      * REGISTER NODES HERE
      */
-    factory.registerNodeType<RetryUntilSuccessfulOrTimeout>("RetryUntilSuccessfulOrTimeout");
-    factory.registerNodeType<BigMoveState>("BigMoveState");
-    factory.registerNodeType<FlattenCalculationState>("FlattenCalculationState");
-    factory.registerNodeType<ToWorldFrameState>("ToWorldFrameState");
-    factory.registerNodeType<VelocityState>("VelocityState");
-    factory.registerNodeType<SearchState>("SearchState");
-    factory.registerNodeType<LineDriveCalcState>("LineDriveCalcState");
-    factory.registerNodeType<ActuateState>("ActuateState");
-    factory.registerNodeType<GetActuatorStatus>("GetActuatorStatus");
-    factory.registerNodeType<WaitState>("WaitState");
+    factory.registerNodeType<Actuate>("Actuate");
     factory.registerNodeType<AlignTorpedos>("AlignTorpedos");
+    factory.registerNodeType<GetActuatorStatus>("GetActuatorStatus");
+    factory.registerNodeType<GetOdometry>("GetOdometry");
+    factory.registerNodeType<PublishToController>("PublishToController");
+    factory.registerNodeType<Search>("Search");
+    factory.registerNodeType<TransformPose>("TransformPose");
+    factory.registerNodeType<Wait>("Wait");
+    factory.registerNodeType<RetryUntilSuccessfulOrTimeout>("RetryUntilSuccessfulOrTimeout");
     //your node type here...
 
+
     //register simple actions
-    SimpleStates::registerSimpleActions(&factory);
+    SimpleActions::registerActions(&factory);
 
     //register actuator conditions
     SimpleConditions::registerConditions(&factory);
-    ActuatorStateCheckers::registerConditions(&factory);
+    ActuatorConditions::registerConditions(&factory);
 
     //create string with path to the tree
     std::string treePath = argv[1];
@@ -101,7 +100,7 @@ int main(int argc, char *argv[]) {
         }
     }    
 
-    std::string logFile = getEnvironmentVariable("HOME") + std::string(AUTONOMY_PATH_FROM_HOME) + "btLog.fbs";
+    std::string logFile = getEnvironmentVariable("HOME") + std::string(AUTONOMY_PATH_FROM_HOME) + "btLog.fbl";
     int logArgIndex = indexOfStr(argv, "--log-file", argc);
     if(logArgIndex > -1 && logArgIndex + 1 < argc) {
         logFile = argv[logArgIndex + 1];

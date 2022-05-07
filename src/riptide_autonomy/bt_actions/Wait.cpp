@@ -2,12 +2,12 @@
 
 using namespace BT;
 
-void WaitState::init(rclcpp::Node::SharedPtr node) { // TODO: Change BaseState to your new class name
+void Wait::init(rclcpp::Node::SharedPtr node) { // TODO: Change BaseState to your new class name
     this->rosnode = node;
 }
 
 
-NodeStatus WaitState::tick() { //TODO: Change BaseState to your new class name  
+NodeStatus Wait::tick() { //TODO: Change BaseState to your new class name  
     double seconds = getInput<double>("seconds").value();
 
     rclcpp::Time start = rosnode->get_clock()->now();

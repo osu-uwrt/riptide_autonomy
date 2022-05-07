@@ -18,6 +18,7 @@
 #include "geometry_msgs/msg/pose_with_covariance.hpp"
 #include "riptide_msgs2/msg/actuator_command.hpp"
 #include "riptide_msgs2/msg/actuator_status.hpp"
+#include "riptide_msgs2/msg/controller_command.hpp"
 #include "riptide_msgs2/action/align_torpedos.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
@@ -33,12 +34,9 @@ using namespace BT;
 
 //useful constant values for autonomy
 const std::string
-    STEADY_TOPIC = "steady",
     ODOMETRY_TOPIC = "odometry/filtered",
-    POSITION_TOPIC = "position",
-    ORIENTATION_TOPIC = "orientation",
-    ANGULAR_VELOCITY_TOPIC = "angular_velocity",
-    LINEAR_VELOCITY_TOPIC = "linear_velocity",
+    POSITION_TOPIC = "controller/position",
+    ORIENTATION_TOPIC = "controller/orientation",
     ACTUATOR_COMMAND_TOPIC = "command/actuator",
     ACTUATOR_STATUS_TOPIC = "state/actuator";
 
@@ -63,6 +61,13 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose, geometry_msgs::ms
 geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion);
 
 /**
+ * @brief Converts RPY to quaternion.
+ * 
+ * @return geometry_msgs::msg::Quaternion The quaternion represented by the Vector3
+ */
+geometry_msgs::msg::Quaternion toQuat(geometry_msgs::msg::Vector3);
+
+/**
  * @brief Converts the passed point to a Vector3 message.
  * 
  * @return geometry_msgs::msg::Vector3 A Vector3 message that is equal to the passed Point.
@@ -75,6 +80,13 @@ geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point);
  * @return geometry_msgs::msg::Point A Point message that is equal to the passed Vector3.
  */
 geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3);
+
+/**
+ * @brief Computes the length of a Vector3.
+ * 
+ * @return double the length of the passed vector.
+ */
+double vector3Length(geometry_msgs::msg::Vector3);
 
 /**
  * @brief Get a thing from the BT blackboard.
@@ -107,9 +119,9 @@ double distance(geometry_msgs::msg::Vector3, geometry_msgs::msg::Vector3);
  * @brief Basic states that do not require a ROS node.
  * These will be used for basic computations or prints to rclcpp.
  */
-class SimpleStates {
+class SimpleActions {
     public:
-    static void registerSimpleActions(BT::BehaviorTreeFactory *factory);
+    static void registerActions(BT::BehaviorTreeFactory *factory);
 };
 
 /**
@@ -210,223 +222,148 @@ class BaseState : public UWRTSyncActionNode { //TODO: Rename class to whatever y
     rclcpp::Node::SharedPtr rosnode;
 };
 
-/**
- * @brief Move state.
- * 
- * This state moves the robot to a specified position and/or orientation. Optionally,
- * this state can set an angular velocity.
- */
-class BigMoveState : public UWRTSyncActionNode {
-    public: 
-    BigMoveState(const std::string& name, const NodeConfiguration& config)
-     : UWRTSyncActionNode(name, config) { }
-    
-    /**
-     * @brief Initializes the state.
-     * 
-     * @param node The ROS node belonging to the current process
-     */
-    void init(rclcpp::Node::SharedPtr) override;
-
-    /**
-     * @brief Ticks the action.
-     * All exeuction of the state goes in this method. It will
-     * only be called once and must return either SUCCESS OR FAILURE
-     * 
-     * @return NodeStatus The status of the node after the execution completes
-     */
-    NodeStatus tick() override;
-
-    /**
-     * @brief Declares the ports needed by the state.
-     * 
-     * @return PortsList Needed ports
-     */
-    static PortsList providedPorts() {
-        return {
-            InputPort<std::string>("x"),
-            InputPort<std::string>("y"),
-            InputPort<std::string>("z"),
-            InputPort<std::string>("orientation_x"),
-            InputPort<std::string>("orientation_y"),
-            InputPort<std::string>("orientation_z"),
-            InputPort<std::string>("orientation_w"),
-            InputPort<std::string>("v_roll"),
-            InputPort<std::string>("v_pitch"),
-            InputPort<std::string>("v_yaw")
-        };
-    }
-
-    private:
-    /**
-     * @brief Publishes the goal position, orientation, and/or angular velocity
-     */
-    void publishGoalInformation();
-    
-    /**
-     * @brief Called when odometry subscription received a message.
-     * 
-     * @param msg The message received.
-     */
-    void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
-    
-    /**
-     * @brief Called before the main loop enters.
-     * This method reads the behaviortree ports and determines what the 
-     * state's goal is (will it set position? Orientation? Both?). 
-     */
-    void resolveGoalPosition();
-
-    static constexpr double THRESHOLD = 0.1;
-
-    //process' ros node
-    rclcpp::Node::SharedPtr rosnode;
-
-    bool
-        hasEntered,
-        odomExists,
-        publishPosition,
-        publishOrientation,
-        publishAngularVelocity;
-    
-    //pose data
-    geometry_msgs::msg::Pose
-        currentPose,
-        goalPose;
-
-    geometry_msgs::msg::Vector3 
-        goalAngVelocity;
-
-    //ROS subscribers
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSubscriber;
-
-    //ROS publishers
-    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr    positionPub;
-    rclcpp::Publisher<geometry_msgs::msg::Quaternion>::SharedPtr orientationPub;
-    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr    angVelocityPub;
-};
 
 /**
- * @brief Flatten state.
- * 
- * This state calculates the position and orientation that the robot should move to in 
- * order to properly flatten itself.
+ * @brief Publishes a message to the controller to move the robot.
  */
-class FlattenCalculationState : public UWRTSyncActionNode {
+class PublishToController : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
     public:
-    FlattenCalculationState(const std::string& name, const NodeConfiguration& config)
+    PublishToController(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
      : UWRTSyncActionNode(name, config) { }
 
     /**
      * @brief Declares ports needed by this state.
-     * 
      * @return PortsList Needed ports.
      */
     static PortsList providedPorts() {
         return {
-            InputPort<double>("depth"),
-            OutputPort<std::string>("x"),
-            OutputPort<std::string>("y"),
-            OutputPort<std::string>("z"),
-            OutputPort<std::string>("orientation_x"),
-            OutputPort<std::string>("orientation_y"),
-            OutputPort<std::string>("orientation_z"),
-            OutputPort<std::string>("orientation_w")
+            InputPort<bool>("isOrientation"),
+            InputPort<int>("mode"),
+            InputPort<double>("x"),
+            InputPort<double>("y"),
+            InputPort<double>("z"),
         };
     }
 
     /**
-     * @brief Initializes the node. 
-     * 
+     * @brief Initializes the node.
      * @param node The ROS node belonging to the current process.
      */
     void init(rclcpp::Node::SharedPtr) override;
 
     /**
-     * @brief Executes the node.
-     * This method will be called once by the tree and can block for as long
-     * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
-     * IDLE or RUNNING.
+     * @brief Executes the node
      * 
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
 
     private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
+    
+    //publisher to controller
+    rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr 
+        positionPub,
+        orientationPub;
+};
+
+/**
+ * @brief Gets the odometry of the robot.
+ */
+class GetOdometry : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+    public:
+    GetOdometry(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+     : UWRTSyncActionNode(name, config) { }
+
     /**
-     * @brief Called when the odometry subscription receives a message.
-     * 
-     * @param msg The received message.
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
      */
+    static PortsList providedPorts() {
+        return {
+            OutputPort<double>("x"),
+            OutputPort<double>("y"),
+            OutputPort<double>("z"),
+            OutputPort<double>("or"),
+            OutputPort<double>("op"),
+            OutputPort<double>("oy")
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * 
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
     void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
 
     //process node
     rclcpp::Node::SharedPtr rosnode;
 
-    //odometry stuff
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSub;
-    bool odomExists;
-    geometry_msgs::msg::Pose currentPose;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub;
+    bool msgReceived;
+    nav_msgs::msg::Odometry odom;
 };
 
 /**
- * @brief Line-drive state
- * 
- * This state calculates the position that the robot should move to in order 
- * to drive directly through a target frame.
+ * @brief Transforms a pose from one coordinate frame to another.
  */
-class LineDriveCalcState : public UWRTSyncActionNode {
+class TransformPose : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
     public:
-    LineDriveCalcState(const std::string& name, const NodeConfiguration& config)
+    TransformPose(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
      : UWRTSyncActionNode(name, config) { }
 
     /**
      * @brief Declares ports needed by this state.
-     * 
      * @return PortsList Needed ports.
      */
     static PortsList providedPorts() {
         return {
-            InputPort("frame"),
-            InputPort("extra_distance"),
-            OutputPort("x_out"),
-            OutputPort("y_out"),
-            OutputPort("z_out")
+            InputPort<std::string>("from_frame"),
+            InputPort<std::string>("to_frame"),
+            InputPort<double>("x"),
+            InputPort<double>("y"),
+            InputPort<double>("z"),
+            InputPort<double>("or"),
+            InputPort<double>("op"),
+            InputPort<double>("oy"),
+            OutputPort<double>("out_x"),
+            OutputPort<double>("out_y"),
+            OutputPort<double>("out_z"),
+            OutputPort<double>("out_or"),
+            OutputPort<double>("out_op"),
+            OutputPort<double>("out_oy")
         };
     }
 
     /**
-     * @brief Initializes the node. 
-     * 
+     * @brief Initializes the node.
      * @param node The ROS node belonging to the current process.
      */
     void init(rclcpp::Node::SharedPtr) override;
 
     /**
      * @brief Executes the node.
-     * This method will be called once by the tree and can block for as long
-     * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
-     * IDLE or RUNNING.
      * 
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
 
     private:
-    /**
-     * @brief Called when the odometry subscription receives a message.
-     * 
-     * @param msg The received message.
-     */
-    void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
-
+    //process node
     rclcpp::Node::SharedPtr rosnode;
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSub;
-    geometry_msgs::msg::Pose currentPose;
 
-    bool odomExists;
+    
 };
 
 /**
@@ -438,9 +375,9 @@ class LineDriveCalcState : public UWRTSyncActionNode {
  * position of the object should be accurate enough to use ToWorldFrameState and
  * BigMoveState to fully bring the robot to the object.
  */
-class SearchState : public UWRTSyncActionNode {
+class Search : public UWRTSyncActionNode {
     public:
-    SearchState(const std::string& name, const NodeConfiguration& config)
+    Search(const std::string& name, const NodeConfiguration& config)
      : UWRTSyncActionNode(name, config) { }
 
     /**
@@ -475,6 +412,9 @@ class SearchState : public UWRTSyncActionNode {
     NodeStatus tick() override;
 
     private:
+    void publishPosition(geometry_msgs::msg::Vector3);
+    void publishOrientation(geometry_msgs::msg::Quaternion);
+
     /**
      * @brief Called when the guess subscription receives a message.
      * 
@@ -497,8 +437,8 @@ class SearchState : public UWRTSyncActionNode {
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSub;
 
     //publishers
-    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr positionPub;
-    rclcpp::Publisher<geometry_msgs::msg::Quaternion>::SharedPtr orientationPub;
+    rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr positionPub;
+    rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr orientationPub;
 
     //other things
     geometry_msgs::msg::Pose 
@@ -511,148 +451,13 @@ class SearchState : public UWRTSyncActionNode {
         receivedPos;
 };
 
-/**
- * @brief State that converts relative coordinates to global (world frame) ones.
- * 
- * This state receives a frame/object name, a set of coordinates relative to that 
- * frame/object, and an orientation relative to that frame/object, and transforms 
- * those coordinates to global or "world frame" coordinates. This state can be used,
- * for example, if you want to move the robot 1 meter directly in front of the gate.
- * Use gate_frame as the frame name, the coordinates 1, 0, 0, and the orientation 
- * 0, 0, -1, 1, and then use the move state with the output values from this state.
- */
-class ToWorldFrameState : public UWRTSyncActionNode {
-    public:
-    ToWorldFrameState(const std::string& name, const NodeConfiguration& config)
-     : UWRTSyncActionNode(name, config) { }
-
-    /**
-     * @brief Declares ports needed by this state.
-     * 
-     * @return PortsList Needed ports.
-     */
-    static PortsList providedPorts() {
-        return {
-            InputPort<std::string>("object"),
-            InputPort<std::string>("relative_x"),
-            InputPort<std::string>("relative_y"),
-            InputPort<std::string>("relative_z"),
-            InputPort<std::string>("relative_orientation_x"),
-            InputPort<std::string>("relative_orientation_y"),
-            InputPort<std::string>("relative_orientation_z"),
-            InputPort<std::string>("relative_orientation_w"),
-            OutputPort<std::string>("world_x"),
-            OutputPort<std::string>("world_y"),
-            OutputPort<std::string>("world_z"),
-            OutputPort<std::string>("world_orientation_x"),
-            OutputPort<std::string>("world_orientation_y"),
-            OutputPort<std::string>("world_orientation_z"),
-            OutputPort<std::string>("world_orientation_w")
-        };
-    }
-
-    /**
-     * @brief Initializes the node. 
-     * 
-     * @param node The ROS node belonging to the current process.
-     */
-    void init(rclcpp::Node::SharedPtr) override;
-
-    /**
-     * @brief Executes the node.
-     * This method will be called once by the tree and can block for as long
-     * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
-     * IDLE or RUNNING.
-     * 
-     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
-     */
-    NodeStatus tick() override;
-
-    private:
-    rclcpp::Node::SharedPtr rosnode;
-};
-
-/**
- * @brief Velocity state.
- * 
- * This state drives the robot at a constant velocity while fixed at its
- * current orientation (its orientation when the state starts)
- */
-class VelocityState : public UWRTSyncActionNode {
-    public:
-    VelocityState(const std::string& name, const NodeConfiguration& config)
-     : UWRTSyncActionNode(name, config) { }
-
-    /**
-     * @brief Declares ports needed by this state.
-     * 
-     * @return PortsList Needed ports.
-     */
-    static PortsList providedPorts() {
-        return {
-            InputPort<std::string>("time"),
-            InputPort<std::string>("x_velocity"),
-            InputPort<std::string>("y_velocity"),
-            InputPort<std::string>("z_velocity")
-        };
-    }
-
-    /**
-     * @brief Initializes the node. 
-     * 
-     * @param node The ROS node belonging to the current process.
-     */
-    void init(rclcpp::Node::SharedPtr) override;
-
-    /**
-     * @brief Executes the node.
-     * This method will be called once by the tree and can block for as long
-     * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
-     * IDLE or RUNNING.
-     * 
-     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
-     */
-    NodeStatus tick() override;
-
-    private:
-    /**
-     * @brief Called when the odometry subscription receives a message.
-     * 
-     * @param msg The received message.
-     */
-    void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
-
-    rclcpp::Node::SharedPtr rosnode;
-
-    //publishers 
-    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr velocityPub;
-    rclcpp::Publisher<geometry_msgs::msg::Quaternion>::SharedPtr orientationPub;
-
-    //subscribers
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSub;
-
-    //goal information
-    geometry_msgs::msg::Vector3 velocities;
-    geometry_msgs::msg::Quaternion orientation;
-
-    //other information
-    geometry_msgs::msg::Pose currentPose;
-
-    bool
-        hasEntered,
-        odomDataExists;
-
-    int startTime;
-};
 
 /**
  * State that actuates stuff on the robot
  */
-class ActuateState : public UWRTSyncActionNode {
+class Actuate : public UWRTSyncActionNode {
     public:
-    ActuateState(const std::string& name, const NodeConfiguration& config)
+    Actuate(const std::string& name, const NodeConfiguration& config)
      : UWRTSyncActionNode(name, config) { }
 
     /**
@@ -747,9 +552,9 @@ class GetActuatorStatus : public UWRTSyncActionNode { //TODO: Rename class to wh
     bool statusReceived;
 };
 
-class WaitState : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+class Wait : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
     public:
-    WaitState(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+    Wait(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
      : UWRTSyncActionNode(name, config) { }
 
     /**
@@ -828,28 +633,10 @@ class AlignTorpedos : public UWRTSyncActionNode { //TODO: Rename class to whatev
     rclcpp::Node::SharedPtr rosnode;
 };
 
-class ActuatorStateCheckers {
+class ActuatorConditions {
     public:
     //register states
     static void registerConditions(BT::BehaviorTreeFactory *factory);
-
-    //some claw states
-    static BT::NodeStatus isClawError(BT::TreeNode&);
-    static BT::NodeStatus isClawUnknown(BT::TreeNode&);
-    static BT::NodeStatus isClawOpen(BT::TreeNode&);
-    static BT::NodeStatus isClawClosed(BT::TreeNode&);
-
-    //some torpedo states
-    static BT::NodeStatus isTorpedoError(BT::TreeNode&);
-    static BT::NodeStatus isTorpedoCharging(BT::TreeNode&);
-    static BT::NodeStatus isTorpedoCharged(BT::TreeNode&);
-    static BT::NodeStatus isTorpedoFired(BT::TreeNode&);
-    static BT::NodeStatus isTorpedoDisarmed(BT::TreeNode&);
-
-    //some dropper states
-    static BT::NodeStatus isDropperError(BT::TreeNode&);
-    static BT::NodeStatus isDropperReady(BT::TreeNode&);
-    static BT::NodeStatus isDropperDropped(BT::TreeNode&);
 };
 
 #endif // AUTONOMY_H
