@@ -604,7 +604,8 @@ class AlignTorpedos : public UWRTSyncActionNode { //TODO: Rename class to whatev
     static PortsList providedPorts() {
         return {
             InputPort<double>("timeout"),
-            InputPort<double>("distance"),
+            InputPort<double>("current_distance"),
+            InputPort<double>("goal_distance"),
             OutputPort<double>("x"),
             OutputPort<double>("y"),
             OutputPort<double>("z")

@@ -12,7 +12,8 @@ NodeStatus AlignTorpedos::tick() {
 
     double 
         timeout = getInput<double>("timeout").value(),
-        distance = getInput<double>("distance").value();
+        currentDistance = getInput<double>("current_distance").value(),
+        goalDistance = getInput<double>("goal_distance").value();
 
     auto client = rclcpp_action::create_client<AlignTorpedos>(this->rosnode, "AlignTorpedos");
     
@@ -23,10 +24,11 @@ NodeStatus AlignTorpedos::tick() {
 
     auto goal = AlignTorpedos::Goal();
     goal.timeoutms = timeout * 1000;
-    goal.distance = distance;
+    goal.currentdistance = currentDistance;
+    goal.goaldistance = goalDistance;
 
     rclcpp_action::ClientGoalHandle<AlignTorpedos>::WrappedResult actionResult;
-    RCLCPP_INFO(log, "original result unknown: %s", (actionResult.code == rclcpp_action::ResultCode::UNKNOWN ? "true" : "false"));
+    actionResult.code = rclcpp_action::ResultCode::UNKNOWN;
     auto options = rclcpp_action::Client<AlignTorpedos>::SendGoalOptions();
     options.result_callback = 
         [&actionResult] (const rclcpp_action::ClientGoalHandle<AlignTorpedos>::WrappedResult& result) {
@@ -38,11 +40,10 @@ NodeStatus AlignTorpedos::tick() {
     RCLCPP_INFO(log, "Sending goal to AlignTorpedos client.");
     auto future = client->async_send_goal(goal, options);
 
-    while(rclcpp::ok() && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) {
+    rclcpp::Time startTime = rosnode->get_clock()->now();
+    while(rclcpp::ok() && actionResult.code == rclcpp_action::ResultCode::UNKNOWN && (rosnode->get_clock()->now() - startTime).seconds() < timeout) {
         rclcpp::spin_some(rosnode);
     }
-
-    RCLCPP_INFO(log, "Processing result.");
 
     switch(actionResult.code) {
         case rclcpp_action::ResultCode::SUCCEEDED: {
@@ -55,7 +56,7 @@ NodeStatus AlignTorpedos::tick() {
             RCLCPP_ERROR(log, "Torpedo Alignment aborted by server.");
             return NodeStatus::FAILURE;
         default:
-            RCLCPP_ERROR(log, "Torpedo alignment result either unknown or canceled.");
+            RCLCPP_ERROR(log, "Torpedo alignment result either unknown or canceled. Likely timed out waiting for a response from the server.");
             return NodeStatus::FAILURE;
     }
 

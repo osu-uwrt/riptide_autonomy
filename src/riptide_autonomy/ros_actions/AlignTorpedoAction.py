@@ -1,8 +1,7 @@
 #! /usr/bin/env python3
 
-from math import cos, pi, sin, sqrt, tan
+from math import cos, inf, pi, sin, sqrt, tan
 from queue import Queue
-
 import cv2
 import numpy as np
 import rclpy
@@ -14,6 +13,7 @@ from cv_bridge import CvBridge
 from rclpy.node import Node
 from riptide_msgs2.action import AlignTorpedos
 from sensor_msgs.msg import Image
+from nav_msgs.msg import Odometry
 from tf2_ros import TransformException
 from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import Vector3
@@ -24,11 +24,14 @@ from statistics import pstdev
 
 import utils.TorpedoVision as TorpedoVision
 
-IMAGE_TOPIC = "/tempest/stereo/left/image_rect_color" #TODO: make this not an absolute namespace
+SHOW_DEBUG_IMAGE = False
 
-# #TODO: figure out to delete because we cannot reliably see the borders of the prop. if needed, figure out these values
-# PROP_SIZE_x = 10 #meters
-# PROP_SIZE_y = 10 #also meters
+IMAGE_TOPIC = "/tempest/stereo/left/image_rect_color"
+ODOM_TOPIC = "/tempest/odometry/filtered"
+
+# CAMERA_FRAME = "tempest_left_camera_frame"
+CAMERA_FRAME = "tempest/stereo/left_link"
+TORPEDO_FRAME = "tempest/stereo/left_link" #TODO: make this the correct name
 
 ROBOT_NAME = "tempest"
 CAMERA_FOV_X = 81.25 #degrees
@@ -50,13 +53,17 @@ class AlignTorpedosService(Node):
         
         #subscribers
         self.imageSub = self.create_subscription(Image, IMAGE_TOPIC, self.imageCallback, qos_profile_system_default)
+        self.odomSub = self.create_subscription(Odometry, ODOM_TOPIC, self.odomCallback, qos_profile_system_default)
+        
         self.imgQueue = Queue(1)
+        self.odomQueue = Queue(1)
+        
         
     #
     # Utils
     #
     
-    #TODO: make a util file to store all of these util methods. when you make one, change away from using TorpedoVision.dist which can only do 2d points
+    #TODO: make a util file to store all of these util methods.
     def dist(self, pt1, pt2):
         if not (len(pt1) == len(pt2)):
             self.get_logger().error("Cannot calculate distance between points of differing dimensions!")
@@ -68,6 +75,14 @@ class AlignTorpedosService(Node):
             sum += diff**2 #diff squared
         
         return sqrt(sum)
+    
+
+    def distVec3(self, v1: Vector3, v2: Vector3):
+        dx = v2.x - v1.x
+        dy = v2.y - v1.y
+        dz = v2.z - v1.z
+        
+        return sqrt(dx**2 + dy**2 + dz**2)
     
     
     def closestToPoint(self, rects, target):
@@ -81,23 +96,31 @@ class AlignTorpedosService(Node):
         
         return closest
     
-    
-    def averageOfTuples(self, points, tupleSize):
-        if len(points) == 0:
-            return [0.0] * tupleSize
-               
-        res = [0.0] * tupleSize
-        for point in points:
-            for i in range(0, len(point)):
-                res[i] += point[i]
-                
-        for i in range(0, len(res)):
-            res[i] /= len(points)
+
+    def rotateAboutYaw(self, pt: Vector3, angle) -> Vector3:
+        x = pt.x * cos(angle) - pt.y * sin(angle)
+        y = pt.x * sin(angle) + pt.y * cos(angle)
         
-        # for comp in res:
-        #     comp /= len(res)
-            
+        res = Vector3()
+        res.x = x
+        res.y = y
+        res.z = pt.z
+        
         return res
+    
+    
+    def averageOfVector3s(self, vecs):               
+        avg = Vector3()
+        for vec in vecs:
+            avg.x += vec.x
+            avg.y += vec.y
+            avg.z += vec.z
+            
+        avg.x /= len(vecs)
+        avg.y /= len(vecs)
+        avg.z /= len(vecs)
+        
+        return avg
     
     
     def centerOfRect(self, rect):
@@ -108,14 +131,14 @@ class AlignTorpedosService(Node):
         return (cX, cY)
     
     
-    def filterPoints(self, points, tupleSize):
+    def filterPoints(self, points):
         if len(points) == 0:
             return points
         
-        avg = self.averageOfTuples(points, tupleSize)
+        avg = self.averageOfVector3s(points)
         
         #get distance of each point from average point
-        dists = [self.dist(avg, pt) for pt in points]
+        dists = [self.distVec3(avg, pt) for pt in points]
         avgDist = sum(dists) / len(dists)
         stdev = pstdev(dists) #standard deviation
         
@@ -150,9 +173,8 @@ class AlignTorpedosService(Node):
         return px / pixelsPerMeter
     
     #basically this method should be the exact python version of doTransform() in util.cpp but without transforming the quaternion and returning a pose
-    def transformPosition(self, coords, transform: TransformStamped) -> Vector3:
+    def doTransform(self, coords: Vector3, transform: TransformStamped) -> Vector3:
         #rotate point with transform orientation
-        
         rpy = euler_from_quaternion([
             transform.transform.rotation.x,
             transform.transform.rotation.y,
@@ -161,20 +183,43 @@ class AlignTorpedosService(Node):
         ])
         
         yaw = rpy[2]
-        
-        x = coords[0] * cos(yaw) - coords[1] * sin(yaw)
-        y = coords[0] * sin(yaw) + coords[1] * cos(yaw)
+        relative = self.rotateAboutYaw(coords, yaw)
         
         position = Vector3()
-        position.x = x + transform.transform.translation.x
-        position.y = y + transform.transform.translation.y
-        position.z = coords[2] + transform.transform.translation.z
+        position.x = relative.x + transform.transform.translation.x
+        position.y = relative.y + transform.transform.translation.y
+        position.z = relative.z + transform.transform.translation.z
         
         return position
     
+
+    def transformBetweenFrames(self, pose: Vector3, fromFrame: str, toFrame: str, timeout=5.0) -> Vector3:
+        startTime = self.get_clock().now()
+        #attempt to look up transform until lookup succeeds or timeout is reached (or rclpy is shut down)
+        while rclpy.ok() and (self.get_clock().now() - startTime).to_msg().sec < timeout:
+            try:
+                transform = self.tfBuffer.lookup_transform(
+                    toFrame,
+                    fromFrame,
+                    rclpy.time.Time()
+                )
+                                
+                return self.doTransform(pose, transform)
+            except Exception as ex:
+                self.get_logger().warn("Received exception while looking up transform: {}".format(ex))
+        
+        self.get_logger().error("Failed to look up transform from {} to {}!".format(fromFrame, toFrame))
+        
+        #compose error return value
+        ret = Vector3()
+        ret.x = inf
+        ret.y = inf
+        ret.z = inf
+        return ret
+    
     
     #transforms image pixel coordinates to global coordinates in world frame. returns (-1000, -1000, -1000) if an error happens.
-    def imageToWorldCoordinates(self, center, distance, imgShape):
+    def imageToWorldCoordinates(self, center, distance, imgShape) -> Vector3:
         cX, cY = center
         imgCenX = imgShape[0] / 2
         imgCenY = imgShape[1] / 2
@@ -187,25 +232,15 @@ class AlignTorpedosService(Node):
         xMeters = self.pixelsToMeters(cX, imgShape[0], CAMERA_FOV_X, distance)
         yMeters = self.pixelsToMeters(cY, imgShape[1], CAMERA_FOV_Y, distance)
         
-        #now all we need to do is convert that to world frame
-        try:
-            toFrame = "world"
-            # fromFrame = "tempest_left_camera_frame"
-            fromFrame = ROBOT_NAME + "/stereo/left_link"
-            
-            cameraToWorld = self.tfBuffer.lookup_transform(
-                toFrame,
-                fromFrame,
-                rclpy.time.Time()
-            )
-            
-            #transform point (distance, xMeters, yMeters). distance is first because it is forwards/backwards, x is second because its left/right, y third because up/down
-            globalCoords = self.transformPosition((distance, xMeters, yMeters), cameraToWorld)
-            return [globalCoords.x, globalCoords.y, globalCoords.z]
-        except TransformException as ex:
-            self.get_logger().warn("Could not transform {} to {}! {}".format(toFrame, fromFrame, ex))
+        print("xmeters: " + str(xMeters) + ",  ymeters: " + str(yMeters) + ",  distance: " + str(distance))
         
-        return (-1000.0, -1000.0, -1000.0) # error coords error coords
+        #compose the vector3 describing hole position relative to camera
+        relative = Vector3()
+        relative.x = distance
+        relative.y = xMeters
+        relative.z = yMeters
+                
+        return self.transformBetweenFrames(relative, CAMERA_FRAME, "world")
         
         
     #
@@ -223,12 +258,29 @@ class AlignTorpedosService(Node):
     
     def waitForImage(self, timeout=3.0) -> np.ndarray:
         return self.imgQueue.get(True, timeout)
+    
+    
+    def odomCallback(self, msg):
+        if self.odomQueue.full():
+            self.odomQueue.get_nowait()
+        
+        self.odomQueue.put_nowait(msg)
+        
+    
+    def waitForOdom(self, timeout=3.0) -> Odometry:
+        return self.odomQueue.get(True, timeout)
         
         
     def alignTorpedosCallback(self, goalHandle):
         self.get_logger().info("Starting align torpedos action.")
-        distance = goalHandle.request.distance
+        currentDist = goalHandle.request.currentdistance
+        goalDist = goalHandle.request.goaldistance
         timeout = goalHandle.request.timeoutms
+        
+        if currentDist == 0:
+            self.get_logger().error("Request invalid! currentdistance must be greater than 0!")
+            goalHandle.abort()
+            return AlignTorpedos.Result()
         
         startTime = self.get_clock().now()
         
@@ -240,26 +292,26 @@ class AlignTorpedosService(Node):
             img = self.waitForImage()
                         
             if img is not None:
-                #TODO: maybe instead of looking at corners, look at circularity instead
-                #peep this link: https://riptutorial.com/opencv/example/22518/circular-blob-detection
-                
                 holes = TorpedoVision.processImage(img) #returns a list of (contour, numCorners)
                 rects = [(cv2.boundingRect(hole), corners) for hole, corners in holes]
-                print(rects)
-                
+                                
                 for ((x, y, w, h), segments) in rects:
-                    globalCoords = self.imageToWorldCoordinates((x, y), distance, img.shape)
+                    globalCoords = self.imageToWorldCoordinates((x, y), currentDist, img.shape) #keep coordinates in global coords because world frame is more rigid than camera frame
                     coords.append((globalCoords, segments))
-                        
+                    
+                    print("distance: " + str(currentDist) + ",  image2world: " + str(globalCoords))
+                    print()
+                                        
                 for ((x, y, w, h), segments) in rects:
                     cv2.circle(img, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
-                    
-                cv2.imshow("result", img)
-                cv2.waitKey(1)
-        
-        print()
-        print()
-        
+                                    
+                if SHOW_DEBUG_IMAGE:
+                    cv2.imshow("result", img)
+                    cv2.waitKey(20)
+                                
+        if SHOW_DEBUG_IMAGE:
+            cv2.destroyAllWindows()
+                            
         # group all detections into groups of detections that are close to each other. The radius of each group is determined by GROUP_SIZE
         groups = [] #will be a list of (groups of coordinates that are close together, numSegments)
         for (coord, segments) in coords:
@@ -267,7 +319,7 @@ class AlignTorpedosService(Node):
             foundGroup = False
             for i in range(0, len(groups)):
                 (group, groupSegments) = groups[i]
-                if self.dist(coord, self.averageOfTuples(group, 3)) < GROUP_SIZE and segments == groupSegments:
+                if self.distVec3(coord, self.averageOfVector3s(group)) < GROUP_SIZE and segments == groupSegments:
                     groups[i][0].append(coord)
                     foundGroup = True
 
@@ -277,13 +329,9 @@ class AlignTorpedosService(Node):
         #find the average coordinate of each group
         finalCoords = [] #will be list of (coord, numDetections, numSegments)
         for (coords, segments) in groups:
-            finalCoords.append((self.averageOfTuples(coords, 3), len(coords), segments))
+            finalCoords.append((self.averageOfVector3s(coords), len(coords), segments))
             
-        print()
-        print()
-        print("RESULTS:")
-        for coord in finalCoords:
-            print(coord)
+        print("final coords: " + str(finalCoords))
             
         #now score each group based on the shape and number of detections (circle is lower score and more detections is better)
         scores = []
@@ -292,16 +340,59 @@ class AlignTorpedosService(Node):
             scores.append(numDetections * multiplier)
             
         #find coordinate to align to by using the one with the highest score
-        index = scores.index(max(scores)) #index of max of scores
-        targetCoord = finalCoords[index][0]
-            
         actionResult = AlignTorpedos.Result()
-        actionResult.coords.x = targetCoord[0]
-        actionResult.coords.y = targetCoord[1]
-        actionResult.coords.z = targetCoord[2]
+        if len(scores) > 0:
+            index = scores.index(max(scores)) #index of max of scores
+            targetCoord = finalCoords[index][0]
+            
+            self.get_logger().info("Target world coordinates: {}, {}, {}".format(targetCoord.x, targetCoord.y, targetCoord.z))
+            
+            #now that we have the target world coordinates, figure out where to move the robot to have the torpedos aligned
+            currTorpedo = self.transformBetweenFrames(targetCoord, "world", TORPEDO_FRAME)
+            print("current: " + str(currTorpedo))
+            
+            destTorpedo = Vector3() #goal position of of the target in torpedo frame
+            destTorpedo.x = goalDist
+            
+            print("dest: " + str(destTorpedo))
+            
+            #get difference between our current coords and our goal coords
+            difference = Vector3()
+            difference.x = currTorpedo.x - destTorpedo.x
+            difference.y = currTorpedo.y - destTorpedo.y
+            difference.z = currTorpedo.z - destTorpedo.z
+            
+            print("diff: " + str(difference))
+            
+            #convert our difference into world frame by rotating the point to be aligned with world frame coords
+            currentOdom = self.waitForOdom()
+            orientation = currentOdom.pose.pose.orientation
+            _, _, currYaw = euler_from_quaternion((orientation.w, orientation.x, orientation.y, orientation.z))
+            
+            diffWorld = self.rotateAboutYaw(difference, -currYaw)
+            
+            print("diffworld: " + str(diffWorld))
+            
+            if abs(diffWorld.x) == inf:
+                self.get_logger().error("Coordinate transformation failed at some point! Aborting.")
+                goalHandle.abort()
+                return AlignTorpedos.Result()
+            
+            #add our world frame difference to our current position to get our ultimate world-frame destination position
+            
+            goalPosition = Vector3()
+            goalPosition.x = currentOdom.pose.pose.position.x + diffWorld.x
+            goalPosition.y = currentOdom.pose.pose.position.y + diffWorld.y
+            goalPosition.z = currentOdom.pose.pose.position.z + diffWorld.z
+            
+            actionResult.coords = goalPosition
         
-        goalHandle.succeed()
-        self.get_logger().info("Torpedo alignment complete.")
+            goalHandle.succeed()
+            self.get_logger().info("Torpedo alignment complete.")
+        else:
+            self.get_logger().error("No targets detected! Aborting.")
+            goalHandle.abort()
+        
         return actionResult
     
     
@@ -318,4 +409,3 @@ def main(args=None):
 #program starts here
 if __name__ == '__main__':
     main()
-    
