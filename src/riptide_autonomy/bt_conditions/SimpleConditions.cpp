@@ -3,7 +3,7 @@
 
 /**
  * @brief Registers simple conditions.
- * 
+ *
  * @param factory The factory to register conditions with.
  */
 void SimpleConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
@@ -19,7 +19,7 @@ void SimpleConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
                 b = n.getInput<double>("b").value();
 
             RCLCPP_WARN(log, "Using deprecated state NumsEqual! Use CompareNums instead.");
-            
+
             return (a == b ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
         },
         { InputPort<double>("a"), InputPort<double>("b") }
@@ -32,11 +32,11 @@ void SimpleConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
         "CompareNums",
         [] (BT::TreeNode& n) {
             std::string test = n.getInput<std::string>("test").value();
-            
+
             double
                 a = n.getInput<double>("a").value(),
                 b = n.getInput<double>("b").value();
-            
+
             if(test == ">") { //check a > b
                 return (a > b ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
             } else if(test == "<") { //check if a < b
@@ -65,13 +65,27 @@ void SimpleConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
                 a = n.getInput<double>("a").value(),
                 b = n.getInput<double>("b").value(),
                 range = n.getInput<double>("range").value();
-            
+
             return (abs(a - b) < range ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
         },
         {
             InputPort<double>("a"),
             InputPort<double>("b"),
             InputPort<double>("range")
+        }
+    );
+
+    /**
+     * Basic condition that checks if a boolean value is true
+     */
+    factory->registerSimpleCondition(
+        "IsTrue",
+        [] (BT::TreeNode& n) {
+            bool value = n.getInput<bool>("value").value();
+            return (value ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
+        },
+        {
+            InputPort<bool>("value")
         }
     );
 }

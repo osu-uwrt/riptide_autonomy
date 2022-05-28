@@ -1,4 +1,27 @@
-<root>
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <Action ID="Info" message="Waiting for Kill Switch"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="Info" message="Ready to do things now"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="WaitForKillSwitch">
+        <Sequence>
+            <Action ID="Wait" seconds="5"/>
+            <RetryUntilSuccessful num_attempts="-1">
+                <Sequence>
+                    <Action ID="GetSwitchState" aux_switch_inserted="" kill_switch_inserted="kill_switch_inserted"/>
+                    <Condition ID="IsTrue" value="{kill_switch_inserted}"/>
+                </Sequence>
+            </RetryUntilSuccessful>
+            <Action ID="Wait" seconds="5"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="Actuate">
             <input_port name="arm_torpedo"/>
@@ -61,7 +84,7 @@
         <Condition ID="CompareNums">
             <input_port name="a"/>
             <input_port name="b"/>
-            <input_port name="test">can be "&lt;", ">", or "=".</input_port>
+            <input_port name="test">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeYawAngle">
             <output_port name="output"/>
@@ -97,8 +120,8 @@
             <output_port name="z"/>
         </Action>
         <Action ID="GetSwitchState">
-            <output_port name="kill_switch_inserted"/>
             <output_port name="aux_switch_inserted"/>
+            <output_port name="kill_switch_inserted"/>
         </Action>
         <Action ID="Info">
             <input_port name="message">The message to print.</input_port>
@@ -145,7 +168,7 @@
         <Action ID="Math">
             <input_port name="a"/>
             <input_port name="b"/>
-            <input_port default="+" name="operator">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out"/>
         </Action>
         <Condition ID="NumsEqual">
@@ -220,8 +243,11 @@
         <Action ID="Wait">
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
+        <SubTree ID="WaitForKillSwitch"/>
         <Action ID="WaitState">
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
     </TreeNodesModel>
+    <!-- ////////// -->
 </root>
+

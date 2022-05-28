@@ -38,6 +38,7 @@ add_library(autonomy STATIC
   src/riptide_autonomy/bt_actions/AlignTorpedos.cpp
   src/riptide_autonomy/bt_actions/GetActuatorStatus.cpp
   src/riptide_autonomy/bt_actions/GetOdometry.cpp
+  src/riptide_autonomy/bt_actions/GetSwitchState.cpp
   src/riptide_autonomy/bt_actions/PublishToController.cpp
   src/riptide_autonomy/bt_actions/Search.cpp
   src/riptide_autonomy/bt_actions/SimpleActions.cpp
@@ -54,16 +55,16 @@ add_library(autonomy STATIC
 )
 
 #deps
-ament_target_dependencies(autonomy 
+ament_target_dependencies(autonomy
   rclcpp
-  geometry_msgs 
-  std_msgs 
-  nav_msgs 
+  geometry_msgs
+  std_msgs
+  nav_msgs
   sensor_msgs
-  riptide_msgs2 
-  behaviortree_cpp_v3 
-  tf2 
-  tf2_ros 
+  riptide_msgs2
+  behaviortree_cpp_v3
+  tf2
+  tf2_ros
   tf2_geometry_msgs
 )
 
@@ -81,11 +82,11 @@ install(DIRECTORY launch
 
 # Install Python executables
 install(PROGRAMS
-  src/riptide_autonomy/ros_actions/AlignTorpedoAction.py 
+  src/riptide_autonomy/ros_actions/AlignTorpedoAction.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY 
+install(DIRECTORY
   src/riptide_autonomy/ros_actions/utils
   DESTINATION lib/${PROJECT_NAME}
 )

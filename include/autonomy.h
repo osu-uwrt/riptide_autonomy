@@ -1,4 +1,4 @@
-/** 
+/**
  * Include file that contains all includes needed for autonomy
  */
 
@@ -19,6 +19,7 @@
 #include "riptide_msgs2/msg/actuator_command.hpp"
 #include "riptide_msgs2/msg/actuator_status.hpp"
 #include "riptide_msgs2/msg/controller_command.hpp"
+#include "riptide_msgs2/msg/robot_state.hpp"
 #include "riptide_msgs2/action/align_torpedos.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
@@ -38,59 +39,60 @@ const std::string
     POSITION_TOPIC = "controller/position",
     ORIENTATION_TOPIC = "controller/orientation",
     ACTUATOR_COMMAND_TOPIC = "command/actuator",
-    ACTUATOR_STATUS_TOPIC = "state/actuator";
+    ACTUATOR_STATUS_TOPIC = "state/actuator",
+    ROBOT_STATE_TOPIC = "state/robot";
 
 /**
- * 
+ *
  * UTILITY METHODS
- * 
+ *
  */
 
 /**
  * @brief Transforms a pose.
- * 
+ *
  * @return geometry_msgs::msg::Pose The original pose with the transform applied.
  */
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose, geometry_msgs::msg::TransformStamped);
 
 /**
  * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles in radians.
- * 
+ *
  * @return geometry_msgs::msg::Vector3 The orientation in roll pitch yaw.
  */
 geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion);
 
 /**
  * @brief Converts RPY to quaternion.
- * 
+ *
  * @return geometry_msgs::msg::Quaternion The quaternion represented by the Vector3
  */
 geometry_msgs::msg::Quaternion toQuat(geometry_msgs::msg::Vector3);
 
 /**
  * @brief Converts the passed point to a Vector3 message.
- * 
+ *
  * @return geometry_msgs::msg::Vector3 A Vector3 message that is equal to the passed Point.
  */
 geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point);
 
 /**
  * @brief Converts the passed Vector3 to a Point message.
- * 
+ *
  * @return geometry_msgs::msg::Point A Point message that is equal to the passed Vector3.
  */
 geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3);
 
 /**
  * @brief Computes the length of a Vector3.
- * 
+ *
  * @return double the length of the passed vector.
  */
 double vector3Length(geometry_msgs::msg::Vector3);
 
 /**
  * @brief Get a thing from the BT blackboard.
- * 
+ *
  * @return true if the operation succeeded, false otherwise.
  */
 template<typename T>
@@ -98,14 +100,14 @@ bool getFromBlackboard(BT::TreeNode&, std::string, T*);
 
 /**
  * @brief Inserts blackboard entries, where applicable, into the given string.
- * 
+ *
  * @return std::string The string with the blackboard entries inserted
  */
 std::string stringWithBlackboardEntries(std::string, BT::TreeNode&);
 
 /**
  * @brief Calculates the distance between two given points.
- * 
+ *
  * @return double The distance between point1 and point2.
  */
 double distance(geometry_msgs::msg::Point, geometry_msgs::msg::Point);
@@ -127,7 +129,7 @@ class SimpleActions {
 /**
  * @brief Basic conditions that do not require a ROS node.
  * Used for basic computations that can be checked without using a publisher or subscriber.
- * 
+ *
  * TODO: move ActuatorStateCheckers here
  */
 class SimpleConditions {
@@ -137,7 +139,7 @@ class SimpleConditions {
 
 /**
  * @brief A BT SyncActionNode with an init() method that takes a ROS node as a parameter.
- * This class should be inherited by every state used by the robot to avoid creating a new 
+ * This class should be inherited by every state used by the robot to avoid creating a new
  * ros node every time a state change happens.
  */
 class UWRTSyncActionNode : public SyncActionNode {
@@ -170,19 +172,19 @@ class RetryUntilSuccessfulOrTimeout : public BT::DecoratorNode {
 
 /**
  * @brief The base state template that you can copy and modify to create other states
- * 
+ *
  * When creating a new state, copy this template and rename the class and the constructor to
- * the name of the state you are creating. For example, if you are writing a state that 
+ * the name of the state you are creating. For example, if you are writing a state that
  * aligns the robot to a thing, you might rename the class and constructor to "AlignState".
- * 
+ *
  * After renaming the class, be sure to define the providedPorts() method. Any input/output
  * ports should be defined in this header to reduce verbosity in your source file.
- * 
+ *
  * After defining your ports, delete this comment and replace it with a description of your state.
- * 
+ *
  * DO NOT USE THIS CLASS OR ANY OF ITS METHODS AS A STATE. YOU WILL GET UNDEFINED REFERENCES
  * BECAUSE THIS CLASS DOESN'T GET COMPILED.
- * 
+ *
  * TODO: Delete this comment and resolve other todos.
  */
 class BaseState : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
@@ -210,9 +212,9 @@ class BaseState : public UWRTSyncActionNode { //TODO: Rename class to whatever y
      * @brief Executes the node.
      * This method will be called once by the tree and can block for as long
      * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
      * IDLE or RUNNING.
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -253,7 +255,7 @@ class PublishToController : public UWRTSyncActionNode { //TODO: Rename class to 
 
     /**
      * @brief Executes the node
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -261,9 +263,9 @@ class PublishToController : public UWRTSyncActionNode { //TODO: Rename class to 
     private:
     //process node
     rclcpp::Node::SharedPtr rosnode;
-    
+
     //publisher to controller
-    rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr 
+    rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr
         positionPub,
         orientationPub;
 };
@@ -299,7 +301,7 @@ class GetOdometry : public UWRTSyncActionNode { //TODO: Rename class to whatever
 
     /**
      * @brief Executes the node.
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -354,7 +356,7 @@ class TransformPose : public UWRTSyncActionNode { //TODO: Rename class to whatev
 
     /**
      * @brief Executes the node.
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -363,13 +365,13 @@ class TransformPose : public UWRTSyncActionNode { //TODO: Rename class to whatev
     //process node
     rclcpp::Node::SharedPtr rosnode;
 
-    
+
 };
 
 /**
  * @brief Search State.
- * 
- * This state searches for a given frame/object while moving towards it. 
+ *
+ * This state searches for a given frame/object while moving towards it.
  * Its goal is to reduce the covariance of the position estimate from mapping,
  * not to bring the robot all the way to the object. When this state ends, the
  * position of the object should be accurate enough to use ToWorldFrameState and
@@ -382,7 +384,7 @@ class Search : public UWRTSyncActionNode {
 
     /**
      * @brief Declares ports needed by this state.
-     * 
+     *
      * @return PortsList Needed ports.
      */
     static PortsList providedPorts() {
@@ -394,8 +396,8 @@ class Search : public UWRTSyncActionNode {
     }
 
     /**
-     * @brief Initializes the node. 
-     * 
+     * @brief Initializes the node.
+     *
      * @param node The ROS node belonging to the current process.
      */
     void init(rclcpp::Node::SharedPtr) override;
@@ -404,9 +406,9 @@ class Search : public UWRTSyncActionNode {
      * @brief Executes the node.
      * This method will be called once by the tree and can block for as long
      * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
      * IDLE or RUNNING.
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -417,14 +419,14 @@ class Search : public UWRTSyncActionNode {
 
     /**
      * @brief Called when the guess subscription receives a message.
-     * 
+     *
      * @param msg The received message.
      */
     void guessCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr);
 
     /**
      * @brief Called when the guess subscription receives a message.
-     * 
+     *
      * @param msg The received message.
      */
     void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
@@ -441,12 +443,12 @@ class Search : public UWRTSyncActionNode {
     rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr orientationPub;
 
     //other things
-    geometry_msgs::msg::Pose 
+    geometry_msgs::msg::Pose
         guessLocation,
         currentPose;
 
     double guessError;
-    bool 
+    bool
         receivedGuess,
         receivedPos;
 };
@@ -489,9 +491,9 @@ class Actuate : public UWRTSyncActionNode {
      * @brief Executes the node.
      * This method will be called once by the tree and can block for as long
      * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
      * IDLE or RUNNING.
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -504,7 +506,7 @@ class Actuate : public UWRTSyncActionNode {
 
 /**
  * @brief Reads out the status of the actuators into behaviortree ports
- * 
+ *
  */
 class GetActuatorStatus : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
     public:
@@ -535,9 +537,9 @@ class GetActuatorStatus : public UWRTSyncActionNode { //TODO: Rename class to wh
      * @brief Executes the node.
      * This method will be called once by the tree and can block for as long
      * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
      * IDLE or RUNNING.
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -562,7 +564,7 @@ class Wait : public UWRTSyncActionNode { //TODO: Rename class to whatever your s
      * @return PortsList Needed ports.
      */
     static PortsList providedPorts() {
-        return { 
+        return {
             InputPort<double>("seconds")
         };
     }
@@ -577,9 +579,9 @@ class Wait : public UWRTSyncActionNode { //TODO: Rename class to whatever your s
      * @brief Executes the node.
      * This method will be called once by the tree and can block for as long
      * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
      * IDLE or RUNNING.
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -622,9 +624,9 @@ class AlignTorpedos : public UWRTSyncActionNode { //TODO: Rename class to whatev
      * @brief Executes the node.
      * This method will be called once by the tree and can block for as long
      * as it needs for the action to be completed. When execution completes,
-     * this method must return either SUCCESS or FAILURE; it CANNOT return 
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
      * IDLE or RUNNING.
-     * 
+     *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     NodeStatus tick() override;
@@ -638,6 +640,52 @@ class ActuatorConditions {
     public:
     //register states
     static void registerConditions(BT::BehaviorTreeFactory *factory);
+};
+
+/**
+ * @brief Reads out the state of the switches into behaviortree ports
+ */
+class GetSwitchState : public UWRTSyncActionNode {
+    public:
+    GetSwitchState(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts() {
+        return {
+            OutputPort<bool>("kill_switch_inserted"),
+            OutputPort<bool>("aux_switch_inserted")
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
+     * IDLE or RUNNING.
+     *
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    void robotStateCallback(const riptide_msgs2::msg::RobotState::SharedPtr);
+
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
+    rclcpp::Subscription<riptide_msgs2::msg::RobotState>::SharedPtr stateSub;
+    riptide_msgs2::msg::RobotState latestState;
+    bool stateReceived;
 };
 
 #endif // AUTONOMY_H

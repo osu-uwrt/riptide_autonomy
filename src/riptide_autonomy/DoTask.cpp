@@ -6,8 +6,8 @@
 /**
  * C++ Script that runs a given behavior tree.
  * Script will take in the file path to a behavior
- * tree XML file as an argument, then run that 
- * tree and return the result (0 if success, 1 if failure) 
+ * tree XML file as an argument, then run that
+ * tree and return the result (0 if success, 1 if failure)
  */
 
 using namespace BT;
@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<AlignTorpedos>("AlignTorpedos");
     factory.registerNodeType<GetActuatorStatus>("GetActuatorStatus");
     factory.registerNodeType<GetOdometry>("GetOdometry");
+    factory.registerNodeType<GetSwitchState>("GetSwitchState");
     factory.registerNodeType<PublishToController>("PublishToController");
     factory.registerNodeType<Search>("Search");
     factory.registerNodeType<TransformPose>("TransformPose");
@@ -98,7 +99,7 @@ int main(int argc, char *argv[]) {
         if( auto action = dynamic_cast<UWRTSyncActionNode*>( node.get() )) {
             action->init(rosnode);
         }
-    }    
+    }
 
     std::string logFile = getEnvironmentVariable("HOME") + std::string(AUTONOMY_PATH_FROM_HOME) + "btLog.fbl";
     int logArgIndex = indexOfStr(argv, "--log-file", argc);
