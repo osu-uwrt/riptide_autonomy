@@ -91,12 +91,26 @@ BT::NodeStatus doMath(BT::TreeNode& n) {
     return NodeStatus::SUCCESS;
 }
 
-BT::NodeStatus computeYawAngle(BT::TreeNode& n) {
+/**
+ * @brief Get the Heading To Point
+ * 
+ * @param n The BehaviorTree node.
+ * @return BT::NodeStatus return status
+ */
+BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
     double
-        x = n.getInput<double>("x").value(),
-        y = n.getInput<double>("y").value();
-    
-    n.setOutput<double>("output", atan2(y, x));
+        currX = n.getInput<double>("currX").value(),
+        currY = n.getInput<double>("currY").value(),
+        targX = n.getInput<double>("targX").value(),
+        targY = n.getInput<double>("targY").value();
+
+    double
+        dx = targX - currX,
+        dy = targY - currY;
+
+    double heading = atan2(dy, dx);
+
+    n.setOutput<double>("heading", heading);
     return NodeStatus::SUCCESS;
 }
 
@@ -144,14 +158,13 @@ void SimpleActions::registerActions(BT::BehaviorTreeFactory *factory) {
         }
     );
 
-    /**
-     * Basic action that computes the angle between two vectors.
-     */
-    factory->registerSimpleAction("ComputeYawAngle", computeYawAngle,
+    factory->registerSimpleAction("HeadingToPoint", getHeadingToPoint,
         {
-            InputPort<double>("x"),
-            InputPort<double>("y"),
-            OutputPort<double>("output")
+            InputPort<double>("currX"),
+            InputPort<double>("currY"),
+            InputPort<double>("targX"),
+            InputPort<double>("targY"),
+            OutputPort<double>("heading")
         }
     );
 }

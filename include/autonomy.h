@@ -36,8 +36,8 @@ using namespace BT;
 //useful constant values for autonomy
 const std::string
     ODOMETRY_TOPIC = "odometry/filtered",
-    POSITION_TOPIC = "controller/position",
-    ORIENTATION_TOPIC = "controller/orientation",
+    POSITION_TOPIC = "controller/linear",
+    ORIENTATION_TOPIC = "controller/angular",
     ACTUATOR_COMMAND_TOPIC = "command/actuator",
     ACTUATOR_STATUS_TOPIC = "state/actuator",
     ROBOT_STATE_TOPIC = "state/robot";

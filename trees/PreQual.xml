@@ -3,9 +3,30 @@
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <Action ID="Wait" seconds="3"/>
-            <SetBlackboard output_key="depth" value="-1.5"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            <SubTree ID="HelpfulMessage"/>
+            <SubTree ID="defines" __shared_blackboard="true"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="-1" y="0" yaw="0" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="0" y="0" yaw="0" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="2" y="-2" yaw="0" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="4" y="0" yaw="pi/2" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="2" y="2" yaw="pi" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="0" y="0" yaw="pi" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="-1" y="0" yaw="pi" z="-1"/>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="Dive">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="{op}" or="{or}" oy="{oy}" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="oy" x="x" y="y" z="depth"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="GateTask">
+        <Sequence>
             <Action ID="Search" frame="gman" target_error="0.125" update_sec="1"/>
             <Action ID="TransformPose" from_frame="gman_frame" op="0" or="0" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="0" to_frame="world" x="-1.2" y="0" z="-0.5"/>
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
@@ -17,11 +38,9 @@
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
-    <BehaviorTree ID="Dive">
+    <BehaviorTree ID="HelpfulMessage">
         <Sequence>
-            <SetBlackboard output_key="0" value="0"/>
-            <Action ID="GetOdometry" op="{op}" or="{or}" oy="{oy}" x="{x}" y="{y}" z="{z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="oy" x="x" y="y" z="depth"/>
+            <Action ID="Error" message="Hey if you guys need to change the parameters of the subtrees, make sure the number is &quot;defined&quot; in the &quot;defines&quot; tab in Groot beacuse BT is annoying. Also, ignore this error; I only made it an error so its distinctive. glhf -- Brach"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -51,21 +70,33 @@
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="cx" y="cy" z="cz"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="goal_yaw"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="op" r="or" y="oy"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" y="oy"/>
             <Action ID="Info" message="Move Complete."/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
+    <BehaviorTree ID="MoveRelativeToGman">
+        <Sequence>
+            <Action ID="TransformPose" from_frame="gman_frame" op="0" or="0" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="{yaw}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
     <BehaviorTree ID="PrimitiveMoveOrientation">
-        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
-            <Sequence>
-                <Action ID="PublishToController" isOrientation="1" mode="3" x="{r}" y="{p}" z="{y}"/>
-                <Action ID="GetOdometry" name="Get Current RPY" op="{cp}" or="{cr}" oy="{cy}" x="" y="" z=""/>
-                <Condition ID="ApproxEqualTo" a="{cr}" b="{r}" name="At goal roll?" range="0.25"/>
-                <Condition ID="ApproxEqualTo" a="{cp}" b="{p}" name="At goal pitch?" range="0.25"/>
-                <Condition ID="ApproxEqualTo" a="{cy}" b="{y}" name="At goal yaw?" range="0.25"/>
-            </Sequence>
-        </Decorator>
+        <Fallback>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
+                <Sequence>
+                    <Action ID="PublishToController" isOrientation="1" mode="3" x="{r}" y="{p}" z="{y}"/>
+                    <Action ID="GetOdometry" name="Get Current RPY" op="{cp}" or="{cr}" oy="{cy}" x="" y="" z=""/>
+                    <Condition ID="ApproxEqualTo" a="{cr}" b="{r}" name="At goal roll?" range="0.25"/>
+                    <Condition ID="ApproxEqualTo" a="{cp}" b="{p}" name="At goal pitch?" range="0.25"/>
+                    <Condition ID="ApproxEqualTo" a="{cy}" b="{y}" name="At goal yaw?" range="0.25"/>
+                </Sequence>
+            </Decorator>
+            <ForceSuccess>
+                <Action ID="Error" message="Couldn't bring Tempest to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+            </ForceSuccess>
+        </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="PrimitiveMovePosition">
@@ -88,7 +119,21 @@
             <Action ID="Math" a="{cx}" b="{x}" operator="+" out="{gx}"/>
             <Action ID="Math" a="{cy}" b="{y}" operator="+" out="{gy}"/>
             <Action ID="Math" a="{cz}" b="{z}" operator="+" out="{gz}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="" or="" oy="" x="" y="" z=""/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="defines">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SetBlackboard output_key="4" value="4"/>
+            <SetBlackboard output_key="1.5" value="1.5"/>
+            <SetBlackboard output_key="2" value="2"/>
+            <SetBlackboard output_key="-2" value="-2"/>
+            <SetBlackboard output_key="pi/2" value="1.5708"/>
+            <SetBlackboard output_key="pi" value="3.1415"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -173,6 +218,7 @@
             <output_port default="0" name="y"/>
             <output_port default="-1" name="z"/>
         </Action>
+        <SubTree ID="GateTask"/>
         <Action ID="GetActuatorStatus">
             <output_port name="claw_state"/>
             <output_port name="dropper1_state"/>
@@ -195,6 +241,7 @@
             <input_port name="targX"/>
             <input_port name="targY"/>
         </Action>
+        <SubTree ID="HelpfulMessage"/>
         <Action ID="Info">
             <input_port name="message">The message to print.</input_port>
         </Action>
@@ -250,6 +297,13 @@
             <input_port name="y"/>
             <input_port name="z"/>
         </SubTree>
+        <SubTree ID="MoveRelativeToGman">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="yaw"/>
+            <input_port name="z"/>
+        </SubTree>
         <Condition ID="NumsEqual">
             <input_port name="a"/>
             <input_port name="b"/>
@@ -295,7 +349,6 @@
             <input_port name="target_error">The goal amount of error for the state to succeed.</input_port>
             <input_port name="update_sec">How much time to wait for update</input_port>
         </Action>
-        <Action ID="ShootTorpedoState"/>
         <Action ID="ToString">
             <input_port name="double_in">optional. use if value is a double</input_port>
             <input_port name="int_in">optional. use if value is a string</input_port>
@@ -346,6 +399,9 @@
         <Action ID="WaitState">
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
+        <SubTree ID="defines">
+            <input_port default="true" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
