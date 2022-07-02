@@ -8,9 +8,9 @@
             <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
             <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="-1" y="0" yaw="0" z="-1"/>
             <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="0" y="0" yaw="0" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="2" y="-2" yaw="0" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="4" y="0" yaw="pi/2" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="2" y="2" yaw="pi" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="2" y="-3.5" yaw="0" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="5.5" y="0" yaw="pi/2" z="-1"/>
+            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="2" y="3.5" yaw="pi" z="-1"/>
             <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="0" y="0" yaw="pi" z="-1"/>
             <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="-1" y="0" yaw="pi" z="-1"/>
             <SubTree ID="KillController"/>
@@ -123,6 +123,19 @@
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
+    <BehaviorTree ID="WaitForKillSwitch">
+        <Sequence>
+            <Action ID="Wait" seconds="5"/>
+            <RetryUntilSuccessful num_attempts="-1">
+                <Sequence>
+                    <Action ID="GetSwitchState" aux_switch_inserted="" kill_switch_inserted="kill_switch_inserted"/>
+                    <Condition ID="IsTrue" value="{kill_switch_inserted}"/>
+                </Sequence>
+            </RetryUntilSuccessful>
+            <Action ID="Wait" seconds="5"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
     <BehaviorTree ID="defines">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
@@ -134,6 +147,9 @@
             <SetBlackboard output_key="-2" value="-2"/>
             <SetBlackboard output_key="pi/2" value="1.5708"/>
             <SetBlackboard output_key="pi" value="3.1415"/>
+            <SetBlackboard output_key="-3.5" value="-3.5"/>
+            <SetBlackboard output_key="5.5" value="5.5"/>
+            <SetBlackboard output_key="3.5" value="3.5"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -234,6 +250,10 @@
             <output_port name="y"/>
             <output_port name="z"/>
         </Action>
+        <Action ID="GetSwitchState">
+            <output_port name="aux_switch_inserted"/>
+            <output_port name="kill_switch_inserted"/>
+        </Action>
         <Action ID="HeadingToPoint">
             <input_port name="currX"/>
             <input_port name="currY"/>
@@ -280,6 +300,9 @@
         </Condition>
         <Condition ID="IsTorpedoFired">
             <input_port name="torpedo_state"/>
+        </Condition>
+        <Condition ID="IsTrue">
+            <input_port name="value"/>
         </Condition>
         <SubTree ID="KillController"/>
         <Action ID="Math">
@@ -399,10 +422,10 @@
         <Action ID="WaitState">
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
+        <SubTree ID="WaitForKillSwitch"/>
         <SubTree ID="defines">
             <input_port default="true" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-

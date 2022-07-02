@@ -24,8 +24,8 @@ NodeStatus AlignTorpedos::tick() {
 
     auto goal = AlignTorpedos::Goal();
     goal.timeoutms = timeout * 1000;
-    goal.currentdistance = currentDistance;
-    goal.goaldistance = goalDistance;
+    //goal.currentdistance = currentDistance;
+    //goal.goaldistance = goalDistance;
 
     rclcpp_action::ClientGoalHandle<AlignTorpedos>::WrappedResult actionResult;
     actionResult.code = rclcpp_action::ResultCode::UNKNOWN;
