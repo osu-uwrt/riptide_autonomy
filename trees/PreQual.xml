@@ -3,16 +3,24 @@
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SubTree ID="HelpfulMessage"/>
-            <SubTree ID="defines" __shared_blackboard="true"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="-1" y="0" yaw="0" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="0" y="0" yaw="0" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="2" y="-3.5" yaw="0" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="5.5" y="0" yaw="pi/2" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="2" y="3.5" yaw="pi" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="0" y="0" yaw="pi" z="-1"/>
-            <SubTree ID="MoveRelativeToGman" __shared_blackboard="false" x="-1" y="0" yaw="pi" z="-1"/>
+            <SetBlackboard output_key="gate_frame" value="gate_frame"/>
+            <SetBlackboard output_key="pole_frame" value="pole_frame"/>
+            <SetBlackboard output_key="pi/2" value="1.5708"/>
+            <SetBlackboard output_key="pi" value="3.1415"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard name="Set depth of Tempest" output_key="depth" value="-1"/>
+            <SetBlackboard name="Set radius around pole" output_key="r" value="2.5"/>
+            <Action ID="GetOdometry" op="" or="" oy="" x="{st_x}" y="{st_y}" z="{st_z}"/>
+            <Action ID="Math" a="0" b="{r}" operator="-" out="{neg_r}"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            <SubTree ID="MoveRelativeToObject" __shared_blackboard="false" frame="gate_frame" x="0" y="0" yaw="pi" z="depth"/>
+            <SubTree ID="MoveRelativeToObject" __shared_blackboard="false" frame="pole_frame" x="neg_r" y="0" yaw="0" z="depth"/>
+            <SubTree ID="MoveRelativeToObject" __shared_blackboard="false" frame="pole_frame" x="0" y="neg_r" yaw="0" z="depth"/>
+            <SubTree ID="MoveRelativeToObject" __shared_blackboard="false" frame="pole_frame" x="r" y="0" yaw="pi/2" z="depth"/>
+            <SubTree ID="MoveRelativeToObject" __shared_blackboard="false" frame="pole_frame" x="0" y="r" yaw="pi" z="depth"/>
+            <SubTree ID="MoveRelativeToObject" __shared_blackboard="false" frame="pole_frame" x="neg_r" y="0" yaw="pi" z="depth"/>
+            <SubTree ID="MoveRelativeToObject" __shared_blackboard="false" frame="gate_frame" x="0" y="0" yaw="0" z="depth"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="st_x" y="st_y" z="depth"/>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
@@ -75,10 +83,10 @@
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
-    <BehaviorTree ID="MoveRelativeToGman">
+    <BehaviorTree ID="MoveRelativeToObject">
         <Sequence>
-            <Action ID="TransformPose" from_frame="gman_frame" op="0" or="0" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="{yaw}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="{t_pitch}" out_or="{t_roll}" out_oy="{t_yaw}" out_x="{t_x}" out_y="{t_y}" out_z="{t_z}" oy="{yaw}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="t_pitch" or="t_roll" oy="t_yaw" x="t_x" y="t_y" z="t_z"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -120,23 +128,6 @@
             <Action ID="Math" a="{cy}" b="{y}" operator="+" out="{gy}"/>
             <Action ID="Math" a="{cz}" b="{z}" operator="+" out="{gz}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="" or="" oy="" x="" y="" z=""/>
-        </Sequence>
-    </BehaviorTree>
-    <!-- ////////// -->
-    <BehaviorTree ID="defines">
-        <Sequence>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="-1" value="-1"/>
-            <SetBlackboard output_key="4" value="4"/>
-            <SetBlackboard output_key="1.5" value="1.5"/>
-            <SetBlackboard output_key="2" value="2"/>
-            <SetBlackboard output_key="-2" value="-2"/>
-            <SetBlackboard output_key="pi/2" value="1.5708"/>
-            <SetBlackboard output_key="pi" value="3.1415"/>
-            <SetBlackboard output_key="-3.5" value="-3.5"/>
-            <SetBlackboard output_key="5.5" value="5.5"/>
-            <SetBlackboard output_key="3.5" value="3.5"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -300,12 +291,13 @@
             <input_port name="y"/>
             <input_port name="z"/>
         </SubTree>
-        <SubTree ID="MoveRelativeToGman">
+        <SubTree ID="MoveRelativeToObject">
             <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="x"/>
-            <input_port name="y"/>
-            <input_port name="yaw"/>
-            <input_port name="z"/>
+            <input_port name="frame">frame to move relative to</input_port>
+            <input_port name="x">relative X</input_port>
+            <input_port name="y">relative Y</input_port>
+            <input_port name="yaw">relative yaw</input_port>
+            <input_port name="z">relative Z</input_port>
         </SubTree>
         <Condition ID="NumsEqual">
             <input_port name="a"/>
@@ -402,9 +394,6 @@
         <Action ID="WaitState">
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
-        <SubTree ID="defines">
-            <input_port default="true" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>

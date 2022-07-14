@@ -83,7 +83,7 @@ install(DIRECTORY launch
 # Install Python executables
 install(PROGRAMS
   src/riptide_autonomy/ros_actions/AlignTorpedoAction.py
-  src/riptide_autonomy/ros_actions/CompleteBinsAction.py
+  src/riptide_autonomy/ros_actions/BinsDiveAction.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
