@@ -3,6 +3,7 @@
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
+            <SubTree ID="WaitForKillSwitch"/>
             <SetBlackboard output_key="gate_frame" value="gate_frame"/>
             <SetBlackboard output_key="pole_frame" value="pole_frame"/>
             <SetBlackboard output_key="pi/2" value="1.5708"/>
@@ -86,7 +87,7 @@
     <BehaviorTree ID="MoveRelativeToObject">
         <Sequence>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="{t_pitch}" out_or="{t_roll}" out_oy="{t_yaw}" out_x="{t_x}" out_y="{t_y}" out_z="{t_z}" oy="{yaw}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="t_pitch" or="t_roll" oy="t_yaw" x="t_x" y="t_y" z="t_z"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="t_pitch" or="t_roll" oy="t_yaw" x="t_x" y="t_y" z="z"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -128,6 +129,19 @@
             <Action ID="Math" a="{cy}" b="{y}" operator="+" out="{gy}"/>
             <Action ID="Math" a="{cz}" b="{z}" operator="+" out="{gz}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="" or="" oy="" x="" y="" z=""/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="WaitForKillSwitch">
+        <Sequence>
+            <Action ID="Wait" seconds="5"/>
+            <RetryUntilSuccessful num_attempts="-1">
+                <Sequence>
+                    <Action ID="GetSwitchState" aux_switch_inserted="" kill_switch_inserted="kill_switch_inserted"/>
+                    <Condition ID="IsTrue" value="{kill_switch_inserted}"/>
+                </Sequence>
+            </RetryUntilSuccessful>
+            <Action ID="Wait" seconds="5"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -228,6 +242,10 @@
             <output_port name="y"/>
             <output_port name="z"/>
         </Action>
+        <Action ID="GetSwitchState">
+            <inout_port name="aux_switch_inserted"/>
+            <inout_port name="kill_switch_inserted"/>
+        </Action>
         <Action ID="HeadingToPoint">
             <input_port name="currX"/>
             <input_port name="currY"/>
@@ -274,6 +292,9 @@
         </Condition>
         <Condition ID="IsTorpedoFired">
             <input_port name="torpedo_state"/>
+        </Condition>
+        <Condition ID="IsTrue">
+            <input_port name="value"/>
         </Condition>
         <SubTree ID="KillController"/>
         <Action ID="Math">
@@ -391,6 +412,7 @@
         <Action ID="Wait">
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
+        <SubTree ID="WaitForKillSwitch"/>
         <Action ID="WaitState">
             <input_port name="seconds">number of seconds to wait.</input_port>
         </Action>
