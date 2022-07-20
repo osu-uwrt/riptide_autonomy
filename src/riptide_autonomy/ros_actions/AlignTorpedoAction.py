@@ -26,12 +26,12 @@ import utils.TorpedoVision as TorpedoVision
 
 SHOW_DEBUG_IMAGE = False
 
-IMAGE_TOPIC = "/tempest/stereo/left/image_rect_color"
+IMAGE_TOPIC = "/tempest/torpedos"
 ODOM_TOPIC = "/tempest/odometry/filtered"
 
 # CAMERA_FRAME = "tempest_left_camera_frame"
-CAMERA_FRAME = "tempest/stereo/left_link"
-TORPEDO_FRAME = "tempest/stereo/left_link" #TODO: make this the correct name
+CAMERA_FRAME = "/tempest/stereo/left_link"
+TORPEDO_FRAME = "/tempest/stereo/left_link" #TODO: make this the correct name
 
 ROBOT_NAME = "tempest"
 CAMERA_FOV_X = 81.25 #degrees
