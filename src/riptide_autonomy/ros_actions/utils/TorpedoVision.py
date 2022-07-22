@@ -78,19 +78,14 @@ def isTarget(contour, imgSize):
     return False, -1
 
 
-def getTargets(contours, hierarchy, imgSize, i=0):
+def getTargets(contours, imgSize, i=0):
     targets = []
-    contour = contours[i]
     
-    isTarg, corners = isTarget(contour, imgSize)
-    if isTarg:
-        targets.append((contour, corners))
-    elif hierarchy[i][2] > -1: #search children if the current contour is not a target
-        targets += getTargets(contours, hierarchy, imgSize, hierarchy[i][2])
-    
-    if hierarchy[i][0] > -1: #go to next contour
-        targets += getTargets(contours, hierarchy, imgSize, hierarchy[i][0])
-        
+    for contour in contours:
+        isTarg, corners = isTarget(contour, imgSize)
+        if isTarg:
+            targets.append((contour, corners))
+            
     return targets
 
 
@@ -101,11 +96,10 @@ def processImage(img: np.ndarray):
     edges = cv2.Canny(blurred, 15, 160)
     edges = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_RECT, (3,3)))
     
-    contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    hierarchy = hierarchy[0]
-    
+    contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE) 
+        
     #look for potential targets
-    targets = getTargets(contours, hierarchy, (img.shape[0], img.shape[1])) #list of (contour, numCorners)
+    targets = getTargets(contours, (img.shape[0], img.shape[1])) #list of (contour, numCorners)
         
     #draw target contours on output image
     for target, _ in targets:
@@ -132,6 +126,5 @@ def test():
                         
             
 if __name__ == '__main__': #start here
-    # sys.setrecursionlimit(2500) 
     test()
     
