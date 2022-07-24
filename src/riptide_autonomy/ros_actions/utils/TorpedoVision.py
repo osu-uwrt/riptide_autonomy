@@ -8,7 +8,10 @@ import math
 DEBUG = False
 
 def dist(pt1, pt2): #TODO: this is wrong. get rid of it or fix
-    return math.sqrt((pt1[0] * pt1[0]) + (pt2[0] * pt2[0]))
+    dx = pt2[0] - pt1[0]
+    dy = pt2[1] - pt1[1]
+    # return math.sqrt((pt1[0] * pt1[0]) + (pt2[0] * pt2[0]))
+    return math.sqrt((dx * dx) + (dy * dy))
 
 
 def angle(pt1, pt2):
@@ -27,7 +30,7 @@ def numSegments(contour):
     for i in range(1, len(corners)):
         prev = corners[i-1][0]
         curr = corners[i][0]
-        if dist(prev, curr) > 250:
+        if dist(prev, curr) > 30:
             longSegments.append([prev, curr])
             
     return len(longSegments)
@@ -35,6 +38,7 @@ def numSegments(contour):
 
 def fitsTargetShape(contour):
     (x, y), (w, h), a = cv2.minAreaRect(contour)
+    corners = -1
     
     #first test: is the object big enough?
     if w * h > 5000:
@@ -47,7 +51,7 @@ def fitsTargetShape(contour):
         if abs(1 - lengthRatio) < 0.2:
             #third test: is the aspect ratio good?
             if abs(1 - (w / h)) < 0.3:
-                #fourth test: does it have the proper number of sides? TODO: figure out if this test is reliable
+                #fourth test: does it have the proper number of sides?
                 corners = numSegments(contour)
                 
                 # 10 or 5 corners - star
@@ -56,16 +60,17 @@ def fitsTargetShape(contour):
                 if corners == 10 or corners == 8 or corners == 5 or corners == 4:
                     return True, corners
 
-    return False, -1
+    return False, corners
 
 
 def isTarget(contour, imgSize):
     x, y, w, h = cv2.boundingRect(contour)
+    corners = -1
     if w * h > 5000:
         #create blank image to test contour on
         canvas = np.zeros(shape=(imgSize[0], imgSize[1], 1), dtype="uint8")
         
-        #redraw contour thicker to make it more perfect and fill any holes
+        #redraw contour thicker to make it more perfect
         canvas = cv2.drawContours(canvas, [contour], 0, (255), 15)
         
         postContours, _ = cv2.findContours(canvas, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -75,7 +80,7 @@ def isTarget(contour, imgSize):
             if fitsShape:
                 return True, corners
         
-    return False, -1
+    return False, corners
 
 
 def getTargets(contours, imgSize, i=0):
@@ -89,14 +94,14 @@ def getTargets(contours, imgSize, i=0):
     return targets
 
 
-def processImage(img: np.ndarray):
+def processImage(img: np.ndarray):    
     out = img.copy()
  
     blurred = cv2.blur(img, (5,5))
     edges = cv2.Canny(blurred, 15, 160)
     edges = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_RECT, (3,3)))
     
-    contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE) 
+    contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
         
     #look for potential targets
     targets = getTargets(contours, (img.shape[0], img.shape[1])) #list of (contour, numCorners)
@@ -109,9 +114,15 @@ def processImage(img: np.ndarray):
         cv2.circle(out, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
     
     #print good contours on output image
-    if DEBUG:        
+    if DEBUG:
+        edgesOut = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+        for contour in contours:
+            (x, y, w, h) = cv2.boundingRect(contour)
+            _, segments = fitsTargetShape(contour)
+            cv2.putText(edgesOut, str(segments), (int(x + (w/2)), int(y + (h/2))), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
         cv2.imshow("image", out)
-        cv2.imshow("edges", edges)
+        cv2.imshow("edges", edgesOut)
         cv2.waitKey()
     
     return targets

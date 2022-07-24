@@ -24,14 +24,14 @@ from statistics import pstdev
 
 import utils.TorpedoVision as TorpedoVision
 
-SHOW_DEBUG_IMAGE = False
+SHOW_DEBUG_IMAGE = True
 
-IMAGE_TOPIC = "/tempest/torpedos"
+IMAGE_TOPIC = "/tempest/stereo/left/image_raw"
 ODOM_TOPIC = "/tempest/odometry/filtered"
 
 # CAMERA_FRAME = "tempest_left_camera_frame"
-CAMERA_FRAME = "/tempest/stereo/left_link"
-TORPEDO_FRAME = "/tempest/stereo/left_link" #TODO: make this the correct name
+CAMERA_FRAME = "tempest/stereo/left_link"
+TORPEDO_FRAME = "tempest/torpedo_link" #TODO: make this the correct name
 
 ROBOT_NAME = "tempest"
 CAMERA_FOV_X = 81.25 #degrees
@@ -348,42 +348,56 @@ class AlignTorpedosService(Node):
             self.get_logger().info("Target world coordinates: {}, {}, {}".format(targetCoord.x, targetCoord.y, targetCoord.z))
             
             #now that we have the target world coordinates, figure out where to move the robot to have the torpedos aligned
-            currTorpedo = self.transformBetweenFrames(targetCoord, "world", TORPEDO_FRAME)
-            print("current: " + str(currTorpedo))
+            # currTorpedo = self.transformBetweenFrames(targetCoord, "world", TORPEDO_FRAME)
+            # print("current: " + str(currTorpedo))
             
-            destTorpedo = Vector3() #goal position of of the target in torpedo frame
-            destTorpedo.x = goalDist
+            # destTorpedo = Vector3() #goal position of of the target in torpedo frame
+            # destTorpedo.x = goalDist
             
-            print("dest: " + str(destTorpedo))
+            # print("dest: " + str(destTorpedo))
             
-            #get difference between our current coords and our goal coords
-            difference = Vector3()
-            difference.x = currTorpedo.x - destTorpedo.x
-            difference.y = currTorpedo.y - destTorpedo.y
-            difference.z = currTorpedo.z - destTorpedo.z
+            # #get difference between our current coords and our goal coords
+            # difference = Vector3()
+            # difference.x = currTorpedo.x - destTorpedo.x
+            # difference.y = currTorpedo.y - destTorpedo.y
+            # difference.z = currTorpedo.z - destTorpedo.z
             
-            print("diff: " + str(difference))
+            # print("diff: " + str(difference))
             
-            #convert our difference into world frame by rotating the point to be aligned with world frame coords
-            currentOdom = self.waitForOdom()
-            orientation = currentOdom.pose.pose.orientation
-            _, _, currYaw = euler_from_quaternion((orientation.w, orientation.x, orientation.y, orientation.z))
+            # #convert our difference into world frame by rotating the point to be aligned with world frame coords
+            # currentOdom = self.waitForOdom()
+            # orientation = currentOdom.pose.pose.orientation
+            # _, _, currYaw = euler_from_quaternion((orientation.w, orientation.x, orientation.y, orientation.z))
             
-            diffWorld = self.rotateAboutYaw(difference, -currYaw)
+            # diffWorld = self.rotateAboutYaw(difference, -currYaw)
             
-            print("diffworld: " + str(diffWorld))
+            # print("diffworld: " + str(diffWorld))
             
-            if abs(diffWorld.x) == inf:
-                self.get_logger().error("Coordinate transformation failed at some point! Aborting.")
-                goalHandle.abort()
-                return AlignTorpedos.Result()
+            # if abs(diffWorld.x) == inf:
+            #     self.get_logger().error("Coordinate transformation failed at some point! Aborting.")
+            #     goalHandle.abort()
+            #     return AlignTorpedos.Result()
             
-            #add our world frame difference to our current position to get our ultimate world-frame destination position
+            # #add our world frame difference to our current position to get our ultimate world-frame destination position
+            
+            # goalPosition = Vector3()
+            # goalPosition.x = currentOdom.pose.pose.position.x + diffWorld.x
+            # goalPosition.y = currentOdom.pose.pose.position.y + diffWorld.y
+            # goalPosition.z = currentOdom.pose.pose.position.z + diffWorld.z
+            
+            torpedoPosition = self.transformBetweenFrames(Vector3(), TORPEDO_FRAME, "tempest/base_link") #position of torpedos relative to base_link
+            
+            torpedoGoalPosition = self.transformBetweenFrames(targetCoord, "world", TORPEDO_FRAME)
+            torpedoGoalPosition.x = targetCoord.x - goalDist
+            
+            goalBasePosition = self.transformBetweenFrames(torpedoGoalPosition, TORPEDO_FRAME, "world")
+            
+            self.get_logger().info("goal base pos: {}".format(goalBasePosition))
             
             goalPosition = Vector3()
-            goalPosition.x = currentOdom.pose.pose.position.x + diffWorld.x
-            goalPosition.y = currentOdom.pose.pose.position.y + diffWorld.y
-            goalPosition.z = currentOdom.pose.pose.position.z + diffWorld.z
+            goalPosition.x = goalBasePosition.x - torpedoPosition.x
+            goalPosition.y = goalBasePosition.y - torpedoPosition.y
+            goalPosition.z = goalBasePosition.z - torpedoPosition.z
             
             actionResult.coords = goalPosition
         
