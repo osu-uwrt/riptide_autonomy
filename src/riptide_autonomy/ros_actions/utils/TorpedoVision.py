@@ -9,6 +9,7 @@ DEBUG = False
 
 def dist(pt1, pt2): #TODO: this is wrong. get rid of it or fix
     return math.sqrt((pt1[0] * pt1[0]) + (pt2[0] * pt2[0]))
+    # math.sqrt(math.pow(pt1[0] - pt2[0], 2) + math.pow(pt1[1] - pt2[1], 2))
 
 
 def angle(pt1, pt2):
