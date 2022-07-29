@@ -3,11 +3,8 @@
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="depth" value="-1"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <Action ID="Info" message="Arm Torpedos"/>
-            <SubTree ID="TorpedoTask"/>
-            <Action ID="Info" message="Disarm Torpedos"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="Info" message="Kill switch pulled."/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -15,8 +12,7 @@
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="GetOdometry" op="{op}" or="{or}" oy="{oy}" x="{x}" y="{y}" z="{z}"/>
-            <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
-            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="depth"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="oy" x="x" y="y" z="depth"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -115,16 +111,6 @@
             <Action ID="Math" a="{cy}" b="{y}" operator="+" out="{gy}"/>
             <Action ID="Math" a="{cz}" b="{z}" operator="+" out="{gz}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="" or="" oy="" x="" y="" z=""/>
-        </Sequence>
-    </BehaviorTree>
-    <!-- ////////// -->
-    <BehaviorTree ID="TorpedoTask">
-        <Sequence>
-            <Action ID="TransformPose" from_frame="gman_frame" name="Transform relative to gman" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="0" to_frame="world" x="-0.5" y="0" z="0"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
-            <Action ID="AlignTorpedos" current_distance="0.5" goal_distance="0.5" timeout="15" x="{x}" y="{y}" z="{z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
-            <Action ID="Info" message="Kablamo"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -383,7 +369,6 @@
             <output_port name="world_y"/>
             <output_port name="world_z"/>
         </Action>
-        <SubTree ID="TorpedoTask"/>
         <Action ID="TransformPose">
             <input_port name="from_frame"/>
             <input_port name="op"/>

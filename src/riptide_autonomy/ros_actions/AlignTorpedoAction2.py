@@ -15,10 +15,8 @@ from rclpy.action import ActionServer
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import qos_profile_system_default
-from rclpy.subscription import Subscription
 from riptide_msgs2.action import AlignTorpedos
 from sensor_msgs.msg import CameraInfo, Image
-from stereo_msgs.msg import DisparityImage
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from tf_transformations import euler_from_quaternion
@@ -26,7 +24,9 @@ from tf_transformations import euler_from_quaternion
 import utils.TorpedoVision as TorpedoVision
 
 # Settings
-SHOW_DEBUG_IMAGE                    = False
+DEBUG_MODE                          = True
+DEBUG_OUTPUT_TOPIC                  = "align_torpedos_debug"
+DEBUG_RATE                          = 0.125
 NUM_DETECTIONS                      = 50 #number of detections to gather for processing.
 DETECTION_GROUP_RADIUS              = 25
 NON_CIRCLE_PRIORITY                 = 1.3 #measure of how much more "important" non-circle shapes are. this will affect how the alignment prioritizes the special shapes for more points
@@ -140,7 +140,6 @@ class AlignTorpedosAction(Node):
         self.odomQueue      = Queue(1)
         self.leftImgQueue   = Queue(1)
         self.rightImgQueue  = Queue(1)
-        self.disparityQueue = Queue(1)
         self.leftInfoQueue  = Queue(1)
         self.rightInfoQueue = Queue(1)
         
@@ -149,11 +148,14 @@ class AlignTorpedosAction(Node):
         self.odomSub     = self.create_subscription(Odometry, ODOM_TOPIC, self.odomCB, qos_profile_system_default)
         self.leftImgSub  = self.create_subscription(Image, LEFT_IMG_TOPIC, self.leftImgCB, qos_profile_system_default)
         self.rightImgSub = self.create_subscription(Image, RIGHT_IMG_TOPIC, self.rightImgCB, qos_profile_system_default)
-        self.dispSub     = self.create_subscription(DisparityImage, DISPARITY_TOPIC, self.disparityCB, qos_profile_system_default)
         self.leftSub     = self.create_subscription(CameraInfo, LEFT_INFO_TOPIC, self.leftDataCB, qos_profile_system_default)
         self.rightSub    = self.create_subscription(CameraInfo, RIGHT_INFO_TOPIC, self.rightDataCB, qos_profile_system_default)
         
         self.camModel    = StereoCameraModel() #this will get configured when the action is called.
+        
+        if DEBUG_MODE:
+            self.timer = self.create_timer(DEBUG_RATE, self.debugCB)
+            self.outPub = self.create_publisher(Image, DEBUG_OUTPUT_TOPIC, qos_profile_system_default)
         
         self.get_logger().info("Align Torpedos Action Started.")
         
@@ -188,9 +190,6 @@ class AlignTorpedosAction(Node):
     def rightImgCB(self, msg):
         cvimg = self.cvBridge.imgmsg_to_cv2(msg)
         self.pushQueue(self.rightImgQueue, cvimg)
-        
-    def disparityCB(self, msg):
-        self.pushQueue(self.disparityQueue, msg)        
     
     def leftDataCB(self, msg):
         self.pushQueue(self.leftInfoQueue, msg)
@@ -226,13 +225,15 @@ class AlignTorpedosAction(Node):
         try:
             img = imgQueue.get(block=True, timeout=1.0)
                                         
-            holes = TorpedoVision.processImage(img) #returns a list of (contour, numCorners)
+            holes, _ = TorpedoVision.processImage(img) #returns a list of (contour, numCorners)
             
             rects = []
             for (hole, segments) in holes:
                 (x, y, w, h) = cv2.boundingRect(hole)
-                rects.append((x, y, w, h))
-                detections.append(HoleDetection(x, y, w, h, segments))
+                cenX = x + (w / 2)
+                cenY = y + (h / 2)
+                rects.append((cenX, cenY, w, h))
+                detections.append(HoleDetection(cenX, cenY, w, h, segments))
                                 
             return img, rects
         except Empty: #nothing in queue
@@ -256,7 +257,7 @@ class AlignTorpedosAction(Node):
             leftImg, leftRects = self.collectDetections(self.leftImgQueue, leftDetections)
             rightImg, rightRects = self.collectDetections(self.rightImgQueue, rightDetections)
                                 
-            if SHOW_DEBUG_IMAGE:
+            if DEBUG_MODE:
                 for (x, y, w, h) in leftRects:
                     cv2.circle(leftImg, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
                 
@@ -335,6 +336,19 @@ class AlignTorpedosAction(Node):
         self.get_logger().error("No attemptable targets found! Aborting!")
         goalHandle.abort()
         return AlignTorpedos.Result()
+
+    def debugCB(self):
+        if DEBUG_MODE:
+            try:
+                img = self.leftImgQueue.get(block=True, timeout=DEBUG_RATE / 2)
+                _, outImg = TorpedoVision.processImage(img)
+                
+                msg = self.cvBridge.cv2_to_imgmsg(outImg, encoding='rgb8')
+                self.outPub.publish(msg)
+            except Empty:
+                pass
+        else:
+            self.get_logger().warn("Enable DEBUG_MODE to debug!")
     
 
 def main(args=None):

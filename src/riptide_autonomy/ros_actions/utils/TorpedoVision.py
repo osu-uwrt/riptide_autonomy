@@ -125,7 +125,7 @@ def processImage(img: np.ndarray):
         cv2.imshow("edges", edgesOut)
         cv2.waitKey()
     
-    return targets
+    return targets, out
 
 
 def test():
