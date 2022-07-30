@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from math import cos, inf, sin
+from math import cos, inf, sin, sqrt
 from queue import Empty, Queue
 
 import cv2
@@ -37,10 +37,13 @@ ROBOT_NAME        = "tempest"
 TORPEDO_FRAME     = ROBOT_NAME + "/torpedo_link"
 BASE_LINK_FRAME   = ROBOT_NAME + "/base_link"
 LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_link"
+# PROP_FRAME        = "gmanTorpedo_frame"
+PROP_FRAME        = "aaa_frame"
 
 # Topic names
 ODOM_TOPIC       = "odometry/filtered"
-LEFT_IMG_TOPIC   = "stereo/left_raw/image_raw_color"
+# LEFT_IMG_TOPIC   = "stereo/left_raw/image_raw_color"
+LEFT_IMG_TOPIC  = "stereo/left/image_raw"
 RIGHT_IMG_TOPIC  = "stereo/right/image_rect_color"
 DISPARITY_TOPIC  = "stereo/disparity"
 RIGHT_INFO_TOPIC = "stereo/left/camera_info"
@@ -263,50 +266,28 @@ class AlignTorpedosAction(Node):
                 
                 for (x, y, w, h) in rightRects:
                     cv2.circle(rightImg, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
-                    
-                # cv2.imshow("Left Image", leftImg)
-                # cv2.imshow("Right Image", rightImg)
-                # cv2.waitKey(20)
                 
         if len(leftDetections) < NUM_DETECTIONS or len(rightDetections) < NUM_DETECTIONS:
             self.get_logger().warn("Timed out before all detections could be gathered! Collected {} left detections and {} right detections. Result may be less correct.".format(len(leftDetections), len(rightDetections)))
         
-        leftGroups  = groupDetections(leftDetections)
-        rightGroups = groupDetections(rightDetections)
-        
-        #find detections that are present in both cameras
-        filtered: list[tuple[HoleDetection, int, int]] = [] #format: (detection, disparity, numLeftDetections, numRightDetections)
-        for l in range(0, len(leftGroups)):
-            left = leftGroups[l]
-            
-            for r in range(0, len(rightGroups)):
-                right = rightGroups[r]
-                
-                if left[0].numSegments == right[0].numSegments:
-                    leftAvg = avgDetection(left)
-                    rightAvg = avgDetection(right)
-                    
-                    leftLoc = (leftAvg.x, leftAvg.y)
-                    rightLoc = (rightAvg.x, rightAvg.y)
-                    if leftLoc[0] > rightLoc[0]: # object should have a greater x-coordinate in left camera as opposed to right
-                        disparity = leftLoc[0] - rightLoc[0]
-                        filtered.append((leftAvg, disparity, len(left), len(right)))
+        leftGroups  = groupDetections(leftDetections)        
         
         #choose detection to align to
         scores = []
-        for (detection, disparity, leftDetections, rightDetections) in filtered:
-            multiplier = NON_CIRCLE_PRIORITY if detection.numSegments != 8 else 1
-            numDetections = leftDetections + rightDetections
-            detectionDiff = abs(leftDetections - rightDetections)
-            
-            #factor in difference in left vs right detections
-            multiplier *= ((1 / MAX_LEFT_RIGHT_DETECTION_DIFFERENCE) * detectionDiff) + 1 #max 1, min, -oo
-            
-            scores.append(numDetections * multiplier)
+        for group in leftGroups:
+            multiplier = NON_CIRCLE_PRIORITY if group[0].numSegments != 8 else 1           
+            scores.append(len(group) * multiplier)
         
         if len(scores) > 0:
             maxIndex = scores.index(max(scores)) #index of max of scores
-            (target, targetDisparity, _, _) = filtered[maxIndex] #max score means most valueable target
+            target = avgDetection(leftGroups[maxIndex]) #max score means most valueable target
+            
+            #get distance to target (used to calculate disparity)
+            odom: Odometry = self.odomQueue.get(block=True, timeout=2.5)
+            curPos: Vector3 = odom.pose.pose.position
+            propPos: Vector3 = self.transformBetweenFrames(Vector3(), PROP_FRAME, BASE_LINK_FRAME)
+            dist = abs(curPos.x - propPos.x)
+            targetDisparity = self.camModel.getDisparity(dist)
             
             #get 3d position of hole in camera frame
             holeCamPos = Vector3()
