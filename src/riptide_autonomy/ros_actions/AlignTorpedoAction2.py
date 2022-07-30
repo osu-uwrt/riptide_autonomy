@@ -40,7 +40,7 @@ LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_link"
 
 # Topic names
 ODOM_TOPIC       = "odometry/filtered"
-LEFT_IMG_TOPIC   = "stereo/left/image_rect_color"
+LEFT_IMG_TOPIC   = "stereo/left_raw/image_raw_color"
 RIGHT_IMG_TOPIC  = "stereo/right/image_rect_color"
 DISPARITY_TOPIC  = "stereo/disparity"
 RIGHT_INFO_TOPIC = "stereo/left/camera_info"
@@ -156,6 +156,7 @@ class AlignTorpedosAction(Node):
         if DEBUG_MODE:
             self.timer = self.create_timer(DEBUG_RATE, self.debugCB)
             self.outPub = self.create_publisher(Image, DEBUG_OUTPUT_TOPIC, qos_profile_system_default)
+            self.get_logger().info("asfadsfasdfadsf")
         
         self.get_logger().info("Align Torpedos Action Started.")
         
@@ -338,6 +339,7 @@ class AlignTorpedosAction(Node):
         return AlignTorpedos.Result()
 
     def debugCB(self):
+        self.get_logger().info("AAAAAAAAAAAAA {}".format(DEBUG_MODE))
         if DEBUG_MODE:
             try:
                 img = self.leftImgQueue.get(block=True, timeout=DEBUG_RATE / 2)
@@ -345,8 +347,10 @@ class AlignTorpedosAction(Node):
                 
                 msg = self.cvBridge.cv2_to_imgmsg(outImg, encoding='rgb8')
                 self.outPub.publish(msg)
+                self.get_logger().info("bruh")
+                # cv2.imshow(outImg)
             except Empty:
-                pass
+                self.get_logger().warn("no")
         else:
             self.get_logger().warn("Enable DEBUG_MODE to debug!")
     
