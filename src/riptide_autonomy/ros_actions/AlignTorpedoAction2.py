@@ -264,9 +264,9 @@ class AlignTorpedosAction(Node):
                 for (x, y, w, h) in rightRects:
                     cv2.circle(rightImg, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
                     
-                cv2.imshow("Left Image", leftImg)
-                cv2.imshow("Right Image", rightImg)
-                cv2.waitKey(20)
+                # cv2.imshow("Left Image", leftImg)
+                # cv2.imshow("Right Image", rightImg)
+                # cv2.waitKey(20)
                 
         if len(leftDetections) < NUM_DETECTIONS or len(rightDetections) < NUM_DETECTIONS:
             self.get_logger().warn("Timed out before all detections could be gathered! Collected {} left detections and {} right detections. Result may be less correct.".format(len(leftDetections), len(rightDetections)))

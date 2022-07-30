@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import cv2
-from matplotlib.pyplot import close
 import numpy as np
 import math
 
@@ -121,9 +120,9 @@ def processImage(img: np.ndarray):
             _, segments = fitsTargetShape(contour)
             cv2.putText(edgesOut, str(segments), (int(x + (w/2)), int(y + (h/2))), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
-        cv2.imshow("image", out)
-        cv2.imshow("edges", edgesOut)
-        cv2.waitKey()
+        # cv2.imshow("image", out)
+        # cv2.imshow("edges", edgesOut)
+        # cv2.waitKey()
     
     return targets, out
 
