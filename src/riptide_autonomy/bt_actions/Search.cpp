@@ -50,8 +50,8 @@ NodeStatus Search::tick() {
     relativePose.position.z = 0;
     relativePose.orientation.x = 0;
     relativePose.orientation.y = 0;
-    relativePose.orientation.z = 0;
-    relativePose.orientation.w = 1;
+    relativePose.orientation.z = 1;
+    relativePose.orientation.w = 0;
 
     geometry_msgs::msg::Pose worldGuessPos = doTransform(relativePose, transform);
 
