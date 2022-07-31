@@ -21,6 +21,7 @@ find_package(stereo_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
+find_package(robot_localization REQUIRED)
 
 include_directories("include")
 include_directories($(rclcpp_INCLUDE_DIRS))
@@ -46,6 +47,7 @@ add_library(autonomy STATIC
   src/riptide_autonomy/bt_actions/TransformPose.cpp
   src/riptide_autonomy/bt_actions/UWRTSyncActionNode.cpp
   src/riptide_autonomy/bt_actions/Wait.cpp
+  src/riptide_autonomy/bt_actions/ResetOdom.cpp
 
   #bt conditions
   src/riptide_autonomy/bt_conditions/ActuatorConditions.cpp
@@ -67,6 +69,7 @@ ament_target_dependencies(autonomy
   tf2
   tf2_ros
   tf2_geometry_msgs
+  robot_localization
 )
 
 #add and link doTask executable
