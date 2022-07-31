@@ -3,12 +3,15 @@
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
+            <SetBlackboard output_key="depth" value="-1"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <ForceSuccess>
                 <SubTree ID="GateTask"/>
             </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="BuoyTree"/>
             </ForceSuccess>
+            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -22,7 +25,8 @@
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
             <Action ID="PublishToController" isOrientation="0" mode="2" name="move forward" x="0.5" y="0" z="0"/>
             <Action ID="Wait" seconds="2"/>
-            <Action ID="PublishToController" isOrientation="0" mode="2" name="move backward" x="-0.5" y="0" z="0"/>
+            <Action ID="PublishToController" isOrientation="0" mode="2" name="move backward" x="-1" y="0" z="0"/>
+            <Action ID="Wait" seconds="2"/>
             <Action ID="GetOdometry" op="" or="" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="coy" x="cx" y="cy" z="cz"/>
         </Sequence>
@@ -47,7 +51,7 @@
                 <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="yaw"/>
             </Fallback>
             <Fallback>
-                <Action ID="SearchState" frame="{frame}" target_error="0.0000027173" update_sec="0.25"/>
+                <Action ID="Search" frame="{frame}" target_error="1" update_sec="0.25"/>
                 <Sequence>
                     <Action ID="Info" message="Search failed, looking in the last place I found it."/>
                     <Action ID="TransformPose" from_frame="{frame_full}" op="0" or="0" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="pi" to_frame="world" x="1" y="0" z="-0.25"/>
@@ -65,7 +69,7 @@
             <SubTree ID="DoSearch" __shared_blackboard="false" frame="gman" frame_full="gman_frame"/>
             <Action ID="TransformPose" from_frame="gman_frame" op="0" or="0" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="3.1415" to_frame="world" x="1.2" y="0" z="-0.5"/>
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
-            <Action ID="TransformPose" from_frame="gman_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="0" to_frame="world" x="1.2" y="0" z="-0.5"/>
+            <Action ID="TransformPose" from_frame="gman_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="0" to_frame="world" x="-1.2" y="0" z="-0.5"/>
             <Action ID="PublishToController" isOrientation="1" mode="2" name="I live in spin" x="3.1415" y="0" z="0"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="gx" y="gy" z="gz"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="gop" r="gor" y="goy"/>
@@ -106,6 +110,7 @@
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="goal_yaw"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" y="oy"/>
+            <Action ID="Wait" seconds="2"/>
             <Action ID="Info" message="Move Complete."/>
         </Sequence>
     </BehaviorTree>
@@ -399,11 +404,6 @@
             <input_port name="num_seconds">number of seconds until abandonment.</input_port>
         </Decorator>
         <Action ID="Search">
-            <input_port name="frame">The frame to search for</input_port>
-            <input_port name="target_error">The goal amount of error for the state to succeed.</input_port>
-            <input_port name="update_sec">How much time to wait for update</input_port>
-        </Action>
-        <Action ID="SearchState">
             <input_port name="frame">The frame to search for</input_port>
             <input_port name="target_error">The goal amount of error for the state to succeed.</input_port>
             <input_port name="update_sec">How much time to wait for update</input_port>
