@@ -76,6 +76,7 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<TransformPose>("TransformPose");
     factory.registerNodeType<Wait>("Wait");
     factory.registerNodeType<RetryUntilSuccessfulOrTimeout>("RetryUntilSuccessfulOrTimeout");
+    factory.registerNodeType<ResetOdom>("ResetOdom");
     //your node type here...
 
 
