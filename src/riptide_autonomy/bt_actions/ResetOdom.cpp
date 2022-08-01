@@ -6,7 +6,7 @@ using namespace std::chrono_literals;
 void ResetOdom::init(rclcpp::Node::SharedPtr node) {
     this->rosnode = node;
     
-    this->client = rosnode->create_client<robot_localization::srv::SetPose>("/set_pose");
+    this->client = rosnode->create_client<robot_localization::srv::SetPose>("/tempest/set_pose");
 }
 
 NodeStatus ResetOdom::tick() {
