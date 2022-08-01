@@ -37,8 +37,7 @@ ROBOT_NAME        = "tempest"
 TORPEDO_FRAME     = ROBOT_NAME + "/torpedo_link"
 BASE_LINK_FRAME   = ROBOT_NAME + "/base_link"
 LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_link"
-# PROP_FRAME        = "gmanTorpedo_frame"
-PROP_FRAME        = "aaa_frame"
+PROP_FRAME        = "gmanTorpedo_frame"
 
 # Topic names
 ODOM_TOPIC       = "odometry/filtered"
