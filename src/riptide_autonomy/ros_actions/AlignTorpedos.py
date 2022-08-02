@@ -37,12 +37,12 @@ ROBOT_NAME        = "tempest"
 TORPEDO_FRAME     = ROBOT_NAME + "/torpedo_link"
 BASE_LINK_FRAME   = ROBOT_NAME + "/base_link"
 LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_link"
-PROP_FRAME        = "gmanTorpedo_frame"
+PROP_FRAME        = "torpedoGman_frame"
 
 # Topic names
 ODOM_TOPIC       = "odometry/filtered"
-# LEFT_IMG_TOPIC   = "stereo/left_raw/image_raw_color"
-LEFT_IMG_TOPIC  = "stereo/left/image_raw"
+LEFT_IMG_TOPIC   = "stereo/left_raw/image_raw_color"
+# LEFT_IMG_TOPIC  = "stereo/left/image_raw"
 RIGHT_IMG_TOPIC  = "stereo/right/image_rect_color"
 DISPARITY_TOPIC  = "stereo/disparity"
 RIGHT_INFO_TOPIC = "stereo/left/camera_info"
@@ -257,17 +257,17 @@ class AlignTorpedosAction(Node):
         # collect 25 good detections or time out after the specified timeout time
         while (len(leftDetections) < NUM_DETECTIONS) and (len(rightDetections) < NUM_DETECTIONS) and (self.get_clock().now() - startTime).to_msg().sec * 1000.0 < timeout:
             leftImg, leftRects = self.collectDetections(self.leftImgQueue, leftDetections)
-            rightImg, rightRects = self.collectDetections(self.rightImgQueue, rightDetections)
+            # rightImg, rightRects = self.collectDetections(self.rightImgQueue, rightDetections)
                                 
             if DEBUG_MODE:
                 for (x, y, w, h) in leftRects:
                     cv2.circle(leftImg, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
                 
-                for (x, y, w, h) in rightRects:
-                    cv2.circle(rightImg, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
+                # for (x, y, w, h) in rightRects:
+                #     cv2.circle(rightImg, (int(x + (w/2)), int(y + (h/2))), 2, (0, 255, 0), 2)
                 
-        if len(leftDetections) < NUM_DETECTIONS or len(rightDetections) < NUM_DETECTIONS:
-            self.get_logger().warn("Timed out before all detections could be gathered! Collected {} left detections and {} right detections. Result may be less correct.".format(len(leftDetections), len(rightDetections)))
+        if len(leftDetections) < NUM_DETECTIONS:
+            self.get_logger().warn("Timed out before all detections could be gathered! Collected {} left detections.".format(len(leftDetections)))
         
         leftGroups  = groupDetections(leftDetections)        
         
