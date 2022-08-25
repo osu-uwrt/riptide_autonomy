@@ -34,9 +34,9 @@ MAX_LEFT_RIGHT_DETECTION_DIFFERENCE = 10 #maximum number of times a detection is
 
 #frame names
 ROBOT_NAME        = "tempest"
-TORPEDO_FRAME     = ROBOT_NAME + "/torpedo_link"
+TORPEDO_FRAME     = ROBOT_NAME + "/stereo/left_optical"
 BASE_LINK_FRAME   = ROBOT_NAME + "/base_link"
-LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_link"
+LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_optical"
 PROP_FRAME        = "torpedoGman_frame"
 
 # Topic names
@@ -45,8 +45,8 @@ LEFT_IMG_TOPIC   = "stereo/left_raw/image_raw_color"
 # LEFT_IMG_TOPIC  = "stereo/left/image_raw"
 RIGHT_IMG_TOPIC  = "stereo/right/image_rect_color"
 DISPARITY_TOPIC  = "stereo/disparity"
-RIGHT_INFO_TOPIC = "stereo/left/camera_info"
-LEFT_INFO_TOPIC  = "stereo/right/camera_info"
+RIGHT_INFO_TOPIC = "stereo/right_info"
+LEFT_INFO_TOPIC  = "stereo/left_info"
 
 class HoleDetection:
     def __init__(self, x, y, w, h, numSegments): #format of rects is ((x, y, w, h), numSegments)
@@ -216,12 +216,7 @@ class AlignTorpedosAction(Node):
         
         self.get_logger().error("Failed to look up transform from {} to {}!".format(fromFrame, toFrame))
         
-        #compose error return value
-        ret = Vector3()
-        ret.x = inf
-        ret.y = inf
-        ret.z = inf
-        return ret
+        return None
         
     def collectDetections(self, imgQueue: Queue, detections: list[HoleDetection]):
         try:
@@ -291,14 +286,26 @@ class AlignTorpedosAction(Node):
             #get 3d position of hole in camera frame
             holeCamPos = Vector3()
             (holeCamPos.z, holeCamPos.y, holeCamPos.x) = self.camModel.projectPixelTo3d((target.x, target.y), targetDisparity) # In camera frame: (z, y, x)
-            self.get_logger().info("Found hole at camera frame coords {}, {}, {} with {} segments".format(holeCamPos.x, holeCamPos.y, holeCamPos.z, target.numSegments))
+            # (holeCamPos.x, holeCamPos.y, holeCamPos.z) = self.camModel.projectPixelTo3d((target.x, target.y), targetDisparity) # In camera frame: (z, y, x)
+            # self.get_logger().info("Found hole at camera frame coords {}, {}, {} with {} segments".format(holeCamPos.x, holeCamPos.y, holeCamPos.z, target.numSegments))
             
             #figure out where to move Tempest to have torpedos aligned with the hole
             torpedoPosition = self.transformBetweenFrames(Vector3(), TORPEDO_FRAME, BASE_LINK_FRAME) #position of base link relative to torpedo launcher
             holeTorpedoPos = self.transformBetweenFrames(holeCamPos, LEFT_CAMERA_FRAME, TORPEDO_FRAME) #location of detection in torpedo frame
+            
+            if torpedoPosition is None or holeTorpedoPos is None:
+                self.get_logger().error("Failed to perform some necessary transforms!")
+                goalHandle.abort()
+                return AlignTorpedos.Result()           
+            
             holeTorpedoPos.x -= goalDist
             
             goalBasePos = self.transformBetweenFrames(holeTorpedoPos, TORPEDO_FRAME, "world")
+            
+            if goalBasePos is None:
+                self.get_logger().error("Failed to perform some necessary transforms!")
+                goalHandle.abort()
+                return AlignTorpedos.Result()
             
             #offset torpedo position to get goal position
             goalPosition = Vector3()
