@@ -34,9 +34,9 @@ MAX_LEFT_RIGHT_DETECTION_DIFFERENCE = 10 #maximum number of times a detection is
 
 #frame names
 ROBOT_NAME        = "tempest"
-TORPEDO_FRAME     = ROBOT_NAME + "/stereo/left_optical"
+TORPEDO_FRAME     = ROBOT_NAME + "/torpedo_link"
 BASE_LINK_FRAME   = ROBOT_NAME + "/base_link"
-LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_optical"
+LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_link"
 PROP_FRAME        = "torpedoGman_frame"
 
 # Topic names
@@ -287,7 +287,7 @@ class AlignTorpedosAction(Node):
             holeCamPos = Vector3()
             (holeCamPos.z, holeCamPos.y, holeCamPos.x) = self.camModel.projectPixelTo3d((target.x, target.y), targetDisparity) # In camera frame: (z, y, x)
             # (holeCamPos.x, holeCamPos.y, holeCamPos.z) = self.camModel.projectPixelTo3d((target.x, target.y), targetDisparity) # In camera frame: (z, y, x)
-            # self.get_logger().info("Found hole at camera frame coords {}, {}, {} with {} segments".format(holeCamPos.x, holeCamPos.y, holeCamPos.z, target.numSegments))
+            self.get_logger().info("Found hole at camera frame coords {}, {}, {} with {} segments".format(holeCamPos.x, holeCamPos.y, holeCamPos.z, target.numSegments))
             
             #figure out where to move Tempest to have torpedos aligned with the hole
             torpedoPosition = self.transformBetweenFrames(Vector3(), TORPEDO_FRAME, BASE_LINK_FRAME) #position of base link relative to torpedo launcher
