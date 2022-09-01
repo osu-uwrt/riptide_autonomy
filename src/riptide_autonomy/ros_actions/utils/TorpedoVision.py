@@ -6,10 +6,9 @@ import math
 
 DEBUG = False
 
-def dist(pt1, pt2): #TODO: this is wrong. get rid of it or fix
+def dist(pt1, pt2):
     dx = pt2[0] - pt1[0]
     dy = pt2[1] - pt1[1]
-    # return math.sqrt((pt1[0] * pt1[0]) + (pt2[0] * pt2[0]))
     return math.sqrt((dx * dx) + (dy * dy))
 
 

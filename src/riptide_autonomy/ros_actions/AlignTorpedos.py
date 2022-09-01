@@ -277,11 +277,16 @@ class AlignTorpedosAction(Node):
             target = avgDetection(leftGroups[maxIndex]) #max score means most valueable target
             
             #get distance to target (used to calculate disparity)
-            odom: Odometry = self.odomQueue.get(block=True, timeout=2.5)
-            curPos: Vector3 = odom.pose.pose.position
-            propPos: Vector3 = self.transformBetweenFrames(Vector3(), PROP_FRAME, BASE_LINK_FRAME)
-            dist = abs(curPos.x - propPos.x)
+            propPosCameraFrame: Vector3 = self.transformBetweenFrames(Vector3(), PROP_FRAME, LEFT_CAMERA_FRAME)  
+            # dist = sqrt((propPosCameraFrame.x ** 2) + (propPosCameraFrame.y ** 2) + (propPosCameraFrame.z ** 2))          
+            dist = propPosCameraFrame.x
             targetDisparity = self.camModel.getDisparity(dist)
+            
+            # odom: Odometry = self.odomQueue.get(block=True, timeout=2.5)
+            # curPos: Vector3 = odom.pose.pose.position
+            # propPos: Vector3 = self.transformBetweenFrames(Vector3(), PROP_FRAME, BASE_LINK_FRAME)
+            # dist = abs(curPos.x - propPos.x)
+            # targetDisparity = self.camModel.getDisparity(dist)            
             
             #get 3d position of hole in camera frame
             holeCamPos = Vector3()
@@ -330,7 +335,7 @@ class AlignTorpedosAction(Node):
                 img = self.leftImgQueue.get(block=True, timeout=DEBUG_RATE / 2)
                 _, outImg = TorpedoVision.processImage(img)
                 
-                msg = self.cvBridge.cv2_to_imgmsg(outImg, encoding='rgb8')
+                msg = self.cvBridge.cv2_to_imgmsg(outImg, encoding='bgr8')
                 self.outPub.publish(msg)
             except Empty:
                 pass
