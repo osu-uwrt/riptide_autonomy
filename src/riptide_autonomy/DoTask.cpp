@@ -28,7 +28,7 @@ int indexOfStr(char *arr[], std::string str, int arrLen) {
 std::string getEnvironmentVariable(const char *name) {
     const char *env = std::getenv(name);
     if(env == nullptr) {
-        RCLCPP_INFO(log, "DoTask: HOME environment variable not found!");
+        RCLCPP_INFO(log, "DoTask: %s environment variable not found!", name);
         return "";
     }
 
@@ -47,14 +47,14 @@ int main(int argc, char *argv[]) {
 
     if(indexOfStr(argv, "-h", argc) > 1 || indexOfStr(argv, "--help", argc) > -1) {
         std::cout << "OSU UWRT BehaviorTree Runner\n";
-        std::cout << "Usage: ros2 run riptide_autonomy doTask <tree> [options]\n\n";
+        std::cout << "Usage: ros2 run riptide_autonomy doTask <path-to-tree> [options]\n\n";
 
-        std::cout << "Runs BehaviorTrees located in ~/osu-uwrt/riptide_software/src/riptide_autonomy/trees\n\n";
+        std::cout << "Runs BehaviorTrees";
 
         std::cout << "Options:\n";
         std::cout << "-h, --help: Displays this message.\n";
         std::cout << "--log-cout: Enables logging of state changes to cout.";
-        std::cout << "--log-file: Specifies the location to save the log file. If not specified, this will default to ~/osu-uwrt/riptide_software/src/riptide_autonomy/btLog.fbs";
+        std::cout << "--log-file: Specifies the location to save the log file. If not specified, this will default to ~/osu-uwrt/riptide_software/src/riptide_autonomy/btLog.fbl";
         std::cout << std::endl; //newline and flush stream
 
         return 0;
@@ -128,5 +128,6 @@ int main(int argc, char *argv[]) {
     coutLogger.flush(); //will flush if enabled
 
     RCLCPP_INFO(log, "Tree returned with %s", (result == NodeStatus::SUCCESS ? "SUCCESS" : "FAILED"));
+    rclcpp::shutdown();
     return (result == NodeStatus::SUCCESS ? 0 : 1); //returns 0 if success and 1 if failure
 }
