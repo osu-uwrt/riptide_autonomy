@@ -26,35 +26,21 @@ find_package(robot_localization REQUIRED)
 include_directories("include")
 include_directories($(rclcpp_INCLUDE_DIRS))
 
+file(GLOB bt_actions_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_actions/*.cpp)
+file(GLOB bt_conditions_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_conditions/*.cpp)
+file(GLOB bt_decorators_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_decorators/*.cpp)
+
 #
 # autonomy library
-# PUT YOUR STATE FILES HERE!!
-#
 #
 add_library(autonomy STATIC
   #utilities
   src/riptide_autonomy/util.cpp
 
-  #bt actions / states
-  src/riptide_autonomy/bt_actions/Actuate.cpp
-  src/riptide_autonomy/bt_actions/AlignTorpedos.cpp
-  src/riptide_autonomy/bt_actions/GetActuatorStatus.cpp
-  src/riptide_autonomy/bt_actions/GetOdometry.cpp
-  src/riptide_autonomy/bt_actions/GetSwitchState.cpp
-  src/riptide_autonomy/bt_actions/PublishToController.cpp
-  src/riptide_autonomy/bt_actions/Search.cpp
-  src/riptide_autonomy/bt_actions/SimpleActions.cpp
-  src/riptide_autonomy/bt_actions/TransformPose.cpp
-  src/riptide_autonomy/bt_actions/UWRTSyncActionNode.cpp
-  src/riptide_autonomy/bt_actions/Wait.cpp
-  src/riptide_autonomy/bt_actions/ResetOdom.cpp
-
-  #bt conditions
-  src/riptide_autonomy/bt_conditions/ActuatorConditions.cpp
-  src/riptide_autonomy/bt_conditions/SimpleConditions.cpp
-
-  #bt decorators
-  src/riptide_autonomy/bt_decorators/RetryUntilSuccessfulOrTimeout.cpp
+  #bt nodes
+  ${bt_actions_sources}
+  ${bt_conditions_sources}
+  ${bt_decorators_sources}
 )
 
 #deps
@@ -85,9 +71,9 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
 
 # Install Python executables
+file(GLOB ros_actions_py RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/ros_actions/*.py)
 install(PROGRAMS
-  src/riptide_autonomy/ros_actions/AlignTorpedos.py
-  src/riptide_autonomy/ros_actions/BinsDiveAction.py
+  ${ros_actions_py}
   DESTINATION lib/${PROJECT_NAME}
 )
 
