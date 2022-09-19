@@ -77,6 +77,7 @@ int main(int argc, char *argv[]) {
     factory.registerNodeType<Wait>("Wait");
     factory.registerNodeType<RetryUntilSuccessfulOrTimeout>("RetryUntilSuccessfulOrTimeout");
     factory.registerNodeType<ResetOdom>("ResetOdom");
+    factory.registerNodeType<ActuateDroppers>("ActuateDroppers");
     //your node type here...
 
 

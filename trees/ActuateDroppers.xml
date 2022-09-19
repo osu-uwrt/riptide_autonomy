@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Action DropperID="" ID="ActuateDroppers"/>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="ActuateDroppers">
+            <input_port name="DropperID"/>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>

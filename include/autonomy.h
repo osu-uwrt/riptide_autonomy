@@ -21,6 +21,7 @@
 #include "riptide_msgs2/msg/controller_command.hpp"
 #include "riptide_msgs2/msg/robot_state.hpp"
 #include "riptide_msgs2/action/align_torpedos.hpp"
+#include "riptide_msgs2/action/actuate_droppers.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
@@ -729,6 +730,43 @@ class ResetOdom : public UWRTSyncActionNode {
     private:
     rclcpp::Node::SharedPtr rosnode;
     rclcpp::Client<robot_localization::srv::SetPose>::SharedPtr client;
+};
+
+class ActuateDroppers : public UWRTSyncActionNode { 
+    public:
+    ActuateDroppers(const std::string& name, const NodeConfiguration& config) 
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts() {
+        return {
+            InputPort<int>("DropperID"),
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
+     * IDLE or RUNNING.
+     *
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
 };
 
 #endif // AUTONOMY_H
