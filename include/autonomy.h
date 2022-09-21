@@ -57,6 +57,13 @@ const std::string
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose, geometry_msgs::msg::TransformStamped);
 
 /**
+ * @brief Looks up necessary transform between two poses the transforms specified coords into cords in the new pose
+ * 
+ * @return geometry_msgs::msg::Pose The equlivalent pose in a new frame
+ */
+std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs::msg::Pose, std::string, std::string, rclcpp::Node::SharedPtr);
+
+/**
  * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles in radians.
  *
  * @return geometry_msgs::msg::Vector3 The orientation in roll pitch yaw.
@@ -729,6 +736,49 @@ class ResetOdom : public UWRTSyncActionNode {
     private:
     rclcpp::Node::SharedPtr rosnode;
     rclcpp::Client<robot_localization::srv::SetPose>::SharedPtr client;
+};
+
+class ComputeFrameAlignment : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+    public:
+    ComputeFrameAlignment(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this state.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts() {
+        return {
+            InputPort<double>("x"),
+            InputPort<double>("y"),
+            InputPort<double>("z"),
+            InputPort<std::string>("frameName"),
+            OutputPort<double>("out_x"),
+            OutputPort<double>("out_y"),
+            OutputPort<double>("out_z"),
+        };
+    }
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
+     * IDLE or RUNNING.
+     *
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
 };
 
 #endif // AUTONOMY_H

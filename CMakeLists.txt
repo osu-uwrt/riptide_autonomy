@@ -48,6 +48,7 @@ add_library(autonomy STATIC
   src/riptide_autonomy/bt_actions/UWRTSyncActionNode.cpp
   src/riptide_autonomy/bt_actions/Wait.cpp
   src/riptide_autonomy/bt_actions/ResetOdom.cpp
+  src/riptide_autonomy/bt_actions/ComputeFrameAlignment.cpp
 
   #bt conditions
   src/riptide_autonomy/bt_conditions/ActuatorConditions.cpp

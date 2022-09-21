@@ -29,39 +29,28 @@ NodeStatus TransformPose::tick() {
     originalRPY.z = getInput<double>("oy").value();
     original.orientation = toQuat(originalRPY);
     
-    //look up transform with a three second timeout to find one
-    rclcpp::Time startTime = rosnode->get_clock()->now();
-    while((rosnode->get_clock()->now() - startTime).seconds() < 3) {
-        try {
-            geometry_msgs::msg::TransformStamped transform = buffer.lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
-            geometry_msgs::msg::Pose transformed = doTransform(original, transform);
 
-            RCLCPP_INFO(log, "transformed orientation: %f, %f, %f, %f", transformed.orientation.x, transformed.orientation.y, transformed.orientation.z, transformed.orientation.w);
+    std::tuple<geometry_msgs::msg::Pose, bool> res = transformBetweenFrames(original, toFrame, fromFrame, rosnode);
+    geometry_msgs::msg::Pose transformed = std::get<0>(res);
 
-            //set output ports
-            setOutput<double>("out_x", transformed.position.x);
-            setOutput<double>("out_y", transformed.position.y);
-            setOutput<double>("out_z", transformed.position.z);
+    geometry_msgs::msg::Vector3 transformedRPY = toRPY(transformed.orientation);
 
-            //convert orientation back to RPY and return that
-            geometry_msgs::msg::Vector3 transformedRPY = toRPY(transformed.orientation);
-            RCLCPP_INFO(log, "transformed rpy: %f, %f ,%f", transformedRPY.x, transformedRPY.y, transformedRPY.z);
-            setOutput<double>("out_or", transformedRPY.x);
-            setOutput<double>("out_op", transformedRPY.y);
-            setOutput<double>("out_oy", transformedRPY.z);
+    if(std::get<1>(res)){
+    //RCLCPP_INFO(log, "transformed orientation: %f, %f, %f, %f", transformed.orientation.x, transformed.orientation.y, transformed.orientation.z, transformed.orientation.w);
 
-            return NodeStatus::SUCCESS;
-        } catch(tf2::LookupException &ex) {
-            RCLCPP_WARN(log, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
+    //set output ports
+    setOutput<double>("out_x", transformed.position.x);
+    setOutput<double>("out_y", transformed.position.y);
+    setOutput<double>("out_z", transformed.position.z);
 
-            //wait a little bit for some frame data to come in 
-            rclcpp::Time waitStart = rosnode->get_clock()->now();
-            while((rosnode->get_clock()->now() - waitStart).seconds() < 1) {
-                rclcpp::spin_some(rosnode);
-            }
-        }
+    //convert orientation back to RPY and return that
+    RCLCPP_INFO(log, "transformed rpy: %f, %f ,%f", transformedRPY.x, transformedRPY.y, transformedRPY.z);
+    setOutput<double>("out_or", transformedRPY.x);
+    setOutput<double>("out_op", transformedRPY.y);
+    setOutput<double>("out_oy", transformedRPY.z);
+    return NodeStatus::SUCCESS;
+    } else{
+        RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
+        return NodeStatus::FAILURE;
     }
-
-    RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
-    return NodeStatus::FAILURE;
 }
