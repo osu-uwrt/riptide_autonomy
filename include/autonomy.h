@@ -29,6 +29,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "robot_localization/srv/set_pose.hpp"
+#include "riptide_msgs2/action/change_claw_state.hpp"
 
 using namespace BT;
 
@@ -744,6 +745,25 @@ class ActuateDroppers : public UWRTSyncActionNode {
     static PortsList providedPorts() {
         return {
             InputPort<int>("DropperID"),
+        };
+    }
+
+    void init(rclcpp::Node::SharedPtr) override;
+    NodeStatus tick() override;
+
+    private:
+    rclcpp::Node::SharedPtr rosnode;
+    rclcpp::Client<robot_localization::srv::SetPose>::SharedPtr client;
+};
+
+class AccuateClaw : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+    public:
+    AccuateClaw(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+
+     : UWRTSyncActionNode(name, config) { }
+    static PortsList providedPorts() {
+        return {
+     InputPort<bool>("claw_open")
         };
     }
 

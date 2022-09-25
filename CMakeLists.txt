@@ -49,6 +49,7 @@ add_library(autonomy STATIC
   src/riptide_autonomy/bt_actions/Wait.cpp
   src/riptide_autonomy/bt_actions/ResetOdom.cpp
   src/riptide_autonomy/bt_actions/ActuateDroppers.cpp
+  src/riptide_autonomy/bt_actions/AccuateClaw.cpp
 
   #bt conditions
   src/riptide_autonomy/bt_conditions/ActuatorConditions.cpp
