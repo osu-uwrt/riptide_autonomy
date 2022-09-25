@@ -52,7 +52,7 @@ NodeStatus ActuateDroppers::tick() {
 
     int dropperID = getInput<int>("DropperID").value();
 
-    auto client = rclcpp_action::create_client<ActuateDroppers>(this->rosnode, "ActuateDroppers");
+    auto client = rclcpp_action::create_client<ActuateDroppers>(this->rosnode, "/dropper");
 
     if(!client->wait_for_action_server(10s)) {
         RCLCPP_ERROR(log, "ActuateDroppers action server not available.");
