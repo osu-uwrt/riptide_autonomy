@@ -5,6 +5,7 @@ from rclpy.action import ActionServer
 from rclpy.node import Node
 
 from riptide_msgs2.action import ActuateDroppers as DropperMsg
+from riptide_msgs2.action import ChangeClawState as ClawMsg
 
 class DummyActuatorServers(Node):
 
@@ -23,11 +24,11 @@ class DummyActuatorServers(Node):
             'dropper',
             self.dropper_callback)
         
-        # self.claw_server = ActionServer(
-        #     self,
-        #     ClawMsg,
-        #     'claw',
-        #     self.claw_callback)
+        self.claw_server = ActionServer(
+            self,
+            ClawMsg,
+            'claw',
+            self.claw_callback)
         
         self.get_logger().info("Dummy actuator server started.")
 
@@ -43,11 +44,11 @@ class DummyActuatorServers(Node):
         goal_handle.succeed()
         return DropperMsg.Result()
     
-    # def claw_callback(self, goal_handle):
-    #     open_claw = False #TODO
-    #     self.get_logger().info("Opening Claw" if open_claw else "Closing Claw")
-    #     goal_handle.succeed()
-    #     return ClawMsg.Result()
+    def claw_callback(self, goal_handle):
+        open_claw = goal_handle.request.clawopen #TODO
+        self.get_logger().info("Opening Claw" if open_claw else "Closing Claw")
+        goal_handle.succeed()
+        return ClawMsg.Result()
 
 
 def main(args=None):
