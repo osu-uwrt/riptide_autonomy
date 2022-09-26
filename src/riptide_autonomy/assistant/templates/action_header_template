@@ -1,0 +1,39 @@
+#ifndef <1>_H
+#define <1>_H
+
+#include "autonomy_lib.h"
+
+class <2> : public UWRTSyncActionNode {
+    public:
+    <2>(const std::string& name, const NodeConfiguration& config)
+     : UWRTSyncActionNode(name, config) { }
+
+    /**
+     * @brief Declares ports needed by this node.
+     * @return PortsList Needed ports.
+     */
+    static PortsList providedPorts();
+
+    /**
+     * @brief Initializes the node.
+     * @param node The ROS node belonging to the current process.
+     */
+    void init(rclcpp::Node::SharedPtr) override;
+
+    /**
+     * @brief Executes the node.
+     * This method will be called once by the tree and can block for as long
+     * as it needs for the action to be completed. When execution completes,
+     * this method must return either SUCCESS or FAILURE; it CANNOT return
+     * IDLE or RUNNING.
+     *
+     * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
+     */
+    NodeStatus tick() override;
+
+    private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
+};
+
+#endif // <1>_H

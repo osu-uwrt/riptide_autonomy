@@ -1,0 +1,19 @@
+#ifndef <1>_H
+#define <1>_H
+
+#include "autonomy_lib.h"
+
+class RetryUntilSuccessfulOrTimeout : public BT::DecoratorNode {
+    public:
+    RetryUntilSuccessfulOrTimeout(const std::string& name, const NodeConfiguration& config)
+    : DecoratorNode(name, config) { };
+
+    static PortsList providedPorts() {}
+    NodeStatus tick() override;
+
+    private:
+    //process node
+    rclcpp::Node::SharedPtr rosnode;
+};
+
+#endif // <1>_H
