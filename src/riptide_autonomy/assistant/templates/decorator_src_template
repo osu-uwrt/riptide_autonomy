@@ -1,6 +1,0 @@
-#include "autonomy.h"
-
-BT::NodeStatus <1>::tick() {
-    //TODO: implement method and return SUCCESS or FAILURE when done
-    return NodeStatus::SUCCESS;
-}

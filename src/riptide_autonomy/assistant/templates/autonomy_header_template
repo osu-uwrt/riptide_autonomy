@@ -1,0 +1,7 @@
+#ifndef AUTONOMY_H
+#define AUTONOMY_H
+
+<1>
+void registerCustomNodes(BehaviorTreeFactory factory);
+
+#endif // AUTONOMY_H

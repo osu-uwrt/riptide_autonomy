@@ -3,10 +3,10 @@
 
 #include "autonomy_lib.h"
 
-class <2> : public UWRTSyncActionNode {
+class <2> : public <3> {
     public:
     <2>(const std::string& name, const NodeConfiguration& config)
-     : UWRTSyncActionNode(name, config) { }
+     : <3>(name, config) { }
 
     /**
      * @brief Declares ports needed by this node.
