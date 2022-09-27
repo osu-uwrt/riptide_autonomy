@@ -1,9 +1,17 @@
-#include "autonomy.h"
+#include "bt_actions/AlignTorpedos.h"
 
 using namespace BT;
 
-void AlignTorpedos::init(rclcpp::Node::SharedPtr node) {
-    this->rosnode = node;
+
+PortsList AlignTorpedos::providedPorts() {
+    return {
+        BT::InputPort<double>("timeout"),
+        BT::InputPort<double>("current_distance"),
+        BT::InputPort<double>("goal_distance"),
+        BT::OutputPort<double>("x"),
+        BT::OutputPort<double>("y"),
+        BT::OutputPort<double>("z")
+    };
 }
 
 

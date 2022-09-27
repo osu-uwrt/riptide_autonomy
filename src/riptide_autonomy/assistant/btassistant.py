@@ -69,7 +69,7 @@ def createFileFromTemplate(templatePath: str, targetPath: str, args: 'list[str]'
 def onCreate(args):
     templateName = "{}/assistant/templates/node_src_template".format(AUTONOMY_SRC_LOCATION, args.type)    
     newFileName = "{0}/bt_{1}s/{2}.bt{1}.cpp".format(AUTONOMY_SRC_LOCATION, args.type, args.name)
-    createFileFromTemplate(templateName, newFileName, [args.name])
+    createFileFromTemplate(templateName, newFileName, [args.name, args.type.lower()])
     
     info(args, "Created a new {} with name {}.".format(args.type, args.name))
     
@@ -96,11 +96,6 @@ def onGenerateHeaders(args):
     headerTemplate = "{}/assistant/templates/node_header_template".format(AUTONOMY_SRC_LOCATION)
     autonomyTemplate = "{}/assistant/templates/autonomy_header_template".format(AUTONOMY_SRC_LOCATION)
     
-    #resolve names of directories to install headers to
-    actionInstallDir = "{}/bt_actions".format(args.target_directory)
-    conditionInstallDir = "{}/bt_conditions".format(args.target_directory)
-    decoratorInstallDir = "{}/bt_decorators".format(args.target_directory)
-    
     #populates header files from templates with two arguments (first is uppercase name, second is titlecase name)
     #returns a list containing all populated header files
     def populateHeadersFromTemplates(directory: str, files: 'list[str]', headerSuperclass: str):
@@ -111,15 +106,15 @@ def onGenerateHeaders(args):
             info(args, "Creating header file for {}".format(fileName))
             
             #install file from template
-            installFileName = "{}/{}.h".format(directory, fileName)
+            installFileName = "{}/{}/{}.h".format(args.target_directory, directory, fileName)
             createFileFromTemplate(headerTemplate, installFileName, [fileName.upper(), fileName, headerSuperclass])
-            headersList.append(installFileName)
+            headersList.append("{}/{}.h".format(directory, fileName))
         
         return headersList
         
-    actionHeaders    = populateHeadersFromTemplates(actionInstallDir, actionFiles, "UWRTSyncActionNode")
-    conditionHeaders = populateHeadersFromTemplates(conditionInstallDir, conditionFiles, "BT::ConditionNode")
-    decoratorHeaders = populateHeadersFromTemplates(decoratorInstallDir, decoratorFiles, "BT::DecoratorNode")
+    actionHeaders    = populateHeadersFromTemplates("bt_actions", actionFiles, "UWRTSyncActionNode")
+    conditionHeaders = populateHeadersFromTemplates("bt_conditions", conditionFiles, "BT::ConditionNode")
+    decoratorHeaders = populateHeadersFromTemplates("bt_decorators", decoratorFiles, "BT::DecoratorNode")
     
     #create autonomy.h file. only need to fill in the #include's for all custom nodes
     includes = ""
@@ -142,15 +137,13 @@ def onGenerateRegistrator(args):
     registrations = ""
     for file in (actionFiles + conditionFiles + decoratorFiles):
         #ex. factory.registerNodeType<Actuate>("Actuate");
-        registrations += "    factory.registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
+        registrations += "    factory->registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
     
     template = "{}/assistant/templates/node_registrator_template".format(AUTONOMY_SRC_LOCATION)
     createFileFromTemplate(template, location, [registrations])
     info(args, "Generated registrator source code at {}".format(os.path.abspath(location)))
         
     
-    
-        
 #
 # ARGPARSE TASK DEFINITIONS
 #

@@ -29,6 +29,6 @@ PortsList UWRTSyncActionNode::providedPorts() {
  * @return BT::NodeStatus The status of the node after tick completes.
  */
 NodeStatus UWRTSyncActionNode::tick() {
-    RCLCPP_INFO(log, "UWRTSyncActionNode's tick() method not overridden! This action does nothing! Override me!");
+    RCLCPP_WARN(log, "UWRTSyncActionNode's tick() method not overridden! This action does nothing! Override me!");
     return NodeStatus::SUCCESS;
 }

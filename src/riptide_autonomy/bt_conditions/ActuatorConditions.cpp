@@ -11,7 +11,7 @@
  */
 BT::NodeStatus intInputEquals(BT::TreeNode& node, std::string portName, int value) {
     int portVal = node.getInput<int>(portName).value();
-    return (portVal == value ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
+    return (portVal == value ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
 }
 
 BT::NodeStatus isClawError(BT::TreeNode& node) {
@@ -68,18 +68,18 @@ BT::NodeStatus isDropperDropped(BT::TreeNode& node) {
  * @param factory the factory to register the conditions with
  */
 void ActuatorConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
-    factory->registerSimpleCondition("IsClawError", isClawError, { InputPort<int>("claw_state") });
-    factory->registerSimpleCondition("IsClawUnknown", isClawUnknown, { InputPort<int>("claw_state") });
-    factory->registerSimpleCondition("IsClawOpen", isClawOpen, { InputPort<int>("claw_state") });
-    factory->registerSimpleCondition("IsClawClosed", isClawClosed, { InputPort<int>("claw_state") });
+    factory->registerSimpleCondition("IsClawError", isClawError, { BT::InputPort<int>("claw_state") });
+    factory->registerSimpleCondition("IsClawUnknown", isClawUnknown, { BT::InputPort<int>("claw_state") });
+    factory->registerSimpleCondition("IsClawOpen", isClawOpen, { BT::InputPort<int>("claw_state") });
+    factory->registerSimpleCondition("IsClawClosed", isClawClosed, { BT::InputPort<int>("claw_state") });
 
-    factory->registerSimpleCondition("IsTorpedoError", isTorpedoError, { InputPort<int>("torpedo_state") });
-    factory->registerSimpleCondition("IsTorpedoCharging", isTorpedoCharging, { InputPort<int>("torpedo_state") });
-    factory->registerSimpleCondition("IsTorpedoCharged", isTorpedoCharged, { InputPort<int>("torpedo_state") });
-    factory->registerSimpleCondition("IsTorpedoFired", isTorpedoFired, { InputPort<int>("torpedo_state") });
-    factory->registerSimpleCondition("IsTorpedoDisarmed", isTorpedoDisarmed, { InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoError", isTorpedoError, { BT::InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoCharging", isTorpedoCharging, { BT::InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoCharged", isTorpedoCharged, { BT::InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoFired", isTorpedoFired, { BT::InputPort<int>("torpedo_state") });
+    factory->registerSimpleCondition("IsTorpedoDisarmed", isTorpedoDisarmed, { BT::InputPort<int>("torpedo_state") });
 
-    factory->registerSimpleCondition("IsDropperError", isDropperError, { InputPort<int>("dropper_state") });
-    factory->registerSimpleCondition("IsDropperReady", isDropperReady, { InputPort<int>("dropper_state") });
-    factory->registerSimpleCondition("IsDropperDropped", isDropperDropped, { InputPort<int>("dropper_state") });
+    factory->registerSimpleCondition("IsDropperError", isDropperError, { BT::InputPort<int>("dropper_state") });
+    factory->registerSimpleCondition("IsDropperReady", isDropperReady, { BT::InputPort<int>("dropper_state") });
+    factory->registerSimpleCondition("IsDropperDropped", isDropperDropped, { BT::InputPort<int>("dropper_state") });
 }

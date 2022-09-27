@@ -1,15 +1,24 @@
-#include "autonomy.h"
+#include "bt_actions/ResetOdom.h"
 
 using namespace BT;
 using namespace std::chrono_literals;
 
-void ResetOdom::init(rclcpp::Node::SharedPtr node) {
-    this->rosnode = node;
-    
-    this->client = rosnode->create_client<robot_localization::srv::SetPose>("/tempest/set_pose");
+
+PortsList ResetOdom::providedPorts() {
+    return {
+        BT::InputPort<double>("x"),
+        BT::InputPort<double>("y"),
+        BT::InputPort<double>("z"),
+        BT::InputPort<double>("or"),
+        BT::InputPort<double>("op"),
+        BT::InputPort<double>("oy"),
+    };
 }
 
+
 NodeStatus ResetOdom::tick() {
+    auto client = rosnode->create_client<robot_localization::srv::SetPose>("/tempest/set_pose");
+
     //get inputs from BT
     auto request = std::make_shared<robot_localization::srv::SetPose::Request>();
 

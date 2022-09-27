@@ -1,20 +1,39 @@
-#include "autonomy.h"
+#include "bt_actions/GetActuatorStatus.h"
 
-using std::placeholders::_1;
 using namespace BT;
+using std::placeholders::_1;
 
-void GetActuatorStatus::init(rclcpp::Node::SharedPtr node) {
-    this->rosnode = node;
 
-    this->statusSub = rosnode->create_subscription<riptide_msgs2::msg::ActuatorStatus> (
-        ACTUATOR_STATUS_TOPIC, 
-        rclcpp::SensorDataQoS(),
-        std::bind(&GetActuatorStatus::actuatorStateCallback, this, _1)
-    );
+bool statusReceived = false;
+riptide_msgs2::msg::ActuatorStatus latestStatus;
+
+
+static void statusCallback(const riptide_msgs2::msg::ActuatorStatus::SharedPtr msg) {
+    latestStatus = *msg;
+    statusReceived = true;
+}
+
+
+PortsList GetActuatorStatus::providedPorts() {
+    return {
+        BT::OutputPort<int>("claw_state"),
+        BT::OutputPort<int>("torpedo1_state"),
+        BT::OutputPort<int>("torpedo2_state"),
+        BT::OutputPort<int>("dropper1_state"),
+        BT::OutputPort<int>("dropper2_state")
+    };
 }
 
 
 NodeStatus GetActuatorStatus::tick() { 
+    statusReceived = false; //...so that we force the node to collect another reading
+
+    auto statusSub = rosnode->create_subscription<riptide_msgs2::msg::ActuatorStatus> (
+        ACTUATOR_STATUS_TOPIC, 
+        rclcpp::SensorDataQoS(),
+        std::bind(&statusCallback, _1)
+    );
+
     rclcpp::Time startTime = rosnode->get_clock()->now();
     statusReceived = false;
 
@@ -34,9 +53,4 @@ NodeStatus GetActuatorStatus::tick() {
     setOutput<int>("dropper2_state", latestStatus.dropper2_state);
 
     return NodeStatus::SUCCESS;
-}
-
-void GetActuatorStatus::actuatorStateCallback(const riptide_msgs2::msg::ActuatorStatus::SharedPtr msg) {
-    latestStatus = *msg;
-    statusReceived = true;
 }

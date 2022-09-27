@@ -1,18 +1,11 @@
-#include "<1>.h"
+#include "bt_<2>s/<1>.h"
 
 using namespace BT;
 
-void <1>::providedPorts() {
+static void <1>::providedPorts() {
     return {
         //TODO: define needed ports here...
     }
-}
-
-
-void <1>::init(rclcpp::Node::SharedPtr node) {
-    this->rosnode = node;
-
-    //TODO: Define needed ros subscriptions and publishers here...
 }
 
 

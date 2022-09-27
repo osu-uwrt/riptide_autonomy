@@ -1,16 +1,23 @@
-#include "autonomy.h"
+#include "bt_actions/PublishToController.h"
 
 using namespace BT;
 
-void PublishToController::init(rclcpp::Node::SharedPtr node) { // TODO: Change BaseState to your new class name
-    this->rosnode = node;
 
-    this->positionPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(POSITION_TOPIC, 10);
-    this->orientationPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(ORIENTATION_TOPIC, 10);
+PortsList PublishToController::providedPorts() {
+    return {
+        BT::InputPort<bool>("isOrientation"),
+        BT::InputPort<int>("mode"),
+        BT::InputPort<double>("x"),
+        BT::InputPort<double>("y"),
+        BT::InputPort<double>("z"),
+    };
 }
 
 
 NodeStatus PublishToController::tick() {
+    auto positionPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(POSITION_TOPIC, 10);
+    auto orientationPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(ORIENTATION_TOPIC, 10);
+
     //which metric are we publishing?
     bool isOrientation = getInput<bool>("isOrientation").value();
 

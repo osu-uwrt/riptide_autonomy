@@ -7,6 +7,7 @@ The BT assistant takes the templates in this directory and fills in the holes to
   - <3>: the name of the parent class.
 - node_src_template:
   - <1>: the name of the class/file
+  - <2>: The type of the class/file, lowercased
 - autonomy_header_template:
   - <1>: the #include's for all autonomy header files
 - node_registrator_template:

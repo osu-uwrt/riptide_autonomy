@@ -1,24 +1,18 @@
 #ifndef <1>_H
 #define <1>_H
 
-#include "autonomy_lib.h"
+#include "autonomy_lib.hpp"
 
 class <2> : public <3> {
     public:
-    <2>(const std::string& name, const NodeConfiguration& config)
+    <2>(const std::string& name, const BT::NodeConfiguration& config)
      : <3>(name, config) { }
 
     /**
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static PortsList providedPorts();
-
-    /**
-     * @brief Initializes the node.
-     * @param node The ROS node belonging to the current process.
-     */
-    void init(rclcpp::Node::SharedPtr) override;
+    static BT::PortsList providedPorts();
 
     /**
      * @brief Executes the node.
@@ -29,11 +23,7 @@ class <2> : public <3> {
      *
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
-    NodeStatus tick() override;
-
-    private:
-    //process node
-    rclcpp::Node::SharedPtr rosnode;
+    BT::NodeStatus tick() override;
 };
 
 #endif // <1>_H

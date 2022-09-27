@@ -63,22 +63,7 @@ int main(int argc, char *argv[]) {
     BehaviorTreeFactory factory;
     RCLCPP_INFO(log, "DoTask: Registering Nodes");
 
-    /**
-     * REGISTER NODES HERE
-     */
-    factory.registerNodeType<Actuate>("Actuate");
-    factory.registerNodeType<AlignTorpedos>("AlignTorpedos");
-    factory.registerNodeType<GetActuatorStatus>("GetActuatorStatus");
-    factory.registerNodeType<GetOdometry>("GetOdometry");
-    factory.registerNodeType<GetSwitchState>("GetSwitchState");
-    factory.registerNodeType<PublishToController>("PublishToController");
-    factory.registerNodeType<Search>("Search");
-    factory.registerNodeType<TransformPose>("TransformPose");
-    factory.registerNodeType<Wait>("Wait");
-    factory.registerNodeType<RetryUntilSuccessfulOrTimeout>("RetryUntilSuccessfulOrTimeout");
-    factory.registerNodeType<ResetOdom>("ResetOdom");
-    //your node type here...
-
+    registerCustomNodes(&factory);
 
     //register simple actions
     SimpleActions::registerActions(&factory);
@@ -97,8 +82,8 @@ int main(int argc, char *argv[]) {
     //initialize all nodes in tree
     for(auto& node : tree.nodes) {
         // Not a typo: it is "=", not "=="
-        if( auto action = dynamic_cast<UWRTSyncActionNode*>( node.get() )) {
-            action->init(rosnode);
+        if( auto btNode = dynamic_cast<UwrtBtNode*>( node.get() )) {
+            btNode->init(rosnode);
         }
     }
 

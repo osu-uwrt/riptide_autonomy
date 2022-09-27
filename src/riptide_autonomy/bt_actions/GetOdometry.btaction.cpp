@@ -1,17 +1,35 @@
-#include "autonomy.h"
+#include "bt_actions/GetOdometry.h"
 
 using namespace BT;
 using std::placeholders::_1;
 
-void GetOdometry::init(rclcpp::Node::SharedPtr node) { 
-    this->rosnode = node;
-    msgReceived = false;
 
-    sub = rosnode->create_subscription<nav_msgs::msg::Odometry>(ODOMETRY_TOPIC, 10, std::bind(&GetOdometry::odomCallback, this, _1));
+bool msgReceived = false;
+nav_msgs::msg::Odometry odom;
+
+
+PortsList GetOdometry::providedPorts() {
+    return {
+        BT::OutputPort<double>("x"),
+        BT::OutputPort<double>("y"),
+        BT::OutputPort<double>("z"),
+        BT::OutputPort<double>("or"),
+        BT::OutputPort<double>("op"),
+        BT::OutputPort<double>("oy")
+    };
 }
 
 
+static void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
+    msgReceived = true;
+    odom = *msg;
+}
+
 NodeStatus GetOdometry::tick() {
+    bool msgReceived = false; //force node to collect another message
+
+    auto sub = rosnode->create_subscription<nav_msgs::msg::Odometry>(ODOMETRY_TOPIC, 10, std::bind(&odomCallback, _1));
+
     rclcpp::Time startTime = rosnode->get_clock()->now();
     msgReceived = false;
 
@@ -36,10 +54,4 @@ NodeStatus GetOdometry::tick() {
     setOutput<double>("oy", rpy.z);
 
     return NodeStatus::SUCCESS;
-}
-
-
-void GetOdometry::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
-    msgReceived = true;
-    odom = *msg;
 }

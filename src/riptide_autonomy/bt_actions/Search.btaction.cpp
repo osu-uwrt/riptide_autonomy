@@ -1,19 +1,66 @@
-#include "autonomy.h"
+#include "bt_actions/Search.h"
 
 using namespace BT;
-using namespace std::placeholders;
+using std::placeholders::_1;
 
-    
-void Search::init(rclcpp::Node::SharedPtr node) {
-    rosnode = node;
+//this is really annoying to type out...
+typedef rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr ControllerPublisher;
 
-    odomSub        = node->create_subscription<nav_msgs::msg::Odometry>(ODOMETRY_TOPIC, 10, std::bind(&Search::odomCallback, this, _1));
-    positionPub    = node->create_publisher<riptide_msgs2::msg::ControllerCommand>(POSITION_TOPIC, 10);
-    orientationPub = node->create_publisher<riptide_msgs2::msg::ControllerCommand>(ORIENTATION_TOPIC, 10);
+geometry_msgs::msg::Pose 
+    guessLocation,
+    currentPose;
+
+double 
+    guessError;
+
+bool
+    receivedGuess,
+    receivedPos;
+
+
+PortsList Search::providedPorts() {
+    return {
+        BT::InputPort<std::string>("frame"),
+        BT::InputPort<std::string>("target_error"),
+        BT::InputPort<std::string>("update_sec")
+    };
+}
+
+
+static void guessCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) { 
+    guessLocation = msg->pose.pose;
+    guessError = msg->pose.covariance[0] + msg->pose.covariance[7] + msg->pose.covariance[14] + msg->pose.covariance[21] + msg->pose.covariance[28] + msg->pose.covariance[35];
+    receivedGuess = true;
+}
+
+
+static void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) { 
+    currentPose = msg->pose.pose;
+    receivedPos = true;
+}
+
+
+static void publishPosition(ControllerPublisher positionPub, geometry_msgs::msg::Vector3 pos) {
+    riptide_msgs2::msg::ControllerCommand cmd;
+    cmd.mode = riptide_msgs2::msg::ControllerCommand::POSITION;
+    cmd.setpoint_vect = pos;
+    positionPub->publish(cmd);
+}
+
+
+static void publishOrientation(ControllerPublisher orientationPub, geometry_msgs::msg::Quaternion quat) {
+    riptide_msgs2::msg::ControllerCommand cmd;
+    cmd.mode = riptide_msgs2::msg::ControllerCommand::POSITION;
+    cmd.setpoint_quat = quat;
+    orientationPub->publish(cmd);
 }
 
 
 NodeStatus Search::tick() {
+    auto odomSub        = rosnode->create_subscription<nav_msgs::msg::Odometry>(ODOMETRY_TOPIC, 10, std::bind(&odomCallback, _1));
+    auto positionPub    = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(POSITION_TOPIC, 10);
+    auto orientationPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(ORIENTATION_TOPIC, 10);
+
     RCLCPP_INFO(log, "BIG Search");
     bool sunnyDay = true;
 
@@ -23,7 +70,7 @@ NodeStatus Search::tick() {
     double update_sec = stod(getInput<std::string>("update_sec").value());
 
     //Subscribe to the guess place (we initialize this here because we only now have read the behaviortree and know the frame name)
-    guessSub = rosnode->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("mapping/" + target, 10, std::bind(&Search::guessCallback, this, _1));
+    auto guessSub = rosnode->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("mapping/" + target, 10, std::bind(&guessCallback, _1));
 
     //actually look up the transform of the frame we want
     tf2_ros::Buffer buffer(rosnode->get_clock());
@@ -61,8 +108,8 @@ NodeStatus Search::tick() {
     worldGuessPtv3.z = worldGuessPos.position.z;
 
     //publish the initial estimate to the controller to move the robot to that pose
-    publishPosition(worldGuessPtv3);
-    publishOrientation(worldGuessPos.orientation);
+    publishPosition(positionPub, worldGuessPtv3);
+    publishOrientation(orientationPub, worldGuessPos.orientation);
 
     RCLCPP_INFO(log, "Going to %f, %f, %f", worldGuessPtv3.x, worldGuessPtv3.y, worldGuessPtv3.z);
     
@@ -85,7 +132,7 @@ NodeStatus Search::tick() {
                 worldGuessPtv3.x = worldGuessPos.position.x;
                 worldGuessPtv3.y = worldGuessPos.position.y;
                 worldGuessPtv3.z = worldGuessPos.position.z;
-                publishPosition(worldGuessPtv3);
+                publishPosition(positionPub, worldGuessPtv3);
                 
                 //figure out which direction to face object we are driving towards
                 double
@@ -99,7 +146,7 @@ NodeStatus Search::tick() {
                 rpy.z = yaw;
 
                 geometry_msgs::msg::Quaternion quat = toQuat(rpy);
-                publishOrientation(quat);
+                publishOrientation(orientationPub, quat);
 
                 RCLCPP_INFO(log, "Going to %f, %f, %f", worldGuessPtv3.x, worldGuessPtv3.y, worldGuessPtv3.z);
             }
@@ -117,31 +164,3 @@ NodeStatus Search::tick() {
     return NodeStatus::FAILURE;
 }
 
-
-void Search::publishPosition(geometry_msgs::msg::Vector3 pos) {
-    riptide_msgs2::msg::ControllerCommand cmd;
-    cmd.mode = riptide_msgs2::msg::ControllerCommand::POSITION;
-    cmd.setpoint_vect = pos;
-    this->positionPub->publish(cmd);
-}
-
-
-void Search::publishOrientation(geometry_msgs::msg::Quaternion quat) {
-    riptide_msgs2::msg::ControllerCommand cmd;
-    cmd.mode = riptide_msgs2::msg::ControllerCommand::POSITION;
-    cmd.setpoint_quat = quat;
-    this->orientationPub->publish(cmd);
-}
-
-
-void Search::guessCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) { 
-    guessLocation = msg->pose.pose;
-    guessError = msg->pose.covariance[0] + msg->pose.covariance[7] + msg->pose.covariance[14] + msg->pose.covariance[21] + msg->pose.covariance[28] + msg->pose.covariance[35];
-    receivedGuess = true;
-}
-
-
-void Search::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) { 
-    currentPose = msg->pose.pose;
-    receivedPos = true;
-}
