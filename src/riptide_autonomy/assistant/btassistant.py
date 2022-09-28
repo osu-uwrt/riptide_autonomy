@@ -11,6 +11,7 @@ if HOME_DIR is None:
     exit(1)
 
 AUTONOMY_SRC_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/src/riptide_autonomy".format(HOME_DIR)
+SHELL_ASSISTANT_FILE  = "{}/assistant/shellassistant.sh".format(AUTONOMY_SRC_LOCATION)
 
 #
 # UTIL FUNCTIONS
@@ -20,6 +21,15 @@ AUTONOMY_SRC_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/src/r
 def info(args, msg):
     if not args.silent:
         print(msg)
+
+
+#asks user for confirmation of an action with a y/n unless the --force flag was specified.
+def askConfirmation(args, msg):
+    if not args.force:
+        res = input("{} [y/n]: ".format(msg))
+        return res.upper() == "Y"
+
+    return True #user forced
         
 
 def fileNameNoExt(fileName: str):
@@ -65,15 +75,36 @@ def createFileFromTemplate(templatePath: str, targetPath: str, args: 'list[str]'
 # CALLBACKS
 #
 
+#called when the rebuild_autonomy task is invoked
+def onRebuildAutonomy(args):
+    info(args, "Rebuilding the riptide_autonomy2 package...")
+    
+    #invoke shell assistant with the rebuild_autonomy argument.
+    command = "{} rebuild_autonomy".format(SHELL_ASSISTANT_FILE)
+    res = os.system(command)
+    
+    if res != 0:
+        info(args, "Errors occurred while rebuilding autonomy.")
+
+
 #called when the create task is invoked.
 def onCreate(args):
     templateName = "{}/assistant/templates/node_src_template".format(AUTONOMY_SRC_LOCATION, args.type)    
     newFileName = "{0}/bt_{1}s/{2}.bt{1}.cpp".format(AUTONOMY_SRC_LOCATION, args.type, args.name)
-    createFileFromTemplate(templateName, newFileName, [args.name, args.type.lower()])
     
+    if os.path.exists(newFileName):
+        if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):
+            info(args, "Not creating file.") #user said no
+            return
+    
+    createFileFromTemplate(templateName, newFileName, [args.name, args.type.lower()])
     info(args, "Created a new {} with name {}.".format(args.type, args.name))
     
-    #TODO build autonomy when done
+    #rebuild autonomy to force cmake to configure and generate appropriate headers
+    if args.no_rebuild:
+        info(args, "You need to completely rebuild riptide_autonomy2 for the changes to take effect.")
+    else:
+        onRebuildAutonomy(args)
     
     
 #called when the generate headers action is invoked.
@@ -151,9 +182,10 @@ def onGenerateRegistrator(args):
 #task struct containing name, callback, and description. arguments are custom
 class Task:
     class Argument:
-        def __init__(self, name, options=None):
+        def __init__(self, name, options=None, optional=False):
             self.name = name
             self.options = options
+            self.optional = optional
         
     def __init__(self, callback, description: str, args: 'list[Argument]'):
         self.callback = callback
@@ -164,12 +196,19 @@ class Task:
 # map of task options that this program supports
 #
 taskOptions = {
+    "rebuild_autonomy" : Task(
+        onRebuildAutonomy,
+        "Clean and re-build the riptide_autonomy2 package.",
+        []
+    ),
+    
     "create" : Task(
         onCreate, 
         "Create a new custom action, decorator, or condition node.", 
         [
             Task.Argument("type", options=["action", "condition", "decorator"]),
-            Task.Argument('name')
+            Task.Argument('name'),
+            Task.Argument("--no-rebuild", optional=True)
         ]
     ),
     
@@ -183,7 +222,7 @@ taskOptions = {
     
     "generate_registrator" : Task(
         onGenerateRegistrator,
-        "Generate C++ source code for the registerCustomNodes() function in autonomy.h",
+        "Generate C++ source code for the registerCustomNodes() function in autonomy.h.",
         [
             Task.Argument("file_location")
         ]
@@ -199,6 +238,7 @@ def createArgParser() -> argparse.ArgumentParser:
     
     #optional silent flag
     parser.add_argument("-s", "--silent", action="store_true", help="Silence relgular terminal output. Errors will still print")
+    parser.add_argument("-f", "--force", action="store_true", help="Force the assistant to attempt to complete the task without asking user for confirmation of some acitons like file overwrites.")
     
     subparsers = parser.add_subparsers(dest="task", help="The task to complete", required=True)
     for taskName in taskOptions.keys():
@@ -206,7 +246,10 @@ def createArgParser() -> argparse.ArgumentParser:
         subparser = subparsers.add_parser(taskName, help=task.description)
         
         for arg in task.args:
-            subparser.add_argument(arg.name, choices=arg.options)
+            if arg.optional:
+                subparser.add_argument(arg.name, action="store_true")
+            else:
+                subparser.add_argument(arg.name, choices=arg.options)
 
     
     return parser

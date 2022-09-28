@@ -2,10 +2,10 @@
 
 using namespace BT;
 
-static void <1>::providedPorts() {
+BT::PortsList <1>::providedPorts() {
     return {
         //TODO: define needed ports here...
-    }
+    };
 }
 
 
