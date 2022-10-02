@@ -76,15 +76,17 @@ def createFileFromTemplate(templatePath: str, targetPath: str, args: 'list[str]'
 #
 
 #called when the rebuild_autonomy task is invoked
-def onRebuildAutonomy(args):
-    info(args, "Rebuilding the riptide_autonomy2 package...")
+def onReconfigureAutonomy(args):
+    info(args, "Reconfiguring and building the riptide_autonomy2 package...")
     
-    #invoke shell assistant with the rebuild_autonomy argument.
-    command = "{} rebuild_autonomy".format(SHELL_ASSISTANT_FILE)
-    res = os.system(command)
+    workspaceDir = "{}/osu-uwrt/riptide_software".format(HOME_DIR)
+    os.chdir(workspaceDir)
     
-    if res != 0:
-        info(args, "Errors occurred while rebuilding autonomy.")
+    #run command to reconfigure and build
+    res = os.system("colcon build --cmake-force-configure")
+    
+    if res:
+        info(args, "Error reconfiguring autonomy.")
 
 
 #called when the create task is invoked.
@@ -104,7 +106,7 @@ def onCreate(args):
     if args.no_rebuild:
         info(args, "You need to completely rebuild riptide_autonomy2 for the changes to take effect.")
     else:
-        onRebuildAutonomy(args)
+        onReconfigureAutonomy(args)
     
     
 #called when the generate headers action is invoked.
@@ -196,8 +198,8 @@ class Task:
 # map of task options that this program supports
 #
 taskOptions = {
-    "rebuild_autonomy" : Task(
-        onRebuildAutonomy,
+    "reconfigure_autonomy" : Task(
+        onReconfigureAutonomy,
         "Clean and re-build the riptide_autonomy2 package.",
         []
     ),
