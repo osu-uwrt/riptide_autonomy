@@ -31,6 +31,43 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry
     return result;
 }
 
+std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs::msg::Pose original, std::string toFrame, std::string fromFrame, rclcpp::Node::SharedPtr rosnode){
+
+
+    tf2_ros::Buffer buffer(rosnode->get_clock());
+    tf2_ros::TransformListener listener(buffer);
+    //look up transform with a three second timeout to find one
+    rclcpp::Time startTime = rosnode->get_clock()->now();
+    while((rosnode->get_clock()->now() - startTime).seconds() < 3) {
+        try {
+            geometry_msgs::msg::TransformStamped transform = buffer.lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
+            geometry_msgs::msg::Pose transformed = doTransform(original, transform);
+
+            RCLCPP_INFO(log, "transformed position: %f, %f, %f", transformed.position.x, transformed.position.y, transformed.position.z);
+            RCLCPP_INFO(log, "transformed orientation: %f, %f, %f, %f", transformed.orientation.x, transformed.orientation.y, transformed.orientation.z, transformed.orientation.w);
+
+
+            return std::make_tuple(transformed, true);
+
+        } catch(tf2::LookupException &ex) {
+            RCLCPP_WARN(log, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
+
+            //wait a little bit for some frame data to come in 
+            rclcpp::Time waitStart = rosnode->get_clock()->now();
+            while((rosnode->get_clock()->now() - waitStart).seconds() < 1) {
+                rclcpp::spin_some(rosnode);
+            }
+        }
+    }
+    RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
+    geometry_msgs::msg::Pose failed; 
+    return std::make_tuple(failed, false);
+    
+}
+
+
+
+
 geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point pt) {
     geometry_msgs::msg::Vector3 v;
     v.x = pt.x;

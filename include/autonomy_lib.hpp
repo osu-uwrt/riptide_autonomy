@@ -64,6 +64,16 @@ const std::string
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose pose, geometry_msgs::msg::TransformStamped transform);
 
 /**
+ * @brief Looks up necessary transform between two poses the transforms specified coords into cords in the new pose
+ * 
+ * @param relative The pose in fromFrame to transform to toFrame.
+ * @param fromFrame The current frame of the relative pose
+ * @param toFrame The desired frame of the relative pose
+ * @return geometry_msgs::msg::Pose The equlivalent pose in a new frame
+ */
+std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, rclcpp::Node::SharedPtr rosnode);
+
+/**
  * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles in radians.
  *
  * @param quat The quaternion orientation to convert.
