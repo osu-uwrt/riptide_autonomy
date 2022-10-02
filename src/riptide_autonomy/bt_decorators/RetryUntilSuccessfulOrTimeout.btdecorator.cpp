@@ -1,6 +1,14 @@
-#include "autonomy.h"
+#include "bt_decorators/RetryUntilSuccessfulOrTimeout.h"
 
 using namespace std::chrono_literals;
+
+
+BT::PortsList RetryUntilSuccessfulOrTimeout::providedPorts() {
+    return {
+        BT::InputPort<double>("num_seconds")
+    };
+}
+
 
 BT::NodeStatus RetryUntilSuccessfulOrTimeout::tick() {
     auto startTime = std::chrono::system_clock::now();
@@ -8,12 +16,12 @@ BT::NodeStatus RetryUntilSuccessfulOrTimeout::tick() {
     
     auto chronoDuration = std::chrono::duration<double>(timeoutDuration);
     while((std::chrono::system_clock::now() - startTime) < chronoDuration) {
-        NodeStatus result = child()->executeTick();
+        BT::NodeStatus result = child()->executeTick();
 
-        if(result == NodeStatus::SUCCESS) {
-            return NodeStatus::SUCCESS;
+        if(result == BT::NodeStatus::SUCCESS) {
+            return BT::NodeStatus::SUCCESS;
         }
     }
 
-    return NodeStatus::FAILURE;
+    return BT::NodeStatus::FAILURE;
 }

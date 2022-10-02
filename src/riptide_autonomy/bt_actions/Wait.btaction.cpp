@@ -1,13 +1,16 @@
-#include "autonomy.h"
+#include "bt_actions/Wait.h"
 
 using namespace BT;
 
-void Wait::init(rclcpp::Node::SharedPtr node) { // TODO: Change BaseState to your new class name
-    this->rosnode = node;
+
+PortsList Wait::providedPorts() {
+    return {
+        BT::InputPort<double>("seconds")
+    };
 }
 
 
-NodeStatus Wait::tick() { //TODO: Change BaseState to your new class name  
+NodeStatus Wait::tick() {
     double seconds = getInput<double>("seconds").value();
 
     rclcpp::Time start = rosnode->get_clock()->now();

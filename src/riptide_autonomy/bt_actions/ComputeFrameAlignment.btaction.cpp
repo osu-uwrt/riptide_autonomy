@@ -3,19 +3,20 @@
 using namespace BT;
 
 
-
-
-
-void ComputeFrameAlignment::init(rclcpp::Node::SharedPtr node) { 
-    this->rosnode = node;
+PortsList ComputeFrameAlignment::providedPorts() {
+    return {
+        InputPort<double>("x"),
+        InputPort<double>("y"),
+        InputPort<double>("z"),
+        InputPort<std::string>("frameName"),
+        OutputPort<double>("out_x"),
+        OutputPort<double>("out_y"),
+        OutputPort<double>("out_z"),
+    };
 }
 
 
-    
-
-
 NodeStatus ComputeFrameAlignment::tick() { 
-
     tf2_ros::Buffer buffer(rosnode->get_clock());
     rclcpp::Time startTime = rosnode->get_clock()->now();
 

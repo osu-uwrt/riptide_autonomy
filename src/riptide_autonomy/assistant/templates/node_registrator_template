@@ -1,0 +1,5 @@
+#include "autonomy.h"
+
+void registerCustomNodes(BT::BehaviorTreeFactory *factory) {
+<1>
+}

@@ -32,17 +32,29 @@
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="2" value="2"/>
             <Action ID="Info" message="Fire 1"/>
-            <SubTree ID="ArmTorpedos"/>
-            <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="1"/>
+            <ForceSuccess>
+                <SubTree ID="ArmTorpedos"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="1"/>
+            </ForceSuccess>
             <Action ID="Info" message="Fire 2"/>
-            <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="2"/>
-            <SubTree ID="DisarmTorpedos"/>
+            <ForceSuccess>
+                <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="2"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="DisarmTorpedos"/>
+            </ForceSuccess>
             <Action ID="Wait" seconds="5"/>
             <Action ID="Info" message="Drop 1"/>
-            <SubTree ID="DropMarker" __shared_blackboard="false" dropper="1"/>
+            <ForceSuccess>
+                <SubTree ID="DropMarker" __shared_blackboard="false" dropper="1"/>
+            </ForceSuccess>
             <Action ID="Wait" seconds="5"/>
             <Action ID="Info" message="Drop 2"/>
-            <SubTree ID="DropMarker" __shared_blackboard="false" dropper="2"/>
+            <ForceSuccess>
+                <SubTree ID="DropMarker" __shared_blackboard="false" dropper="2"/>
+            </ForceSuccess>
             <Action ID="Info" message="End BT"/>
         </Sequence>
     </BehaviorTree>
@@ -291,16 +303,16 @@
     <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="Actuate">
-            <input_port name="arm_torpedo"/>
-            <input_port name="clear_dropper_status"/>
-            <input_port name="close_claw"/>
-            <input_port name="disarm_torpedo"/>
-            <input_port name="drop_1"/>
-            <input_port name="drop_2"/>
-            <input_port name="fire_torpedo_1"/>
-            <input_port name="fire_torpedo_2"/>
-            <input_port name="open_claw"/>
-            <input_port name="reset_actuators"/>
+            <input_port name="arm_torpedo" type="bool"/>
+            <input_port name="clear_dropper_status" type="bool"/>
+            <input_port name="close_claw" type="bool"/>
+            <input_port name="disarm_torpedo" type="bool"/>
+            <input_port name="drop_1" type="bool"/>
+            <input_port name="drop_2" type="bool"/>
+            <input_port name="fire_torpedo_1" type="bool"/>
+            <input_port name="fire_torpedo_2" type="bool"/>
+            <input_port name="open_claw" type="bool"/>
+            <input_port name="reset_actuators" type="bool"/>
         </Action>
         <SubTree ID="ArmTorpedos"/>
         <SubTree ID="DisarmTorpedos"/>
@@ -309,7 +321,7 @@
             <input_port name="dropper">marker dropper ID. 1 or 2</input_port>
         </SubTree>
         <Action ID="Error">
-            <input_port name="message">The message to print.</input_port>
+            <input_port name="message" type="std::string"/>
         </Action>
         <SubTree ID="FireTorpedo">
             <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -319,11 +331,11 @@
             <input_port default="true" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
         <Action ID="GetActuatorStatus">
-            <output_port name="claw_state"/>
-            <output_port name="dropper1_state"/>
-            <output_port name="dropper2_state"/>
-            <output_port name="torpedo1_state"/>
-            <output_port name="torpedo2_state"/>
+            <output_port name="claw_state" type="int"/>
+            <output_port name="dropper1_state" type="int"/>
+            <output_port name="dropper2_state" type="int"/>
+            <output_port name="torpedo1_state" type="int"/>
+            <output_port name="torpedo2_state" type="int"/>
         </Action>
         <SubTree ID="GetTorpedoState">
             <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -331,7 +343,7 @@
             <output_port name="torpedo_state"/>
         </SubTree>
         <Action ID="Info">
-            <input_port name="message">The message to print.</input_port>
+            <input_port name="message" type="std::string"/>
         </Action>
         <Condition ID="IsClawClosed">
             <input_port name="claw_state"/>
@@ -346,35 +358,35 @@
             <input_port name="claw_state"/>
         </Condition>
         <Condition ID="IsDropperDropped">
-            <input_port name="dropper_state"/>
+            <input_port name="dropper_state" type="int"/>
         </Condition>
         <Condition ID="IsDropperError">
-            <input_port name="dropper_state"/>
+            <input_port name="dropper_state" type="int"/>
         </Condition>
         <Condition ID="IsDropperReady">
             <input_port name="dropper_state"/>
         </Condition>
         <Condition ID="IsTorpedoCharged">
-            <input_port name="torpedo_state"/>
+            <input_port name="torpedo_state" type="int"/>
         </Condition>
         <Condition ID="IsTorpedoCharging">
             <input_port name="torpedo_state"/>
         </Condition>
         <Condition ID="IsTorpedoDisarmed">
-            <input_port name="torpedo_state"/>
+            <input_port name="torpedo_state" type="int"/>
         </Condition>
         <Condition ID="IsTorpedoError">
-            <input_port name="torpedo_state"/>
+            <input_port name="torpedo_state" type="int"/>
         </Condition>
         <Condition ID="IsTorpedoFired">
-            <input_port name="torpedo_state"/>
+            <input_port name="torpedo_state" type="int"/>
         </Condition>
         <Condition ID="NumsEqual">
-            <input_port name="a"/>
-            <input_port name="b"/>
+            <input_port name="a" type="double"/>
+            <input_port name="b" type="double"/>
         </Condition>
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
-            <input_port name="num_seconds">number of seconds until abandonment.</input_port>
+            <input_port name="num_seconds" type="double"/>
         </Decorator>
         <Action ID="Search">
             <input_port name="frame">The frame to search for</input_port>
@@ -387,7 +399,7 @@
             <output_port name="str_out">output.</output_port>
         </Action>
         <Action ID="Wait">
-            <input_port name="seconds">number of seconds to wait.</input_port>
+            <input_port name="seconds" type="double"/>
         </Action>
         <SubTree ID="WaitForTorpedoCharged">
             <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>

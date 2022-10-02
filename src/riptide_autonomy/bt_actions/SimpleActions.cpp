@@ -10,7 +10,7 @@
 BT::NodeStatus printInfo(BT::TreeNode& n) {
     std::string message = n.getInput<std::string>("message").value();
     RCLCPP_INFO(log, "%s", stringWithBlackboardEntries(message, n).c_str()); 
-    return NodeStatus::SUCCESS; 
+    return BT::NodeStatus::SUCCESS; 
 }
 
 /**
@@ -22,7 +22,7 @@ BT::NodeStatus printInfo(BT::TreeNode& n) {
 BT::NodeStatus printError(BT::TreeNode& n) {
     std::string message = n.getInput<std::string>("message").value();
     RCLCPP_ERROR(log, "%s", stringWithBlackboardEntries(message, n).c_str());
-    return NodeStatus::SUCCESS;
+    return BT::NodeStatus::SUCCESS;
 }
 
 /**
@@ -41,7 +41,7 @@ BT::NodeStatus numToString(BT::TreeNode& n) {
         n.setOutput<std::string>("str_out", std::to_string(intIn.value()));
     }
 
-    return NodeStatus::SUCCESS;
+    return BT::NodeStatus::SUCCESS;
 }
 
 /**
@@ -60,7 +60,7 @@ BT::NodeStatus calculateDistance(BT::TreeNode& n) {
     p2.z = n.getInput<double>("z2").value();
 
     n.setOutput<double>("dist", distance(p1, p2));
-    return NodeStatus::SUCCESS;
+    return BT::NodeStatus::SUCCESS;
 }
 
 /**
@@ -88,7 +88,7 @@ BT::NodeStatus doMath(BT::TreeNode& n) {
     }
 
     n.setOutput<double>("out", output);
-    return NodeStatus::SUCCESS;
+    return BT::NodeStatus::SUCCESS;
 }
 
 /**
@@ -111,7 +111,7 @@ BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
     double heading = atan2(dy, dx);
 
     n.setOutput<double>("heading", heading);
-    return NodeStatus::SUCCESS;
+    return BT::NodeStatus::SUCCESS;
 }
 
 /**
@@ -120,14 +120,14 @@ BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
  * @param factory The factory to register with.
  */
 void SimpleActions::registerActions(BT::BehaviorTreeFactory *factory) {
-    factory->registerSimpleAction("Info", printInfo, { InputPort<std::string>("message") } );
-    factory->registerSimpleAction("Error", printError, { InputPort<std::string>("message") } );
+    factory->registerSimpleAction("Info", printInfo, { BT::InputPort<std::string>("message") } );
+    factory->registerSimpleAction("Error", printError, { BT::InputPort<std::string>("message") } );
 
     factory->registerSimpleAction("ToString", numToString,
         { 
-            InputPort<double>("double_in"), 
-            InputPort<int>("int_in"), 
-            OutputPort<std::string>("str_out") 
+            BT::InputPort<double>("double_in"), 
+            BT::InputPort<int>("int_in"), 
+            BT::OutputPort<std::string>("str_out") 
         }
     );
 
@@ -136,13 +136,13 @@ void SimpleActions::registerActions(BT::BehaviorTreeFactory *factory) {
      */
     factory->registerSimpleAction("CalculateDistance", calculateDistance,
         {
-            InputPort<double>("x1"),
-            InputPort<double>("y1"),
-            InputPort<double>("z1"),
-            InputPort<double>("x2"),
-            InputPort<double>("y2"),
-            InputPort<double>("z2"),
-            OutputPort<double>("dist")
+            BT::InputPort<double>("x1"),
+            BT::InputPort<double>("y1"),
+            BT::InputPort<double>("z1"),
+            BT::InputPort<double>("x2"),
+            BT::InputPort<double>("y2"),
+            BT::InputPort<double>("z2"),
+            BT::OutputPort<double>("dist")
         }
     );
 
@@ -151,20 +151,20 @@ void SimpleActions::registerActions(BT::BehaviorTreeFactory *factory) {
      */
     factory->registerSimpleAction("Math", doMath, 
         {
-            InputPort<double>("a"),
-            InputPort<double>("b"),
-            InputPort<std::string>("operator"),
-            OutputPort<double>("out")
+            BT::InputPort<double>("a"),
+            BT::InputPort<double>("b"),
+            BT::InputPort<std::string>("operator"),
+            BT::OutputPort<double>("out")
         }
     );
 
     factory->registerSimpleAction("HeadingToPoint", getHeadingToPoint,
         {
-            InputPort<double>("currX"),
-            InputPort<double>("currY"),
-            InputPort<double>("targX"),
-            InputPort<double>("targY"),
-            OutputPort<double>("heading")
+            BT::InputPort<double>("currX"),
+            BT::InputPort<double>("currY"),
+            BT::InputPort<double>("targX"),
+            BT::InputPort<double>("targY"),
+            BT::OutputPort<double>("heading")
         }
     );
 }

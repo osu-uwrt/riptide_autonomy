@@ -1,15 +1,28 @@
-#include "autonomy.h"
+#include "bt_actions/Actuate.h"
 
 using namespace BT;
 
-void Actuate::init(rclcpp::Node::SharedPtr node) {
-    this->rosnode = node;
-    
-    this->publisher = rosnode->create_publisher<riptide_msgs2::msg::ActuatorCommand>(ACTUATOR_COMMAND_TOPIC, 10);
+
+PortsList Actuate::providedPorts() {
+    return {
+        BT::InputPort<bool>("drop_1"),
+        BT::InputPort<bool>("drop_2"),
+        BT::InputPort<bool>("clear_dropper_status"),
+        BT::InputPort<bool>("arm_torpedo"),
+        BT::InputPort<bool>("disarm_torpedo"),
+        BT::InputPort<bool>("fire_torpedo_1"),
+        BT::InputPort<bool>("fire_torpedo_2"),
+        BT::InputPort<bool>("open_claw"),
+        BT::InputPort<bool>("close_claw"),
+        BT::InputPort<bool>("reset_actuators")
+    };
 }
 
 
 NodeStatus Actuate::tick() {
+    //create publisher
+    auto publisher = rosnode->create_publisher<riptide_msgs2::msg::ActuatorCommand>(ACTUATOR_COMMAND_TOPIC, 10);
+
     //get inputs from BT
     Optional<bool> 
         drop1                = getInput<bool>("drop_1"),

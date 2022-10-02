@@ -23,39 +23,62 @@ find_package(riptide_msgs2 REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(robot_localization REQUIRED)
 
+#create directory for auto-generated code which will include headers for custom nodes as well as source code that registers custom nodes
+make_directory(${PROJECT_BINARY_DIR}/autonomy_generator)
+
+#
+# cmake macro to execute a process and quit cmake execution if it fails
+#
+function(execute_process_with_error_detection)
+  execute_process(COMMAND ${ARGV}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE func_out
+    RESULT_VARIABLE func_result
+  )
+
+  if(${func_result}) #nonzero function result means error
+    message(SEND_ERROR 
+      "Error occurred during execution of process: ${cmd}\n\n"
+      "Stderr shown above. Stdout shown below: \n" #stderr automatically printed by cmake, stdout has to be manually printed
+      "${func_output}\n")
+    message(FATAL_ERROR "Review error information above. Cmake will exit.") #will quit cmake execution
+  endif()
+endfunction()
+
+# generate headers...
+execute_process_with_error_detection(
+  ./src/riptide_autonomy/assistant/btassistant.py generate_headers ${PROJECT_BINARY_DIR}/autonomy_generator/include
+)
+
+# ...and behaviortree node registrator
+execute_process_with_error_detection(
+  ./src/riptide_autonomy/assistant/btassistant.py generate_registrator ${PROJECT_BINARY_DIR}/autonomy_generator/registrator.cpp
+)
+
+#configure includes
+include_directories(${PROJECT_BINARY_DIR}/autonomy_generator/include)
 include_directories("include")
 include_directories($(rclcpp_INCLUDE_DIRS))
 
+#find all c++ source files to compile (all of them, not just the special classes)
+file(GLOB bt_actions_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_actions/*.cpp)
+file(GLOB bt_conditions_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_conditions/*.cpp)
+file(GLOB bt_decorators_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_decorators/*.cpp)
+
 #
 # autonomy library
-# PUT YOUR STATE FILES HERE!!
-#
 #
 add_library(autonomy STATIC
   #utilities
   src/riptide_autonomy/util.cpp
 
-  #bt actions / states
-  src/riptide_autonomy/bt_actions/Actuate.cpp
-  src/riptide_autonomy/bt_actions/AlignTorpedos.cpp
-  src/riptide_autonomy/bt_actions/GetActuatorStatus.cpp
-  src/riptide_autonomy/bt_actions/GetOdometry.cpp
-  src/riptide_autonomy/bt_actions/GetSwitchState.cpp
-  src/riptide_autonomy/bt_actions/PublishToController.cpp
-  src/riptide_autonomy/bt_actions/Search.cpp
-  src/riptide_autonomy/bt_actions/SimpleActions.cpp
-  src/riptide_autonomy/bt_actions/TransformPose.cpp
-  src/riptide_autonomy/bt_actions/UWRTSyncActionNode.cpp
-  src/riptide_autonomy/bt_actions/Wait.cpp
-  src/riptide_autonomy/bt_actions/ResetOdom.cpp
-  src/riptide_autonomy/bt_actions/ComputeFrameAlignment.cpp
+  #bt nodes
+  ${bt_actions_sources}
+  ${bt_conditions_sources}
+  ${bt_decorators_sources}
 
-  #bt conditions
-  src/riptide_autonomy/bt_conditions/ActuatorConditions.cpp
-  src/riptide_autonomy/bt_conditions/SimpleConditions.cpp
-
-  #bt decorators
-  src/riptide_autonomy/bt_decorators/RetryUntilSuccessfulOrTimeout.cpp
+  #registrator
+  ${PROJECT_BINARY_DIR}/autonomy_generator/registrator.cpp
 )
 
 #deps
@@ -86,9 +109,10 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
 
 # Install Python executables
+file(GLOB ros_actions_py RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/ros_actions/*.py)
 install(PROGRAMS
-  src/riptide_autonomy/ros_actions/AlignTorpedos.py
-  src/riptide_autonomy/ros_actions/BinsDiveAction.py
+  ${ros_actions_py}
+  src/riptide_autonomy/assistant/btassistant.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

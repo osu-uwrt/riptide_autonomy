@@ -22,7 +22,7 @@ void SimpleConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
 
             return (a == b ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
         },
-        { InputPort<double>("a"), InputPort<double>("b") }
+        { BT::InputPort<double>("a"), BT::InputPort<double>("b") }
     );
 
     /**
@@ -38,20 +38,20 @@ void SimpleConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
                 b = n.getInput<double>("b").value();
 
             if(test == ">") { //check a > b
-                return (a > b ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
+                return (a > b ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
             } else if(test == "<") { //check if a < b
-                return (a < b ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
+                return (a < b ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
             } else if(test == "=") { // check if a == b
-                return (a == b ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
+                return (a == b ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
             }
 
             RCLCPP_ERROR(log, "Invalid operator %s!", test.c_str());
-            return NodeStatus::FAILURE;
+            return BT::NodeStatus::FAILURE;
         },
         {
-            InputPort<std::string>("test"),
-            InputPort<double>("a"),
-            InputPort<double>("b")
+            BT::InputPort<std::string>("test"),
+            BT::InputPort<double>("a"),
+            BT::InputPort<double>("b")
         }
     );
 
@@ -66,12 +66,12 @@ void SimpleConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
                 b = n.getInput<double>("b").value(),
                 range = n.getInput<double>("range").value();
 
-            return (abs(a - b) < range ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
+            return (abs(a - b) < range ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
         },
         {
-            InputPort<double>("a"),
-            InputPort<double>("b"),
-            InputPort<double>("range")
+            BT::InputPort<double>("a"),
+            BT::InputPort<double>("b"),
+            BT::InputPort<double>("range")
         }
     );
 
@@ -82,10 +82,10 @@ void SimpleConditions::registerConditions(BT::BehaviorTreeFactory *factory) {
         "IsTrue",
         [] (BT::TreeNode& n) {
             bool value = n.getInput<bool>("value").value();
-            return (value ? NodeStatus::SUCCESS : NodeStatus::FAILURE);
+            return (value ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
         },
         {
-            InputPort<bool>("value")
+            BT::InputPort<bool>("value")
         }
     );
 }

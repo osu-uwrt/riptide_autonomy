@@ -1,9 +1,25 @@
-#include "autonomy.h"
+#include "bt_actions/TransformPose.h"
 
 using namespace BT;
 
-void TransformPose::init(rclcpp::Node::SharedPtr node) { 
-    this->rosnode = node;
+
+PortsList TransformPose::providedPorts() {
+    return {
+        BT::InputPort<std::string>("from_frame"),
+        BT::InputPort<std::string>("to_frame"),
+        BT::InputPort<double>("x"),
+        BT::InputPort<double>("y"),
+        BT::InputPort<double>("z"),
+        BT::InputPort<double>("or"),
+        BT::InputPort<double>("op"),
+        BT::InputPort<double>("oy"),
+        BT::OutputPort<double>("out_x"),
+        BT::OutputPort<double>("out_y"),
+        BT::OutputPort<double>("out_z"),
+        BT::OutputPort<double>("out_or"),
+        BT::OutputPort<double>("out_op"),
+        BT::OutputPort<double>("out_oy")
+    };
 }
 
 
