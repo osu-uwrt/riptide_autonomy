@@ -7,7 +7,6 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclpy REQUIRED)
@@ -17,7 +16,6 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(stereo_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
@@ -57,8 +55,7 @@ execute_process_with_error_detection(
 
 #configure includes
 include_directories(${PROJECT_BINARY_DIR}/autonomy_generator/include)
-include_directories("include")
-include_directories($(rclcpp_INCLUDE_DIRS))
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 #find all c++ source files to compile (all of them, not just the special classes)
 file(GLOB bt_actions_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_actions/*.cpp)
@@ -81,7 +78,7 @@ add_library(autonomy STATIC
   ${PROJECT_BINARY_DIR}/autonomy_generator/registrator.cpp
 )
 
-#deps
+# autonomy lib deps
 ament_target_dependencies(autonomy
   rclcpp
   geometry_msgs
@@ -96,13 +93,19 @@ ament_target_dependencies(autonomy
   robot_localization
 )
 
-#add and link doTask executable
+# Tree execution executable
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
-target_link_libraries(doTask autonomy ${colcon_LIBRARIES})
+
+ament_target_dependencies(doTask
+  rclcpp
+  behaviortree_cpp_v3
+  rclcpp_action
+  riptide_msgs2
+)
 
 #install C++ stuff
 install(TARGETS
-  doTask
+  doTask autonomy
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch

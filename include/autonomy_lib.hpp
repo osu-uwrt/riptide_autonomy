@@ -34,6 +34,8 @@
 
 #include "riptide_msgs2/action/align_torpedos.hpp"
 
+#include "UwrtBtNode.hpp"
+
 
 
 //define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
@@ -157,16 +159,6 @@ double distance(geometry_msgs::msg::Vector3 pt1, geometry_msgs::msg::Vector3 pt2
  * CLASSES 
  * 
  */
-
-class UwrtBtNode {
-    public:
-    void init(rclcpp::Node::SharedPtr node) {
-        this->rosnode = node;
-    }
-
-    protected:
-    rclcpp::Node::SharedPtr rosnode;
-};
 
 /**
  * @brief UWRT superclass for integrating SyncActionNodes with ROS. 

@@ -170,7 +170,7 @@ def onGenerateRegistrator(args):
     registrations = ""
     for file in (actionFiles + conditionFiles + decoratorFiles):
         #ex. factory.registerNodeType<Actuate>("Actuate");
-        registrations += "    factory->registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
+        registrations += "    factory.registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
     
     template = "{}/assistant/templates/node_registrator_template".format(AUTONOMY_SRC_LOCATION)
     createFileFromTemplate(template, location, [registrations])

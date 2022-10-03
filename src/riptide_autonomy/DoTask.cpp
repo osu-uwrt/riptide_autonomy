@@ -1,7 +1,10 @@
-#include "autonomy.h"
-#include "behaviortree_cpp_v3/loggers/bt_zmq_publisher.h"
-#include "behaviortree_cpp_v3/loggers/bt_cout_logger.h"
-#include "behaviortree_cpp_v3/loggers/bt_file_logger.h"
+#include <behaviortree_cpp_v3/loggers/bt_zmq_publisher.h>
+#include <behaviortree_cpp_v3/loggers/bt_cout_logger.h>
+#include <behaviortree_cpp_v3/loggers/bt_file_logger.h>
+
+#include <rclcpp/rclcpp.hpp>
+
+#include "UwrtBtNode.hpp"
 
 /**
  * C++ Script that runs a given behavior tree.
@@ -9,6 +12,9 @@
  * tree XML file as an argument, then run that
  * tree and return the result (0 if success, 1 if failure)
  */
+
+//define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
+#define log rclcpp::get_logger("autonomy")
 
 using namespace BT;
 
@@ -39,38 +45,10 @@ int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
     rclcpp::Node::SharedPtr rosnode = std::make_shared<rclcpp::Node>("DoTask");
 
-    //get name of tree to run
-    if(argc <= 1) {
-        RCLCPP_INFO(log, "DoTask: No tree to run. Please specify a tree.");
-        return 1;
-    }
-
-    if(indexOfStr(argv, "-h", argc) > 1 || indexOfStr(argv, "--help", argc) > -1) {
-        std::cout << "OSU UWRT BehaviorTree Runner\n";
-        std::cout << "Usage: ros2 run riptide_autonomy doTask <path-to-tree> [options]\n\n";
-
-        std::cout << "Runs BehaviorTrees";
-
-        std::cout << "Options:\n";
-        std::cout << "-h, --help: Displays this message.\n";
-        std::cout << "--log-cout: Enables logging of state changes to cout.";
-        std::cout << "--log-file: Specifies the location to save the log file. If not specified, this will default to ~/osu-uwrt/riptide_software/src/riptide_autonomy/btLog.fbl";
-        std::cout << std::endl; //newline and flush stream
-
-        return 0;
-    }
-
     BehaviorTreeFactory factory;
     RCLCPP_INFO(log, "DoTask: Registering Nodes");
 
-    registerCustomNodes(&factory);
-
-    //register simple actions
-    SimpleActions::registerActions(&factory);
-
-    //register actuator conditions
-    SimpleConditions::registerConditions(&factory);
-    ActuatorConditions::registerConditions(&factory);
+    // load the plugin .so files
 
     //create string with path to the tree
     std::string treePath = argv[1];
