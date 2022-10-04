@@ -20,6 +20,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(robot_localization REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
 #create directory for auto-generated code which will include headers for custom nodes as well as source code that registers custom nodes
 make_directory(${PROJECT_BINARY_DIR}/autonomy_generator)
@@ -97,6 +98,7 @@ ament_target_dependencies(autonomy
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
 
 ament_target_dependencies(doTask
+  ament_index_cpp
   rclcpp
   behaviortree_cpp_v3
   rclcpp_action
