@@ -128,6 +128,7 @@ def onGenerateHeaders(args):
     #resolve template names
     headerTemplate = "{}/assistant/templates/node_header_template".format(AUTONOMY_SRC_LOCATION)
     autonomyTemplate = "{}/assistant/templates/autonomy_header_template".format(AUTONOMY_SRC_LOCATION)
+    simpleTemplate = "{}/assistant/templates/simple_header_template".format(AUTONOMY_SRC_LOCATION)
     
     #populates header files from templates with two arguments (first is uppercase name, second is titlecase name)
     #returns a list containing all populated header files
@@ -137,11 +138,19 @@ def onGenerateHeaders(args):
             #get actual name of file (without extension)
             fileName = fileNameNoExt(filePath)
             info(args, "Creating header file for {}".format(fileName))
-            
-            #install file from template
-            installFileName = "{}/{}/{}.h".format(args.target_directory, directory, fileName)
-            createFileFromTemplate(headerTemplate, installFileName, [fileName.upper(), fileName, headerSuperclass])
-            headersList.append("{}/{}.h".format(directory, fileName))
+
+            # handle the bulk condition
+            if(".simple." in filePath):
+                #install file from template
+                installFileName = "{}/{}/{}.h".format(args.target_directory, directory, fileName)
+                createFileFromTemplate(simpleTemplate, installFileName, [fileName.upper(), fileName, headerSuperclass])
+                headersList.append("{}/{}.h".format(directory, fileName))
+
+            else:
+                #install file from template
+                installFileName = "{}/{}/{}.h".format(args.target_directory, directory, fileName)
+                createFileFromTemplate(headerTemplate, installFileName, [fileName.upper(), fileName, headerSuperclass])
+                headersList.append("{}/{}.h".format(directory, fileName))
         
         return headersList
         
@@ -169,8 +178,12 @@ def onGenerateRegistrator(args):
     #string containing code that registers the nodes
     registrations = ""
     for file in (actionFiles + conditionFiles + decoratorFiles):
-        #ex. factory.registerNodeType<Actuate>("Actuate");
-        registrations += "    factory.registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
+        # perform bulk registration
+        if(".simple." in file):
+            registrations += "    {0}::bulkRegister(factory);\n".format(fileNameNoExt(file))
+        # perform general registration
+        else:
+            registrations += "    factory.registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
     
     template = "{}/assistant/templates/node_registrator_template".format(AUTONOMY_SRC_LOCATION)
     createFileFromTemplate(template, location, [registrations])

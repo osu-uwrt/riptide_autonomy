@@ -201,33 +201,4 @@ class UWRTDecoratorNode : public BT::DecoratorNode, UwrtBtNode {
     BT::NodeStatus tick();
 };
 
-/**
- * @brief Basic states that do not require a ROS node.
- * These will be used for basic computations or prints to rclcpp.
- */
-class SimpleActions {
-    public:
-    static void registerActions(BT::BehaviorTreeFactory *factory);
-};
-
-/**
- * @brief Basic conditions that do not require a ROS node.
- * Used for basic computations that can be checked without using a publisher or subscriber.
- *
- * TODO: move ActuatorStateCheckers here
- */
-class SimpleConditions {
-    public:
-    static void registerConditions(BT::BehaviorTreeFactory *factory);
-};
-
-/**
- * @brief this class is about to go away real soon...
- */
-class ActuatorConditions {
-    public:
-    //register states
-    static void registerConditions(BT::BehaviorTreeFactory *factory);
-};
-
 #endif // AUTONOMY_LIB_H

@@ -119,11 +119,11 @@ BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
  * 
  * @param factory The factory to register with.
  */
-void SimpleActions::registerActions(BT::BehaviorTreeFactory *factory) {
-    factory->registerSimpleAction("Info", printInfo, { BT::InputPort<std::string>("message") } );
-    factory->registerSimpleAction("Error", printError, { BT::InputPort<std::string>("message") } );
+void SimpleActions::bulkRegister(BT::BehaviorTreeFactory  &factory) {
+    factory.registerSimpleAction("Info", printInfo, { BT::InputPort<std::string>("message") } );
+    factory.registerSimpleAction("Error", printError, { BT::InputPort<std::string>("message") } );
 
-    factory->registerSimpleAction("ToString", numToString,
+    factory.registerSimpleAction("ToString", numToString,
         { 
             BT::InputPort<double>("double_in"), 
             BT::InputPort<int>("int_in"), 
@@ -134,7 +134,7 @@ void SimpleActions::registerActions(BT::BehaviorTreeFactory *factory) {
     /**
      * Basic action that calculates the distance between two points.
      */
-    factory->registerSimpleAction("CalculateDistance", calculateDistance,
+    factory.registerSimpleAction("CalculateDistance", calculateDistance,
         {
             BT::InputPort<double>("x1"),
             BT::InputPort<double>("y1"),
@@ -149,7 +149,7 @@ void SimpleActions::registerActions(BT::BehaviorTreeFactory *factory) {
     /**
      * Basic action that does math with two numbers (can add, subtract, multiply, or divide)
      */
-    factory->registerSimpleAction("Math", doMath, 
+    factory.registerSimpleAction("Math", doMath, 
         {
             BT::InputPort<double>("a"),
             BT::InputPort<double>("b"),
@@ -158,7 +158,7 @@ void SimpleActions::registerActions(BT::BehaviorTreeFactory *factory) {
         }
     );
 
-    factory->registerSimpleAction("HeadingToPoint", getHeadingToPoint,
+    factory.registerSimpleAction("HeadingToPoint", getHeadingToPoint,
         {
             BT::InputPort<double>("currX"),
             BT::InputPort<double>("currY"),
