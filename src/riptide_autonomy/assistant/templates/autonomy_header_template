@@ -1,9 +1,7 @@
 #ifndef AUTONOMY_H
 #define AUTONOMY_H
 
-#include "behaviortree_cpp_v3/bt_factory.h"
-
 <1>
-void registerCustomNodes(BT::BehaviorTreeFactory *factory);
+// void registerCustomNodes(BT::BehaviorTreeFactory *factory);
 
 #endif // AUTONOMY_H

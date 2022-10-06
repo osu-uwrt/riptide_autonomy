@@ -66,7 +66,7 @@ file(GLOB bt_decorators_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_auton
 #
 # autonomy library
 #
-add_library(autonomy STATIC
+add_library(autonomy SHARED
   #utilities
   src/riptide_autonomy/util.cpp
 
@@ -78,6 +78,8 @@ add_library(autonomy STATIC
   #registrator
   ${PROJECT_BINARY_DIR}/autonomy_generator/registrator.cpp
 )
+
+target_compile_definitions(autonomy PRIVATE BT_PLUGIN_EXPORT)
 
 # autonomy lib deps
 ament_target_dependencies(autonomy
@@ -97,6 +99,9 @@ ament_target_dependencies(autonomy
 # Tree execution executable
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
 
+# set the name of the autonomy package
+target_compile_definitions(doTask PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
+
 ament_target_dependencies(doTask
   ament_index_cpp
   rclcpp
@@ -105,11 +110,12 @@ ament_target_dependencies(doTask
   riptide_msgs2
 )
 
-#install C++ stuff
+#install library and node
 install(TARGETS
   doTask autonomy
   DESTINATION lib/${PROJECT_NAME})
 
+  # install the launch files
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
 
@@ -120,6 +126,9 @@ install(PROGRAMS
   src/riptide_autonomy/assistant/btassistant.py
   DESTINATION lib/${PROJECT_NAME}
 )
+
+install(DIRECTORY trees
+  DESTINATION share/${PROJECT_NAME})
 
 install(DIRECTORY
   src/riptide_autonomy/ros_actions/utils
