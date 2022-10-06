@@ -39,7 +39,11 @@ NodeStatus ResetOdom::tick() {
 
     auto result = client->async_send_request(request);
 
-    if(rclcpp::spin_until_future_complete(rosnode, result) != rclcpp::FutureReturnCode::SUCCESS){
+    // wait for the result
+    result.wait();
+
+    // should be valid now 
+    if(! result.valid()){
         return NodeStatus::FAILURE;
     }
     return NodeStatus::SUCCESS;

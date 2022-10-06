@@ -15,7 +15,7 @@ NodeStatus Wait::tick() {
 
     rclcpp::Time start = rosnode->get_clock()->now();
     while((rosnode->get_clock()->now() - start).seconds() < seconds) {
-        rclcpp::spin_some(rosnode);
+        // rclcpp::spin_some(rosnode);
     }
 
     return NodeStatus::SUCCESS;

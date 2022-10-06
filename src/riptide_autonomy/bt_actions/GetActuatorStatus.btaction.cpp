@@ -38,7 +38,7 @@ NodeStatus GetActuatorStatus::tick() {
     statusReceived = false;
 
     while(!statusReceived) {
-        rclcpp::spin_some(rosnode);
+        // rclcpp::spin_some(rosnode);
 
         if((rosnode->get_clock()->now() - startTime).seconds() > 3) {
             RCLCPP_ERROR(log, "Timed out getting actuator status.");

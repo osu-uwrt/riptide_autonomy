@@ -83,7 +83,7 @@ NodeStatus Search::tick() {
             break; 
         } catch(tf2::TransformException& ex) {
             RCLCPP_DEBUG(log, "%s", ex.what());
-            rclcpp::spin_some(rosnode);
+            // rclcpp::spin_some(rosnode);
         }
     }
 

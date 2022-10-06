@@ -50,7 +50,7 @@ NodeStatus AlignTorpedos::tick() {
 
     rclcpp::Time startTime = rosnode->get_clock()->now();
     while(rclcpp::ok() && actionResult.code == rclcpp_action::ResultCode::UNKNOWN && (rosnode->get_clock()->now() - startTime).seconds() < timeout) {
-        rclcpp::spin_some(rosnode);
+        // rclcpp::spin_some(rosnode);
     }
 
     switch(actionResult.code) {

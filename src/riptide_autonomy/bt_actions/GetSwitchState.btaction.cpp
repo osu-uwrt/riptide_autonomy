@@ -35,7 +35,7 @@ NodeStatus GetSwitchState::tick() {
     stateReceived = false;
 
     while(!stateReceived) {
-        rclcpp::spin_some(rosnode);
+        // rclcpp::spin_some(rosnode);
 
         if((rosnode->get_clock()->now() - startTime).seconds() > 3) {
             RCLCPP_ERROR(log, "Timed out getting switch state.");
