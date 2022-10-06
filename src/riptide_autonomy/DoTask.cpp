@@ -70,7 +70,7 @@ namespace do_task
                 std::bind(&BTExecutor::handleService, this, _1, _2));
 
             // declare params
-            declare_parameter<bool>("enable_zmq", true);
+            declare_parameter<bool>("enable_zmq", false);
             declare_parameter<bool>("enable_cout", true);
             declare_parameter<std::vector<std::string>>("ext_plugin_list", std::vector<std::string>());
             declare_parameter<std::vector<std::string>>("ext_tree_dirs", std::vector<std::string>());
