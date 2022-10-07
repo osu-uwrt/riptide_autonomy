@@ -72,6 +72,7 @@ namespace do_task
             // declare params
             declare_parameter<bool>("enable_zmq", false);
             declare_parameter<bool>("enable_cout", true);
+            declare_parameter<std::string>("cout_file", getEnvVar("HOME") + "/osu-uwrt/autonomy_log.txt");
             declare_parameter<std::vector<std::string>>("ext_plugin_list", std::vector<std::string>());
             declare_parameter<std::vector<std::string>>("ext_tree_dirs", std::vector<std::string>());
 
@@ -84,6 +85,7 @@ namespace do_task
                 enableCout = get_parameter("enable_cout").as_bool();
                 treeDirs = get_parameter("ext_tree_dirs").as_string_array();
                 pluginPaths = get_parameter("ext_plugin_list").as_string_array();
+                coutFilePath = get_parameter("cout_file").as_string();
             }
             catch (const std::exception &e)
             {
@@ -173,7 +175,7 @@ namespace do_task
                 // add the loggers to the BT context
                 RCLCPP_INFO(log, "DoTask: Loading Monitor");
                 PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
-                FileLogger fileLogger(tree, "logFile.c_str()");
+                FileLogger fileLogger(tree, coutFilePath.c_str());
                 StdCoutLogger coutLogger(tree);
 
                 // configure our loggers
@@ -267,6 +269,9 @@ namespace do_task
         // full tree file path vector to load
         std::vector<std::string> treeDirs;
         std::vector<std::string> pluginPaths;
+
+        // cout log file location
+        std::string coutFilePath;
     };
 } // namespace do_task
 
