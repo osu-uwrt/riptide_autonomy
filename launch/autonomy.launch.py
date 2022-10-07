@@ -25,7 +25,7 @@ def generate_launch_description():
 
                 Node(
                     package='riptide_autonomy2',
-                    executable='',
+                    executable='doTask',
                     name='autonomy',
                     respawn=True,
                     output='screen'
