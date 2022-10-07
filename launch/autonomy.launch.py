@@ -21,6 +21,14 @@ def generate_launch_description():
                     name='AlignTorpedos',
                     respawn=False,
                     output='screen',
+                ),
+
+                Node(
+                    package='riptide_autonomy2',
+                    executable='',
+                    name='autonomy',
+                    respawn=True,
+                    output='screen'
                 )
             ]
         )
