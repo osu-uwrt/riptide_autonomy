@@ -175,6 +175,20 @@ class UWRTSyncActionNode : public BT::SyncActionNode, public UwrtBtNode {
 };
 
 /**
+ * @brief UWRT superclass for integrating AsyncActionNodes with ROS. 
+ * Uses multiple-inheritance to create a class that has the properties of 
+ * both the SyncActionNode and the UWRT general node superclass.
+ */
+class UWRTAsyncActionNode : public BT::AsyncActionNode, public UwrtBtNode {
+    public:
+    UWRTAsyncActionNode(const std::string& name, const BT::NodeConfiguration& config)
+     : AsyncActionNode(name, config) { };
+
+    static BT::PortsList providedPorts();
+    BT::NodeStatus tick() override;
+};
+
+/**
  * @brief UWRT superclass for integrating ConditionNodes with ROS.
  * Similar to UWRTSyncActionNode, this class inherits both the BT 
  * ConditionNode and UwrtBtNode.

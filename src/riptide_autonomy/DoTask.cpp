@@ -15,6 +15,7 @@
 #include <filesystem>
 
 #include "UwrtBtNode.hpp"
+#include "UWRTLogger.hpp"
 
 /**
  * C++ Script that runs a given behavior tree.
@@ -108,8 +109,14 @@ namespace do_task
             // load other plugins from the paramter server
             for (auto plugin : pluginPaths)
             {
-                RCLCPP_INFO_STREAM(this->get_logger(), "Registering additional plugin: " << plugin);
-                factory->registerFromPlugin(plugin);
+                try{
+                    RCLCPP_INFO_STREAM(this->get_logger(), "Registering additional plugin: " << plugin);
+                    factory->registerFromPlugin(plugin);
+                }
+                catch(BT::RuntimeError & e){
+                    RCLCPP_ERROR_STREAM(get_logger(), "Could not load plugin: " << e.what());
+                }
+                
             }
 
             // automatically add osu-uwrt riptide autonomy and the ament index dir
@@ -177,6 +184,7 @@ namespace do_task
                 PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
                 FileLogger fileLogger(tree, coutFilePath.c_str());
                 StdCoutLogger coutLogger(tree);
+                UwrtLogger uwrtLogger(tree, this->shared_from_this());
 
                 // configure our loggers
                 coutLogger.setEnabled(enableCout);

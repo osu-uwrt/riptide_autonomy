@@ -1,5 +1,6 @@
-#include <rclcpp/rclcpp.hpp>
+#pragma once
 
+#include <rclcpp/rclcpp.hpp>
 
 class UwrtBtNode {
     public:
