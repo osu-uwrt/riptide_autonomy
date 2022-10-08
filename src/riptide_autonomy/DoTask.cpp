@@ -189,6 +189,7 @@ namespace do_task
                 // configure our loggers
                 coutLogger.setEnabled(enableCout);
                 zmq.setEnabled(enableZMQ);
+                uwrtLogger.setEnabled(true);
 
                 // set up idle sleep rate
                 rclcpp::Rate loop_rate(10ms);
