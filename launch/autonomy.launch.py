@@ -23,9 +23,9 @@ def generate_launch_description():
                     output='screen',
                     parameters=[
                         {
-                            'ext_plugin_list': [
+                            # 'ext_plugin_list': [
                                 
-                            ],
+                            # ],
                             'enable_zmq': False,
                             'enable_cout': True
                         }
