@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <Action ID="AsyncWait" seconds="5.0"/>
+            <SetBlackboard output_key="&quot;ello&quot;" value="5.0"/>
+            <Action ID="AsyncWait" seconds="5.0"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="AsyncWait">
+            <input_port default="1.0" name="seconds">time to wait in seconds</input_port>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>

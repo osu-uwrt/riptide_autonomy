@@ -71,10 +71,10 @@ public:
 
     void flush() override
     {
-        std::cout << "Flushing UWRT logger: stack size " << treeStack.size() << std::endl;
-        // for(auto item : treeStack){
-        //     std::cout << "'" << item << "'" << std::endl;
-        // }
+        if(treeStack.size() > 0){
+            // only enable this when looking for bugs
+            // throw BT::RuntimeError("Tree stack size nonzero at completion");
+        }
         sendStack();
     }
 
