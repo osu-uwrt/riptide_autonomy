@@ -4,8 +4,6 @@ using namespace BT;
 using std::placeholders::_1;
 
 
-bool msgReceived = false;
-nav_msgs::msg::Odometry odom;
 
 
 PortsList GetOdometry::providedPorts() {

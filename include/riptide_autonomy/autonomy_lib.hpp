@@ -8,6 +8,7 @@
  */
 
 #include <iostream>
+#include <chrono>
 
 #include "behaviortree_cpp_v3/behavior_tree.h"
 #include "behaviortree_cpp_v3/bt_factory.h"
@@ -17,7 +18,8 @@
 
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+// #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h" //pretty sure this is a galactic thing
 
 #include "geometry_msgs/msg/vector3.hpp"
 #include "geometry_msgs/msg/point.hpp"
@@ -66,12 +68,25 @@ const std::string
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose pose, geometry_msgs::msg::TransformStamped transform);
 
 /**
- * @brief Looks up necessary transform between two poses the transforms specified coords into cords in the new pose
+ * @brief Looks up necessary transform between two poses then transforms specified coords into cords in the new pose. Use this overload if you have or can create a TF buffer
  * 
  * @param relative The pose in fromFrame to transform to toFrame.
  * @param fromFrame The current frame of the relative pose
  * @param toFrame The desired frame of the relative pose
- * @return geometry_msgs::msg::Pose The equlivalent pose in a new frame
+ * @param rosnode The ROS node handle to use.
+ * @param buffer The TF buffer to use.
+ * @return std::tuple<geometry_msgs::msg::Pose, bool> The equlivalent pose in a new frame
+ */
+std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer);
+
+/**
+ * @brief Looks up necessary transform between two poses then transforms specified coords into coords in the new pose. this overload will create a TF buffer and listener to use.
+ * 
+ * @param relative The pose in fromFrame to transform to toFrame
+ * @param fromFrame The current frame of the relative pose
+ * @param toFrame The desired frame of the relative pose
+ * @param rosnode The ROS node handle to use.
+ * @return std::tuple<geometry_msgs::msg::Pose, bool> The equivalent pose in a new frame
  */
 std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, rclcpp::Node::SharedPtr rosnode);
 
@@ -161,31 +176,14 @@ double distance(geometry_msgs::msg::Vector3 pt1, geometry_msgs::msg::Vector3 pt2
  */
 
 /**
- * @brief UWRT superclass for integrating SyncActionNodes with ROS. 
- * Uses multiple-inheritance to create a class that has the properties of 
- * both the SyncActionNode and the UWRT general node superclass.
+ * @brief UWRT superclass for BT action nodes
  */
-class UWRTSyncActionNode : public BT::SyncActionNode, public UwrtBtNode {
+class UWRTActionNode : public BT::StatefulActionNode, public UwrtBtNode {
     public:
-    UWRTSyncActionNode(const std::string& name, const BT::NodeConfiguration& config)
-     : SyncActionNode(name, config) { };
+    UWRTActionNode(const std::string& name, const BT::NodeConfiguration& config)
+     : StatefulActionNode(name, config) { };
 
     static BT::PortsList providedPorts();
-    BT::NodeStatus tick() override;
-};
-
-/**
- * @brief UWRT superclass for integrating AsyncActionNodes with ROS. 
- * Uses multiple-inheritance to create a class that has the properties of 
- * both the SyncActionNode and the UWRT general node superclass.
- */
-class UWRTAsyncActionNode : public BT::AsyncActionNode, public UwrtBtNode {
-    public:
-    UWRTAsyncActionNode(const std::string& name, const BT::NodeConfiguration& config)
-     : AsyncActionNode(name, config) { };
-
-    static BT::PortsList providedPorts();
-    BT::NodeStatus tick() override;
 };
 
 /**
@@ -193,26 +191,24 @@ class UWRTAsyncActionNode : public BT::AsyncActionNode, public UwrtBtNode {
  * Similar to UWRTSyncActionNode, this class inherits both the BT 
  * ConditionNode and UwrtBtNode.
  */
-class UWRTConditionNode : public BT::ConditionNode, UwrtBtNode {
+class UWRTConditionNode : public BT::ConditionNode, public UwrtBtNode {
     public:
     UWRTConditionNode(const std::string& name, const BT::NodeConfiguration& config)
      : ConditionNode(name, config) { };
     
     static BT::PortsList providedPorts();
-    BT::NodeStatus tick();
 };
 
 /**
  * @brief UWRT superclass for integrating DecoratorNodes with ROS.
  * Operates exactly the same as UWRTConditionNode and UWRTSyncActionNode.
  */
-class UWRTDecoratorNode : public BT::DecoratorNode, UwrtBtNode {
+class UWRTDecoratorNode : public BT::DecoratorNode, public UwrtBtNode {
     public:
     UWRTDecoratorNode(const std::string& name, const BT::NodeConfiguration& config)
      : DecoratorNode(name, config) { };
     
     static BT::PortsList providedPorts();
-    BT::NodeStatus tick();
 };
 
 #endif // AUTONOMY_LIB_H

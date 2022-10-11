@@ -1,4 +1,4 @@
-#include "autonomy.h"
+#include "riptide_autonomy/simple_nodes.hpp"
 
 /**
  * @brief Returns NodeStatus::SUCCESS if the value on the specified port equals the specified value.

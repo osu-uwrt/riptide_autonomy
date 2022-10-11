@@ -14,8 +14,8 @@
 #include <chrono>
 #include <filesystem>
 
-#include "UwrtBtNode.hpp"
-#include "UWRTLogger.hpp"
+#include "riptide_autonomy/UwrtBtNode.hpp"
+#include "riptide_autonomy/UWRTLogger.hpp"
 
 /**
  * C++ Script that runs a given behavior tree.
@@ -104,7 +104,9 @@ namespace do_task
             // load our plugins from ament index
             RCLCPP_INFO(this->get_logger(), "Registering autonomy core plugin");
             std::string amentIndexPath = ament_index_cpp::get_package_prefix(AUTONOMY_PKG_NAME); // TODO Make this work to scan ament index and get to our plugin
-            factory->registerFromPlugin(amentIndexPath + "/lib/" + AUTONOMY_PKG_NAME + "/libautonomy.so");
+            factory->registerFromPlugin(amentIndexPath + "/lib/" + AUTONOMY_PKG_NAME + "/libautonomy_actions.so");
+            factory->registerFromPlugin(amentIndexPath + "/lib/" + AUTONOMY_PKG_NAME + "/libautonomy_conditions.so");
+            factory->registerFromPlugin(amentIndexPath + "/lib/" + AUTONOMY_PKG_NAME + "/libautonomy_decorators.so");
 
             // load other plugins from the paramter server
             for (auto plugin : pluginPaths)
@@ -217,6 +219,24 @@ namespace do_task
 
                 fileLogger.flush();
                 coutLogger.flush(); // will flush if enabled
+
+                std::string resultStr = "SUCCESS";
+                switch(tickStatus) {
+                    case NodeStatus::FAILURE:
+                        resultStr = "FAILURE";
+                        break;
+                    case NodeStatus::IDLE:
+                        resultStr = "IDLE";
+                        break;
+                    case NodeStatus::RUNNING:
+                        resultStr = "RUNNING";
+                        break;
+                    default:
+                        resultStr = "SUCCESS";
+                        break;
+                }
+
+                RCLCPP_INFO(log, "Tree ended with status %s", resultStr.c_str());
 
                 // wrap this party up and finish execution
                 result->returncode = (int)tickStatus;

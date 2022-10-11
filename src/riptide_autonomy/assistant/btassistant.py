@@ -11,7 +11,7 @@ if HOME_DIR is None:
     exit(1)
 
 AUTONOMY_SRC_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/src/riptide_autonomy".format(HOME_DIR)
-SHELL_ASSISTANT_FILE  = "{}/assistant/shellassistant.sh".format(AUTONOMY_SRC_LOCATION)
+AUTONOMY_INCLUDE_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/include/riptide_autonomy".format(HOME_DIR)
 
 #
 # UTIL FUNCTIONS
@@ -83,7 +83,7 @@ def onReconfigureAutonomy(args):
     os.chdir(workspaceDir)
     
     #run command to reconfigure and build
-    res = os.system("colcon build --cmake-force-configure")
+    res = os.system("colcon build --cmake-clean-cache --packages-select riptide_autonomy2")
     
     if res:
         info(args, "Error reconfiguring autonomy.")
@@ -91,15 +91,27 @@ def onReconfigureAutonomy(args):
 
 #called when the create task is invoked.
 def onCreate(args):
-    templateName = "{}/assistant/templates/node_src_template".format(AUTONOMY_SRC_LOCATION, args.type)    
-    newFileName = "{0}/bt_{1}s/{2}.bt{1}.cpp".format(AUTONOMY_SRC_LOCATION, args.type, args.name)
+    #figure out node superclass and template
+    nodeType = "UWRTBtNode" #placeholder. if this ends up in the file then something was wonky
+    template = "nonactionnode_hpp_template"
+    if(args.type == "action"):
+        nodeType = "UWRTActionNode"
+        template = "actionnode_hpp_template"
+    elif(args.type == "condition"):
+        nodeType = "UWRTConditionNode"
+    elif(args.type == "decorator"):
+        nodeType = "UWRTDecoratorNode"
+        
+    
+    templateName = "{}/assistant/templates/{}".format(AUTONOMY_SRC_LOCATION, template)    
+    newFileName = "{0}/bt_{1}s/{2}.bt{1}.hpp".format(AUTONOMY_INCLUDE_LOCATION, args.type, args.name)
     
     if os.path.exists(newFileName):
         if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):
             info(args, "Not creating file.") #user said no
             return
     
-    createFileFromTemplate(templateName, newFileName, [args.name, args.type.lower()])
+    createFileFromTemplate(templateName, newFileName, [args.name, nodeType, args.type.lower()])
     info(args, "Created a new {} with name {}.".format(args.type, args.name))
     
     #rebuild autonomy to force cmake to configure and generate appropriate headers
@@ -107,87 +119,57 @@ def onCreate(args):
         info(args, "You need to completely rebuild riptide_autonomy2 for the changes to take effect.")
     else:
         onReconfigureAutonomy(args)
-    
-    
-#called when the generate headers action is invoked.
-def onGenerateHeaders(args):
-    absdir = os.path.abspath(args.target_directory)
-    info(args, "Generating headers in directory {}".format(absdir))
-    
-    #ensure necessary directories exist
-    ensureDirectoryExists(args.target_directory)
-    ensureDirectoryExists("{}/{}".format(args.target_directory, "bt_actions"))
-    ensureDirectoryExists("{}/{}".format(args.target_directory, "bt_conditions"))
-    ensureDirectoryExists("{}/{}".format(args.target_directory, "bt_decorators"))
-    
-    #resolve source file names
-    actionFiles = glob("{}/bt_actions/*.btaction.cpp".format(AUTONOMY_SRC_LOCATION))
-    conditionFiles = glob("{}/bt_conditions/*.btcondition.cpp".format(AUTONOMY_SRC_LOCATION))
-    decoratorFiles = glob("{}/bt_decorators/*.btdecorator.cpp".format(AUTONOMY_SRC_LOCATION))
-    
-    #resolve template names
-    headerTemplate = "{}/assistant/templates/node_header_template".format(AUTONOMY_SRC_LOCATION)
-    autonomyTemplate = "{}/assistant/templates/autonomy_header_template".format(AUTONOMY_SRC_LOCATION)
-    simpleTemplate = "{}/assistant/templates/simple_header_template".format(AUTONOMY_SRC_LOCATION)
-    
-    #populates header files from templates with two arguments (first is uppercase name, second is titlecase name)
-    #returns a list containing all populated header files
-    def populateHeadersFromTemplates(directory: str, files: 'list[str]', headerSuperclass: str):
-        headersList = []
-        for filePath in files:
-            #get actual name of file (without extension)
-            fileName = fileNameNoExt(filePath)
-            info(args, "Creating header file for {}".format(fileName))
-
-            # handle the bulk condition
-            if(".simple." in filePath):
-                #install file from template
-                installFileName = "{}/{}/{}.h".format(args.target_directory, directory, fileName)
-                createFileFromTemplate(simpleTemplate, installFileName, [fileName.upper(), fileName, headerSuperclass])
-                headersList.append("{}/{}.h".format(directory, fileName))
-
-            else:
-                #install file from template
-                installFileName = "{}/{}/{}.h".format(args.target_directory, directory, fileName)
-                createFileFromTemplate(headerTemplate, installFileName, [fileName.upper(), fileName, headerSuperclass])
-                headersList.append("{}/{}.h".format(directory, fileName))
         
-        return headersList
-        
-    actionHeaders    = populateHeadersFromTemplates("bt_actions", actionFiles, "UWRTSyncActionNode")
-    conditionHeaders = populateHeadersFromTemplates("bt_conditions", conditionFiles, "BT::ConditionNode")
-    decoratorHeaders = populateHeadersFromTemplates("bt_decorators", decoratorFiles, "BT::DecoratorNode")
-    
-    #create autonomy.h file. only need to fill in the #include's for all custom nodes
-    includes = ""
-    for header in (actionHeaders + conditionHeaders + decoratorHeaders):
-        includes += "#include \"{}\"\n".format(header) # ex. #include "Actuate.h"\n
-    
-    autonomyHeaderLocation = "{}/autonomy.h".format(args.target_directory)
-    createFileFromTemplate(autonomyTemplate, autonomyHeaderLocation, [includes])
-    
 
-def onGenerateRegistrator(args):
-    location = args.file_location
+def onGenerateRegistrators(args):
+    location = args.directory
     
-    #resolve source file names
-    actionFiles = glob("{}/bt_actions/*.btaction.cpp".format(AUTONOMY_SRC_LOCATION))
-    conditionFiles = glob("{}/bt_conditions/*.btcondition.cpp".format(AUTONOMY_SRC_LOCATION))
-    decoratorFiles = glob("{}/bt_decorators/*.btdecorator.cpp".format(AUTONOMY_SRC_LOCATION))
+    #resolve general node file names
+    generalActionFiles = glob("{}/bt_actions/*.btaction.hpp".format(AUTONOMY_INCLUDE_LOCATION))
+    generalConditionFiles = glob("{}/bt_conditions/*.btcondition.hpp".format(AUTONOMY_INCLUDE_LOCATION))
+    generalDecoratorFiles = glob("{}/bt_decorators/*.btdecorator.hpp".format(AUTONOMY_INCLUDE_LOCATION))
     
-    #string containing code that registers the nodes
-    registrations = ""
-    for file in (actionFiles + conditionFiles + decoratorFiles):
-        # perform bulk registration
-        if(".simple." in file):
-            registrations += "    {0}::bulkRegister(factory);\n".format(fileNameNoExt(file))
-        # perform general registration
-        else:
+    #resolve simple node file names
+    simpleActionFiles = glob("{}/bt_actions/*.simple.cpp".format(AUTONOMY_SRC_LOCATION))
+    simpleConditionFiles = glob("{}/bt_conditions/*.simple.cpp".format(AUTONOMY_SRC_LOCATION))
+    simpleDecoratorFiles = glob("{}/bt_decorators/*.simple.cpp".format(AUTONOMY_SRC_LOCATION))
+    
+    #creates a single registrator
+    def createRegistrator(generalFiles: 'list[str]', simpleFiles: 'list[str]', location: str):
+        registrations = ""
+        headers = ""
+        for file in generalFiles:
+            # perform general registration on all other hpps
             registrations += "    factory.registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
+            
+            #figure out node type (its in the name between the second to last and last dots)
+            lastDot = file.rfind(".")
+            secondLastDot = file.rfind(".", 0, lastDot - 1)
+                            
+            #not checking dots because files need to have two to be globbed
+            nodeType = file[secondLastDot + 1 : lastDot]
+            
+            nodeDir = ""
+            if(nodeType == "btaction"):
+                nodeDir = "bt_actions"
+            elif(nodeType == "btcondition"):
+                nodeDir = "bt_conditions"
+            elif(nodeType == "btdecorator"):
+                nodeDir = "bt_decorators"
+            
+            headers += "#include \"riptide_autonomy/{}/{}\"\n".format(nodeDir, os.path.basename(file))
+        
+        for file in simpleFiles:
+            registrations += "    {0}::bulkRegister(factory);\n".format(fileNameNoExt(file))
+        
+        templatePath = "{}/assistant/templates/plugin_registrator_template".format(AUTONOMY_SRC_LOCATION)
+        createFileFromTemplate(templatePath, location, [headers, registrations])
     
-    template = "{}/assistant/templates/node_registrator_template".format(AUTONOMY_SRC_LOCATION)
-    createFileFromTemplate(template, location, [registrations])
-    info(args, "Generated registrator source code at {}".format(os.path.abspath(location)))
+    createRegistrator(generalActionFiles, simpleActionFiles, "{}/registerActions.cpp".format(location))
+    createRegistrator(generalConditionFiles, simpleConditionFiles, "{}/registerConditions.cpp".format(location))
+    createRegistrator(generalDecoratorFiles, simpleDecoratorFiles, "{}/registerDecorators.cpp".format(location))
+    
+    info(args, "Generated registrators in directory {}".format(os.path.abspath(location)))
         
     
 #
@@ -197,7 +179,7 @@ def onGenerateRegistrator(args):
 #task struct containing name, callback, and description. arguments are custom
 class Task:
     class Argument:
-        def __init__(self, name, options=None, optional=False):
+        def __init__(self, name: str, options: 'list[str]' = None, optional: bool = False):
             self.name = name
             self.options = options
             self.optional = optional
@@ -227,19 +209,11 @@ taskOptions = {
         ]
     ),
     
-    "generate_headers" : Task(
-        onGenerateHeaders,
-        "Generate headers for custom nodes in the specified target directory.",
+    "generate_registrators" : Task(
+        onGenerateRegistrators,
+        "Generate C++ source code for plugin registrators.",
         [
-            Task.Argument("target_directory")
-        ]
-    ),
-    
-    "generate_registrator" : Task(
-        onGenerateRegistrator,
-        "Generate C++ source code for the registerCustomNodes() function in autonomy.h.",
-        [
-            Task.Argument("file_location")
+            Task.Argument("directory")
         ]
     )
 }

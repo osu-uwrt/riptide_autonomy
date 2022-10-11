@@ -1,4 +1,4 @@
-#include "autonomy.h"
+#include "riptide_autonomy/simple_nodes.hpp"
 
 
 /**
@@ -119,7 +119,7 @@ BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
  * 
  * @param factory The factory to register with.
  */
-void SimpleActions::bulkRegister(BT::BehaviorTreeFactory  &factory) {
+void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
     factory.registerSimpleAction("Info", printInfo, { BT::InputPort<std::string>("message") } );
     factory.registerSimpleAction("Error", printError, { BT::InputPort<std::string>("message") } );
 

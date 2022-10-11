@@ -176,13 +176,13 @@
                         <Action ID="Wait" seconds="1"/>
                         <Action ID="Info" message="Attempting to drop dropper {dropper}..."/>
                         <IfThenElse>
-                            <Condition ID="NumsEqual" a="{dropper}" b="1"/>
+                            <Condition ID="CompareNums" a="{dropper}" b="1" test="="/>
                             <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="1" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
                             <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="1" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
                         </IfThenElse>
                         <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
                         <IfThenElse>
-                            <Condition ID="NumsEqual" a="{dropper}" b="1"/>
+                            <Condition ID="CompareNums" a="{dropper}" b="1" test="="/>
                             <SetBlackboard output_key="dropper_state" value="{dropper1_state}"/>
                             <SetBlackboard output_key="dropper_state" value="{dropper2_state}"/>
                         </IfThenElse>
@@ -219,7 +219,7 @@
                     <Sequence name="Attempt to fire torpedo">
                         <SetBlackboard name="Set &quot;1&quot;" output_key="1" value="1"/>
                         <IfThenElse name="Select Torpedo">
-                            <Condition ID="NumsEqual" a="1" b="{torpedo_id}"/>
+                            <Condition ID="CompareNums" a="1" b="{torpedo_id}" test="="/>
                             <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="1" fire_torpedo_2="" open_claw="" reset_actuators=""/>
                             <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators=""/>
                         </IfThenElse>
@@ -287,7 +287,7 @@
         <Sequence>
             <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
             <IfThenElse name="Choose appropriate torpedo">
-                <Condition ID="NumsEqual" a="1" b="{torpedo_id}"/>
+                <Condition ID="CompareNums" a="1" b="{torpedo_id}" test="="/>
                 <SetBlackboard name="choose torpedo 1" output_key="torpedo_state" value="{torpedo1_state}"/>
                 <SetBlackboard name="choose torpedo 2" output_key="torpedo_state" value="{torpedo2_state}"/>
             </IfThenElse>
