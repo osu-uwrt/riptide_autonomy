@@ -10,33 +10,35 @@
 #include <iostream>
 #include <chrono>
 
-#include "behaviortree_cpp_v3/behavior_tree.h"
-#include "behaviortree_cpp_v3/bt_factory.h"
+#include <behaviortree_cpp_v3/behavior_tree.h>
+#include <behaviortree_cpp_v3/bt_factory.h>
 
-#include "rclcpp/rclcpp.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
 
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
+#include <ament_index_cpp/get_package_prefix.hpp>
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 // #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h" //pretty sure this is a galactic thing
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h> //galactic header. will go back to .hpp when I go over to humble
 
-#include "geometry_msgs/msg/vector3.hpp"
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-#include "geometry_msgs/msg/quaternion.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "riptide_msgs2/msg/actuator_command.hpp"
-#include "riptide_msgs2/msg/actuator_status.hpp"
-#include "riptide_msgs2/msg/robot_state.hpp"
-#include "riptide_msgs2/msg/controller_command.hpp"
+#include <geometry_msgs/msg/vector3.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <riptide_msgs2/msg/actuator_command.hpp>
+#include <riptide_msgs2/msg/actuator_status.hpp>
+#include <riptide_msgs2/msg/robot_state.hpp>
+#include <riptide_msgs2/msg/controller_command.hpp>
 
-#include "robot_localization/srv/set_pose.hpp"
+#include <robot_localization/srv/set_pose.hpp>
 
-#include "riptide_msgs2/action/align_torpedos.hpp"
+#include <riptide_msgs2/action/align_torpedos.hpp>
 
-#include "UwrtBtNode.hpp"
+#include "riptide_autonomy/UwrtBtNode.hpp"
 
 
 
@@ -57,6 +59,15 @@ const std::string
  * UTILITY METHODS
  *
  */
+
+/**
+ * @brief Registers plugins needed to run UWRTs behavior trees or test nodes.
+ * Using a register function also allows test suite to ensure that plugins being
+ * tested are being loaded by the executor
+ * 
+ * @param factory The factory to register the plugins with.
+ */
+void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName);
 
 /**
  * @brief Transforms a pose by the provided transform

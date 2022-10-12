@@ -139,6 +139,8 @@ add_executable(doTask src/riptide_autonomy/DoTask.cpp)
 target_include_directories(doTask PUBLIC
   ${PROJECT_SOURCE_DIR}/include)
 
+target_link_libraries(doTask autonomy_utils)
+
 # set the name of the autonomy package
 target_compile_definitions(doTask PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
@@ -181,14 +183,35 @@ install(DIRECTORY
 )
 
 if(BUILD_TESTING)
+  #ament lint auto things
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # uncomment the line when a copyright and license is not present in all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_copyright_FOUND TRUE)
   # the following line skips cpplint (only works in a git repo)
   # uncomment the line when this package is not in a git repo
   #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+
+  #set up GTest
+  find_package(ament_cmake_gtest REQUIRED)
+
+  #glob all test sources together
+  file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.test.cpp)
+  file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.test.cpp)
+  file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.test.cpp)
+
+  ament_add_gtest(bt_test
+    ${action_test_sources}
+    ${condition_test_sources}
+    ${decorator_test_sources}
+  )
+
+  target_include_directories(bt_test PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+  
 endif()
 
 ament_package()

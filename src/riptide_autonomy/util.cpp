@@ -1,6 +1,14 @@
 #include "riptide_autonomy/autonomy_lib.hpp"
 
 
+void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName) {
+    std::string amentIndexPath = ament_index_cpp::get_package_prefix(packageName); // TODO Make this work to scan ament index and get to our plugin
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_decorators.so");
+}
+
+
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry_msgs::msg::TransformStamped transform) {
     geometry_msgs::msg::Pose result;
 

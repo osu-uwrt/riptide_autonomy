@@ -5,7 +5,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <ament_index_cpp/get_package_prefix.hpp>
 
 #include <riptide_msgs2/action/execute_tree.hpp>
 #include <riptide_msgs2/srv/list_trees.hpp>
@@ -14,7 +13,7 @@
 #include <chrono>
 #include <filesystem>
 
-#include "riptide_autonomy/UwrtBtNode.hpp"
+#include "riptide_autonomy/autonomy_lib.hpp"
 #include "riptide_autonomy/UWRTLogger.hpp"
 
 /**
@@ -103,10 +102,7 @@ namespace do_task
 
             // load our plugins from ament index
             RCLCPP_INFO(this->get_logger(), "Registering autonomy core plugin");
-            std::string amentIndexPath = ament_index_cpp::get_package_prefix(AUTONOMY_PKG_NAME); // TODO Make this work to scan ament index and get to our plugin
-            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
-            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
-            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_decorators.so");
+            registerPluginsForFactory(factory, AUTONOMY_PKG_NAME);
 
             // load other plugins from the paramter server
             for (auto plugin : pluginPaths)
