@@ -104,9 +104,9 @@ namespace do_task
             // load our plugins from ament index
             RCLCPP_INFO(this->get_logger(), "Registering autonomy core plugin");
             std::string amentIndexPath = ament_index_cpp::get_package_prefix(AUTONOMY_PKG_NAME); // TODO Make this work to scan ament index and get to our plugin
-            factory->registerFromPlugin(amentIndexPath + "/lib/" + AUTONOMY_PKG_NAME + "/libautonomy_actions.so");
-            factory->registerFromPlugin(amentIndexPath + "/lib/" + AUTONOMY_PKG_NAME + "/libautonomy_conditions.so");
-            factory->registerFromPlugin(amentIndexPath + "/lib/" + AUTONOMY_PKG_NAME + "/libautonomy_decorators.so");
+            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
+            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
+            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_decorators.so");
 
             // load other plugins from the paramter server
             for (auto plugin : pluginPaths)

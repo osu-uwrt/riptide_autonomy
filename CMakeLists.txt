@@ -150,15 +150,15 @@ ament_target_dependencies(doTask
   riptide_msgs2
 )
 
-#install util
-install(TARGETS autonomy_utils
-  EXPORT autonomy_utils
-  DESTINATION lib
+#install executable
+install(TARGETS doTask
+  DESTINATION lib/${PROJECT_NAME}
 )
 
-#install other targets
-install(TARGETS doTask autonomy_actions autonomy_conditions autonomy_decorators
-  DESTINATION lib/${PROJECT_NAME})
+#install libraries
+install(TARGETS autonomy_actions autonomy_conditions autonomy_decorators autonomy_utils
+  DESTINATION lib
+)
 
 # install the launch files
 install(DIRECTORY launch

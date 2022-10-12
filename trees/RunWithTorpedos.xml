@@ -33,7 +33,9 @@
             <SetBlackboard output_key="-1.75" value="-1.75"/>
             <SetBlackboard output_key="depth" value="-1"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            <ForceSuccess>
+                <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="GateTask"/>
             </ForceSuccess>
