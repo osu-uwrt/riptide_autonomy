@@ -142,15 +142,78 @@ geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3 vec3);
 double vector3Length(geometry_msgs::msg::Vector3 vec3);
 
 /**
+ * @brief Get a thing from a BT blackboard.
+ * 
+ * @tparam T The type of the pointer to grab.
+ * @param blackboard The blackboard to grab from.
+ * @param key The name of the value to grab.
+ * @param value The variable to be populated with the desired blackboard entry.
+ * @return true If the operation succeeds
+ * @return false If the operation fails
+ */
+template<typename T>
+bool getFromBlackboard(BT::Blackboard::Ptr blackboard, std::string key, T& value) {
+    try {
+        if(blackboard->get<T>(key, value)) {
+            return true;
+        }
+    } catch (std::runtime_error const&) {
+        RCLCPP_ERROR(log, "Could not cast blackboard entry \"%s\" to the correct type.", key.c_str());
+    }
+
+    return false;
+}
+
+/**
  * @brief Get a thing from the BT blackboard.
  *
+ * @tparam T The type of the pointer to grab.
  * @param treeNode The behaviortree node to grab the blackboard value from.
  * @param name The name of the blackboard value to get.
  * @param value Will be populated with the value grabbed from the blackboard.
  * @return true if the operation succeeded, false otherwise.
  */
 template<typename T>
-bool getFromBlackboard(BT::TreeNode& treeNode, std::string name, T* value);
+bool getFromBlackboard(BT::TreeNode& n, std::string key, T& value) {
+    if(!n.config().blackboard) {
+        RCLCPP_ERROR(log, "Cannot get from blackboard! The passed TreeNode does not have one!");
+        return false;
+    }
+
+    return getFromBlackboard(n.config().blackboard, key, value);
+}
+
+/**
+ * @brief Attempts to get an entry from a BT blackboard, and returns a specified default value if the operation fails.
+ * 
+ * @tparam T The type of value to get.
+ * @param blackboard The blackboard to use.
+ * @param key The key to grab from the blackboard.
+ * @param defaultValue The value to return if the operation fails
+ * @return T The value of the blackboard entry, or the default value if it cannot be retrieved.
+ */
+template<typename T>
+T getFromBlackboardWithDefault(BT::Blackboard::Ptr blackboard, std::string key, T& defaultValue) {
+    T retval = defaultValue;
+    getFromBlackboard(blackboard, key, retval);
+    return retval;
+}
+
+/**
+ * @brief Attempts to get an entry from a BT blackboard, and returns a specified default value if the operation fails.
+ * 
+ * @tparam T The type of value to get.
+ * @param n The tree node whose blackboard to use.
+ * @param key The key to grab from the blackboard.
+ * @param defaultValue The value to return if the operation fails.
+ * @return T The value of the blackboard entry, or the default value if it cannot be retrieved.
+ */
+template<typename T>
+T getFromBlackboardWithDefault(BT::TreeNode& n, std::string key, T& defaultValue) {
+    T retval = defaultValue;
+    getFromBlackboard(n, key, retval);
+    return retval;
+}
 
 /**
  * @brief Inserts blackboard entries, where applicable, into the given string.

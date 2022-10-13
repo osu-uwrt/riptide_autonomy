@@ -119,19 +119,6 @@ double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 
     return distance(vector3ToPoint(point1), vector3ToPoint(point2));
 }
 
-template<typename T>
-bool getFromBlackboard(BT::TreeNode& n, std::string key, T *value) {
-    try {
-        if(n.config().blackboard.get()->get<T>(key, *value)) {
-            return true;
-        }
-    } catch (std::runtime_error const&) {
-        RCLCPP_ERROR(log, "Could not cast blackboard entry \"%s\" to the correct type.", key.c_str());
-    }
-
-    return false;
-}
-
 std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
     std::string result = "";
     int pos = 0;
@@ -148,7 +135,7 @@ std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
                 valueOfEntry;
 
             //get the value of the entry
-            if(getFromBlackboard<std::string>(btNode, nameOfEntry, &valueOfEntry)) {
+            if(getFromBlackboard<std::string>(btNode, nameOfEntry, valueOfEntry)) {
                 //if nameOfEntry exists, valueOfEntry was populated by the call above
                 result += valueOfEntry;
             } else {

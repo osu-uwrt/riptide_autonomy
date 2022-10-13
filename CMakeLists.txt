@@ -202,16 +202,25 @@ if(BUILD_TESTING)
   file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.test.cpp)
   file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.test.cpp)
 
-  ament_add_gtest(bt_test
+  ament_add_gtest(test_bt
     ${action_test_sources}
     ${condition_test_sources}
     ${decorator_test_sources}
+    test/riptide_autonomy/BtTestTool.cpp
+    test/riptide_autonomy/BtTestEnvironment.cpp
+    test/riptide_autonomy/executeTests.cpp #overrides default main() method
   )
 
-  target_include_directories(bt_test PUBLIC
+  ament_target_dependencies(test_bt ${deps})
+  target_link_libraries(test_bt autonomy_utils)
+
+  target_include_directories(test_bt PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
   
+  install(TARGETS test_bt
+    DESTINATION lib/${PROJECT_NAME}
+  )
 endif()
 
 ament_package()
