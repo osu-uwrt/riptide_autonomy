@@ -70,6 +70,16 @@ const std::string
 void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName);
 
 /**
+ * @brief Gives the passed ros context to each node in the behavior tree that needs it.
+ * If this function is not called before running a tree, the tree will segfault if a 
+ * node tries to access ROS.
+ * 
+ * @param tree The behavior tree to initialize
+ * @param rosContext The ROS context to give to the tree
+ */
+void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext);
+
+/**
  * @brief Transforms a pose by the provided transform
  * 
  * @param pose The pose to transform

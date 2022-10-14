@@ -5,10 +5,32 @@
 #include <gtest/gtest.h>
 #include "riptide_autonomy/autonomy_lib.hpp"
 
+
+/**
+ * @brief Counts the number of elements in vector that match the object obj.
+ * 
+ * @tparam T The type to check
+ * @param vector The vector to check
+ * @param obj The item to count
+ * @return int The number of times obj occurs in vector.
+ */
+template<typename T>
+int numOccurrances(std::vector<T> vector, T obj) {
+    int count = 0;
+    for(unsigned int i=0; i<vector.size(); i++) {
+        if(vector[i] == obj) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+
 class BtTestTool : public rclcpp::Node {
     public:
     BtTestTool();
-    BT::Blackboard::Ptr runLeafNodeFromConfig(std::string name, BT::NodeConfiguration config);
+    std::unique_ptr<BT::TreeNode> createLeafNodeFromConfig(std::string name, BT::NodeConfiguration config);
 
     private:
     std::shared_ptr<BT::BehaviorTreeFactory> factory;
@@ -26,6 +48,7 @@ class BtTestEnvironment : public ::testing::Environment {
     static std::shared_ptr<BtTestTool> getBtTestTool();
 
     private:
+    std::thread executionThread;
     static std::shared_ptr<BtTestTool> toolNode;
 };
 

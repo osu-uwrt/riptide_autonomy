@@ -9,6 +9,19 @@ void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory,
 }
 
 
+void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext) {
+    // give each BT node access to our RCLCPP context
+    for (auto &node : tree.nodes)
+    {
+        // Not a typo: it is "=", not "=="
+        if (auto btNode = dynamic_cast<UwrtBtNode *>(node.get()))
+        {
+            btNode->init(rosContext);
+        }
+    }
+}
+
+
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry_msgs::msg::TransformStamped transform) {
     geometry_msgs::msg::Pose result;
 

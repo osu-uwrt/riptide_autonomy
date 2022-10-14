@@ -27,9 +27,6 @@
 #endif
 #define AUTONOMY_HOME_DIR "/osu-uwrt/riptide_software/src/riptide_autonomy/trees"
 
-// define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
-#define log rclcpp::get_logger("autonomy_dotask")
-
 using namespace BT;
 using namespace std::chrono_literals;
 
@@ -166,16 +163,7 @@ namespace do_task
             {
                 // load the tree file contents in to a BT context
                 Tree tree = factory->createTreeFromFile(goal_handle->get_goal()->tree);
-
-                // give each BT node access to our RCLCPP context
-                for (auto &node : tree.nodes)
-                {
-                    // Not a typo: it is "=", not "=="
-                    if (auto btNode = dynamic_cast<UwrtBtNode *>(node.get()))
-                    {
-                        btNode->init(this->shared_from_this());
-                    }
-                }
+                initRosForTree(tree, this->shared_from_this());
 
                 // add the loggers to the BT context
                 RCLCPP_INFO(log, "DoTask: Loading Monitor");

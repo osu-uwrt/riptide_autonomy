@@ -19,8 +19,15 @@ BtTestEnvironment::BtTestEnvironment(int argc, char **argv) {
  * @brief Setup function called before test cases run
  */
 void BtTestEnvironment::SetUp() {
-    if(toolNode == nullptr) { //if tool
+    //if tool doesn't exist, create it
+    if(toolNode == nullptr) {
         toolNode = std::make_shared<BtTestTool>();
+
+        executionThread = std::thread(
+            [] () {
+                rclcpp::spin(BtTestEnvironment::getBtTestTool());
+            }
+        );
     } else {
         RCLCPP_INFO(toolNode->get_logger(), "Not creating tool node because it already exists.");
     }
@@ -31,6 +38,11 @@ void BtTestEnvironment::SetUp() {
  */
 void BtTestEnvironment::TearDown() {
     rclcpp::shutdown();
+
+    //wait for execution thread to stop if it is still running
+    if(executionThread.joinable()) {
+        executionThread.join();
+    }
 }
 
 /**

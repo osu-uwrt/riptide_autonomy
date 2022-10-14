@@ -1,13 +1,13 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
 BtTestTool::BtTestTool()
- : rclcpp::Node("BtTester") {
+ : rclcpp::Node("BtTester", "bt_testing") {
     factory = std::make_shared<BT::BehaviorTreeFactory>();
     registerPluginsForFactory(factory, "riptide_autonomy2");
 }
 
 
-BT::Blackboard::Ptr BtTestTool::runLeafNodeFromConfig(std::string name, BT::NodeConfiguration inputConfig) {
+std::unique_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string name, BT::NodeConfiguration inputConfig) {
     //create a blackboard if non exists
     if(!inputConfig.blackboard) {
         inputConfig.blackboard = BT::Blackboard::create();
@@ -21,7 +21,11 @@ BT::Blackboard::Ptr BtTestTool::runLeafNodeFromConfig(std::string name, BT::Node
     }
 
     auto node = factory->instantiateTreeNode("Test", name, inputConfig);
-    node->executeTick();
-    
-    return node->config().blackboard;
+
+    //initialize node with ROS context if appropriate (yes, single equal sign, not double)
+    if(auto btNode = dynamic_cast<UwrtBtNode *>(node.get())) {
+        btNode->init(this->shared_from_this());
+    }
+
+    return node;
 }
