@@ -179,11 +179,13 @@ def onCheck(args):
         
         madeChanges = False
         
+        #names of files
         fileNames = [fileNameNoExt(file) for file in files]
-        testNames = [fileNameNoExt(test).replace("Test", "") for test in tests] # ex. "TestActuate.cpp" becomes Actuate
+        testNames = [fileNameNoExt(test) for test in tests]
         
-        filesWithoutTests = [file for file in fileNames if file not in testNames]
-        testsWithoutFiles = [test for test in testNames if test not in fileNames]
+        #convention is for every file (say XYZ) in fileNames, there should be a test file named TestXYZ
+        filesWithoutTests = [file for file in fileNames if "Test{}".format(file) not in testNames]
+        testsWithoutFiles = [test for test in testNames if test.replace("Test", "") not in fileNames]
         
         #print summary
         info(args, "Found {} files.".format(len(fileNames)))
@@ -220,7 +222,7 @@ def onCheck(args):
         
         for test in testsWithoutFiles:
             response = conditionalPrompt(
-                "Test file Test{} does not correspond with an existing BT node. What would you like to do?".format(test),
+                "Test file {} does not correspond with an existing BT node. What would you like to do?".format(test),
                 [
                     "Create a Node file",
                     "Delete the test",
@@ -235,9 +237,9 @@ def onCheck(args):
                 madeChanges = True
             elif response == 1: #delete
                 if askConfirmation(args, "Are you sure you want to delete the test?"):
-                    pathToFile = "{}/bt_{}s/Test{}.cpp".format(AUTONOMY_TEST_LOCATION, nodeType.name.lower(), test)
+                    pathToFile = "{}/bt_{}s/{}.cpp".format(AUTONOMY_TEST_LOCATION, nodeType.name.lower(), test)
                     os.remove(pathToFile)
-                    info(args, "Removed test for {} {}".format(nodeType.name.lower(), test))
+                    info(args, "Removed test {}".format(test))
                     madeChanges = True
             #3 is do nothing
             elif response == 3: #do nothing for all

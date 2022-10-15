@@ -7,7 +7,7 @@ BtTestTool::BtTestTool()
 }
 
 
-std::unique_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string name, BT::NodeConfiguration inputConfig) {
+std::shared_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string name, BT::NodeConfiguration inputConfig) {
     //create a blackboard if non exists
     if(!inputConfig.blackboard) {
         inputConfig.blackboard = BT::Blackboard::create();
@@ -28,4 +28,14 @@ std::unique_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string n
     }
 
     return node;
+}
+
+
+BT::NodeStatus BtTestTool::tickUntilFinished(std::shared_ptr<BT::TreeNode> node) {
+    BT::NodeStatus status = BT::NodeStatus::IDLE;
+    while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE) {
+        status = node->executeTick();
+    }
+
+    return status;
 }

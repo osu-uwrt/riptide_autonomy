@@ -30,7 +30,8 @@ int numOccurrances(std::vector<T> vector, T obj) {
 class BtTestTool : public rclcpp::Node {
     public:
     BtTestTool();
-    std::unique_ptr<BT::TreeNode> createLeafNodeFromConfig(std::string name, BT::NodeConfiguration config);
+    std::shared_ptr<BT::TreeNode> createLeafNodeFromConfig(std::string name, BT::NodeConfiguration config);
+    BT::NodeStatus tickUntilFinished(std::shared_ptr<BT::TreeNode> node);
 
     private:
     std::shared_ptr<BT::BehaviorTreeFactory> factory;
