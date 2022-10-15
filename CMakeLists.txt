@@ -198,9 +198,9 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
   #glob all test sources together
-  file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.test.cpp)
-  file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.test.cpp)
-  file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.test.cpp)
+  file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.cpp)
+  file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.cpp)
+  file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.cpp)
 
   ament_add_gtest(test_bt
     ${action_test_sources}
