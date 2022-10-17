@@ -31,6 +31,13 @@ std::shared_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string n
 }
 
 
+std::shared_ptr<DummyActionNode> BtTestTool::createDummyActionNode() {
+    auto ptr = std::make_shared<DummyActionNode>("Dummy", BT::NodeConfiguration());
+    ptr->init(this->shared_from_this());
+    return ptr;
+}
+
+
 BT::NodeStatus BtTestTool::tickUntilFinished(std::shared_ptr<BT::TreeNode> node) {
     BT::NodeStatus status = BT::NodeStatus::IDLE;
     while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE) {

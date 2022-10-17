@@ -201,11 +201,14 @@ if(BUILD_TESTING)
   file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.cpp)
   file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.cpp)
   file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.cpp)
+  file(GLOB tool_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/tools/*.cpp)
 
   ament_add_gtest(test_bt
     ${action_test_sources}
     ${condition_test_sources}
     ${decorator_test_sources}
+    ${tool_test_sources}
+    test/riptide_autonomy/DummyActionNode.cpp
     test/riptide_autonomy/BtTestTool.cpp
     test/riptide_autonomy/BtTestEnvironment.cpp
     test/riptide_autonomy/executeTests.cpp #overrides default main() method
