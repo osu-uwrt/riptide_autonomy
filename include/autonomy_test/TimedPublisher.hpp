@@ -30,10 +30,7 @@ class TimedPublisher {
         );
     }
 
-    /**
-     * @brief Destroy the Timed Publisher object. Will stop the timer
-     */
-    ~TimedPublisher() {
+    void cancelTimer() {
         timer->cancel();
     }
 
@@ -48,9 +45,7 @@ class TimedPublisher {
 
     private:
     void onTimer() {
-        RCLCPP_INFO(log, "Publishing a Message");
         pub->publish(message);
-        
     }
 
     T message;

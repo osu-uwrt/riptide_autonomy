@@ -31,6 +31,8 @@ void BtTestEnvironment::SetUp() {
     } else {
         RCLCPP_INFO(toolNode->get_logger(), "Not creating tool node because it already exists.");
     }
+
+    std::cout << "BT Test environment successfully set up." << std::endl;
 }
 
 /**
@@ -43,6 +45,8 @@ void BtTestEnvironment::TearDown() {
     if(executionThread.joinable()) {
         executionThread.join();
     }
+
+    std::cout << "BT Test environment successfully torn down." << std::endl;
 }
 
 /**

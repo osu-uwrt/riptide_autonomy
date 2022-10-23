@@ -27,7 +27,7 @@ def generate_launch_description():
                                 
                             # ],
                             'enable_zmq': False,
-                            'enable_cout': True
+                            'enable_cout': False
                         }
                     ]
                 )

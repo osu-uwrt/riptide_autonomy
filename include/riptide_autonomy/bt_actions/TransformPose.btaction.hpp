@@ -65,7 +65,7 @@ class TransformPose : public UWRTActionNode {
         original.orientation = toQuat(originalRPY);
         
 
-        std::tuple<geometry_msgs::msg::Pose, bool> res = transformBetweenFrames(original, toFrame, fromFrame, rosnode, buffer);
+        std::tuple<geometry_msgs::msg::Pose, bool> res = transformBetweenFrames(original, fromFrame, toFrame, rosnode, buffer);
         geometry_msgs::msg::Pose transformed = std::get<0>(res);
         geometry_msgs::msg::Vector3 transformedRPY = toRPY(transformed.orientation);
 
