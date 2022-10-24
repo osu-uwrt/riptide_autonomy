@@ -203,7 +203,7 @@ bool getFromBlackboard(BT::TreeNode& n, std::string key, T& value) {
  * @return T The value of the blackboard entry, or the default value if it cannot be retrieved.
  */
 template<typename T>
-T getFromBlackboardWithDefault(BT::Blackboard::Ptr blackboard, std::string key, T& defaultValue) {
+T getFromBlackboardWithDefault(BT::Blackboard::Ptr blackboard, std::string key, const T defaultValue) {
     T retval = defaultValue;
     getFromBlackboard(blackboard, key, retval);
     return retval;
