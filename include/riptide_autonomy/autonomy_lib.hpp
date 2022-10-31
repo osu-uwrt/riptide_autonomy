@@ -20,6 +20,7 @@
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 // #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h> //galactic header. will go back to .hpp when I go over to humble
 
@@ -267,7 +268,7 @@ class UWRTActionNode : public BT::StatefulActionNode, public UwrtBtNode {
     UWRTActionNode(const std::string& name, const BT::NodeConfiguration& config)
      : StatefulActionNode(name, config) { };
 
-    static BT::PortsList providedPorts();
+    // static BT::PortsList providedPorts();
 };
 
 /**
@@ -280,7 +281,7 @@ class UWRTConditionNode : public BT::ConditionNode, public UwrtBtNode {
     UWRTConditionNode(const std::string& name, const BT::NodeConfiguration& config)
      : ConditionNode(name, config) { };
     
-    static BT::PortsList providedPorts();
+    // static BT::PortsList providedPorts();
 };
 
 /**
@@ -292,7 +293,7 @@ class UWRTDecoratorNode : public BT::DecoratorNode, public UwrtBtNode {
     UWRTDecoratorNode(const std::string& name, const BT::NodeConfiguration& config)
      : DecoratorNode(name, config) { };
     
-    static BT::PortsList providedPorts();
+    // static BT::PortsList providedPorts();
 };
 
 #endif // AUTONOMY_LIB_H

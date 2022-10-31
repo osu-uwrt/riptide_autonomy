@@ -169,11 +169,9 @@ namespace do_task
                 RCLCPP_INFO(log, "DoTask: Loading Monitor");
                 PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
                 FileLogger fileLogger(tree, coutFilePath.c_str());
-                // StdCoutLogger coutLogger(tree);
                 UwrtLogger uwrtLogger(tree, this->shared_from_this());
 
                 // configure our loggers
-                // coutLogger.setEnabled(enableCout);
                 zmq.setEnabled(enableZMQ);
                 uwrtLogger.setEnabled(true);
 
@@ -202,7 +200,6 @@ namespace do_task
                 }
 
                 fileLogger.flush();
-                // coutLogger.flush(); // will flush if enabled
 
                 std::string resultStr = "SUCCESS";
                 switch(tickStatus) {

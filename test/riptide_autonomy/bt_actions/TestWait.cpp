@@ -10,11 +10,11 @@ static std::tuple<BT::NodeStatus, int> WaitTest(int millisecondsToWait) {
     //initialize wait node
     BT::NodeConfiguration in;
     in.input_ports["seconds"] = std::to_string(millisecondsToWait / 1000.0);
-    std::shared_ptr<BT::TreeNode> node = BtTestEnvironment::getBtTestTool()->createLeafNodeFromConfig("Wait", in);
+    auto node = BtTestEnvironment::getBtTestTool()->createLeafNodeFromConfig("Wait", in);
 
     //wait and see how long we actually waited
     rclcpp::Time startTime = BtTestEnvironment::getBtTestTool()->get_clock()->now();
-    BT::NodeStatus status = BtTestEnvironment::getBtTestTool()->tickUntilFinished(std::move(node));
+    BT::NodeStatus status = BtTestEnvironment::getBtTestTool()->tickUntilFinished(node);
     rclcpp::Time finishTime = BtTestEnvironment::getBtTestTool()->get_clock()->now();
 
     int millisecondsWaited = (finishTime - startTime).seconds() * 1000;
