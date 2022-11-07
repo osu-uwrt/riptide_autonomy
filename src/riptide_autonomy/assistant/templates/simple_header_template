@@ -1,8 +1,0 @@
-#pragma once
-
-#include "autonomy_lib.hpp"
-
-class <2> {
-    public:
-    static void bulkRegister(BT::BehaviorTreeFactory &factory);
-};

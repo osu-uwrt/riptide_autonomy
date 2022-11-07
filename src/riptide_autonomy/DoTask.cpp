@@ -5,7 +5,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <ament_index_cpp/get_package_prefix.hpp>
 
 #include <riptide_msgs2/action/execute_tree.hpp>
 #include <riptide_msgs2/srv/list_trees.hpp>
@@ -14,8 +13,8 @@
 #include <chrono>
 #include <filesystem>
 
-#include "UwrtBtNode.hpp"
-#include "UWRTLogger.hpp"
+#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/UWRTLogger.hpp"
 
 /**
  * C++ Script that runs a given behavior tree.
@@ -27,9 +26,6 @@
 #define AUTONOMY_PKG_NAME "ritpide_autonomy2"
 #endif
 #define AUTONOMY_HOME_DIR "/osu-uwrt/riptide_software/src/riptide_autonomy/trees"
-
-// define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
-#define log rclcpp::get_logger("autonomy_dotask")
 
 using namespace BT;
 using namespace std::chrono_literals;
@@ -103,8 +99,7 @@ namespace do_task
 
             // load our plugins from ament index
             RCLCPP_INFO(this->get_logger(), "Registering autonomy core plugin");
-            std::string amentIndexPath = ament_index_cpp::get_package_prefix(AUTONOMY_PKG_NAME); // TODO Make this work to scan ament index and get to our plugin
-            factory->registerFromPlugin(amentIndexPath + "/lib/" + AUTONOMY_PKG_NAME + "/libautonomy.so");
+            registerPluginsForFactory(factory, AUTONOMY_PKG_NAME);
 
             // load other plugins from the paramter server
             for (auto plugin : pluginPaths)
@@ -168,26 +163,15 @@ namespace do_task
             {
                 // load the tree file contents in to a BT context
                 Tree tree = factory->createTreeFromFile(goal_handle->get_goal()->tree);
-
-                // give each BT node access to our RCLCPP context
-                for (auto &node : tree.nodes)
-                {
-                    // Not a typo: it is "=", not "=="
-                    if (auto btNode = dynamic_cast<UwrtBtNode *>(node.get()))
-                    {
-                        btNode->init(this->shared_from_this());
-                    }
-                }
+                initRosForTree(tree, this->shared_from_this());
 
                 // add the loggers to the BT context
                 RCLCPP_INFO(log, "DoTask: Loading Monitor");
                 PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
                 FileLogger fileLogger(tree, coutFilePath.c_str());
-                StdCoutLogger coutLogger(tree);
                 UwrtLogger uwrtLogger(tree, this->shared_from_this());
 
                 // configure our loggers
-                coutLogger.setEnabled(enableCout);
                 zmq.setEnabled(enableZMQ);
                 uwrtLogger.setEnabled(true);
 
@@ -216,7 +200,24 @@ namespace do_task
                 }
 
                 fileLogger.flush();
-                coutLogger.flush(); // will flush if enabled
+
+                std::string resultStr = "SUCCESS";
+                switch(tickStatus) {
+                    case NodeStatus::FAILURE:
+                        resultStr = "FAILURE";
+                        break;
+                    case NodeStatus::IDLE:
+                        resultStr = "IDLE";
+                        break;
+                    case NodeStatus::RUNNING:
+                        resultStr = "RUNNING";
+                        break;
+                    default:
+                        resultStr = "SUCCESS";
+                        break;
+                }
+
+                RCLCPP_INFO(log, "Tree ended with status %s", resultStr.c_str());
 
                 // wrap this party up and finish execution
                 result->returncode = (int)tickStatus;

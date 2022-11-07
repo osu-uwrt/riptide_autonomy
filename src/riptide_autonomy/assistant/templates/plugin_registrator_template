@@ -1,0 +1,8 @@
+#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/simple_nodes.hpp"
+<1>
+
+BT_REGISTER_NODES(factory)
+{
+<2>
+}
