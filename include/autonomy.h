@@ -756,9 +756,9 @@ class ActuateDroppers : public UWRTSyncActionNode {
     rclcpp::Client<robot_localization::srv::SetPose>::SharedPtr client;
 };
 
-class AccuateClaw : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
+class ActuateClaw : public UWRTSyncActionNode { //TODO: Rename class to whatever your state is named.
     public:
-    AccuateClaw(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
+    ActuateClaw(const std::string& name, const NodeConfiguration& config) //TODO: Rename constructor to match class name.
 
      : UWRTSyncActionNode(name, config) { }
     static PortsList providedPorts() {
