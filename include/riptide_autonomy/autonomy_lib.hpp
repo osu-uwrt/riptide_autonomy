@@ -38,6 +38,8 @@
 #include <robot_localization/srv/set_pose.hpp>
 
 #include <riptide_msgs2/action/align_torpedos.hpp>
+#include <riptide_msgs2/action/change_claw_state.hpp>
+#include <riptide_msgs2/action/actuate_droppers.hpp>
 
 #include "riptide_autonomy/UwrtBtNode.hpp"
 

@@ -3,6 +3,7 @@
 #include <behaviortree_cpp_v3/loggers/bt_file_logger.h>
 
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/executors/multi_threaded_executor.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
@@ -292,7 +293,10 @@ int main(int argc, char *argv[])
     // create our node context
     auto node = std::make_shared<do_task::BTExecutor>();
 
-    rclcpp::spin(node);
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node);
+    executor.spin();
 
+    // rclcpp::spin(node);
     rclcpp::shutdown();
 }
