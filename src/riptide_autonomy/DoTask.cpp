@@ -181,10 +181,23 @@ namespace do_task
                     }
                 }
 
+                //make a new directory for the FBL log files
+                std::string FBLloggerDir = getEnvVar("HOME") + "/osu-uwrt/riptide_software/FBLLogger";
+                std::filesystem::create_directory(FBLloggerDir);
+
+                //get time
+                time_t now = time(0);
+                struct tm tstruct;
+                char buf[80];
+                tstruct = *localtime(&now);
+                strftime(buf, sizeof(buf), "%Y_%m_%d_%X", &tstruct);
+                //get file path name using time
+                std::string FBLFilePath = FBLloggerDir + "/FBLLog_" + buf+".txt";
+
                 // add the loggers to the BT context
                 RCLCPP_INFO(log, "DoTask: Loading Monitor");
                 PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
-                FileLogger fileLogger(tree, coutFilePath.c_str());
+                FileLogger fileLogger(tree, FBLFilePath.c_str());
                 StdCoutLogger coutLogger(tree);
                 UwrtLogger uwrtLogger(tree, this->shared_from_this());
 
