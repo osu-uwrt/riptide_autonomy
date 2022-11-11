@@ -100,9 +100,7 @@ class AlignTorpedos : public UWRTActionNode {
     /**
      * @brief Called when the node is halted.
      */
-    void onHalted() override {
-        
-    }
+    void onHalted() override { }
 
     private:
 

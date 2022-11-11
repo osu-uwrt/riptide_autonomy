@@ -76,7 +76,6 @@ class TransformPose : public UWRTActionNode {
             setOutput<double>("out_z", transformed.position.z);
 
             //convert orientation back to RPY and return that
-            RCLCPP_INFO(log, "transformed rpy: %f, %f ,%f", transformedRPY.x, transformedRPY.y, transformedRPY.z);
             setOutput<double>("out_or", transformedRPY.x);
             setOutput<double>("out_op", transformedRPY.y);
             setOutput<double>("out_oy", transformedRPY.z);

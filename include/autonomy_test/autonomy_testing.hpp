@@ -117,6 +117,7 @@ class BtTestTool : public rclcpp::Node {
     public:
     BtTestTool();
     std::shared_ptr<BT::TreeNode> createLeafNodeFromConfig(std::string name, BT::NodeConfiguration config);
+    std::shared_ptr<BT::TreeNode> createDecoratorNodeFromConfig(std::string name, BT::NodeConfiguration config, BT::TreeNode::Ptr child);
     std::shared_ptr<DummyActionNode> createDummyActionNode();
     BT::NodeStatus tickUntilFinished(std::shared_ptr<BT::TreeNode> node);
 

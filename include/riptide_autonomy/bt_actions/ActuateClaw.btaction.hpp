@@ -30,7 +30,7 @@ class ActuateClaw : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override {
-        client = rclcpp_action::create_client<ChangeClawState>(this->rosnode, "claw");
+        client = rclcpp_action::create_client<ChangeClawState>(this->rosnode, CLAW_SERVER_NAME);
     }
 
     /**

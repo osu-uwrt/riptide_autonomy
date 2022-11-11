@@ -31,6 +31,21 @@ std::shared_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string n
 }
 
 
+std::shared_ptr<BT::TreeNode> BtTestTool::createDecoratorNodeFromConfig(std::string name, BT::NodeConfiguration inputConfig, BT::TreeNode::Ptr child) {
+    auto node = createLeafNodeFromConfig(name, inputConfig);
+
+    if(auto decorator = dynamic_cast<BT::DecoratorNode *>(node.get())) {
+        decorator->setChild(child.get());
+        return node;
+    }
+
+    //its not a decorator!
+    std::string msg = "Node with name " + name + " is not a decorator.";
+    RCLCPP_ERROR(log, msg.c_str());
+    throw std::runtime_error(msg);
+}
+
+
 std::shared_ptr<DummyActionNode> BtTestTool::createDummyActionNode() {
     auto ptr = std::make_shared<DummyActionNode>("Dummy", BT::NodeConfiguration());
     ptr->init(this->shared_from_this());

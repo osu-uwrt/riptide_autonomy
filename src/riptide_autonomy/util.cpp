@@ -1,5 +1,6 @@
 #include "riptide_autonomy/autonomy_lib.hpp"
 
+using namespace std::chrono_literals;
 
 void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName) {
     std::string amentIndexPath = ament_index_cpp::get_package_prefix(packageName); // TODO Make this work to scan ament index and get to our plugin
@@ -56,13 +57,10 @@ std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs:
     bool printedWarning = false;
     //look up transform with a three second timeout to find one
     rclcpp::Time startTime = rosnode->get_clock()->now();
-    while((rosnode->get_clock()->now() - startTime).seconds() < 1) {
+    while((rosnode->get_clock()->now() - startTime) < 3s) {
         try {
             geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
             geometry_msgs::msg::Pose transformed = doTransform(original, transform);
-
-            RCLCPP_INFO(log, "transformed position: %f, %f, %f", transformed.position.x, transformed.position.y, transformed.position.z);
-            RCLCPP_INFO(log, "transformed orientation: %f, %f, %f, %f", transformed.orientation.x, transformed.orientation.y, transformed.orientation.z, transformed.orientation.w);
 
             return std::make_tuple(transformed, true);
 

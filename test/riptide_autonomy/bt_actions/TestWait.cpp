@@ -34,8 +34,8 @@ TEST(BtTest, test_Wait_1s) {
     ASSERT_NEAR(std::get<1>(result), 1000, 5);
 }
 
-TEST(BtTest, test_Wait_4562ms) {
-    auto result = WaitTest(4562);
+TEST(BtTest, test_Wait_562ms) {
+    auto result = WaitTest(562);
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
-    ASSERT_NEAR(std::get<1>(result), 4562, 5);
+    ASSERT_NEAR(std::get<1>(result), 562, 5);
 }

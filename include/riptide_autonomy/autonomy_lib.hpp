@@ -48,7 +48,7 @@
 //define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
 #define log rclcpp::get_logger("autonomy")
 
-//useful constant values for autonomy
+//useful topic names for autonomy
 const std::string
     ODOMETRY_TOPIC = "odometry/filtered",
     POSITION_TOPIC = "controller/linear",
@@ -56,6 +56,10 @@ const std::string
     ACTUATOR_COMMAND_TOPIC = "command/actuator",
     ACTUATOR_STATUS_TOPIC = "state/actuator",
     ROBOT_STATE_TOPIC = "state/robot";
+
+//action server names for autonomy
+const std::string 
+    CLAW_SERVER_NAME = "actuate_claw";
 
 /**
  *
