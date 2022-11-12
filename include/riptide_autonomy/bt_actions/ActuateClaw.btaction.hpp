@@ -52,9 +52,14 @@ class ActuateClaw : public UWRTActionNode {
         auto options = rclcpp_action::Client<ChangeClawState>::SendGoalOptions();
         options.result_callback = std::bind(&ActuateClaw::resultCB, this, _1);
 
-        RCLCPP_INFO(log, "Sending goal to AlignTorpedos client.");
+        RCLCPP_INFO(log, "Sending goal to ActuateClaw client.");
         startTime = rosnode->get_clock()->now();
         auto future = client->async_send_goal(goal, options);
+
+        if(future.get() == nullptr) {
+            RCLCPP_ERROR(log, "Could not actuate the claw, the goal was rejected by the server!");
+            return BT::NodeStatus::FAILURE;
+        }
 
         return BT::NodeStatus::RUNNING;
     }
