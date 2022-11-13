@@ -6,17 +6,18 @@ from rclpy.node import Node
 
 from riptide_msgs2.action import ActuateDroppers as DropperMsg
 from riptide_msgs2.action import ChangeClawState as ClawMsg
+from riptide_msgs2.action import ActuateTorpedos as TorpedoMsg
 
 class DummyActuatorServers(Node):
 
     def __init__(self):
         super().__init__('dummy_actuator_servers')
         
-        # self.torpedo_server = ActionServer(
-        #     self,
-        #     TorpedoMsg,
-        #     'torpedo',
-        #     self.torpedo_callback)
+        self.torpedo_server = ActionServer(
+            self,
+            TorpedoMsg,
+            'torpedo',
+            self.torpedo_callback)
 
         self.dropper_server = ActionServer(
             self,
@@ -32,11 +33,11 @@ class DummyActuatorServers(Node):
         
         self.get_logger().info("Dummy actuator server started.")
 
-    # def torpedo_callback(self, goal_handle):
-    #     torpedoNum = 0 #TODO
-    #     self.get_logger().info("Firing Torpedo {}".format(torpedoNum))
-    #     goal_handle.succeed()
-    #     return TorpedoMsg.Result()
+    def torpedo_callback(self, goal_handle):
+        torpedoNum = goal_handle.request.torpedo_id
+        self.get_logger().info("Firing Torpedo {}".format(torpedoNum))
+        goal_handle.succeed()
+        return TorpedoMsg.Result()
 
     def dropper_callback(self, goal_handle):
         dropperNum = goal_handle.request.dropper_id
