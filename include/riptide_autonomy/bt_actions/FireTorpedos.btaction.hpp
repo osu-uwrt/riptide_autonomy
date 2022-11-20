@@ -30,7 +30,7 @@ class FireTorpedos : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        client = rclcpp_action::create_client<ChangeTorpedoState>(this->rosnode, "torpedo");
+        client = rclcpp_action::create_client<ChangeTorpedoState>(this->rosnode, TORPEDO_SERVER_NAME);
     }
 
     /**
@@ -38,10 +38,9 @@ class FireTorpedos : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-
         int torpedoID = getInput<int>("TorpedoID").value(); 
 
-        if(!client->wait_for_action_server(10s)) {
+        if(!client->wait_for_action_server(3s)) {
             RCLCPP_ERROR(log, "FireTorpedos action server not available.");
             return BT::NodeStatus::FAILURE;
         }
@@ -49,14 +48,17 @@ class FireTorpedos : public UWRTActionNode {
         auto goal = ChangeTorpedoState::Goal();
         goal.torpedo_id = torpedoID;
 
-
-        TorpedoResult actionResult;
         actionResult.code = rclcpp_action::ResultCode::UNKNOWN;
         auto options = rclcpp_action::Client<ChangeTorpedoState>::SendGoalOptions();
         options.result_callback = std::bind(&FireTorpedos::resultCB, this, _1);
 
         startTime = rosnode->get_clock()->now();
         auto future = client->async_send_goal(goal, options);
+
+        if(future.get() == nullptr) {
+            RCLCPP_ERROR(log, "Could not fire the torpedos, the goal was rejected by the server!");
+            return BT::NodeStatus::FAILURE;
+        }
 
         return BT::NodeStatus::RUNNING;
     }

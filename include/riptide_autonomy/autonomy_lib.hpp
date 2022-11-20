@@ -61,7 +61,8 @@ const std::string
 //action server names for autonomy
 const std::string 
     CLAW_SERVER_NAME = "actuate_claw",
-    DROPPER_SERVER_NAME = "actuate_droppers";
+    DROPPER_SERVER_NAME = "actuate_droppers",
+    TORPEDO_SERVER_NAME = "fire_torpedos";
 
 /**
  *

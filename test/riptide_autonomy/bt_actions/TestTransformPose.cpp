@@ -49,11 +49,8 @@ class TransformPoseTest : public BtTest {
     }
 
     private:
-    static std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcaster;
+    std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcaster;
 };
-
-std::shared_ptr<tf2_ros::StaticTransformBroadcaster> TransformPoseTest::broadcaster = nullptr; //undefined references are very annoying (var will be un-nullified when test suite set up)
-
 
 //
 // TEST FUNCTION
