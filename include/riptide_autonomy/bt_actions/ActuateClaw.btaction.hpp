@@ -89,7 +89,7 @@ class ActuateClaw : public UWRTActionNode {
     private:
 
     void resultCB(const ClawResult& result) {
-        RCLCPP_INFO(log, "Action completed.");
+        RCLCPP_INFO(log, "Action result received.");
         actionResult = result;
     }
     

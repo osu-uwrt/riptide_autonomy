@@ -6,9 +6,9 @@ using namespace std::chrono_literals;
 // TEST UTIL THINGS
 //
 
-static geometry_msgs::msg::TransformStamped createTransform(double x, double y, double z, double roll, double pitch, double yaw, std::string parentFrame, std::string childFrame) {
+static geometry_msgs::msg::TransformStamped createTransform(std::shared_ptr<BtTestTool> toolNode, double x, double y, double z, double roll, double pitch, double yaw, std::string parentFrame, std::string childFrame) {
     geometry_msgs::msg::TransformStamped transform;
-    transform.header.stamp = BtTestEnvironment::getBtTestTool()->get_clock()->now();
+    transform.header.stamp = toolNode->get_clock()->now();
 
     transform.transform.translation.x = x;
     transform.transform.translation.y = y;
@@ -27,21 +27,26 @@ static geometry_msgs::msg::TransformStamped createTransform(double x, double y, 
     return transform;
 }
 
-class TransformPoseTest : public ::testing::Test {
+class TransformPoseTest : public BtTest {
     protected:
-    static void SetUpTestSuite() {
+    void SetUp() override {
+        BtTest::SetUp();
+
         //set up static transform broadcasters
-        broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(BtTestEnvironment::getBtTestTool());
+        broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(toolNode);
         
         std::vector<geometry_msgs::msg::TransformStamped> transforms;
-        transforms.push_back(createTransform(3, 4, -5, 0, 0, 1.5707, "world", "transA"));
-        transforms.push_back(createTransform(-3, 2, -1, 0, 0, -0.78535, "world", "transB"));
-        transforms.push_back(createTransform(-2, -2, -2, 0, 0, 0, "transA", "transC"));
+        transforms.push_back(createTransform(toolNode, 3, 4, -5, 0, 0, 1.5707, "world", "transA"));
+        transforms.push_back(createTransform(toolNode, -3, 2, -1, 0, 0, -0.78535, "world", "transB"));
+        transforms.push_back(createTransform(toolNode, -2, -2, -2, 0, 0, 0, "transA", "transC"));
 
         broadcaster->sendTransform(transforms);
     }
 
-    static void TearDownTestSuite() { }
+    void TearDown() override {
+        broadcaster.reset();
+        BtTest::TearDown();
+    }
 
     private:
     static std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcaster;
@@ -75,7 +80,7 @@ std::shared_ptr<tf2_ros::StaticTransformBroadcaster> TransformPoseTest::broadcas
  * 
  * @return The resulting node status
  */
-BT::NodeStatus testTransform(double x, double y, double z, double roll, double pitch, double yaw, std::string fromFrame, std::string toFrame, double results[6]) {
+BT::NodeStatus testTransform(std::shared_ptr<BtTestTool> toolNode, double x, double y, double z, double roll, double pitch, double yaw, std::string fromFrame, std::string toFrame, double results[6]) {
     BT::NodeConfiguration cfg;
     cfg.input_ports["from_frame"] = fromFrame;
     cfg.input_ports["to_frame"] = toFrame;
@@ -86,8 +91,8 @@ BT::NodeStatus testTransform(double x, double y, double z, double roll, double p
     cfg.input_ports["op"] = std::to_string(pitch);
     cfg.input_ports["oy"] = std::to_string(yaw);
     
-    auto node = BtTestEnvironment::getBtTestTool()->createLeafNodeFromConfig("TransformPose", cfg);
-    auto result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(node);
+    auto node = toolNode->createLeafNodeFromConfig("TransformPose", cfg);
+    auto result = toolNode->tickUntilFinished(node);
 
     const double UNDEFINED_VALUE = 999.99;
     auto blackboard = node->config().blackboard;
@@ -109,7 +114,7 @@ BT::NodeStatus testTransform(double x, double y, double z, double roll, double p
 
 TEST_F(TransformPoseTest, test_TransformPose_A_to_world) {
     double results[6];
-    auto result = testTransform(1, 1, 1, 0, 0, 1.5707, "transA", "world", results);
+    auto result = testTransform(toolNode, 1, 1, 1, 0, 0, 1.5707, "transA", "world", results);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
     ASSERT_NEAR(results[0], 2, 0.001);
@@ -122,7 +127,7 @@ TEST_F(TransformPoseTest, test_TransformPose_A_to_world) {
 
 TEST_F(TransformPoseTest, test_TransformPose_B_to_world) {
     double results[6];
-    auto result = testTransform(0, 0, 0, 0, 0, 0, "transB", "world", results);
+    auto result = testTransform(toolNode, 0, 0, 0, 0, 0, 0, "transB", "world", results);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
     ASSERT_NEAR(results[0], -3, 0.001);
@@ -135,7 +140,7 @@ TEST_F(TransformPoseTest, test_TransformPose_B_to_world) {
 
 TEST_F(TransformPoseTest, test_TransformPose_C_to_world) {
     double results[6];
-    auto result = testTransform(0, 0, 0, 0, 0, 1.5707, "transC", "world", results);
+    auto result = testTransform(toolNode, 0, 0, 0, 0, 0, 1.5707, "transC", "world", results);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
     ASSERT_NEAR(results[0], 5, 0.001);
@@ -148,7 +153,7 @@ TEST_F(TransformPoseTest, test_TransformPose_C_to_world) {
 
 TEST_F(TransformPoseTest, test_TransformPose_C_to_A) {
     double results[6];
-    auto result = testTransform(2, 2, 2, 0, 0, 0, "transC", "transA", results);
+    auto result = testTransform(toolNode, 2, 2, 2, 0, 0, 0, "transC", "transA", results);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
     ASSERT_NEAR(results[0], 0, 0.001);

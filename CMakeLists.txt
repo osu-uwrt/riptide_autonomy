@@ -152,8 +152,21 @@ ament_target_dependencies(doTask
   riptide_msgs2
 )
 
+add_executable(testbed src/riptide_autonomy/testbed.cpp)
+
+target_include_directories(testbed PUBLIC
+  ${PROJECT_SOURCE_DIR}/include)
+
+target_link_libraries(testbed autonomy_utils)
+
+ament_target_dependencies(testbed
+  rclcpp
+  rclcpp_action
+  riptide_msgs2
+)
+
 #install executable
-install(TARGETS doTask
+install(TARGETS doTask testbed
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -193,7 +206,6 @@ if(BUILD_TESTING)
   #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
-
   #set up GTest
   find_package(ament_cmake_gtest REQUIRED)
 
@@ -210,7 +222,7 @@ if(BUILD_TESTING)
     ${tool_test_sources}
     test/riptide_autonomy/DummyActionNode.cpp
     test/riptide_autonomy/BtTestTool.cpp
-    test/riptide_autonomy/BtTestEnvironment.cpp
+    test/riptide_autonomy/BtTest.cpp
     test/riptide_autonomy/executeTests.cpp #overrides default main() method
   )
 

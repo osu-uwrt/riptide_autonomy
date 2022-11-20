@@ -4,7 +4,7 @@
 
 using namespace std::placeholders;
 
-class TimedPublisherTest : public ::testing::Test {
+class TimedPublisherTest : public BtTest {
     protected:
     void init(rclcpp::Node::SharedPtr rosnode, std::string topicName, rclcpp::QoS qos = 10) {
         sub = rosnode->create_subscription<std_msgs::msg::String>(
@@ -49,11 +49,11 @@ class TimedPublisherTest : public ::testing::Test {
 
 
 TEST_F(TimedPublisherTest, test_TimedPublisher_qos10_1s) {
-    init(BtTestEnvironment::getBtTestTool(), "test_topic");
+    init(toolNode, "test_topic");
 
     std_msgs::msg::String msg;
     msg.data = "some message...";
-    TimedPublisher<std_msgs::msg::String> timedPub(BtTestEnvironment::getBtTestTool(), "test_topic", msg);
+    TimedPublisher<std_msgs::msg::String> timedPub(toolNode, "test_topic", msg);
 
     while(getReceivedMsgs().size() < 3) {
         usleep(10000);
@@ -68,11 +68,11 @@ TEST_F(TimedPublisherTest, test_TimedPublisher_qos10_1s) {
 }
 
 TEST_F(TimedPublisherTest, test_TimedPublisher_sensordataqos_quartersecond) {
-    init(BtTestEnvironment::getBtTestTool(), "another_test_topic", rclcpp::SensorDataQoS());
+    init(toolNode, "another_test_topic", rclcpp::SensorDataQoS());
 
     std_msgs::msg::String msg;
     msg.data = "some message...";
-    TimedPublisher<std_msgs::msg::String> timedPub(BtTestEnvironment::getBtTestTool(), "another_test_topic", msg, rclcpp::SensorDataQoS(), 250);
+    TimedPublisher<std_msgs::msg::String> timedPub(toolNode, "another_test_topic", msg, rclcpp::SensorDataQoS(), 250);
 
     while(getReceivedMsgs().size() < 5) {
         usleep(10000);
@@ -87,11 +87,11 @@ TEST_F(TimedPublisherTest, test_TimedPublisher_sensordataqos_quartersecond) {
 }
 
 TEST_F(TimedPublisherTest, test_TimedPublisher_changeMsg) {
-    init(BtTestEnvironment::getBtTestTool(), "some_test_topic", rclcpp::SensorDataQoS());
+    init(toolNode, "some_test_topic", rclcpp::SensorDataQoS());
 
     std_msgs::msg::String msg;
     msg.data = "some message...";
-    TimedPublisher<std_msgs::msg::String> timedPub(BtTestEnvironment::getBtTestTool(), "some_test_topic", msg, rclcpp::SensorDataQoS(), 125);
+    TimedPublisher<std_msgs::msg::String> timedPub(toolNode, "some_test_topic", msg, rclcpp::SensorDataQoS(), 125);
 
     //wait for timed pub to publish one message
     while(getReceivedMsgs().size() < 1) {
@@ -116,11 +116,11 @@ TEST_F(TimedPublisherTest, test_TimedPublisher_changeMsg) {
 }
 
 TEST_F(TimedPublisherTest, test_TimedPublsher_cancel) {
-    init(BtTestEnvironment::getBtTestTool(), "maybe_the_last_test_topic", rclcpp::SensorDataQoS());
+    init(toolNode, "maybe_the_last_test_topic", rclcpp::SensorDataQoS());
 
     std_msgs::msg::String msg;
     msg.data = "some message...";
-    TimedPublisher<std_msgs::msg::String> timedPub(BtTestEnvironment::getBtTestTool(), "maybe_the_last_test_topic", msg, rclcpp::SensorDataQoS(), 125);
+    TimedPublisher<std_msgs::msg::String> timedPub(toolNode, "maybe_the_last_test_topic", msg, rclcpp::SensorDataQoS(), 125);
 
     while(getReceivedMsgs().size() < 2) {
         usleep(10000);

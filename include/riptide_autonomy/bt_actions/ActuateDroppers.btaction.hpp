@@ -28,7 +28,7 @@ class ActuateDroppers : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override {
-        client = rclcpp_action::create_client<ChangeDropperState>(this->rosnode, "dropper");
+        client = rclcpp_action::create_client<ChangeDropperState>(this->rosnode, DROPPER_SERVER_NAME);
     }
 
     /**
@@ -38,7 +38,7 @@ class ActuateDroppers : public UWRTActionNode {
     BT::NodeStatus onStart() override {
         int dropperID = getInput<int>("DropperID").value(); 
 
-        if(!client->wait_for_action_server(10s)) {
+        if(!client->wait_for_action_server(3s)) {
             RCLCPP_ERROR(log, "ActuateDroppers action server not available.");
             return BT::NodeStatus::FAILURE;
         }
@@ -46,14 +46,18 @@ class ActuateDroppers : public UWRTActionNode {
         auto goal = ChangeDropperState::Goal();
         goal.dropper_id = dropperID;
 
-        DroppersResult actionResult;
         actionResult.code = rclcpp_action::ResultCode::UNKNOWN;
         auto options = rclcpp_action::Client<ChangeDropperState>::SendGoalOptions();
         options.result_callback = std::bind(&ActuateDroppers::resultCB, this, _1);
 
-        RCLCPP_INFO(log, "Sending goal to ActuateDroppers client.");
+        RCLCPP_INFO(log, "Sending goal to ActuateDroppers server.");
         startTime = rosnode->get_clock()->now();
         auto future = client->async_send_goal(goal, options);
+
+        if(future.get() == nullptr) {
+            RCLCPP_ERROR(log, "Could not actuate the droppers, the goal was rejected by the server!");
+            return BT::NodeStatus::FAILURE;
+        }
 
         return BT::NodeStatus::RUNNING;
     }
@@ -82,7 +86,7 @@ class ActuateDroppers : public UWRTActionNode {
 
     private:
     void resultCB(const DroppersResult& result) {
-        RCLCPP_INFO(log, "Action completed.");
+        RCLCPP_INFO(log, "Action result received.");
         actionResult = result;
     }
 

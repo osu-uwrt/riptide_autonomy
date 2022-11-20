@@ -120,23 +120,28 @@ class BtTestTool : public rclcpp::Node {
     std::shared_ptr<BT::TreeNode> createDecoratorNodeFromConfig(std::string name, BT::NodeConfiguration config, BT::TreeNode::Ptr child);
     std::shared_ptr<DummyActionNode> createDummyActionNode();
     BT::NodeStatus tickUntilFinished(std::shared_ptr<BT::TreeNode> node);
+    bool isSpinning();
 
     private:
+    void spinTimer();
+
+    rclcpp::TimerBase::SharedPtr heartTimer;
     std::shared_ptr<BT::BehaviorTreeFactory> factory;
+    bool spinning;
 };
 
 /**
  * @brief A ROS node for behavior tree testing. Test cases can use this to initialize UwrtBtNodes and create publishers/subscribers
  */
-class BtTestEnvironment : public ::testing::Environment {
-    public:
-    BtTestEnvironment(int argc, char **argv);
+class BtTest : public ::testing::Test {
+    protected:
     void SetUp() override;
     void TearDown() override;
 
-    static std::shared_ptr<BtTestTool> getBtTestTool();
-
-    private:
+    // static std::shared_ptr<BtTestTool> getBtTestTool();
     std::thread executionThread;
-    static std::shared_ptr<BtTestTool> toolNode;
+    std::shared_ptr<BtTestTool> toolNode;
 };
+
+// this class serves no purpose except to split up the regular bt test and the test tool test suites.
+class TestToolTest : public BtTest { };

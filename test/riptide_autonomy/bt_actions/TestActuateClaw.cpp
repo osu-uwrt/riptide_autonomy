@@ -4,15 +4,22 @@
 using ActuateClaw = riptide_msgs2::action::ChangeClawState;
 using namespace std::chrono_literals;
 
-class ActuateClawTest : public ::testing::Test {
+class ActuateClawTest : public BtTest {
     public:
-    ActuateClawTest()
-    : server(BtTestEnvironment::getBtTestTool(), CLAW_SERVER_NAME) {
-        RCLCPP_INFO(log, "new server created.");
+    void SetUp() override {
+        BtTest::SetUp();
+    }
+
+    void TearDown() override {
+        server.reset();
+        BtTest::TearDown();
     }
 
     protected:
-    DummyActionServer<ActuateClaw, ActuateClaw::Goal, ActuateClaw::Result> server;
+    void SetUpServer() {
+        server = std::make_unique<DummyActionServer<ActuateClaw, ActuateClaw::Goal, ActuateClaw::Result>>(toolNode, CLAW_SERVER_NAME);
+    }
+    std::unique_ptr<DummyActionServer<ActuateClaw, ActuateClaw::Goal, ActuateClaw::Result>> server;
 };
 
 /**
@@ -22,80 +29,85 @@ class ActuateClawTest : public ::testing::Test {
  * @param secondsElapsed Will be populated with the number of seconds the node takes to complete
  * @return BT::NodeStatus 
  */
-BT::NodeStatus testClaw(bool sendOpen, double& secondsElapsed) {
+BT::NodeStatus testClaw(std::shared_ptr<BtTestTool> toolNode, bool sendOpen, double& secondsElapsed) {
     //configure node
     BT::NodeConfiguration cfg;
     cfg.input_ports["claw_open"] = (sendOpen ? "1" : "0");
-    auto node = BtTestEnvironment::getBtTestTool()->createLeafNodeFromConfig("ActuateClaw", cfg);
+    auto node = toolNode->createLeafNodeFromConfig("ActuateClaw", cfg);
 
     //run node
-    auto startTime = BtTestEnvironment::getBtTestTool()->get_clock()->now();
-    auto nodeResult = BtTestEnvironment::getBtTestTool()->tickUntilFinished(node);
-    secondsElapsed = (BtTestEnvironment::getBtTestTool()->get_clock()->now() - startTime).seconds();
+    auto startTime = toolNode->get_clock()->now();
+    auto nodeResult = toolNode->tickUntilFinished(node);
+    secondsElapsed = (toolNode->get_clock()->now() - startTime).seconds();
 
     return nodeResult;
 }
 
-//important: this test is a regular TEST outside of the suite and before the suite is initialized, so the action server will not be running. 
-//Node should fail after failing to find the server. 
-TEST(ServerlessActuateClawTest, test_ActuateClaw_fail_not_available) {
-    double seconds;
-    auto result = testClaw(true, seconds);
-    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
-    ASSERT_LT(seconds, 4);
-}
-
 TEST_F(ActuateClawTest, test_ActuateClaw_open_success) {
-    server.configureExecution(
+    SetUpServer();
+    server->configureExecution(
         rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE, 
         rclcpp_action::CancelResponse::ACCEPT, 
-        3s, 
+        3, 
         std::make_shared<ActuateClaw::Result>()
     );
     
     double seconds;
-    auto result = testClaw(true, seconds);
+    auto result = testClaw(toolNode, true, seconds);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-    ASSERT_EQ(server.getLatestGoal()->clawopen, true);
+    ASSERT_EQ(server->getLatestGoal()->clawopen, true);
 }
 
 TEST_F(ActuateClawTest, test_ActuateClaw_close_success) {
-    server.configureExecution(
+    SetUpServer();
+    server->configureExecution(
         rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE, 
         rclcpp_action::CancelResponse::ACCEPT, 
-        3s, 
+        3, 
         std::make_shared<ActuateClaw::Result>()
     );
     
     double seconds;
-    auto result = testClaw(false, seconds);
+    auto result = testClaw(toolNode, false, seconds);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-    ASSERT_EQ(server.getLatestGoal()->clawopen, false);
+    ASSERT_EQ(server->getLatestGoal()->clawopen, false);
 }
 
 TEST_F(ActuateClawTest, test_ActuateClaw_fail_timeout) {
-    server.configureExecution(
+    SetUpServer();
+    server->configureExecution(
         rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE, 
         rclcpp_action::CancelResponse::ACCEPT, 
-        11s, 
+        11, 
         std::make_shared<ActuateClaw::Result>()
     );
     
     double seconds;
-    auto result = testClaw(true, seconds);
+    auto result = testClaw(toolNode, true, seconds);
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
+    ASSERT_NEAR(seconds, 10, 0.2);
+
+    rclcpp::sleep_for(2s); //allow action to finish to avoid it getting confused
 }
 
 TEST_F(ActuateClawTest, test_ActuateClaw_fail_rejected) {
-    server.configureExecution(
+    SetUpServer();
+    server->configureExecution(
         rclcpp_action::GoalResponse::REJECT, 
         rclcpp_action::CancelResponse::ACCEPT, 
-        1s, 
+        3,
         std::make_shared<ActuateClaw::Result>()
     );
     
     double seconds;
-    auto result = testClaw(true, seconds);
+    auto result = testClaw(toolNode, true, seconds);
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
-    ASSERT_LT(seconds, 5);
+    ASSERT_LT(seconds, 3);
+}
+
+TEST_F(ActuateClawTest, test_ActuateClaw_fail_not_available) {
+    double seconds;
+    auto result = testClaw(toolNode, true, seconds);
+    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
+    ASSERT_NEAR(seconds, 3, 0.2);
 }

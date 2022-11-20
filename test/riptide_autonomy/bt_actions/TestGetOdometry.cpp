@@ -1,8 +1,8 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
-TEST(BtTest, test_GetOdometry_success_zero) {
-    auto odometryNode = BtTestEnvironment::getBtTestTool()->createLeafNodeFromConfig("GetOdometry", BT::NodeConfiguration());
+TEST_F(BtTest, test_GetOdometry_success_zero) {
+    auto odometryNode = toolNode->createLeafNodeFromConfig("GetOdometry", BT::NodeConfiguration());
 
     //define goal message
     nav_msgs::msg::Odometry odometry;
@@ -14,12 +14,12 @@ TEST(BtTest, test_GetOdometry_success_zero) {
     odometry.pose.pose.orientation.z = 0;
     odometry.pose.pose.orientation.w = 1; //fully zero quaternion will never happen but we doing it for the test
 
-    TimedPublisher<nav_msgs::msg::Odometry> timedPub(BtTestEnvironment::getBtTestTool(), "odometry/filtered", odometry);
+    TimedPublisher<nav_msgs::msg::Odometry> timedPub(toolNode, "odometry/filtered", odometry);
 
     const double UNDEFINED_VALUE = 999.99;
 
     //run bt node
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(odometryNode);
+    BT::NodeStatus result = toolNode->tickUntilFinished(odometryNode);
     auto blackboard = odometryNode->config().blackboard;
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
@@ -42,8 +42,8 @@ TEST(BtTest, test_GetOdometry_success_zero) {
     ASSERT_NEAR(receivedPosYaw, receivedRPY.z, 0.00001);
 }
 
-TEST(BtTest, test_GetOdometry_success_nonzero) {
-    auto odometryNode = BtTestEnvironment::getBtTestTool()->createLeafNodeFromConfig("GetOdometry", BT::NodeConfiguration());
+TEST_F(BtTest, test_GetOdometry_success_nonzero) {
+    auto odometryNode = toolNode->createLeafNodeFromConfig("GetOdometry", BT::NodeConfiguration());
 
     //define goal message
     geometry_msgs::msg::Vector3 rpy;
@@ -58,12 +58,12 @@ TEST(BtTest, test_GetOdometry_success_nonzero) {
     odometry.pose.pose.orientation = toQuat(rpy);
     
     //set up timed pub
-    TimedPublisher<nav_msgs::msg::Odometry> timedPub(BtTestEnvironment::getBtTestTool(), "odometry/filtered", odometry);
+    TimedPublisher<nav_msgs::msg::Odometry> timedPub(toolNode, "odometry/filtered", odometry);
 
     const double UNDEFINED_VALUE = 999.99;
 
     //run bt node
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(odometryNode);
+    BT::NodeStatus result = toolNode->tickUntilFinished(odometryNode);
     auto blackboard = odometryNode->config().blackboard;
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
@@ -86,9 +86,9 @@ TEST(BtTest, test_GetOdometry_success_nonzero) {
     ASSERT_NEAR(receivedPosYaw, receivedRPY.z, 0.00001);
 }
 
-TEST(BtTest, test_GetOdometry_failure) {
-    auto odometryNode = BtTestEnvironment::getBtTestTool()->createLeafNodeFromConfig("GetOdometry", BT::NodeConfiguration());
-    auto result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(odometryNode);
+TEST_F(BtTest, test_GetOdometry_failure) {
+    auto odometryNode = toolNode->createLeafNodeFromConfig("GetOdometry", BT::NodeConfiguration());
+    auto result = toolNode->tickUntilFinished(odometryNode);
 
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
 }

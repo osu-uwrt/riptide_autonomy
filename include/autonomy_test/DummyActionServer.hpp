@@ -30,7 +30,7 @@ class DummyActionServer {
         configureExecution(
             rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE,
             rclcpp_action::CancelResponse::ACCEPT,
-            3s,
+            3,
             std::make_shared<TResult>()
         );
     }
@@ -38,12 +38,12 @@ class DummyActionServer {
     void configureExecution(
         rclcpp_action::GoalResponse goalResponse, 
         rclcpp_action::CancelResponse cancelResponse, 
-        std::chrono::duration<double> executionTime, 
+        double executionTimeSeconds,
         std::shared_ptr<TResult> result) 
     {
         this->goalResponse = goalResponse;
         this->cancelResponse = cancelResponse;
-        this->executionTime = executionTime;
+        this->executionTime = executionTimeSeconds;
         this->result = result;
     }
 
@@ -73,8 +73,18 @@ class DummyActionServer {
     }
 
     void execute(const std::shared_ptr<TGoalHandle> goalHandle) {
-        rclcpp::sleep_for(std::chrono::duration_cast<std::chrono::nanoseconds>(executionTime));
-        goalHandle->succeed(result);
+        if(executionTime >= 0) {
+            std::chrono::duration<double> secs(executionTime);
+            rclcpp::sleep_for(std::chrono::duration_cast<std::chrono::nanoseconds>(secs));
+            goalHandle->succeed(result);
+            return; //we done. if the code goes any further it will block until rclcpp goes bad
+        }
+
+        //okay, this part is weird. basically if the action server stays alive for too long after rclcpp goes down, a bunch of cool segfaults happen
+        //in future tests. to combat this, if the action server is supposed to hang forever, it will simply sleep until rclcpp::ok() returns false
+        while(rclcpp::ok()) {
+            rclcpp::sleep_for(5ms);
+        }
     }
 
     //ros node
@@ -86,7 +96,7 @@ class DummyActionServer {
     //execution information
     rclcpp_action::GoalResponse goalResponse;
     rclcpp_action::CancelResponse cancelResponse;
-    std::chrono::duration<double> executionTime;
+    double executionTime;
     std::shared_ptr<TResult> result;
 
     //storage

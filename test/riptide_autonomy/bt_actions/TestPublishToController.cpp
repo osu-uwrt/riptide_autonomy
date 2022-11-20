@@ -3,9 +3,9 @@
 
 using namespace std::chrono_literals;
 
-static std::tuple<BT::NodeStatus, std::vector<riptide_msgs2::msg::ControllerCommand> > publishTest(bool orientation, int mode, double x, double y, double z, const std::string expectedTopic) {
+static std::tuple<BT::NodeStatus, std::vector<riptide_msgs2::msg::ControllerCommand> > publishTest(std::shared_ptr<BtTestTool> toolNode, bool orientation, int mode, double x, double y, double z, const std::string expectedTopic) {
     //create sub
-    BufferedSubscriber<riptide_msgs2::msg::ControllerCommand> sub(BtTestEnvironment::getBtTestTool(), expectedTopic);
+    BufferedSubscriber<riptide_msgs2::msg::ControllerCommand> sub(toolNode, expectedTopic);
     
     //set up and create bt node
     BT::NodeConfiguration cfg;
@@ -15,12 +15,12 @@ static std::tuple<BT::NodeStatus, std::vector<riptide_msgs2::msg::ControllerComm
     cfg.input_ports["y"] = std::to_string(y);
     cfg.input_ports["z"] = std::to_string(z);
 
-    auto node = BtTestEnvironment::getBtTestTool()->createLeafNodeFromConfig("PublishToController", cfg);
+    auto node = toolNode->createLeafNodeFromConfig("PublishToController", cfg);
 
     //tick for 1 second tops until messages received
-    rclcpp::Time startTime = BtTestEnvironment::getBtTestTool()->get_clock()->now();
+    rclcpp::Time startTime = toolNode->get_clock()->now();
     BT::NodeStatus mostRecentStatus = BT::NodeStatus::IDLE;
-    while(rclcpp::ok() && sub.getMessages().size() <= 0 && BtTestEnvironment::getBtTestTool()->get_clock()->now() - startTime < 1s) {
+    while(rclcpp::ok() && sub.getMessages().size() <= 0 && toolNode->get_clock()->now() - startTime < 1s) {
         mostRecentStatus = node->executeTick();
 
         usleep(10000); //sleep 10000 microseconds
@@ -29,8 +29,9 @@ static std::tuple<BT::NodeStatus, std::vector<riptide_msgs2::msg::ControllerComm
     return std::make_tuple(mostRecentStatus, sub.getMessages());
 }
 
-TEST(BtTest, test_PublishToController_linear_position) {
+TEST_F(BtTest, test_PublishToController_linear_position) {
     auto result = publishTest (
+        toolNode,
         false,
         riptide_msgs2::msg::ControllerCommand::POSITION,
         1.2,
@@ -47,8 +48,9 @@ TEST(BtTest, test_PublishToController_linear_position) {
     ASSERT_NEAR(std::get<1>(result)[0].setpoint_vect.z, 5.6, 0.00001);
 }
 
-TEST(BtTest, test_PublishToController_linear_velocity) {
+TEST_F(BtTest, test_PublishToController_linear_velocity) {
     auto result = publishTest (
+        toolNode,
         false,
         riptide_msgs2::msg::ControllerCommand::VELOCITY,
         0.2,
@@ -65,13 +67,14 @@ TEST(BtTest, test_PublishToController_linear_velocity) {
     ASSERT_NEAR(std::get<1>(result)[0].setpoint_vect.z, 2.3, 0.00001);
 }
 
-TEST(BtTest, test_PublishToController_angular_position) {
+TEST_F(BtTest, test_PublishToController_angular_position) {
     geometry_msgs::msg::Vector3 rpy;
     rpy.x = 62;
     rpy.y = 21;
     rpy.z = 87;
 
     auto result = publishTest (
+        toolNode,
         true,
         riptide_msgs2::msg::ControllerCommand::POSITION,
         rpy.x,
@@ -93,8 +96,9 @@ TEST(BtTest, test_PublishToController_angular_position) {
     ASSERT_NEAR(actualQuat.w, expectedQuat.w, 0.00001);
 }
 
-TEST(BtTest, test_PublishToController_angular_velocity) {
+TEST_F(BtTest, test_PublishToController_angular_velocity) {
     auto result = publishTest (
+        toolNode,
         true,
         riptide_msgs2::msg::ControllerCommand::VELOCITY,
         3.1415,
@@ -111,8 +115,9 @@ TEST(BtTest, test_PublishToController_angular_velocity) {
     ASSERT_NEAR(std::get<1>(result)[0].setpoint_vect.z, 0.5, 0.00001);
 }
 
-TEST(BtTest, test_PublishToController_feedforward) {
+TEST_F(BtTest, test_PublishToController_feedforward) {
     auto result = publishTest (
+        toolNode,
         false,
         riptide_msgs2::msg::ControllerCommand::FEEDFORWARD,
         0,
@@ -129,8 +134,9 @@ TEST(BtTest, test_PublishToController_feedforward) {
     ASSERT_NEAR(std::get<1>(result)[0].setpoint_vect.z, 0, 0.00001);
 }
 
-TEST(BtTest, test_PublishToController_disabled_linear) {
+TEST_F(BtTest, test_PublishToController_disabled_linear) {
     auto result = publishTest (
+        toolNode,
         false,
         riptide_msgs2::msg::ControllerCommand::DISABLED,
         0,
@@ -147,8 +153,9 @@ TEST(BtTest, test_PublishToController_disabled_linear) {
     ASSERT_NEAR(std::get<1>(result)[0].setpoint_vect.z, 0, 0.00001);
 }
 
-TEST(BtTest, test_PublishToController_disabled_angular) {
+TEST_F(BtTest, test_PublishToController_disabled_angular) {
     auto result = publishTest (
+        toolNode,
         true,
         riptide_msgs2::msg::ControllerCommand::DISABLED,
         0,

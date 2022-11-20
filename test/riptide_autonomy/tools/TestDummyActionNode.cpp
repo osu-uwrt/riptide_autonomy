@@ -1,72 +1,72 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
-TEST(TestToolTest, test_DummyActionNode_alwaysSuccess) { //also a test for success after zero ticks
-    auto dummyAction = BtTestEnvironment::getBtTestTool()->createDummyActionNode();
+TEST_F(TestToolTest, test_DummyActionNode_alwaysSuccess) { //also a test for success after zero ticks
+    auto dummyAction = toolNode->createDummyActionNode();
     dummyAction->configureAlwaysReturnStatus(BT::NodeStatus::SUCCESS);
 
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(dummyAction);
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
     
     ASSERT_EQ(dummyAction->getNumTicks(), 1);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
 }
 
-TEST(TestToolTest, test_DummyActionNode_alwaysFailure) { //also a test for failure after zero ticks
-    auto dummyAction = BtTestEnvironment::getBtTestTool()->createDummyActionNode();
+TEST_F(TestToolTest, test_DummyActionNode_alwaysFailure) { //also a test for failure after zero ticks
+    auto dummyAction = toolNode->createDummyActionNode();
     dummyAction->configureAlwaysReturnStatus(BT::NodeStatus::FAILURE);
 
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(dummyAction);
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
 
     ASSERT_EQ(dummyAction->getNumTicks(), 1);
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
 }
 
-TEST(TestToolTest, test_DummyActionNode_successAfterNonzeroTicks) {
-    auto dummyAction = BtTestEnvironment::getBtTestTool()->createDummyActionNode();
+TEST_F(TestToolTest, test_DummyActionNode_successAfterNonzeroTicks) {
+    auto dummyAction = toolNode->createDummyActionNode();
     dummyAction->configureExecution(DummyExecutionMode::FINISH_AFTER_ITERATIONS, 12, BT::NodeStatus::SUCCESS);
 
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(dummyAction);
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
 
     ASSERT_EQ(dummyAction->getNumTicks(), 12);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
 }
 
-TEST(TestToolTest, test_DummyActionNode_failureAfterNonzeroTicks) {
-    auto dummyAction = BtTestEnvironment::getBtTestTool()->createDummyActionNode();
+TEST_F(TestToolTest, test_DummyActionNode_failureAfterNonzeroTicks) {
+    auto dummyAction = toolNode->createDummyActionNode();
     dummyAction->configureExecution(DummyExecutionMode::FINISH_AFTER_ITERATIONS, 12, BT::NodeStatus::FAILURE);
 
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(dummyAction);
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
 
     ASSERT_EQ(dummyAction->getNumTicks(), 12);
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
 }
 
-TEST(TestToolTest, test_DummyActionNode_successAfterZeroTime) {
-    auto dummyAction = BtTestEnvironment::getBtTestTool()->createDummyActionNode();
+TEST_F(TestToolTest, test_DummyActionNode_successAfterZeroTime) {
+    auto dummyAction = toolNode->createDummyActionNode();
     dummyAction->configureExecution(DummyExecutionMode::FINISH_AFTER_TIME, 0, BT::NodeStatus::SUCCESS);
     
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(dummyAction);
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
 
     ASSERT_EQ(dummyAction->getNumTicks(), 1);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
 }
 
-TEST(TestToolTest, test_DummyActionNode_failureAfterZeroTime) {
-    auto dummyAction = BtTestEnvironment::getBtTestTool()->createDummyActionNode();
+TEST_F(TestToolTest, test_DummyActionNode_failureAfterZeroTime) {
+    auto dummyAction = toolNode->createDummyActionNode();
     dummyAction->configureExecution(DummyExecutionMode::FINISH_AFTER_TIME, 0, BT::NodeStatus::FAILURE);
     
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(dummyAction);
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
 
     ASSERT_EQ(dummyAction->getNumTicks(), 1);
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
 }
 
-TEST(TestToolTest, test_DummyActionNode_successAfterNonzeroTime) {
-    auto dummyAction = BtTestEnvironment::getBtTestTool()->createDummyActionNode();
+TEST_F(TestToolTest, test_DummyActionNode_successAfterNonzeroTime) {
+    auto dummyAction = toolNode->createDummyActionNode();
     dummyAction->configureExecution(DummyExecutionMode::FINISH_AFTER_TIME, 2500, BT::NodeStatus::SUCCESS);
 
-    rclcpp::Time startTime = BtTestEnvironment::getBtTestTool()->get_clock()->now();
-    BT::NodeStatus result = BtTestEnvironment::getBtTestTool()->tickUntilFinished(dummyAction);
-    rclcpp::Time finishTime = BtTestEnvironment::getBtTestTool()->get_clock()->now();
+    rclcpp::Time startTime = toolNode->get_clock()->now();
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
+    rclcpp::Time finishTime = toolNode->get_clock()->now();
     double secondsElapsed = (finishTime - startTime).seconds();
 
     ASSERT_GT(dummyAction->getNumTicks(), 1);

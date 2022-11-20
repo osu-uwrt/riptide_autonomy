@@ -5,8 +5,8 @@
 using namespace std::chrono_literals;
 
 //test to make sure that no messages are received if none are being sent
-TEST(TestToolTest, test_BufferedSubscriber_noMsgs) {
-    BufferedSubscriber<std_msgs::msg::String> bufferedSub(BtTestEnvironment::getBtTestTool(), "test_topic");
+TEST_F(TestToolTest, test_BufferedSubscriber_noMsgs) {
+    BufferedSubscriber<std_msgs::msg::String> bufferedSub(toolNode, "test_topic");
     ASSERT_EQ(bufferedSub.getMessages().size(), 0U);
 
     //sleep 1 second
@@ -15,10 +15,10 @@ TEST(TestToolTest, test_BufferedSubscriber_noMsgs) {
     ASSERT_EQ(bufferedSub.getMessages().size(), 0U);
 }
 
-TEST(TestToolTest, test_BufferedSubscriber_someMsgs) {
+TEST_F(TestToolTest, test_BufferedSubscriber_someMsgs) {
     //the goal of this test is to determine that the buffered sub accurately receives at least 80% of messages thrown at it.
-    BufferedSubscriber<std_msgs::msg::String> bufferedSub(BtTestEnvironment::getBtTestTool(), "test_topic");
-    auto publisher = BtTestEnvironment::getBtTestTool()->create_publisher<std_msgs::msg::String>("test_topic", 10);
+    BufferedSubscriber<std_msgs::msg::String> bufferedSub(toolNode, "test_topic");
+    auto publisher = toolNode->create_publisher<std_msgs::msg::String>("test_topic", 10);
 
     //publish some messages
     std_msgs::msg::String msg;
@@ -34,17 +34,17 @@ TEST(TestToolTest, test_BufferedSubscriber_someMsgs) {
     ASSERT_EQ(msgsReceived, bufferedSub.getMessages().size()); //assert that no messages received incorrectly
 }
 
-TEST(TestToolTest, test_BufferedSubscriber_clear_no_msgs) {
-    BufferedSubscriber<std_msgs::msg::String> bufferedSub(BtTestEnvironment::getBtTestTool(), "test_topic");
+TEST_F(TestToolTest, test_BufferedSubscriber_clear_no_msgs) {
+    BufferedSubscriber<std_msgs::msg::String> bufferedSub(toolNode, "test_topic");
     ASSERT_EQ(bufferedSub.getMessages().size(), 0U);
     
     bufferedSub.clearMessages();
     ASSERT_EQ(bufferedSub.getMessages().size(), 0U);
 }
 
-TEST(TestToolTest, test_BufferedSubscriber_clear_msgs) {
-    BufferedSubscriber<std_msgs::msg::String> bufferedSub(BtTestEnvironment::getBtTestTool(), "test_topic");
-    auto publisher = BtTestEnvironment::getBtTestTool()->create_publisher<std_msgs::msg::String>("test_topic", 10);
+TEST_F(TestToolTest, test_BufferedSubscriber_clear_msgs) {
+    BufferedSubscriber<std_msgs::msg::String> bufferedSub(toolNode, "test_topic");
+    auto publisher = toolNode->create_publisher<std_msgs::msg::String>("test_topic", 10);
 
     //publish some messages
     std_msgs::msg::String msg;

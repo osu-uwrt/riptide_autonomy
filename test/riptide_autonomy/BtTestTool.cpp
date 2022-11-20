@@ -1,9 +1,14 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
+using namespace std::chrono_literals;
+
 BtTestTool::BtTestTool()
  : rclcpp::Node("BtTester", "bt_testing") {
     factory = std::make_shared<BT::BehaviorTreeFactory>();
     registerPluginsForFactory(factory, "riptide_autonomy2");
+    spinning = false;
+
+    heartTimer = create_wall_timer(1ms, std::bind(&BtTestTool::spinTimer, this));
 }
 
 
@@ -60,4 +65,15 @@ BT::NodeStatus BtTestTool::tickUntilFinished(std::shared_ptr<BT::TreeNode> node)
     }
 
     return status;
+}
+
+
+bool BtTestTool::isSpinning() {
+    return spinning;
+}
+
+//marks that the node is spinning so that test cases dont shut down ros prematurely
+void BtTestTool::spinTimer() {
+    spinning = true; 
+    heartTimer->cancel();
 }
