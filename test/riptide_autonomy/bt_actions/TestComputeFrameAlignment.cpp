@@ -92,7 +92,7 @@ BT::NodeStatus testFrameAlign(
 }
 
 TEST_F(FrameAlignTest, test_ComputeFrameAlignment_exactly_baselink) {
-    //test computing target position to put some_frame at (-4, -8, -3)
+    //test computing target position to put some_frame at (2, 5, -3)
     setUpBroadcaster(1, -1, -1, 0, 0, 0.635);
 
     geometry_msgs::msg::Vector3 inPos, outPos;
@@ -144,25 +144,8 @@ TEST_F(FrameAlignTest, test_ComputeFrameAlignment_someframe_yawed) {
 }
 
 TEST_F(FrameAlignTest, test_ComputeFrameAlignment_otherframe) {
-    //test computing target position to put the frame at (-4, -8, -3)
-    setUpBroadcaster(1, -1, -1, 0, 0, 0);
-
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = 2;
-    inPos.y = 2;
-    inPos.z = 2;
-
-    auto result = testFrameAlign(toolNode, "some_other_frame", inPos, outPos);
-
-    ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-    ASSERT_NEAR(outPos.x, 0, 0.01);
-    ASSERT_NEAR(outPos.y, 0, 0.01);
-    ASSERT_NEAR(outPos.z, 0, 0.01);
-}
-
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_otherframe_yawed) {
-    //test computing target position to put the frame at (-4, -8, -3)
-    setUpBroadcaster(1, -1, -1, 0, 0, 1.5707);
+    //test computing target position to put the frame at (2, 2, 2)
+    setUpBroadcaster(3, 3, 3, 0, 0, 0);
 
     geometry_msgs::msg::Vector3 inPos, outPos;
     inPos.x = 2;
@@ -174,5 +157,22 @@ TEST_F(FrameAlignTest, test_ComputeFrameAlignment_otherframe_yawed) {
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
     ASSERT_NEAR(outPos.x, 4, 0.01);
     ASSERT_NEAR(outPos.y, 4, 0.01);
-    ASSERT_NEAR(outPos.z, 0, 0.01);
+    ASSERT_NEAR(outPos.z, 4, 0.01);
+}
+
+TEST_F(FrameAlignTest, test_ComputeFrameAlignment_otherframe_yawed) {
+    //test computing target position to put the frame at (2, 2, 2)
+    setUpBroadcaster(1, -1, -1, 0, 0, 1.5707);
+
+    geometry_msgs::msg::Vector3 inPos, outPos;
+    inPos.x = 2;
+    inPos.y = 2;
+    inPos.z = 2;
+
+    auto result = testFrameAlign(toolNode, "some_other_frame", inPos, outPos);
+
+    ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
+    ASSERT_NEAR(outPos.x, 0, 0.01);
+    ASSERT_NEAR(outPos.y, 4, 0.01);
+    ASSERT_NEAR(outPos.z, 4, 0.01);
 }
