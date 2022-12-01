@@ -14,13 +14,22 @@ def generate_launch_description():
                     name='torpedo_hole_publisher',
                     arguments=["0", "0.1524", "0.381", "0", "0", "0", "torpedoGman_frame", "torpedoHole_frame"]
                 ),
-                
+
                 Node(
                     package='riptide_autonomy2',
-                    executable='AlignTorpedos.py',
-                    name='AlignTorpedos',
-                    respawn=False,
+                    executable='doTask',
+                    name='autonomy',
+                    respawn=True,
                     output='screen',
+                    parameters=[
+                        {
+                            # 'ext_plugin_list': [
+                                
+                            # ],
+                            'enable_zmq': False,
+                            'enable_cout': False
+                        }
+                    ]
                 )
             ]
         )

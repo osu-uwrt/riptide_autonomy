@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
+from enum import Enum
 import os
 import sys
 from glob import glob
@@ -11,7 +12,15 @@ if HOME_DIR is None:
     exit(1)
 
 AUTONOMY_SRC_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/src/riptide_autonomy".format(HOME_DIR)
-SHELL_ASSISTANT_FILE  = "{}/assistant/shellassistant.sh".format(AUTONOMY_SRC_LOCATION)
+AUTONOMY_INCLUDE_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/include/riptide_autonomy".format(HOME_DIR)
+AUTONOMY_TEST_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/test/riptide_autonomy".format(HOME_DIR)
+
+
+class BtNodeType(Enum):
+    ACTION = "UWRTActionNode"
+    CONDITION = "UWRTConditionNode"
+    DECORATOR = "UWRTDecoratorNode"
+
 
 #
 # UTIL FUNCTIONS
@@ -30,7 +39,30 @@ def askConfirmation(args, msg):
         return res.upper() == "Y"
 
     return True #user forced
+
+
+def prompt(args, msg: str, options: 'list[str]', default: int = 1):
+    if not args.force:
+        print(msg)
+        for i in range(0, len(options)):
+            print("    {}: {}".format(i + 1, options[i]))
         
+        response = input("[{}-{}]? ".format(1, len(options)))
+        while not response.isnumeric() or int(response) < 1 or int(response) > len(options):
+            response = input("Invalid response: please enter a number from {} to {}: ".format(1, len(options)))
+        
+        return int(response) - 1
+            
+    else:
+        return default
+        
+
+def categorizedGlob(baseDir: str, pattern: str) -> 'tuple[list[str]]':
+    actionFiles = glob("{}/bt_actions/{}".format(baseDir, pattern))
+    conditionFiles = glob("{}/bt_conditions/{}".format(baseDir, pattern))
+    decoratorFiles = glob("{}/bt_decorators/{}".format(baseDir, pattern))
+    return actionFiles, conditionFiles, decoratorFiles
+
 
 def fileNameNoExt(fileName: str):
     base = os.path.basename(fileName)
@@ -71,6 +103,43 @@ def createFileFromTemplate(templatePath: str, targetPath: str, args: 'list[str]'
     writeStringToFile(targetPath, contents)
 
 
+#creates a node file for a node with name nodeName with type nodeType
+def createNodeFile(args, nodeName: str, nodeType: BtNodeType):
+    #check node type
+    if not isinstance(nodeType, BtNodeType):
+        raise TypeError("Parameter nodeType must be a member of the BtNodeType enum.")
+    
+    template = "actionnode_hpp_template" if nodeType == BtNodeType.ACTION else "nonactionnode_hpp_template"
+        
+    templatePath = "{}/assistant/templates/{}".format(AUTONOMY_SRC_LOCATION, template)    
+    newFileName = "{0}/bt_{1}s/{2}.bt{1}.hpp".format(AUTONOMY_INCLUDE_LOCATION, nodeType.name.lower(), nodeName)
+    
+    if os.path.exists(newFileName):
+        if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):
+            info(args, "Not creating file.") #user said no
+            return
+    
+    createFileFromTemplate(templatePath, newFileName, [nodeName, nodeType.value])
+    info(args, "Created a new {} with name {}.".format(nodeType.value, nodeName))
+
+
+#creates a test file for a node with name nodeName of type nodeType.
+def createTestFile(args, nodeName: str, nodeType: BtNodeType):
+    #check node type
+    if not isinstance(nodeType, BtNodeType):
+        raise TypeError("Parameter nodeType must be a member of the BtNodeType enum.")
+    
+    templatePath = "{}/assistant/templates/test_template".format(AUTONOMY_SRC_LOCATION)
+    newFileName = "{0}/bt_{1}s/Test{2}.cpp".format(AUTONOMY_TEST_LOCATION, nodeType.name.lower(), nodeName)
+
+    if os.path.exists(newFileName):
+        if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):
+            info(args, "Not creating file.") #user said no
+            return
+    
+    createFileFromTemplate(templatePath, newFileName, [nodeName])
+    info(args, "Created test file for {} {}.".format(nodeType.name.lower(), nodeName))
+
 #
 # CALLBACKS
 #
@@ -83,100 +152,196 @@ def onReconfigureAutonomy(args):
     os.chdir(workspaceDir)
     
     #run command to reconfigure and build
-    res = os.system("colcon build --cmake-force-configure")
+    res = os.system("colcon build --cmake-clean-cache --packages-select riptide_autonomy2")
     
     if res:
         info(args, "Error reconfiguring autonomy.")
 
 
+#called when the check task is invoked
+def onCheck(args):
+    skipAllPrompts = args.force
+    
+    #gives a prompt to the user as long as skipAllPrompts is False. Returns the user-selected result as an integer
+    def conditionalPrompt(msg: str, options: 'list[str]', default: int = 1):
+        if not skipAllPrompts:
+            return prompt(args, msg, options, default)
+    
+    
+    #analyzes files and their tests to figure out if something is missing. The goal is for every file to have its own test.
+    #returns true if changes were made to the workspace that need to be built. (false otherwise)
+    def analyzeFiles(files: 'list[str]', tests: 'list[str]', nodeType: BtNodeType):
+        nonlocal skipAllPrompts
+        
+        #check bt node type
+        if not isinstance(nodeType, BtNodeType):
+            raise TypeError("Parameter nodeType must be a member of the BtNodeType enum.")
+        
+        madeChanges = False
+        
+        #names of files
+        fileNames = [fileNameNoExt(file) for file in files]
+        testNames = [fileNameNoExt(test) for test in tests]
+        
+        #convention is for every file (say XYZ) in fileNames, there should be a test file named TestXYZ
+        filesWithoutTests = [file for file in fileNames if "Test{}".format(file) not in testNames]
+        testsWithoutFiles = [test for test in testNames if test.replace("Test", "") not in fileNames]
+        
+        #print summary
+        info(args, "Found {} files.".format(len(fileNames)))
+        info(args, "Found {} tests.".format(len(testNames)))
+        info(args, "Found {} files without tests.".format(len(filesWithoutTests)))
+        info(args, "Found {} useless tests.\n".format(len(testsWithoutFiles)))
+        
+        # #ask user what they want to do about files without tests
+        for file in filesWithoutTests:
+            response = conditionalPrompt(
+                "BT Node {} has a file definition but no test. What would you like to do?".format(file),
+                [
+                    "Create a test file",
+                    "Delete the file",
+                    "Do nothing",
+                    "Do nothing for all"
+                ],
+                2 #default is do nothing
+            )
+            
+            if response == 0: #create test file
+                createTestFile(args, file, nodeType)
+                madeChanges = True
+            elif response == 1: #delete file
+                if askConfirmation(args, "Do you really want to delete {}?".format(file)):
+                    pathToFile = "{0}/bt_{1}s/{2}.bt{1}.hpp".format(AUTONOMY_INCLUDE_LOCATION, nodeType.name.lower(), file)
+                    os.remove(pathToFile)
+                    info(args, "Removed {} {}.".format(nodeType.name.lower(), file))
+                    madeChanges = True
+            #3 is do nothing
+            elif response == 3: #do nothing for all
+                skipAllPrompts = True
+            
+        
+        for test in testsWithoutFiles:
+            response = conditionalPrompt(
+                "Test file {} does not correspond with an existing BT node. What would you like to do?".format(test),
+                [
+                    "Create a Node file",
+                    "Delete the test",
+                    "Do nothing",
+                    "Do nothing for all"
+                ],
+                2 #default is do nothing
+            )
+            
+            if response == 0: #create
+                createNodeFile(args, test, nodeType)
+                madeChanges = True
+            elif response == 1: #delete
+                if askConfirmation(args, "Are you sure you want to delete the test?"):
+                    pathToFile = "{}/bt_{}s/{}.cpp".format(AUTONOMY_TEST_LOCATION, nodeType.name.lower(), test)
+                    os.remove(pathToFile)
+                    info(args, "Removed test {}".format(test))
+                    madeChanges = True
+            #3 is do nothing
+            elif response == 3: #do nothing for all
+                skipAllPrompts = True
+        
+        return madeChanges
+            
+    #ACTUAL CHECK FUNCTION STUFF STARTS HERE
+    
+    #get list of bt node and test files
+    actionFiles, conditionFiles, decoratorFiles = categorizedGlob(AUTONOMY_INCLUDE_LOCATION, "*.hpp")
+    actionTests, conditionTests, decoratorTests = categorizedGlob(AUTONOMY_TEST_LOCATION, "*.cpp")
+        
+    info(args, "BT Actions")
+    actionsHadChanges = analyzeFiles(actionFiles, actionTests, BtNodeType.ACTION)
+    
+    info(args, "BT Conditions")
+    conditionsHadChanges = analyzeFiles(conditionFiles, conditionTests, BtNodeType.CONDITION)
+    
+    info(args, "BT Decorators")
+    decoratorsHadChanges = analyzeFiles(decoratorFiles, decoratorTests, BtNodeType.DECORATOR)
+    
+    #if changes were made, ask the user to rebuild them
+    if actionsHadChanges or conditionsHadChanges or decoratorsHadChanges:
+        if askConfirmation(args, "Changes were made to the workspace that need to be built. Rebuild autonomy now?"):
+            onReconfigureAutonomy(args)
+        else:
+            info(args, "Not rebuilding autonomy. Remember to rebuild it yourself before running it so your changes can take effect")
+    
+    info(args, "Check complete.")
+    
+
+
 #called when the create task is invoked.
 def onCreate(args):
-    templateName = "{}/assistant/templates/node_src_template".format(AUTONOMY_SRC_LOCATION, args.type)    
-    newFileName = "{0}/bt_{1}s/{2}.bt{1}.cpp".format(AUTONOMY_SRC_LOCATION, args.type, args.name)
+    nodeType = None
+    try:
+        #select enum value by name, which is the user type specification but uppercase.
+        #this statement must populate nodeType or else catch block will fire
+        nodeType = BtNodeType[args.type.upper()] 
+    except KeyError:
+        print("Node Type {} not recognized/implemented!".format(args.type), file=sys.stderr)
+        exit(1)
     
-    if os.path.exists(newFileName):
-        if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):
-            info(args, "Not creating file.") #user said no
-            return
-    
-    createFileFromTemplate(templateName, newFileName, [args.name, args.type.lower()])
-    info(args, "Created a new {} with name {}.".format(args.type, args.name))
+    #create file
+    createNodeFile(args, args.name, nodeType)
+    createTestFile(args, args.name, nodeType)
     
     #rebuild autonomy to force cmake to configure and generate appropriate headers
     if args.no_rebuild:
         info(args, "You need to completely rebuild riptide_autonomy2 for the changes to take effect.")
     else:
         onReconfigureAutonomy(args)
-    
-    
-#called when the generate headers action is invoked.
-def onGenerateHeaders(args):
-    absdir = os.path.abspath(args.target_directory)
-    info(args, "Generating headers in directory {}".format(absdir))
-    
-    #ensure necessary directories exist
-    ensureDirectoryExists(args.target_directory)
-    ensureDirectoryExists("{}/{}".format(args.target_directory, "bt_actions"))
-    ensureDirectoryExists("{}/{}".format(args.target_directory, "bt_conditions"))
-    ensureDirectoryExists("{}/{}".format(args.target_directory, "bt_decorators"))
-    
-    #resolve source file names
-    actionFiles = glob("{}/bt_actions/*.btaction.cpp".format(AUTONOMY_SRC_LOCATION))
-    conditionFiles = glob("{}/bt_conditions/*.btcondition.cpp".format(AUTONOMY_SRC_LOCATION))
-    decoratorFiles = glob("{}/bt_decorators/*.btdecorator.cpp".format(AUTONOMY_SRC_LOCATION))
-    
-    #resolve template names
-    headerTemplate = "{}/assistant/templates/node_header_template".format(AUTONOMY_SRC_LOCATION)
-    autonomyTemplate = "{}/assistant/templates/autonomy_header_template".format(AUTONOMY_SRC_LOCATION)
-    
-    #populates header files from templates with two arguments (first is uppercase name, second is titlecase name)
-    #returns a list containing all populated header files
-    def populateHeadersFromTemplates(directory: str, files: 'list[str]', headerSuperclass: str):
-        headersList = []
-        for filePath in files:
-            #get actual name of file (without extension)
-            fileName = fileNameNoExt(filePath)
-            info(args, "Creating header file for {}".format(fileName))
-            
-            #install file from template
-            installFileName = "{}/{}/{}.h".format(args.target_directory, directory, fileName)
-            createFileFromTemplate(headerTemplate, installFileName, [fileName.upper(), fileName, headerSuperclass])
-            headersList.append("{}/{}.h".format(directory, fileName))
-        
-        return headersList
-        
-    actionHeaders    = populateHeadersFromTemplates("bt_actions", actionFiles, "UWRTSyncActionNode")
-    conditionHeaders = populateHeadersFromTemplates("bt_conditions", conditionFiles, "BT::ConditionNode")
-    decoratorHeaders = populateHeadersFromTemplates("bt_decorators", decoratorFiles, "BT::DecoratorNode")
-    
-    #create autonomy.h file. only need to fill in the #include's for all custom nodes
-    includes = ""
-    for header in (actionHeaders + conditionHeaders + decoratorHeaders):
-        includes += "#include \"{}\"\n".format(header) # ex. #include "Actuate.h"\n
-    
-    autonomyHeaderLocation = "{}/autonomy.h".format(args.target_directory)
-    createFileFromTemplate(autonomyTemplate, autonomyHeaderLocation, [includes])
-    
 
-def onGenerateRegistrator(args):
-    location = args.file_location
+
+def onGenerateRegistrators(args):
+    location = args.directory
     
-    #resolve source file names
-    actionFiles = glob("{}/bt_actions/*.btaction.cpp".format(AUTONOMY_SRC_LOCATION))
-    conditionFiles = glob("{}/bt_conditions/*.btcondition.cpp".format(AUTONOMY_SRC_LOCATION))
-    decoratorFiles = glob("{}/bt_decorators/*.btdecorator.cpp".format(AUTONOMY_SRC_LOCATION))
+    #resolve general node file names    
+    generalActionFiles, generalConditionFiles, generalDecoratorFiles = categorizedGlob(AUTONOMY_INCLUDE_LOCATION, "*.hpp")
     
-    #string containing code that registers the nodes
-    registrations = ""
-    for file in (actionFiles + conditionFiles + decoratorFiles):
-        #ex. factory.registerNodeType<Actuate>("Actuate");
-        registrations += "    factory->registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
+    #resolve simple node file names
+    simpleActionFiles, simpleConditionFiles, simpleDecoratorFiles = categorizedGlob(AUTONOMY_SRC_LOCATION, "*.simple.cpp")
     
-    template = "{}/assistant/templates/node_registrator_template".format(AUTONOMY_SRC_LOCATION)
-    createFileFromTemplate(template, location, [registrations])
-    info(args, "Generated registrator source code at {}".format(os.path.abspath(location)))
+    #creates a single registrator
+    def createRegistrator(generalFiles: 'list[str]', simpleFiles: 'list[str]', location: str):
+        registrations = ""
+        headers = ""
+        for file in generalFiles:
+            # perform general registration on all other hpps
+            registrations += "    factory.registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
+            
+            #figure out node type (its in the name between the second to last and last dots)
+            lastDot = file.rfind(".")
+            secondLastDot = file.rfind(".", 0, lastDot - 1)
+                            
+            #not checking dots because files need to have two to be globbed
+            nodeType = file[secondLastDot + 1 : lastDot]
+            
+            nodeDir = ""
+            if(nodeType == "btaction"):
+                nodeDir = "bt_actions"
+            elif(nodeType == "btcondition"):
+                nodeDir = "bt_conditions"
+            elif(nodeType == "btdecorator"):
+                nodeDir = "bt_decorators"
+            
+            headers += "#include \"riptide_autonomy/{}/{}\"\n".format(nodeDir, os.path.basename(file))
         
+        for file in simpleFiles:
+            registrations += "    {0}::bulkRegister(factory);\n".format(fileNameNoExt(file))
+        
+        templatePath = "{}/assistant/templates/plugin_registrator_template".format(AUTONOMY_SRC_LOCATION)
+        createFileFromTemplate(templatePath, location, [headers, registrations])
     
+    createRegistrator(generalActionFiles, simpleActionFiles, "{}/registerActions.cpp".format(location))
+    createRegistrator(generalConditionFiles, simpleConditionFiles, "{}/registerConditions.cpp".format(location))
+    createRegistrator(generalDecoratorFiles, simpleDecoratorFiles, "{}/registerDecorators.cpp".format(location))
+    
+    info(args, "Generated registrators in directory {}".format(os.path.abspath(location)))
+        
+        
 #
 # ARGPARSE TASK DEFINITIONS
 #
@@ -184,7 +349,7 @@ def onGenerateRegistrator(args):
 #task struct containing name, callback, and description. arguments are custom
 class Task:
     class Argument:
-        def __init__(self, name, options=None, optional=False):
+        def __init__(self, name: str, options: 'list[str]' = None, optional: bool = False):
             self.name = name
             self.options = options
             self.optional = optional
@@ -204,6 +369,12 @@ taskOptions = {
         []
     ),
     
+    "check" : Task(
+        onCheck,
+        "Check the status of the autonomy package and recommend steps to keep it in an ideal state. Using this with the -f option will skip all user prompts and make no changes to the workspace.",
+        []
+    ),
+    
     "create" : Task(
         onCreate, 
         "Create a new custom action, decorator, or condition node.", 
@@ -214,19 +385,11 @@ taskOptions = {
         ]
     ),
     
-    "generate_headers" : Task(
-        onGenerateHeaders,
-        "Generate headers for custom nodes in the specified target directory.",
+    "generate_registrators" : Task(
+        onGenerateRegistrators,
+        "Generate C++ source code for plugin registrators.",
         [
-            Task.Argument("target_directory")
-        ]
-    ),
-    
-    "generate_registrator" : Task(
-        onGenerateRegistrator,
-        "Generate C++ source code for the registerCustomNodes() function in autonomy.h.",
-        [
-            Task.Argument("file_location")
+            Task.Argument("directory")
         ]
     )
 }

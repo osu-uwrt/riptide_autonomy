@@ -1,4 +1,26 @@
-#include "autonomy.h"
+#include "riptide_autonomy/autonomy_lib.hpp"
+
+using namespace std::chrono_literals;
+
+void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName) {
+    std::string amentIndexPath = ament_index_cpp::get_package_prefix(packageName); // TODO Make this work to scan ament index and get to our plugin
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_decorators.so");
+}
+
+
+void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext) {
+    // give each BT node access to our RCLCPP context
+    for (auto &node : tree.nodes)
+    {
+        // Not a typo: it is "=", not "=="
+        if (auto btNode = dynamic_cast<UwrtBtNode *>(node.get()))
+        {
+            btNode->init(rosContext);
+        }
+    }
+}
 
 
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry_msgs::msg::TransformStamped transform) {
@@ -31,41 +53,35 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry
     return result;
 }
 
-std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs::msg::Pose original, std::string toFrame, std::string fromFrame, rclcpp::Node::SharedPtr rosnode){
-
-
-    tf2_ros::Buffer buffer(rosnode->get_clock());
-    tf2_ros::TransformListener listener(buffer);
+bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
+    bool printedWarning = false;
+    
     //look up transform with a three second timeout to find one
     rclcpp::Time startTime = rosnode->get_clock()->now();
-    while((rosnode->get_clock()->now() - startTime).seconds() < 3) {
+    while((rosnode->get_clock()->now() - startTime) < 3s) {
         try {
-            geometry_msgs::msg::TransformStamped transform = buffer.lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
-            geometry_msgs::msg::Pose transformed = doTransform(original, transform);
+            geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
+            result = doTransform(original, transform);
 
-            RCLCPP_INFO(log, "transformed position: %f, %f, %f", transformed.position.x, transformed.position.y, transformed.position.z);
-            RCLCPP_INFO(log, "transformed orientation: %f, %f, %f, %f", transformed.orientation.x, transformed.orientation.y, transformed.orientation.z, transformed.orientation.w);
-
-
-            return std::make_tuple(transformed, true);
+            return true;
 
         } catch(tf2::LookupException &ex) {
-            RCLCPP_WARN(log, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
-
-            //wait a little bit for some frame data to come in 
-            rclcpp::Time waitStart = rosnode->get_clock()->now();
-            while((rosnode->get_clock()->now() - waitStart).seconds() < 1) {
-                rclcpp::spin_some(rosnode);
+            if(!printedWarning) {
+                RCLCPP_WARN(log, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
+                printedWarning = true;
             }
         }
     }
     RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
-    geometry_msgs::msg::Pose failed; 
-    return std::make_tuple(failed, false);
-    
+    return false;
 }
 
+bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
+    std::shared_ptr<tf2_ros::Buffer> buffer = std::make_shared<tf2_ros::Buffer>(rosnode->get_clock());
+    tf2_ros::TransformListener listener(*buffer);
 
+    return transformBetweenFrames(rosnode, buffer, relative, fromFrame, toFrame, result);
+}
 
 
 geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point pt) {
@@ -113,19 +129,6 @@ double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 
     return distance(vector3ToPoint(point1), vector3ToPoint(point2));
 }
 
-template<typename T>
-bool getFromBlackboard(BT::TreeNode& n, std::string key, T *value) {
-    try {
-        if(n.config().blackboard.get()->get<T>(key, *value)) {
-            return true;
-        }
-    } catch (std::runtime_error const&) {
-        RCLCPP_ERROR(log, "Could not cast blackboard entry \"%s\" to the correct type.", key.c_str());
-    }
-
-    return false;
-}
-
 std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
     std::string result = "";
     int pos = 0;
@@ -142,7 +145,7 @@ std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
                 valueOfEntry;
 
             //get the value of the entry
-            if(getFromBlackboard<std::string>(btNode, nameOfEntry, &valueOfEntry)) {
+            if(getFromBlackboard<std::string>(btNode, nameOfEntry, valueOfEntry)) {
                 //if nameOfEntry exists, valueOfEntry was populated by the call above
                 result += valueOfEntry;
             } else {
