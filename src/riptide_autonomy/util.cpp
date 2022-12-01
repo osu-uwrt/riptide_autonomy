@@ -53,16 +53,17 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry
     return result;
 }
 
-std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer) {
+bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
     bool printedWarning = false;
+    
     //look up transform with a three second timeout to find one
     rclcpp::Time startTime = rosnode->get_clock()->now();
     while((rosnode->get_clock()->now() - startTime) < 3s) {
         try {
             geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
-            geometry_msgs::msg::Pose transformed = doTransform(original, transform);
+            result = doTransform(original, transform);
 
-            return std::make_tuple(transformed, true);
+            return true;
 
         } catch(tf2::LookupException &ex) {
             if(!printedWarning) {
@@ -72,16 +73,14 @@ std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs:
         }
     }
     RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
-    geometry_msgs::msg::Pose failed; 
-    return std::make_tuple(failed, false);
+    return false;
 }
 
-
-std::tuple<geometry_msgs::msg::Pose, bool> transformBetweenFrames(geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, rclcpp::Node::SharedPtr rosnode) {
+bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
     std::shared_ptr<tf2_ros::Buffer> buffer = std::make_shared<tf2_ros::Buffer>(rosnode->get_clock());
     tf2_ros::TransformListener listener(*buffer);
 
-    return transformBetweenFrames(relative, toFrame, fromFrame, rosnode, buffer);
+    return transformBetweenFrames(rosnode, buffer, relative, fromFrame, toFrame, result);
 }
 
 
