@@ -152,6 +152,28 @@ ament_target_dependencies(doTask
   riptide_msgs2
 )
 
+#
+# BT Health Checker executable
+#
+add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
+
+
+target_include_directories(checkBT PUBLIC
+  ${PROJECT_SOURCE_DIR}/include)
+
+target_link_libraries(checkBT autonomy_utils)
+
+
+# set the name of the autonomy package
+target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
+
+ament_target_dependencies(checkBT
+  behaviortree_cpp_v3
+)
+
+#
+# test bed executable
+#
 add_executable(testbed src/riptide_autonomy/testbed.cpp)
 
 target_include_directories(testbed PUBLIC
@@ -166,7 +188,7 @@ ament_target_dependencies(testbed
 )
 
 #install executable
-install(TARGETS doTask testbed
+install(TARGETS doTask checkBT testbed
   DESTINATION lib/${PROJECT_NAME}
 )
 
