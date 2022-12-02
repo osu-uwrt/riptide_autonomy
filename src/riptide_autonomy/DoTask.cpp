@@ -31,18 +31,6 @@
 using namespace BT;
 using namespace std::chrono_literals;
 
-std::string getEnvVar(const char *name)
-{
-    const char *env = std::getenv(name);
-    if (env == nullptr)
-    {
-        RCLCPP_INFO(log, "DoTask: %s environment variable not found!", name);
-        return "";
-    }
-
-    return std::string(env);
-}
-
 namespace do_task
 {
     using namespace std::placeholders;

@@ -2,6 +2,20 @@
 
 using namespace std::chrono_literals;
 
+
+std::string getEnvVar(const char *name)
+{
+    const char *env = std::getenv(name);
+    if (env == nullptr)
+    {
+        RCLCPP_INFO(log, "DoTask: %s environment variable not found!", name);
+        return "";
+    }
+
+    return std::string(env);
+}
+
+
 void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName) {
     std::string amentIndexPath = ament_index_cpp::get_package_prefix(packageName); // TODO Make this work to scan ament index and get to our plugin
     factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
