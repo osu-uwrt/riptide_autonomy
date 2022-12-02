@@ -130,6 +130,11 @@ target_include_directories(autonomy_decorators PUBLIC
 ament_target_dependencies(autonomy_decorators ${deps})
 target_link_libraries(autonomy_decorators autonomy_utils)
 
+#
+# tinyxml2 library
+#
+add_library(tinyxml2 SHARED
+  3rdparty/tinyxml/tinyxml2.cpp)
 
 #
 # Tree execution executable
@@ -137,11 +142,10 @@ target_link_libraries(autonomy_decorators autonomy_utils)
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
 
 target_include_directories(doTask PUBLIC
-  ${PROJECT_SOURCE_DIR}/include)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
 
 target_link_libraries(doTask autonomy_utils)
-
-# set the name of the autonomy package
 target_compile_definitions(doTask PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
 ament_target_dependencies(doTask
@@ -157,14 +161,12 @@ ament_target_dependencies(doTask
 #
 add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
 
-
 target_include_directories(checkBT PUBLIC
-  ${PROJECT_SOURCE_DIR}/include)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
+    $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(checkBT autonomy_utils)
-
-
-# set the name of the autonomy package
+target_link_libraries(checkBT autonomy_utils tinyxml2)
 target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
 ament_target_dependencies(checkBT
@@ -177,7 +179,8 @@ ament_target_dependencies(checkBT
 add_executable(testbed src/riptide_autonomy/testbed.cpp)
 
 target_include_directories(testbed PUBLIC
-  ${PROJECT_SOURCE_DIR}/include)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
 
 target_link_libraries(testbed autonomy_utils)
 
