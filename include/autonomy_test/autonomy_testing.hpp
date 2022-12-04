@@ -138,7 +138,6 @@ class BtTest : public ::testing::Test {
     void SetUp() override;
     void TearDown() override;
 
-    // static std::shared_ptr<BtTestTool> getBtTestTool();
     std::thread executionThread;
     std::shared_ptr<BtTestTool> toolNode;
 };

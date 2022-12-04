@@ -1,5 +1,3 @@
-#include <ctime>
-
 #include "riptide_autonomy/autonomy_lib.hpp"
 #include "tinyxml/tinyxml2.h"
 
@@ -59,31 +57,19 @@ int prompt(const std::string query, const std::vector<std::string> options) {
  * @return false if the workspace and the riptide_autonomy implementations do not match up.
  */
 bool doCheck(XMLDocument& doc, std::shared_ptr<BehaviorTreeFactory> factory) {
-    (void) doc;
+    auto root = doc.RootElement();
+
+
     (void) factory;
     return true;
 }
 
 
 int main() {
-    //print local time. program will also save a copy of the BT workspace with this date and time to make it easy to locate and restore
-    time_t now = time(0);
-    tm *ltime = localtime(&now);
-    ltime->tm_mon += 1;    //make month 1-12 (from 0-11)
-    ltime->tm_year += 1900; //make year start from 0 (instead of from 1900)
-    printf(
-        "Checking BT system on %i/%i/%i @ %.2i:%.2i:%.2i\n",
-        ltime->tm_mon,
-        ltime->tm_mday,
-        ltime->tm_year,
-        ltime->tm_hour,
-        ltime->tm_min,
-        ltime->tm_sec
-    );
-
     //get HOME directory location and figure out where the groot workspace is
     const std::string HOME = getEnvVar("HOME");
     if(HOME.length() == 0) {
+        std::cerr << "Failed to find HOME directory!" << std::endl;
         return 1; //cant do anything more without HOME directory
     }
 
