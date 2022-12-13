@@ -173,25 +173,8 @@ ament_target_dependencies(checkBT
   behaviortree_cpp_v3
 )
 
-#
-# test bed executable
-#
-add_executable(testbed src/riptide_autonomy/testbed.cpp)
-
-target_include_directories(testbed PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-target_link_libraries(testbed autonomy_utils)
-
-ament_target_dependencies(testbed
-  rclcpp
-  rclcpp_action
-  riptide_msgs2
-)
-
 #install executable
-install(TARGETS doTask checkBT testbed
+install(TARGETS doTask checkBT
   DESTINATION lib/${PROJECT_NAME}
 )
 
