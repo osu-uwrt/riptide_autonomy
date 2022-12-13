@@ -45,28 +45,56 @@ class ComputeFrameAlignment : public UWRTActionNode {
         std::string BaseFrame = "tempest/base_link";
 
         //make a pose  that represents the desired position of the given frame
-        geometry_msgs::msg::Pose desiredPose;
-        desiredPose.position.x = getInput<double>("x").value();
-        desiredPose.position.y = getInput<double>("y").value();
-        desiredPose.position.z = getInput<double>("z").value();
+        geometry_msgs::msg::Pose finalRes;
+        finalRes.position.x = getInput<double>("x").value();
+        finalRes.position.y = getInput<double>("y").value();
+        finalRes.position.z = getInput<double>("z").value();
 
-        //convert this to base frame
-        std::tuple<geometry_msgs::msg::Pose, bool> toBase = transformBetweenFrames(desiredPose, BaseFrame, fromOdom, rosnode);
-        if(!(std::get<1>(toBase))){
+        // //convert this to base frame
+        // std::tuple<geometry_msgs::msg::Pose, bool> toBase = transformBetweenFrames(rosnode, desiredPose, fromOdom, BaseFrame,);
+        // if(!(std::get<1>(toBase))){
+        //     return BT::NodeStatus::FAILURE;
+        // }
+
+        // //convert base to odom
+        // desiredPose = std::get<0>(toBase);
+
+        // std::tuple<geometry_msgs::msg::Pose, bool> toFinal = transformBetweenFrames(rosnode, desiredPose, BaseFrame, finalFrame, );
+
+        // if(!(std::get<1>(toFinal))){ 
+        //     return BT::NodeStatus::FAILURE;
+        // }
+
+        // geometry_msgs::msg::Pose finalRes = std::get<0>(toFinal);
+
+
+        //look up displacement between target frame and base frame in the final frame
+        // geometry_msgs::msg::Pose frameBaseDisplacement;
+        // if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), finalFrame, BaseFrame, frameBaseDisplacement)) {
+        //     return BT::NodeStatus::FAILURE;
+        // }
+
+        // //convert displacement to odom frame
+        // //we now have the displacement between the two frames in odom frame
+        // geometry_msgs::msg::Pose frameOdomDisplacement;
+        // if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), BaseFrame, fromOdom, frameOdomDisplacement)) {
+        //     return BT::NodeStatus::FAILURE;
+        // }
+
+        geometry_msgs::msg::Pose baseFrameOdom;
+        if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), BaseFrame, fromOdom, baseFrameOdom)) {
             return BT::NodeStatus::FAILURE;
         }
 
-        //convert base to odom
-
-        desiredPose = std::get<0>(toBase);
-
-        std::tuple<geometry_msgs::msg::Pose, bool> toFinal = transformBetweenFrames(desiredPose, finalFrame, BaseFrame, rosnode);
-
-        if(!(std::get<1>(toFinal))){
+        geometry_msgs::msg::Pose targetFrameOdom;
+        if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), finalFrame, fromOdom, targetFrameOdom)) {
             return BT::NodeStatus::FAILURE;
         }
 
-        geometry_msgs::msg::Pose finalRes = std::get<0>(toFinal);
+        //compute target tempest position by adding target frame displacement in odom frame to the target position
+        finalRes.position.x -= targetFrameOdom.position.x - baseFrameOdom.position.x;
+        finalRes.position.y -= targetFrameOdom.position.y - baseFrameOdom.position.y;
+        finalRes.position.z -= targetFrameOdom.position.z - baseFrameOdom.position.z;
 
         //set outputs to the odom coords that get the desired frame to the desired position
 

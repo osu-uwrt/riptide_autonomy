@@ -3,9 +3,9 @@
 #include <behaviortree_cpp_v3/loggers/bt_file_logger.h>
 
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/executors/multi_threaded_executor.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <ament_index_cpp/get_package_prefix.hpp>
 
 #include <riptide_msgs2/action/execute_tree.hpp>
 #include <riptide_msgs2/srv/list_trees.hpp>
@@ -14,7 +14,7 @@
 #include <chrono>
 #include <filesystem>
 
-#include "riptide_autonomy/UwrtBtNode.hpp"
+#include "riptide_autonomy/autonomy_lib.hpp"
 #include "riptide_autonomy/UWRTLogger.hpp"
 
 /**
@@ -27,9 +27,6 @@
 #define AUTONOMY_PKG_NAME "ritpide_autonomy2"
 #endif
 #define AUTONOMY_HOME_DIR "/osu-uwrt/riptide_software/src/riptide_autonomy/trees"
-
-// define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
-#define log rclcpp::get_logger("autonomy_dotask")
 
 using namespace BT;
 using namespace std::chrono_literals;
@@ -72,8 +69,7 @@ namespace do_task
 
             // declare params
             declare_parameter<bool>("enable_zmq", false);
-            declare_parameter<bool>("enable_cout", true);
-            declare_parameter<std::string>("cout_file", getEnvVar("HOME") + "/osu-uwrt/autonomy_log.txt");
+            declare_parameter<std::string>("log_file_dir", getEnvVar("HOME") + "/osu-uwrt/riptide_software/BTLogger");
             declare_parameter<std::vector<std::string>>("ext_plugin_list", std::vector<std::string>());
             declare_parameter<std::vector<std::string>>("ext_tree_dirs", std::vector<std::string>());
 
@@ -83,10 +79,9 @@ namespace do_task
                 RCLCPP_INFO(this->get_logger(), "Getting parameter data");
                 // get param values
                 enableZMQ = get_parameter("enable_zmq").as_bool();
-                enableCout = get_parameter("enable_cout").as_bool();
                 treeDirs = get_parameter("ext_tree_dirs").as_string_array();
                 pluginPaths = get_parameter("ext_plugin_list").as_string_array();
-                coutFilePath = get_parameter("cout_file").as_string();
+                fblDirPath = get_parameter("log_file_dir").as_string();
             }
             catch (const std::exception &e)
             {
@@ -103,10 +98,7 @@ namespace do_task
 
             // load our plugins from ament index
             RCLCPP_INFO(this->get_logger(), "Registering autonomy core plugin");
-            std::string amentIndexPath = ament_index_cpp::get_package_prefix(AUTONOMY_PKG_NAME); // TODO Make this work to scan ament index and get to our plugin
-            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
-            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
-            factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_decorators.so");
+            registerPluginsForFactory(factory, AUTONOMY_PKG_NAME);
 
             // load other plugins from the paramter server
             for (auto plugin : pluginPaths)
@@ -170,20 +162,10 @@ namespace do_task
             {
                 // load the tree file contents in to a BT context
                 Tree tree = factory->createTreeFromFile(goal_handle->get_goal()->tree);
-
-                // give each BT node access to our RCLCPP context
-                for (auto &node : tree.nodes)
-                {
-                    // Not a typo: it is "=", not "=="
-                    if (auto btNode = dynamic_cast<UwrtBtNode *>(node.get()))
-                    {
-                        btNode->init(this->shared_from_this());
-                    }
-                }
+                initRosForTree(tree, this->shared_from_this());
 
                 //make a new directory for the FBL log files
-                std::string FBLloggerDir = getEnvVar("HOME") + "/osu-uwrt/riptide_software/FBLLogger";
-                std::filesystem::create_directory(FBLloggerDir);
+                std::filesystem::create_directory(fblDirPath);
 
                 //get time
                 time_t now = time(0);
@@ -192,17 +174,15 @@ namespace do_task
                 tstruct = *localtime(&now);
                 strftime(buf, sizeof(buf), "%Y_%m_%d_%X", &tstruct);
                 //get file path name using time
-                std::string FBLFilePath = FBLloggerDir + "/FBLLog_" + buf+".txt";
+                std::string FBLFilePath = fblDirPath + "/BTLog_" + buf+".fbl";
 
                 // add the loggers to the BT context
                 RCLCPP_INFO(log, "DoTask: Loading Monitor");
                 PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
                 FileLogger fileLogger(tree, FBLFilePath.c_str());
-                StdCoutLogger coutLogger(tree);
                 UwrtLogger uwrtLogger(tree, this->shared_from_this());
 
                 // configure our loggers
-                coutLogger.setEnabled(enableCout);
                 zmq.setEnabled(enableZMQ);
                 uwrtLogger.setEnabled(true);
 
@@ -231,7 +211,6 @@ namespace do_task
                 }
 
                 fileLogger.flush();
-                coutLogger.flush(); // will flush if enabled
 
                 std::string resultStr = "SUCCESS";
                 switch(tickStatus) {
@@ -300,7 +279,7 @@ namespace do_task
         rclcpp::Service<riptide_msgs2::srv::ListTrees>::SharedPtr listTreeServer;
 
         // logger enablement flags
-        bool enableZMQ, enableCout;
+        bool enableZMQ;
 
         // execution context thread for the action server
         std::thread executionThread;
@@ -313,7 +292,7 @@ namespace do_task
         std::vector<std::string> pluginPaths;
 
         // cout log file location
-        std::string coutFilePath;
+        std::string fblDirPath;
     };
 } // namespace do_task
 
@@ -324,7 +303,10 @@ int main(int argc, char *argv[])
     // create our node context
     auto node = std::make_shared<do_task::BTExecutor>();
 
-    rclcpp::spin(node);
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node);
+    executor.spin();
 
+    // rclcpp::spin(node);
     rclcpp::shutdown();
 }

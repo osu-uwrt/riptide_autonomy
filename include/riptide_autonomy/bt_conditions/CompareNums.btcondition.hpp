@@ -54,12 +54,12 @@ class CompareNums : public UWRTConditionNode {
         { // check if a < b
             return (a < b ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
         }
-        else if (test == "=")
+        else if (test == "==")
         { // check if a == b
             return (a == b ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
         }
 
-        RCLCPP_ERROR(log, "Invalid operator %s!", test.c_str());
+        RCLCPP_ERROR(log, "Invalid operator %s! Valid options are \">\", \"<\", and \"==\".", test.c_str());
         return BT::NodeStatus::FAILURE;
     }
 };

@@ -112,9 +112,7 @@ class Actuate : public UWRTActionNode {
     /**
      * @brief Called when the node is halted.
      */
-    void onHalted() override {
-
-    }
+    void onHalted() override { }
 
     private:
     rclcpp::Publisher<riptide_msgs2::msg::ActuatorCommand>::SharedPtr publisher;

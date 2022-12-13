@@ -74,7 +74,7 @@ class AlignTorpedos : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        if(rclcpp::ok() && (rosnode->get_clock()->now() - startTime).seconds() > timeout && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) {
+        if(rclcpp::ok() && (rosnode->get_clock()->now() - startTime).seconds() < timeout && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) {
             return BT::NodeStatus::RUNNING;
         }
 
@@ -100,9 +100,7 @@ class AlignTorpedos : public UWRTActionNode {
     /**
      * @brief Called when the node is halted.
      */
-    void onHalted() override {
-        
-    }
+    void onHalted() override { }
 
     private:
 
