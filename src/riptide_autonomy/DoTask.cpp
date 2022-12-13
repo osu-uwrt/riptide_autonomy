@@ -174,7 +174,7 @@ namespace do_task
                 tstruct = *localtime(&now);
                 strftime(buf, sizeof(buf), "%Y_%m_%d_%X", &tstruct);
                 //get file path name using time
-                std::string FBLFilePath = fblDirPath + "/BTLog_" + buf+".fbl";
+                std::string FBLFilePath = fblDirPath + "/BTLog_" + buf + ".fbl";
 
                 // add the loggers to the BT context
                 RCLCPP_INFO(log, "DoTask: Loading Monitor");
