@@ -37,6 +37,15 @@
             <ForceSuccess>
                 <SubTree ID="GateTask"/>
             </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="BuoyTree"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="TorpedoTree"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SurfaceTree"/>
+            </ForceSuccess>
             <SubTree ID="KillController"/>
             <Action ID="Info" message="Routine finished!"/>
         </Sequence>

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<root main_tree_to_execute="BehaviorTree">
+<root>
     <BehaviorTree ID="ArmTorpedos">
         <Sequence>
             <Action ID="Info" message="Arming Torpedos..."/>
@@ -24,23 +24,6 @@
             <Action ID="Info" message="Torpedos Armed."/>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="BehaviorTree">
-        <Sequence>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="-3" value="-3"/>
-            <SetBlackboard output_key="-1.75" value="-1.75"/>
-            <SetBlackboard output_key="depth" value="-1"/>
-            <SubTree ID="WaitForKillSwitch"/>
-            <ForceSuccess>
-                <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="GateTask"/>
-            </ForceSuccess>
-            <SubTree ID="KillController"/>
-            <Action ID="Info" message="Routine finished!"/>
-        </Sequence>
-    </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
         <Sequence>
             <Action ID="Info" message="BUOY TIME"/>
@@ -54,33 +37,6 @@
             <Action ID="Wait" seconds="10"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="gx" y="gy" z="gz"/>
         </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="CloseClaw">
-        <Fallback>
-            <Sequence>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Wait for claw to close" num_seconds="7">
-                    <Sequence>
-                        <Action ID="Wait" seconds="1"/>
-                        <Action ID="Info" message="Attempting to close claw..."/>
-                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="1" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                        <Fallback name="Check if claw is in error state">
-                            <Inverter>
-                                <Condition ID="IsClawError" claw_state="{claw_state}"/>
-                            </Inverter>
-                            <ForceFailure>
-                                <Action ID="Error" message="Claw is in error state!"/>
-                            </ForceFailure>
-                        </Fallback>
-                        <Condition ID="IsClawClosed" claw_state="{claw_state}"/>
-                    </Sequence>
-                </Decorator>
-                <Action ID="Info" message="Claw closed."/>
-            </Sequence>
-            <ForceFailure>
-                <Action ID="Error" message="Failed to close claw!"/>
-            </ForceFailure>
-        </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="DisarmTorpedos">
         <Sequence>
@@ -122,34 +78,6 @@
             <Action ID="Info" message="Letting mapping gather detections for a few seconds"/>
             <Action ID="Wait" name="Wait for mapping" seconds="5"/>
         </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="Drop1">
-        <Fallback>
-            <Sequence>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Wait to see if it actually dropped" num_seconds="5">
-                    <Sequence>
-                        <Action ID="Wait" seconds="1"/>
-                        <Action ID="Info" message="Attempting to drop dropper 1..."/>
-                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="1" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                        <Fallback name="Check if dropper is in error state">
-                            <Inverter>
-                                <Condition ID="IsDropperError" dropper_state="{dropper1_state}"/>
-                            </Inverter>
-                            <ForceFailure>
-                                <Action ID="Error" message="Dropper 1 is in error state!"/>
-                            </ForceFailure>
-                        </Fallback>
-                        <Condition ID="IsDropperDropped" dropper_state="{dropper1_state}"/>
-                    </Sequence>
-                </Decorator>
-                <Action ID="Info" message="Successfully dropped dropper 1."/>
-            </Sequence>
-            <Action ID="Error" message="Failed to drop dropper 1!"/>
-        </Fallback>
-    </BehaviorTree>
-    <BehaviorTree ID="Drop2">
-        <SubTree ID="DropMarker" __shared_blackboard="false" dropper=""/>
     </BehaviorTree>
     <BehaviorTree ID="DropMarker">
         <Fallback>
@@ -316,33 +244,6 @@
             <Action ID="Info" message="Move Complete."/>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="OpenClaw">
-        <Fallback>
-            <Sequence>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Wait for claw to open" num_seconds="7">
-                    <Sequence>
-                        <Action ID="Wait" seconds="1"/>
-                        <Action ID="Info" message="Attempting to open claw..."/>
-                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="1" reset_actuators=""/>
-                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                        <Fallback name="Check if claw is in error state">
-                            <Inverter>
-                                <Condition ID="IsClawError" claw_state="{claw_state}"/>
-                            </Inverter>
-                            <ForceFailure>
-                                <Action ID="Error" message="Claw is in error state!"/>
-                            </ForceFailure>
-                        </Fallback>
-                        <Condition ID="IsClawOpen" claw_state="{claw_state}"/>
-                    </Sequence>
-                </Decorator>
-                <Action ID="Info" message="Claw opened."/>
-            </Sequence>
-            <ForceFailure name="Forces subtree to fail">
-                <Action ID="Error" message="Failed to open claw!"/>
-            </ForceFailure>
-        </Fallback>
-    </BehaviorTree>
     <BehaviorTree ID="PrimitiveMoveOrientation">
         <Sequence>
             <Action ID="Info" message="Rotating to RPY {r}, {p}, {y}"/>
@@ -469,7 +370,6 @@
             <Action ID="Info" message="Torpedo {torpedo_id} charged."/>
         </Sequence>
     </BehaviorTree>
-    <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="Actuate">
             <input_port name="arm_torpedo" required="false"/>
