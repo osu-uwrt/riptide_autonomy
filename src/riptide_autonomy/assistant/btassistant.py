@@ -6,15 +6,21 @@ import os
 import sys
 from glob import glob
 
-HOME_DIR = os.getenv("HOME")
-if HOME_DIR is None:
-    print("Could not get value of HOME environment variable!", file=sys.stderr)
-    exit(1)
+#find the location of this file and use it to locate the riptide_autonomy source package root
+FILE_LOC = os.path.abspath(__file__)
+if FILE_LOC.find("/riptide_autonomy/") < 0:
+    print("Failed to find the riptide_autonomy directory!", file=sys.stderr)
+    
+AUTONOMY_ROOT_LOCATION = os.path.join(FILE_LOC[0 : FILE_LOC.find("/riptide_autonomy/")], "riptide_autonomy")
 
-AUTONOMY_SRC_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/src/riptide_autonomy".format(HOME_DIR)
-AUTONOMY_INCLUDE_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/include/riptide_autonomy".format(HOME_DIR)
-AUTONOMY_TEST_LOCATION = "{}/osu-uwrt/riptide_software/src/riptide_autonomy/test/riptide_autonomy".format(HOME_DIR)
+#if the root location is in an install directory, change it to the source directory
+if AUTONOMY_ROOT_LOCATION.find("/install/") >= 0:
+    AUTONOMY_ROOT_LOCATION = os.path.join(AUTONOMY_ROOT_LOCATION[0 : AUTONOMY_ROOT_LOCATION.find("/install/")], "src", "riptide_autonomy")
 
+#resolve other important directory names
+AUTONOMY_SRC_LOCATION = "{}/src/riptide_autonomy".format(AUTONOMY_ROOT_LOCATION)
+AUTONOMY_INCLUDE_LOCATION = "{}/include/riptide_autonomy".format(AUTONOMY_ROOT_LOCATION)
+AUTONOMY_TEST_LOCATION = "{}/test/riptide_autonomy".format(AUTONOMY_ROOT_LOCATION)
 
 class BtNodeType(Enum):
     ACTION = "UWRTActionNode"
@@ -148,8 +154,11 @@ def createTestFile(args, nodeName: str, nodeType: BtNodeType):
 def onReconfigureAutonomy(args):
     info(args, "Reconfiguring and building the riptide_autonomy2 package...")
     
-    workspaceDir = "{}/osu-uwrt/riptide_software".format(HOME_DIR)
+    #back out two directories for workspace path (autonomy root is <workspace>/src/riptide_autonomy)
+    workspaceDir = os.path.join(AUTONOMY_ROOT_LOCATION, "../..")
     os.chdir(workspaceDir)
+    
+    info(args, "Building package in location {}".format(os.path.abspath(workspaceDir)))
     
     #run command to reconfigure and build
     res = os.system("colcon build --cmake-clean-cache --packages-select riptide_autonomy2")
@@ -423,6 +432,9 @@ def createArgParser() -> argparse.ArgumentParser:
 def main():
     parser = createArgParser()
     args = parser.parse_args()
+    
+    #print some information about the command
+    info(args, "Running subcommand {} on the package at {}".format(args.task, AUTONOMY_ROOT_LOCATION))
     
     #run desired task
     taskOptions[args.task].callback(args)
