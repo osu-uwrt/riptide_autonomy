@@ -26,7 +26,8 @@
 #ifndef AUTONOMY_PKG_NAME
 #define AUTONOMY_PKG_NAME "ritpide_autonomy2"
 #endif
-#define AUTONOMY_HOME_DIR "/osu-uwrt/riptide_software/src/riptide_autonomy/trees"
+#define AUTONOMY_TREE_DIR \
+    std::string(__FILE__).substr(0, std::string(__FILE__).find("/riptide_autonomy/")) + std::string("/riptide_autonomy/trees")
 
 using namespace BT;
 using namespace std::chrono_literals;
@@ -114,7 +115,7 @@ namespace do_task
             }
 
             // automatically add osu-uwrt riptide autonomy and the ament index dir
-            treeDirs.push_back(getEnvVar("HOME") + AUTONOMY_HOME_DIR);
+            treeDirs.push_back(AUTONOMY_TREE_DIR);
             treeDirs.push_back(ament_index_cpp::get_package_share_directory(AUTONOMY_PKG_NAME) + "/trees");
         }
 
@@ -299,6 +300,9 @@ namespace do_task
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
+
+    std::string treeDir = AUTONOMY_TREE_DIR;
+    RCLCPP_INFO(log, "Using tree directory at %s", treeDir.c_str());
 
     // create our node context
     auto node = std::make_shared<do_task::BTExecutor>();
