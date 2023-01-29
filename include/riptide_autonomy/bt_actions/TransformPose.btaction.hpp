@@ -49,19 +49,19 @@ class TransformPose : public UWRTActionNode {
     BT::NodeStatus onStart() override {
         // get frame names
         std::string
-            fromFrame = getInput<std::string>("from_frame").value(),
-            toFrame = getInput<std::string>("to_frame").value();
+            fromFrame = tryGetRequiredInput<std::string>(this, "from_frame", "world"),
+            toFrame = tryGetRequiredInput<std::string>(this, "to_frame", "world");
 
         geometry_msgs::msg::Pose original;
-        original.position.x = getInput<double>("x").value();
-        original.position.y = getInput<double>("y").value();
-        original.position.z = getInput<double>("z").value();
+        original.position.x = tryGetRequiredInput<double>(this, "x", 0);
+        original.position.y = tryGetRequiredInput<double>(this, "y", 0);
+        original.position.z = tryGetRequiredInput<double>(this, "z", 0);
         
         //convert original rpy to quaternion and set that
         geometry_msgs::msg::Vector3 originalRPY;
-        originalRPY.x = getInput<double>("or").value();
-        originalRPY.y = getInput<double>("op").value();
-        originalRPY.z = getInput<double>("oy").value();
+        originalRPY.x = tryGetRequiredInput<double>(this, "or", 0);
+        originalRPY.y = tryGetRequiredInput<double>(this, "op", 0);
+        originalRPY.z = tryGetRequiredInput<double>(this, "oy", 0);
         original.orientation = toQuat(originalRPY);
         
 

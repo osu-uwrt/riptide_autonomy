@@ -24,7 +24,7 @@
  * tree and return the result (0 if success, 1 if failure)
  */
 #ifndef AUTONOMY_PKG_NAME
-#define AUTONOMY_PKG_NAME "ritpide_autonomy2"
+#define AUTONOMY_PKG_NAME "riptide_autonomy2"
 #endif
 
 #define AUTONOMY_TREE_DIR \

@@ -43,14 +43,14 @@ class ResetOdom : public UWRTActionNode {
         //get inputs from BT
         auto request = std::make_shared<robot_localization::srv::SetPose::Request>();
 
-        request->pose.pose.pose.position.x = getInput<double>("x").value();
-        request->pose.pose.pose.position.y = getInput<double>("y").value();
-        request->pose.pose.pose.position.z = getInput<double>("z").value();
+        request->pose.pose.pose.position.x = tryGetRequiredInput<double>(this, "x", 0);
+        request->pose.pose.pose.position.y = tryGetRequiredInput<double>(this, "y", 0);
+        request->pose.pose.pose.position.z = tryGetRequiredInput<double>(this, "z", 0);
 
         geometry_msgs::msg::Vector3 orient;
-        orient.x = getInput<double>("or").value();
-        orient.y = getInput<double>("op").value();
-        orient.z = getInput<double>("oy").value();
+        orient.x = tryGetRequiredInput<double>(this, "or", 0);
+        orient.y = tryGetRequiredInput<double>(this, "op", 0);
+        orient.z = tryGetRequiredInput<double>(this, "oy", 0);
 
         request->pose.pose.pose.orientation = toQuat(orient);
 

@@ -38,7 +38,7 @@ class FireTorpedos : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        int torpedoID = getInput<int>("TorpedoID").value(); 
+        int torpedoID = tryGetRequiredInput<int>(this, "TorpedoID", -1); 
 
         if(!client->wait_for_action_server(3s)) {
             RCLCPP_ERROR(log, "FireTorpedos action server not available.");

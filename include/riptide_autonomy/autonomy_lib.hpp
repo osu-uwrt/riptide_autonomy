@@ -7,47 +7,8 @@
  * 
  */
 
-#include <iostream>
-#include <chrono>
-
-#include <behaviortree_cpp_v3/behavior_tree.h>
-#include <behaviortree_cpp_v3/bt_factory.h>
-
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
-
-#include <ament_index_cpp/get_package_prefix.hpp>
-
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/static_transform_broadcaster.h>
-// #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h> //galactic header. will go back to .hpp when I go over to humble
-
-#include <geometry_msgs/msg/vector3.hpp>
-#include <geometry_msgs/msg/point.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-#include <geometry_msgs/msg/quaternion.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <riptide_msgs2/msg/actuator_command.hpp>
-#include <riptide_msgs2/msg/actuator_status.hpp>
-#include <riptide_msgs2/msg/robot_state.hpp>
-#include <riptide_msgs2/msg/controller_command.hpp>
-
-#include <robot_localization/srv/set_pose.hpp>
-
-#include <riptide_msgs2/action/align_torpedos.hpp>
-#include <riptide_msgs2/action/actuate_torpedos.hpp>
-#include <riptide_msgs2/action/change_claw_state.hpp>
-#include <riptide_msgs2/action/actuate_droppers.hpp>
-
+#include "riptide_autonomy/autonomy_base.hpp"
 #include "riptide_autonomy/UwrtBtNode.hpp"
-
-
-
-//define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
-#define log rclcpp::get_logger("autonomy")
 
 //useful topic names for autonomy
 const std::string
@@ -201,6 +162,56 @@ bool getFromBlackboard(BT::TreeNode& n, std::string key, T& value) {
     }
 
     return getFromBlackboard(n.config().blackboard, key, value);
+}
+
+/**
+ * @brief Attempts to get a port input from a TreeNode.
+ * 
+ * @tparam T The type of the port value to get.
+ * @param n The node to get the port value of.
+ * @param key The key of the port.
+ * @param defaultValue The value to return if the key does not have a value
+ * @param warnIfUndefined True if a warning should be printed if the key doesn't exist
+ * @return T The value of the port or the default if there is none.
+ */
+template<typename T> 
+T tryGetInput(const BT::TreeNode *n, const std::string& key, const T defaultValue, bool warnIfUndefined) {
+    auto op = n->getInput<T>(key);
+    if(op.has_value()) {
+        return op.value();
+    } else if(warnIfUndefined) {
+        RCLCPP_WARN(log, "Node %s does not have a value for required port with name %s!", n->name().c_str(), key.c_str());
+    }
+
+    return defaultValue;
+}
+
+/**
+ * @brief Gets an input from a required port. A warning will be printed if the value does not exist
+ * 
+ * @tparam T The type of the port value.
+ * @param n The TreeNode to get the value from
+ * @param key The name of the value to get
+ * @param defaultValue The value to return if the key does not have a value.
+ * @return T The value of the port, or the default value if there is no such value.
+ */
+template<typename T>
+T tryGetRequiredInput(const BT::TreeNode *n, const std::string& key, const T defaultValue) {
+    return tryGetInput(n, key, defaultValue, true);
+}
+
+/**
+ * @brief Attempts to get an optional value from a port.
+ * 
+ * @tparam T The type of the value to get.
+ * @param n The TreeNode to get the port value from
+ * @param key The name of the value to get.
+ * @param defaultValue the value fto retuurn if the key does not have a value.
+ * @return T The value of the port, or the default value if there is no such value.
+ */
+template<typename T>
+T tryGetOptionalInput(const BT::TreeNode *n, const std::string& key, const T defaultValue) {
+    return tryGetInput(n, key, defaultValue, false);
 }
 
 /**

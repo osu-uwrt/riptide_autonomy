@@ -40,46 +40,15 @@ class ComputeFrameAlignment : public UWRTActionNode {
         tf2_ros::Buffer buffer(rosnode->get_clock());
         rclcpp::Time startTime = rosnode->get_clock()->now();
 
-        std::string finalFrame = getInput<std::string>("frameName").value();
+        std::string finalFrame = tryGetRequiredInput<std::string>(this, "frameName", "");
         std::string fromOdom = "odom";
         std::string BaseFrame = "tempest/base_link";
 
         //make a pose  that represents the desired position of the given frame
         geometry_msgs::msg::Pose finalRes;
-        finalRes.position.x = getInput<double>("x").value();
-        finalRes.position.y = getInput<double>("y").value();
-        finalRes.position.z = getInput<double>("z").value();
-
-        // //convert this to base frame
-        // std::tuple<geometry_msgs::msg::Pose, bool> toBase = transformBetweenFrames(rosnode, desiredPose, fromOdom, BaseFrame,);
-        // if(!(std::get<1>(toBase))){
-        //     return BT::NodeStatus::FAILURE;
-        // }
-
-        // //convert base to odom
-        // desiredPose = std::get<0>(toBase);
-
-        // std::tuple<geometry_msgs::msg::Pose, bool> toFinal = transformBetweenFrames(rosnode, desiredPose, BaseFrame, finalFrame, );
-
-        // if(!(std::get<1>(toFinal))){ 
-        //     return BT::NodeStatus::FAILURE;
-        // }
-
-        // geometry_msgs::msg::Pose finalRes = std::get<0>(toFinal);
-
-
-        //look up displacement between target frame and base frame in the final frame
-        // geometry_msgs::msg::Pose frameBaseDisplacement;
-        // if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), finalFrame, BaseFrame, frameBaseDisplacement)) {
-        //     return BT::NodeStatus::FAILURE;
-        // }
-
-        // //convert displacement to odom frame
-        // //we now have the displacement between the two frames in odom frame
-        // geometry_msgs::msg::Pose frameOdomDisplacement;
-        // if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), BaseFrame, fromOdom, frameOdomDisplacement)) {
-        //     return BT::NodeStatus::FAILURE;
-        // }
+        finalRes.position.x = tryGetRequiredInput<double>(this, "x", 0);
+        finalRes.position.y = tryGetRequiredInput<double>(this, "y", 0);
+        finalRes.position.z = tryGetRequiredInput<double>(this, "z", 0);
 
         geometry_msgs::msg::Pose baseFrameOdom;
         if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), BaseFrame, fromOdom, baseFrameOdom)) {
