@@ -7,6 +7,7 @@ from rclpy.node import Node
 from riptide_msgs2.action import ActuateDroppers as DropperMsg
 from riptide_msgs2.action import ChangeClawState as ClawMsg
 from riptide_msgs2.action import ActuateTorpedos as TorpedoMsg
+from riptide_msgs2.action import ArmTorpedoDropper as ArmerMsg
 
 class DummyActuatorServers(Node):
 
@@ -30,6 +31,12 @@ class DummyActuatorServers(Node):
             ClawMsg,
             'claw',
             self.claw_callback)
+
+        self.armer_server = ActionServer(
+            self,
+            ArmerMsg,
+            'armer',
+            self.armer_callback)
         
         self.get_logger().info("Dummy actuator server started.")
 
@@ -50,6 +57,22 @@ class DummyActuatorServers(Node):
         self.get_logger().info("Opening Claw" if open_claw else "Closing Claw")
         goal_handle.succeed()
         return ClawMsg.Result()
+
+    def armer_callback(self,goal_handle):
+        arm_torpedos = goal_handle.request.arm_torpedo
+        arm_droppers = goal_handle.request.arm_droppers
+        self.get_logger().info("Arming torpedos: {}".format((arm_torpedos)))
+        self.get_logger().info("Arming droppers: {}".format((arm_droppers)))
+        msg = ArmerMsg.Feedback()
+        if arm_droppers or arm_droppers:
+            msg.is_armed = True
+        else:
+            msg.is_armed = False
+        goal_handle.publush_feedback(msg)
+        goal_handle.succeed()
+        return ArmerMsg.Result()
+
+        
 
 
 def main(args=None):

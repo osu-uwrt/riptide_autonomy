@@ -86,7 +86,6 @@ class ActuateDroppers : public UWRTActionNode {
 
     private:
     void resultCB(const DroppersResult& result) {
-        RCLCPP_INFO(log, "Action result received.");
         actionResult = result;
     }
 
