@@ -36,7 +36,7 @@ class ActuateDroppers : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        int dropperID = getInput<int>("DropperID").value(); 
+        int dropperID = tryGetRequiredInput<int>(this, "DropperID", -1); 
 
         if(!client->wait_for_action_server(3s)) {
             RCLCPP_ERROR(log, "ActuateDroppers action server not available.");

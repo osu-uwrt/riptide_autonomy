@@ -10,17 +10,18 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclpy REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(riptide_msgs2 REQUIRED)
+find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(riptide_msgs2 REQUIRED)
-find_package(behaviortree_cpp_v3 REQUIRED)
-find_package(robot_localization REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(robot_localization REQUIRED)
+
 
 #create directory for auto-generated code which will include headers for custom nodes as well as source code that registers custom nodes
 make_directory(${PROJECT_BINARY_DIR}/autonomy_generator)
@@ -173,25 +174,8 @@ ament_target_dependencies(checkBT
   behaviortree_cpp_v3
 )
 
-#
-# test bed executable
-#
-add_executable(testbed src/riptide_autonomy/testbed.cpp)
-
-target_include_directories(testbed PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-target_link_libraries(testbed autonomy_utils)
-
-ament_target_dependencies(testbed
-  rclcpp
-  rclcpp_action
-  riptide_msgs2
-)
-
 #install executable
-install(TARGETS doTask checkBT testbed
+install(TARGETS doTask checkBT
   DESTINATION lib/${PROJECT_NAME}
 )
 

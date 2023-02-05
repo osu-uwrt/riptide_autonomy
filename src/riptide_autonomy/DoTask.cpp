@@ -24,7 +24,7 @@
  * tree and return the result (0 if success, 1 if failure)
  */
 #ifndef AUTONOMY_PKG_NAME
-#define AUTONOMY_PKG_NAME "ritpide_autonomy2"
+#define AUTONOMY_PKG_NAME "riptide_autonomy2"
 #endif
 #define AUTONOMY_TREE_DIR \
     std::string(__FILE__).substr(0, std::string(__FILE__).find("/riptide_autonomy/")) + std::string("/riptide_autonomy/trees")
@@ -70,7 +70,7 @@ namespace do_task
 
             // declare params
             declare_parameter<bool>("enable_zmq", false);
-            declare_parameter<std::string>("log_file_dir", getEnvVar("HOME") + "/osu-uwrt/riptide_software/BTLogger");
+            declare_parameter<std::string>("log_file_dir", getEnvVar("HOME") + "/btlogs");
             declare_parameter<std::vector<std::string>>("ext_plugin_list", std::vector<std::string>());
             declare_parameter<std::vector<std::string>>("ext_tree_dirs", std::vector<std::string>());
 
@@ -202,6 +202,7 @@ namespace do_task
                     if (goal_handle->is_canceling())
                     {
                         result->returncode = 0;
+                        tree.haltTree();
                         goal_handle->canceled(result);
                         RCLCPP_INFO(log, "DoTask: Cancelled current action goal");
                         return;
