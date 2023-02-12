@@ -205,46 +205,48 @@ install(DIRECTORY
 )
 
 if(BUILD_TESTING)
-  #ament lint auto things
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-
   #set up GTest
-  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_gtest QUIET)
 
-  #glob all test sources together
-  file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.cpp)
-  file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.cpp)
-  file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.cpp)
-  file(GLOB tool_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/tools/*.cpp)
+  if(ament_cmake_gtest_FOUND)
+    #ament lint auto things
+    find_package(ament_lint_auto REQUIRED)
+    # the following line skips the linter which checks for copyrights
+    # uncomment the line when a copyright and license is not present in all source files
+    set(ament_cmake_copyright_FOUND TRUE)
+    # the following line skips cpplint (only works in a git repo)
+    # uncomment the line when this package is not in a git repo
+    #set(ament_cmake_cpplint_FOUND TRUE)
+    ament_lint_auto_find_test_dependencies()
 
-  ament_add_gtest(test_bt
-    ${action_test_sources}
-    ${condition_test_sources}
-    ${decorator_test_sources}
-    ${tool_test_sources}
-    test/riptide_autonomy/DummyActionNode.cpp
-    test/riptide_autonomy/BtTestTool.cpp
-    test/riptide_autonomy/BtTest.cpp
-    test/riptide_autonomy/executeTests.cpp #overrides default main() method
-  )
+    #glob all test sources together
+    file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.cpp)
+    file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.cpp)
+    file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.cpp)
+    file(GLOB tool_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/tools/*.cpp)
 
-  ament_target_dependencies(test_bt ${deps})
-  target_link_libraries(test_bt autonomy_utils)
+    ament_add_gtest(test_bt
+      ${action_test_sources}
+      ${condition_test_sources}
+      ${decorator_test_sources}
+      ${tool_test_sources}
+      test/riptide_autonomy/DummyActionNode.cpp
+      test/riptide_autonomy/BtTestTool.cpp
+      test/riptide_autonomy/BtTest.cpp
+      test/riptide_autonomy/executeTests.cpp #overrides default main() method
+    )
 
-  target_include_directories(test_bt PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-  
-  install(TARGETS test_bt
-    DESTINATION lib/${PROJECT_NAME}
-  )
+    ament_target_dependencies(test_bt ${deps})
+    target_link_libraries(test_bt autonomy_utils)
+
+    target_include_directories(test_bt PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>)
+    
+    install(TARGETS test_bt
+      DESTINATION lib/${PROJECT_NAME}
+    )
+  endif()
 endif()
 
 ament_package()
