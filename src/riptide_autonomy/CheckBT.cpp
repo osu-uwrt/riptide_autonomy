@@ -15,7 +15,14 @@
 using namespace tinyxml2;
 using namespace BT;
 
-
+/**
+ * @brief Creates and adds XML element contining node information to the groot workspae
+ * 
+ * @param name the name of the node to add
+ * @param ports the assocaited ports list contianing all ports and all relevent information for each port
+ * @param type the node type (Action, Condition, Decorator)
+ * @param doc filepath to groot workspace 
+ */
 bool addNodeToWorkspace(std::string name, PortsList ports, BT::NodeType type,  std::string doc){
     //load Groot workspace
     XMLDocument grootWorkspace;
@@ -57,7 +64,14 @@ bool addNodeToWorkspace(std::string name, PortsList ports, BT::NodeType type,  s
     return (grootWorkspace.SaveFile(doc.c_str()) == XML_SUCCESS);
 
 }
-
+/**
+ * @brief Creates and adds XML element contining port information to the groot workspae
+ * 
+ * @param missingPort the name of the port to add
+ * @param info  all relevent information for each port
+ * @param node the nmane of the node the port belongs to
+ * @param doc filepath to groot workspace 
+ */
 bool addPortToWorkspace(std::string missingPort, PortInfo info, std::string node,std::string doc){
 
     XMLDocument grootWorkspace;
@@ -93,42 +107,63 @@ bool addPortToWorkspace(std::string missingPort, PortInfo info, std::string node
 }
 
 /**
- * @brief Prompts the user with a message and a list of options to choose from, then collects and returns the users input.
+ * @brief Prompts the user with a message, then collects and returns the users input.
  * If any user input is invalid, the user will be re-prompted.
  * 
- * @param errors The possible nodes to add to workspace
+ * @param nodeToAdd The name of the node to add to workspace
+ * @param factory The BT factory that contains the riptide_autonomy implementations
+ * @param doc The filepath to the workspace
+ * @return true if the node was added
+ * @return false if the node was not added 
  */
 bool promptAddNode(std::string nodeToAdd, std::shared_ptr<BehaviorTreeFactory> factory,std::string doc) {
     std::unordered_map<std::string, BT::TreeNodeManifest> manifest = factory->manifests();
-
+    std::string ans;
+    char check;
+    do{
     RCLCPP_INFO(log, "Would you like to add %s to the groot workspace? (y/n)",nodeToAdd.c_str());
-    char ans;
     std::cin>>ans;
-    if(ans =='y' || ans=='Y'){
-        if(addNodeToWorkspace(nodeToAdd, manifest.at(nodeToAdd).ports, manifest.at(nodeToAdd).type, doc)){
-            RCLCPP_INFO(log,"Successfully added node!");
-            return true;
+        if(ans.size() == 1){
+            check = std::tolower(ans[0]);
+            
         }
-        else{
-            RCLCPP_INFO(log,"There was an unexpected error adding the node :(");
-            return false;
+        if(check =='y'){
+            if(addNodeToWorkspace(nodeToAdd, manifest.at(nodeToAdd).ports, manifest.at(nodeToAdd).type, doc)){
+                RCLCPP_INFO(log,"Successfully added node!");
+                return true;
+            }
+            else{
+                RCLCPP_INFO(log,"There was an unexpected error adding the node :(");
+                return false;
+            }
         }
-    }
+    }while(check != 'n');
     return false;
     
 }
+
 /**
- * @brief Prompts the user with a message and a list of options to choose from, then collects and returns the users input.
+ * @brief Prompts the user with a message, then collects and returns the users input.
  * If any user input is invalid, the user will be re-prompted.
  * 
- * @param errors The possible ports to add to workspace
+ * @param missingPort The name of the port to add to workspace
+ * @param info Information about the missing port
+ * @param doc The filepath to the workspace
+ * @param node The name of the node the port is associated with
+ * @return true if the port was added
+ * @return false if the port was not added 
  */
 bool promptAddPort(std::string missingPort, PortInfo info, std::string node, std::string doc) {
-
+    std::string ans;
+    char check;
+    do{
     RCLCPP_INFO(log, "Would you like to add %s to the node %s? (y/n)",missingPort.c_str(), node.c_str());
-    char ans;
     std::cin>>ans;
-    if(ans =='y' || ans=='Y'){
+    if(ans.size() ==1){
+        check = std::tolower(ans[0]);
+    }
+
+    if(check =='y'){
         if(addPortToWorkspace(missingPort, info, node, doc)){
             RCLCPP_INFO(log,"Successfully added port!");
             return true;
@@ -138,6 +173,7 @@ bool promptAddPort(std::string missingPort, PortInfo info, std::string node, std
             return false;
         }
     }
+    } while(check!='n');
     return false;
     
 }
@@ -316,17 +352,29 @@ void doCheck(std::string doc, std::shared_ptr<BehaviorTreeFactory> factory) {
 
         while(node != model->LastChildElement()){
             std::string nodetype = node->Name();
-            if(nodetype.compare("SubTree") !=0 && findNodeInManifest(node,factory,doc)){
-                nodesfound.push_back(node->Attribute("ID"));
-            }
-            else{
+            if(nodetype.compare("SubTree")!=0 && !findNodeInManifest(node,factory,doc)){
                 has_errors =true;           
             }
+            try{
+                factory->manifests().at(node->Attribute("ID"));
+                nodesfound.push_back(node->Attribute("ID"));
+            }
+            catch(...){
+
+            }
+
             node = node->NextSiblingElement();       
         }
         //run one more time to get last child
         if(findNodeInManifest(node,factory,doc)){
             nodesfound.push_back(node->Attribute("ID"));
+            try{
+                factory->manifests().at(node->Attribute("ID"));
+                nodesfound.push_back(node->Attribute("ID"));
+            }
+            catch(...){
+                
+            }
         }
     }      
     std::list<std::string> customNodes = getCustomNodes();
