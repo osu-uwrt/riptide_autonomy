@@ -79,7 +79,7 @@ bool addPortToWorkspace(std::string missingPort, PortInfo info, std::string node
     auto root = grootWorkspace.RootElement();
     auto model = root->LastChildElement();
     auto nodeToAddTo = model->FirstChildElement();
-    while(nodeToAddTo != model->LastChildElement()){
+    while(nodeToAddTo != nullptr){
         std::string name = nodeToAddTo->Attribute("ID");
         if(name.compare(node) == 0){
             break;
@@ -182,33 +182,52 @@ bool promptAddPort(std::string missingPort, PortInfo info, std::string node, std
  * @brief Checks to see if a certain XML element is found in riptide_autonomy 
  * 
  * @param port The XML node in the groot workspace
- * @param ports TThe list of ports the riptide_autonomy implementation has
+ * @param nodeInfo TNode information containing all of its ports as well as the node name
  * @return true if the XML node is in the PortsList
  * @return false if it is not int the list, or if the directions do not match.
  */
-bool findPortInManifest(XMLElement *port, PortsList ports){
+bool findPortInManifest(XMLElement *port, std::pair<const std::string, BT::TreeNodeManifest> nodeInfo,std::string doc){
     try{
         
         std::string type = port->Name();
         if(type.compare("inout_port") == 0){
-            ports.at(port->Attribute("name"));
+            nodeInfo.second.ports.at(port->Attribute("name"));
             return true;
         }
         else if(type.compare("output_port") == 0){
-            if(ports.at(port->Attribute("name")).direction() == BT::PortDirection::OUTPUT){
+            if(nodeInfo.second.ports.at(port->Attribute("name")).direction() == BT::PortDirection::OUTPUT){
                 return true;
             }
             RCLCPP_WARN(log, "%s is listed as an output port in groot but was not implemented as such.", port->Attribute("name"));
         }
         else{
-            if(ports.at(port->Attribute("name")).direction() == BT::PortDirection::INPUT){
+            if(nodeInfo.second.ports.at(port->Attribute("name")).direction() == BT::PortDirection::INPUT){
                 return true;
             }
             RCLCPP_WARN(log, "%s is listed as an input port in groot but was not implemented as such.", port->Attribute("name"));
         }                    
     }
     catch(const std::out_of_range &e){
-        RCLCPP_ERROR(log,"%s in workspace is not in ripride_autonomy", port->Attribute("name"));
+        RCLCPP_ERROR(log,"%s in workspace is not in ripride_autonomy Would you like to remove it? (y/n)", port->Attribute("name"));
+        std::string ans;
+        std::cin>>ans;
+        if(std::tolower(ans[0]) == 'y'){
+            //load Groot workspace
+            XMLDocument grootWorkspace;
+            grootWorkspace.LoadFile(doc.c_str());
+            auto nodeToDeleteFrom = grootWorkspace.RootElement()->LastChildElement()->FirstChildElement();
+            while(std::strcmp(nodeInfo.first.c_str(), nodeToDeleteFrom->Attribute("ID")) != 0){
+                nodeToDeleteFrom = nodeToDeleteFrom->NextSiblingElement();
+            }
+            auto portToDelete = nodeToDeleteFrom->FirstChildElement();
+            while(std::strcmp(port->Attribute("name"), portToDelete->Attribute("name")) != 0){
+                portToDelete = portToDelete->NextSiblingElement();
+            }
+            portToDelete->Parent()->DeleteChild(portToDelete);
+            return (grootWorkspace.SaveFile(doc.c_str()) == XML_SUCCESS);
+            
+        }
+
     }
     return false;
 }
@@ -280,9 +299,9 @@ bool findNodeInManifest(XMLElement *test, std::shared_ptr<BehaviorTreeFactory> f
             if(test->FirstChild() != NULL){
                 port = test->FirstChildElement();
 
-                while(port && port != test->LastChildElement()){
+                while(port && port != nullptr){
                     //try to find the port in the manifest. if it errors its not there, otherwise make sure their directions match
-                    if(findPortInManifest(port,ports)){
+                    if(findPortInManifest(port,pair,doc)){
                         portsfound.push_back(port->Attribute("name"));
                     }
                     else{
@@ -291,10 +310,7 @@ bool findNodeInManifest(XMLElement *test, std::shared_ptr<BehaviorTreeFactory> f
                     //go to next port
                     port = port->NextSiblingElement();
                 }
-                //do it one extra time to get the last port
-                if(findPortInManifest(port,ports)){
-                    portsfound.push_back(port->Attribute("name"));
-                }
+
             }
             // check the other way. make sure every port in the manifest is in groot
             if(ports.size() != portsfound.size()){
@@ -304,14 +320,27 @@ bool findNodeInManifest(XMLElement *test, std::shared_ptr<BehaviorTreeFactory> f
                         has_errors = promptAddPort(check.first, check.second, pair.first, doc);
                         
                     }
-
                 }
             }
         }
-        
     }
     if(!exists){
-        RCLCPP_ERROR(log, "%s does not have a valid implementation",test->Attribute("ID"));
+        RCLCPP_ERROR(log, "%s does not have a valid implementation. Would you like to remove it from the workspace? (y/n)",test->Attribute("ID"));
+        std::string ans;
+        std::cin>>ans;
+
+        if(std::tolower(ans[0]) == 'y'){
+            //load Groot workspace
+            XMLDocument grootWorkspace;
+            grootWorkspace.LoadFile(doc.c_str());
+            auto nodeToDelete = grootWorkspace.RootElement()->LastChildElement()->FirstChildElement();
+            while(std::strcmp(test->Attribute("ID"), nodeToDelete->Attribute("ID")) != 0){
+                nodeToDelete = nodeToDelete->NextSiblingElement();
+            }
+            nodeToDelete->Parent()->DeleteChild(nodeToDelete);
+            return (grootWorkspace.SaveFile(doc.c_str()) == XML_SUCCESS);
+        }
+
     }
     if(!has_errors && exists){
         RCLCPP_INFO(log, "\tOK!");
@@ -350,7 +379,7 @@ void doCheck(std::string doc, std::shared_ptr<BehaviorTreeFactory> factory) {
     if(model->FirstChild() != NULL){
         node = model->FirstChildElement();
 
-        while(node != model->LastChildElement()){
+        while(node != nullptr){
             std::string nodetype = node->Name();
             if(nodetype.compare("SubTree")!=0 && !findNodeInManifest(node,factory,doc)){
                 has_errors =true;           
@@ -364,17 +393,6 @@ void doCheck(std::string doc, std::shared_ptr<BehaviorTreeFactory> factory) {
             }
 
             node = node->NextSiblingElement();       
-        }
-        //run one more time to get last child
-        if(findNodeInManifest(node,factory,doc)){
-            nodesfound.push_back(node->Attribute("ID"));
-            try{
-                factory->manifests().at(node->Attribute("ID"));
-                nodesfound.push_back(node->Attribute("ID"));
-            }
-            catch(...){
-                
-            }
         }
     }      
     std::list<std::string> customNodes = getCustomNodes();
@@ -393,7 +411,6 @@ void doCheck(std::string doc, std::shared_ptr<BehaviorTreeFactory> factory) {
     if(has_errors) {
         RCLCPP_WARN(log, "Some workspace issues are unresolved. Tree execution may be less reliable.");
     }
-
 }
 
 
