@@ -15,42 +15,131 @@
 using namespace tinyxml2;
 using namespace BT;
 
+
+bool addNodeToWorkspace(std::string name, PortsList ports, BT::NodeType type,  std::string doc){
+    //load Groot workspace
+    XMLDocument grootWorkspace;
+    grootWorkspace.LoadFile(doc.c_str());
+    auto root = grootWorkspace.RootElement();
+    auto model = root->LastChildElement();
+    //add the node to the end of the TreeNodesModel
+    if(type == BT::NodeType::ACTION){
+        model->InsertNewChildElement("Action")->SetAttribute("ID",name.c_str());
+    }
+    else if(type == BT::NodeType::CONDITION){
+        model->InsertNewChildElement("Condition")->SetAttribute("ID",name.c_str());
+    }
+    else{
+        model->InsertNewChildElement("Decorator")->SetAttribute("ID",name.c_str()); 
+    }
+
+    //add the ports
+    auto newNode = model->LastChildElement();
+    for(auto port :ports){
+        if(port.second.direction() == BT::PortDirection::INPUT){
+        newNode->InsertNewChildElement("input_port");
+        }
+        else{
+            newNode->InsertNewChildElement("output_port");
+        }
+        auto newPort = newNode->LastChildElement();
+        //if there is a default val, add it
+        if(port.second.defaultValue().size() > 0){
+            newPort->SetAttribute("default", port.second.defaultValue().c_str());
+        }
+        //set the name
+        newPort->SetAttribute("name",port.first.c_str());
+        newPort->SetAttribute("required","false");
+        newPort->SetText(port.second.description().c_str());
+
+    }
+
+    return (grootWorkspace.SaveFile(doc.c_str()) == XML_SUCCESS);
+
+}
+
+bool addPortToWorkspace(std::string missingPort, PortInfo info, std::string node,std::string doc){
+
+    XMLDocument grootWorkspace;
+    grootWorkspace.LoadFile(doc.c_str());
+    auto root = grootWorkspace.RootElement();
+    auto model = root->LastChildElement();
+    auto nodeToAddTo = model->FirstChildElement();
+    while(nodeToAddTo != model->LastChildElement()){
+        std::string name = nodeToAddTo->Attribute("ID");
+        if(name.compare(node) == 0){
+            break;
+        }
+        nodeToAddTo = nodeToAddTo->NextSiblingElement();
+    }
+    if(info.direction() == BT::PortDirection::INPUT){
+    nodeToAddTo->InsertNewChildElement("input_port");
+    }
+    else{
+        nodeToAddTo->InsertNewChildElement("output_port");
+    }
+    auto newPort = nodeToAddTo->LastChildElement();
+    //if there is a default val, add it
+    if(info.defaultValue().size() > 0){
+        newPort->SetAttribute("default", info.defaultValue().c_str());
+    }
+    //set the name
+    newPort->SetAttribute("name",missingPort.c_str());
+    newPort->SetAttribute("required","false");
+    newPort->SetText(info.description().c_str());   
+
+
+    return (grootWorkspace.SaveFile(doc.c_str()) == XML_SUCCESS);
+}
+
 /**
  * @brief Prompts the user with a message and a list of options to choose from, then collects and returns the users input.
  * If any user input is invalid, the user will be re-prompted.
  * 
- * @param query The message to prompt the user with.
- * @param options The options to give the user
- * @return int the index in the vector of the option that the user chose.
+ * @param errors The possible nodes to add to workspace
  */
-int prompt(const std::string query, const std::vector<std::string> options) {
-    //print query and options
-    std::cout << query << std::endl;
-    for(uint i = 0; i < options.size(); i++) {
-        //use i + 1 so that options start at 1
-        std::cout << "  " << i + 1 << ": " << options[i] << std::endl;
-    }
+bool promptAddNode(std::string nodeToAdd, std::shared_ptr<BehaviorTreeFactory> factory,std::string doc) {
+    std::unordered_map<std::string, BT::TreeNodeManifest> manifest = factory->manifests();
 
-    int selectedOption = 0;
-    while(selectedOption <= 0 || abs(selectedOption) > options.size()) {
-        std::string userInput;
-        std::cout << "[1 - " << options.size() << "]? ";
-        std::cin >> userInput;
-
-        //attempt to convert user input to a valid integer and check the range
-        try {
-            selectedOption = std::stoi(userInput);            
-        } catch(std::invalid_argument& ex) {
-            std::cout << "Please enter a valid number." << std::endl;
-            continue;
+    RCLCPP_INFO(log, "Would you like to add %s to the groot workspace? (y/n)",nodeToAdd.c_str());
+    char ans;
+    std::cin>>ans;
+    if(ans =='y' || ans=='Y'){
+        if(addNodeToWorkspace(nodeToAdd, manifest.at(nodeToAdd).ports, manifest.at(nodeToAdd).type, doc)){
+            RCLCPP_INFO(log,"Successfully added node!");
+            return true;
         }
-
-        if(selectedOption <= 0 || abs(selectedOption) > options.size()) {
-            std::cout << "Please enter a number between 1 and " << options.size() << "." << std::endl;
+        else{
+            RCLCPP_INFO(log,"There was an unexpected error adding the node :(");
+            return false;
         }
     }
+    return false;
     
-    return selectedOption - 1;
+}
+/**
+ * @brief Prompts the user with a message and a list of options to choose from, then collects and returns the users input.
+ * If any user input is invalid, the user will be re-prompted.
+ * 
+ * @param errors The possible ports to add to workspace
+ */
+bool promptAddPort(std::string missingPort, PortInfo info, std::string node, std::string doc) {
+
+    RCLCPP_INFO(log, "Would you like to add %s to the node %s? (y/n)",missingPort.c_str(), node.c_str());
+    char ans;
+    std::cin>>ans;
+    if(ans =='y' || ans=='Y'){
+        if(addPortToWorkspace(missingPort, info, node, doc)){
+            RCLCPP_INFO(log,"Successfully added port!");
+            return true;
+        }
+        else{
+            RCLCPP_INFO(log,"There was an unexpected error adding the port :(");
+            return false;
+        }
+    }
+    return false;
+    
 }
 
 /**
@@ -66,6 +155,7 @@ bool findPortInManifest(XMLElement *port, PortsList ports){
         
         std::string type = port->Name();
         if(type.compare("inout_port") == 0){
+            ports.at(port->Attribute("name"));
             return true;
         }
         else if(type.compare("output_port") == 0){
@@ -89,7 +179,6 @@ bool findPortInManifest(XMLElement *port, PortsList ports){
 
 /**
  * @brief Goes through Include to get all custom nodes
- * 
  * @return a list of the names of every custom node
  */
 std::list<std::string> getCustomNodes(){
@@ -134,26 +223,28 @@ std::list<std::string> getCustomNodes(){
  * @return true if the XML node exactly matches the riptide_autonomy implementation
  * @return false if there are discrepencies between the groot workspace and riptide_autonomy
  */
-bool findNodeInManifest(XMLElement *test, std::shared_ptr<BehaviorTreeFactory> factory){
+bool findNodeInManifest(XMLElement *test, std::shared_ptr<BehaviorTreeFactory> factory, std::string doc){
     bool exists = false;
     bool has_errors = false;
     //arbitrarily return true for subtrees we only care about conditions/actions/decorators
     std::string testNodeType = test->Name();
     
-    if(testNodeType.compare("SubTree") !=0){
-        RCLCPP_INFO(log,"Checking Node %s", test->Attribute("ID"));
-        //get the manifest
-        std::unordered_map<std::string, BT::TreeNodeManifest> src_manifest = factory->manifests();    
-        //iterate though each node to see if one matches
-        for(auto pair : src_manifest){
-            //if a node is found search and check to make sure ports are the same
-            if(test->Attribute("ID") == pair.first){
-                exists = true;
-                PortsList ports = pair.second.ports;
-                //create a list to keep track of the ports we found. We will use this later to make checking the other way easier.
-                std::list<std::string> portsfound;
-                auto port = test->FirstChildElement();
-                while(port != test->LastChildElement()){
+    RCLCPP_INFO(log,"Checking Node %s", test->Attribute("ID"));
+    //get the manifest
+    std::unordered_map<std::string, BT::TreeNodeManifest> src_manifest = factory->manifests();    
+    //iterate though each node to see if one matches
+    for(auto pair : src_manifest){
+        //if a node is found search and check to make sure ports are the same
+        if(test->Attribute("ID") == pair.first){
+            exists = true;
+            PortsList ports = pair.second.ports;
+            //create a list to keep track of the ports we found. We will use this later to make checking the other way easier.
+            std::list<std::string> portsfound;
+            XMLElement *port;
+            if(test->FirstChild() != NULL){
+                port = test->FirstChildElement();
+
+                while(port && port != test->LastChildElement()){
                     //try to find the port in the manifest. if it errors its not there, otherwise make sure their directions match
                     if(findPortInManifest(port,ports)){
                         portsfound.push_back(port->Attribute("name"));
@@ -168,28 +259,31 @@ bool findNodeInManifest(XMLElement *test, std::shared_ptr<BehaviorTreeFactory> f
                 if(findPortInManifest(port,ports)){
                     portsfound.push_back(port->Attribute("name"));
                 }
-                // check the other way. make sure every port in the manifest is in groot
-                if(ports.size() != portsfound.size()){
-                    for(auto check : ports){
-                        if(!(std::find(portsfound.begin(), portsfound.end(), check.first) != portsfound.end())){
-                            RCLCPP_ERROR(log, "%s was not found in groot workspace for node %s",check.first.c_str(),test->Attribute("ID"));
-                            has_errors = true;
-                        }
+            }
+            // check the other way. make sure every port in the manifest is in groot
+            if(ports.size() != portsfound.size()){
+                for(auto check : ports){
+                    if(!(std::find(portsfound.begin(), portsfound.end(), check.first) != portsfound.end())){
+                        RCLCPP_ERROR(log, "%s was not found in groot workspace for node %s",check.first.c_str(),test->Attribute("ID"));
+                        has_errors = promptAddPort(check.first, check.second, pair.first, doc);
+                        
                     }
+
                 }
             }
-            
         }
-        if(!exists){
-            RCLCPP_ERROR(log, "%s does not have a valid implementation",test->Attribute("ID"));
-        }
-        if(!has_errors && exists){
-            RCLCPP_INFO(log, "\tOK!");
-        }
-        return !has_errors && exists;
+        
     }
-    return true;
+    if(!exists){
+        RCLCPP_ERROR(log, "%s does not have a valid implementation",test->Attribute("ID"));
+    }
+    if(!has_errors && exists){
+        RCLCPP_INFO(log, "\tOK!");
+    }
+    return !has_errors && exists;
 }
+
+
 
 
 /**
@@ -200,7 +294,7 @@ bool findNodeInManifest(XMLElement *test, std::shared_ptr<BehaviorTreeFactory> f
  * @return true if the Groot workspace matches with the riptide_autonomy implementation and vice versa
  * @return false if the workspace and the riptide_autonomy implementations do not match up.
  */
-bool doCheck(std::string doc, std::shared_ptr<BehaviorTreeFactory> factory) {
+void doCheck(std::string doc, std::shared_ptr<BehaviorTreeFactory> factory) {
     bool has_errors = false;
     //load Groot workspace
     XMLDocument grootWorkspace;
@@ -209,39 +303,49 @@ bool doCheck(std::string doc, std::shared_ptr<BehaviorTreeFactory> factory) {
         //if there is no root element then the tree was not loaded correctly
         std::cerr << "FATAL: Could not load Groot workspace file (riptide_autonomy/trees/.groot/workspace.xml). Does it exist?" << std::endl;
         std::cerr << "Looked in file path: " << doc << std::endl;
-        return 2; //bail out; nothing else we can do here
+        return; //bail out; nothing else we can do here
     }
     RCLCPP_INFO(log, "Workspace loaded");
     auto root = grootWorkspace.RootElement();
     //get the TreeNodesModel element to check actions/conditions
     auto model = root->LastChildElement();
+    XMLElement *node;
+    std::list<std::string> nodesfound;
+    if(model->FirstChild() != NULL){
+        node = model->FirstChildElement();
 
-    auto node = model->FirstChildElement();
-
-    std::list<std::string> nodesfound = getCustomNodes();
-    while(node != model->LastChildElement()){
-        if(findNodeInManifest(node,factory)){
+        while(node != model->LastChildElement()){
+            std::string nodetype = node->Name();
+            if(nodetype.compare("SubTree") !=0 && findNodeInManifest(node,factory,doc)){
+                nodesfound.push_back(node->Attribute("ID"));
+            }
+            else{
+                has_errors =true;           
+            }
+            node = node->NextSiblingElement();       
+        }
+        //run one more time to get last child
+        if(findNodeInManifest(node,factory,doc)){
             nodesfound.push_back(node->Attribute("ID"));
         }
-        else{
-            has_errors =true;           
-        }
-        node = node->NextSiblingElement();       
-    }
-
+    }      
     std::list<std::string> customNodes = getCustomNodes();
     for(std::string node : customNodes){
         RCLCPP_INFO(log,"Checking for node %s in groot",node.c_str());
         if(!(std::find(nodesfound.begin(), nodesfound.end(), node) != nodesfound.end())){
             RCLCPP_ERROR(log, "%s was not found in groot workspace",node.c_str());
-            has_errors = true;
+            has_errors = promptAddNode(node,factory,doc);
         }
         else{
             RCLCPP_INFO(log, "\tOK!");
         }
     }
 
-    return !has_errors;
+
+    if(has_errors) {
+        RCLCPP_WARN(log, "Some workspace issues are unresolved. Tree execution may be less reliable.");
+    }
+
 }
 
 
@@ -261,12 +365,8 @@ int main() {
     auto factory = std::make_shared<BT::BehaviorTreeFactory>();
     registerPluginsForFactory(factory, AUTONOMY_PKG_NAME);
 
-    bool success = doCheck(workspaceLoc, factory);
-
-    if(!success) {
-        std::cerr << "Some workspace issues are unresolved. Tree execution may be less reliable." << std::endl;
-        return 3;
-    }
+    doCheck(workspaceLoc, factory);
+    
 
     return 0;
 }
