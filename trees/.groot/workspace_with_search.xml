@@ -317,34 +317,42 @@
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="SearchFailure">
-        <Action ID="Info" message="FIxing Panic"/>
+        <Action ID="Info" message="Fixing Panic"/>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="SearchNew">
-        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
-            <Sequence>
-                <Fallback>
-                    <Action ID="Info" message="Fear. Panic. Chaos"/>
-                    <SubTree ID="SearchFailure" __shared_blackboard="true"/>
-                </Fallback>
-                <WhileDoElse>
-                    <Sequence>
-                        <Action Covaraince="{cov}" ID="getCovariance" Target="{target}"/>
-                        <Condition ID="CompareNums" a="{Error_Threshold}" b="{cov}" test="&lt;"/>
-                        <Action ID="TransformPose" from_frame="{target}" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                        <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="0" y1="{y}" y2="0" z1="{z}" z2="0"/>
-                        <Condition ID="CompareNums" a="{dist}" b="2" test="&gt;"/>
-                    </Sequence>
-                    <Sequence>
-                        <Action ID="Math" a="{x}" b="2" operator="/" out="{x}"/>
-                        <Action ID="Math" a="{y}" b="2" operator="/" out="{y}"/>
-                        <Action ID="Math" a="{z}" b="2" operator="/" out="{z}"/>
-                        <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="{x}" y="{y}" z="{z}"/>
-                        <Action ID="Wait" seconds="3"/>
-                    </Sequence>
-                </WhileDoElse>
-            </Sequence>
-        </Decorator>
+        <Sequence>
+            <SetBlackboard output_key="x" value="0"/>
+            <SetBlackboard output_key="y" value=""/>
+            <SetBlackboard output_key="z" value="0"/>
+            <SetBlackboard output_key="cov" value="0"/>
+            <SetBlackboard output_key="dist" value="0"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
+                <Sequence>
+                    <Fallback>
+                        <Action ID="Info" message="Fear. Panic. Chaos"/>
+                        <SubTree ID="SearchFailure" __shared_blackboard="true"/>
+                    </Fallback>
+                    <WhileDoElse>
+                        <Sequence>
+                            <Action Covaraince="{cov}" ID="getCovariance" Target="{Target}"/>
+                            <Condition ID="CompareNums" a="{Error_Threshold}" b="{cov}" test="&lt;"/>
+                            <Action ID="TransformPose" from_frame="{Target}" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                            <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="0" y1="{y}" y2="0" z1="{z}" z2="0"/>
+                            <Condition ID="CompareNums" a="{dist}" b="2" test="&gt;"/>
+                        </Sequence>
+                        <Sequence>
+                            <Action ID="Math" a="{x}" b="2" operator="/" out="{x}"/>
+                            <Action ID="Math" a="{y}" b="2" operator="/" out="{y}"/>
+                            <Action ID="Math" a="{z}" b="2" operator="/" out="{z}"/>
+                            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="{x}" y="{y}" z="{z}"/>
+                            <Action ID="Info" message="Pausing to let vision look at things"/>
+                            <Action ID="Wait" seconds="3"/>
+                        </Sequence>
+                    </WhileDoElse>
+                </Sequence>
+            </Decorator>
+        </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="SurfaceTree">
