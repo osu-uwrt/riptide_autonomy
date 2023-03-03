@@ -21,6 +21,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(robot_localization REQUIRED)
+find_package(tinyxml2_vendor REQUIRED)
 
 
 #create directory for auto-generated code which will include headers for custom nodes as well as source code that registers custom nodes
@@ -62,6 +63,7 @@ set(deps
   tf2_ros
   tf2_geometry_msgs
   robot_localization
+  tinyxml2_vendor
 )
 
 #
@@ -132,12 +134,6 @@ ament_target_dependencies(autonomy_decorators ${deps})
 target_link_libraries(autonomy_decorators autonomy_utils)
 
 #
-# tinyxml2 library
-#
-add_library(tinyxml2 SHARED
-  3rdparty/tinyxml/tinyxml2.cpp)
-
-#
 # Tree execution executable
 #
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
@@ -167,7 +163,7 @@ target_include_directories(checkBT PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
     $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(checkBT autonomy_utils tinyxml2)
+target_link_libraries(checkBT autonomy_utils)
 target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
 ament_target_dependencies(checkBT
@@ -204,7 +200,7 @@ install(DIRECTORY
   DESTINATION lib/${PROJECT_NAME}
 )
 
-if(BUILD_TESTING)
+if(AUTONOMY_BUILD_TESTS)
   #set up GTest
   find_package(ament_cmake_gtest QUIET)
 

@@ -17,7 +17,8 @@ const std::string
     ORIENTATION_TOPIC = "controller/angular",
     ACTUATOR_COMMAND_TOPIC = "command/actuator",
     ACTUATOR_STATUS_TOPIC = "state/actuator",
-    ROBOT_STATE_TOPIC = "state/robot";
+    ROBOT_KILLED_TOPIC = "state/kill",
+    ROBOT_AUX_TOPIC = "state/aux";
 
 //action server names for autonomy
 const std::string 

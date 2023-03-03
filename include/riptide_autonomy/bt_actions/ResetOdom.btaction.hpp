@@ -58,7 +58,7 @@ class ResetOdom : public UWRTActionNode {
             if(! rclcpp::ok()) return BT::NodeStatus::FAILURE;
         }
 
-        future = client->async_send_request(request);
+        future = client->async_send_request(request).future;
         startTime = rosnode->get_clock()->now();
 
         return BT::NodeStatus::RUNNING;

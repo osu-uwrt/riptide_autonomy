@@ -2,106 +2,102 @@
 #include "autonomy_test/TimedPublisher.hpp"
 
 
-
-TEST_F(BtTest, test_GetSwitchState_BothIn) {
+BT::NodeStatus testGetSwitchState(std::shared_ptr<BtTestTool> toolNode, bool auxIn, bool killIn, bool& auxOut, bool& killOut) {
     bool UNSPECIFIED_VAL = false;
     auto switchStateNode = toolNode->createLeafNodeFromConfig("GetSwitchState", BT::NodeConfiguration());
 
-    riptide_msgs2::msg::RobotState msg;
-    msg.aux_switch_inserted = true;
-    msg.kill_switch_inserted = true;
+    std_msgs::msg::Bool
+        auxMsg,
+        killMsg;
 
-    TimedPublisher<riptide_msgs2::msg::RobotState> timedPub(toolNode, ROBOT_STATE_TOPIC, msg);
+    auxMsg.data = auxIn;
+    killMsg.data = killIn;
+
+    TimedPublisher<std_msgs::msg::Bool> 
+        auxPub(toolNode, ROBOT_AUX_TOPIC, auxMsg, rclcpp::SensorDataQoS(), 20),
+        killPub(toolNode, ROBOT_KILLED_TOPIC, killMsg, rclcpp::SensorDataQoS(), 20);
 
     BT::NodeStatus result = toolNode->tickUntilFinished(switchStateNode);
     auto blackboard = switchStateNode->config().blackboard;
 
+    auxOut = getFromBlackboardWithDefault<double>(blackboard, "aux_switch_inserted", UNSPECIFIED_VAL);
+    killOut = getFromBlackboardWithDefault<double>(blackboard, "kill_switch_inserted", UNSPECIFIED_VAL);
+
+    return result;
+}
+
+
+TEST_F(BtTest, test_GetSwitchState_BothIn) {
+    bool 
+        auxIn = false, 
+        killIn = false;
+
+    auto result = testGetSwitchState(toolNode, true, true, auxIn, killIn);
+
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-
-    bool auxIn =  getFromBlackboardWithDefault<double>(blackboard, "aux_switch_inserted",UNSPECIFIED_VAL);
-    bool killIn =  getFromBlackboardWithDefault<double>(blackboard, "kill_switch_inserted",UNSPECIFIED_VAL);
-
     ASSERT_EQ(true, auxIn);
     ASSERT_EQ(true, killIn);
 
 }
 
 TEST_F(BtTest, test_GetSwitchState_AuxIn) {
-    bool UNSPECIFIED_VAL = 5;
-    auto switchStateNode = toolNode->createLeafNodeFromConfig("GetSwitchState", BT::NodeConfiguration());
+    bool 
+        auxIn = false, 
+        killIn = false;
 
-    riptide_msgs2::msg::RobotState msg;
-    msg.aux_switch_inserted = true;
-    msg.kill_switch_inserted = false;
-
-    TimedPublisher<riptide_msgs2::msg::RobotState> timedPub(toolNode, ROBOT_STATE_TOPIC, msg);
-
-    BT::NodeStatus result = toolNode->tickUntilFinished(switchStateNode);
-    auto blackboard = switchStateNode->config().blackboard;
+    auto result = testGetSwitchState(toolNode, true, false, auxIn, killIn);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-
-    bool auxIn =  getFromBlackboardWithDefault<double>(blackboard, "aux_switch_inserted",UNSPECIFIED_VAL);
-    bool killIn =  getFromBlackboardWithDefault<double>(blackboard, "kill_switch_inserted",UNSPECIFIED_VAL);
-
     ASSERT_EQ(true, auxIn);
     ASSERT_EQ(false, killIn);
 
 }
 
 TEST_F(BtTest, test_GetSwitchState_KillIn) {
-    bool UNSPECIFIED_VAL = false;
-    auto switchStateNode = toolNode->createLeafNodeFromConfig("GetSwitchState", BT::NodeConfiguration());
+    bool 
+        auxIn = false, 
+        killIn = false;
 
-    riptide_msgs2::msg::RobotState msg;
-    msg.aux_switch_inserted = false;
-    msg.kill_switch_inserted = true;
-
-    TimedPublisher<riptide_msgs2::msg::RobotState> timedPub(toolNode, ROBOT_STATE_TOPIC, msg);
-
-    BT::NodeStatus result = toolNode->tickUntilFinished(switchStateNode);
-    auto blackboard = switchStateNode->config().blackboard;
+    auto result = testGetSwitchState(toolNode, false, true, auxIn, killIn);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-
-    bool auxIn =  getFromBlackboardWithDefault<double>(blackboard, "aux_switch_inserted",UNSPECIFIED_VAL);
-    bool killIn =  getFromBlackboardWithDefault<double>(blackboard, "kill_switch_inserted",UNSPECIFIED_VAL);
-
     ASSERT_EQ(false, auxIn);
     ASSERT_EQ(true, killIn);
-
 }
 
 TEST_F(BtTest, test_GetSwitchState_NoneIn) {
-    bool UNSPECIFIED_VAL = false;
-    auto switchStateNode = toolNode->createLeafNodeFromConfig("GetSwitchState", BT::NodeConfiguration());
+    bool 
+        auxIn = true, 
+        killIn = true;
 
-    riptide_msgs2::msg::RobotState msg;
-    msg.aux_switch_inserted = false;
-    msg.kill_switch_inserted = false;
-
-    TimedPublisher<riptide_msgs2::msg::RobotState> timedPub(toolNode, ROBOT_STATE_TOPIC, msg);
-
-    BT::NodeStatus result = toolNode->tickUntilFinished(switchStateNode);
-    auto blackboard = switchStateNode->config().blackboard;
+    auto result = testGetSwitchState(toolNode, false, false, auxIn, killIn);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-
-    bool auxIn =  getFromBlackboardWithDefault<double>(blackboard, "aux_switch_inserted",UNSPECIFIED_VAL);
-    bool killIn =  getFromBlackboardWithDefault<double>(blackboard, "kill_switch_inserted",UNSPECIFIED_VAL);
-
     ASSERT_EQ(false, auxIn);
     ASSERT_EQ(false, killIn);
 
 }
 
-TEST_F(BtTest, test_GetSwitchState_Failure) {
-
+TEST_F(BtTest, test_GetSwitchState_Failure_killUnpublished) {
     auto switchStateNode = toolNode->createLeafNodeFromConfig("GetSwitchState", BT::NodeConfiguration());
+    TimedPublisher<std_msgs::msg::Bool> 
+        auxPub(toolNode, ROBOT_AUX_TOPIC, std_msgs::msg::Bool(), rclcpp::SensorDataQoS(), 20);
+
     BT::NodeStatus result = toolNode->tickUntilFinished(switchStateNode);
-
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
-
 }
 
+TEST_F(BtTest, test_GetSwitchState_Failure_auxUnpublished) {
+    auto switchStateNode = toolNode->createLeafNodeFromConfig("GetSwitchState", BT::NodeConfiguration());
+    TimedPublisher<std_msgs::msg::Bool> 
+        killPub(toolNode, ROBOT_KILLED_TOPIC, std_msgs::msg::Bool(), rclcpp::SensorDataQoS(), 20);
 
+    BT::NodeStatus result = toolNode->tickUntilFinished(switchStateNode);
+    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
+}
+
+TEST_F(BtTest, test_GetSwitchState_Failure_bothUnpublished) {
+    auto switchStateNode = toolNode->createLeafNodeFromConfig("GetSwitchState", BT::NodeConfiguration());
+    BT::NodeStatus result = toolNode->tickUntilFinished(switchStateNode);
+    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
+}

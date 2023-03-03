@@ -1,7 +1,7 @@
 #include <filesystem>
 
 #include "riptide_autonomy/autonomy_lib.hpp"
-#include "riptide_autonomy/tinyxml2.h"
+#include "tinyxml2.h"
 
 #ifndef AUTONOMY_PKG_NAME
 #define AUTONOMY_PKG_NAME "riptide_autonomy2"

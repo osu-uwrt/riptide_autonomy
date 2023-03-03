@@ -28,10 +28,16 @@ class GetSwitchState : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        stateSub = rosnode->create_subscription<riptide_msgs2::msg::RobotState> (
-            ROBOT_STATE_TOPIC,
+        killedSub = rosnode->create_subscription<std_msgs::msg::Bool> (
+            ROBOT_KILLED_TOPIC,
             rclcpp::SensorDataQoS(),
-            std::bind(&GetSwitchState::robotStateCallback, this, _1)
+            std::bind(&GetSwitchState::killedCallback, this, _1)
+        );
+
+        auxSub = rosnode->create_subscription<std_msgs::msg::Bool> (
+            ROBOT_AUX_TOPIC,
+            rclcpp::SensorDataQoS(),
+            std::bind(&GetSwitchState::auxCallback, this, _1)
         );
     }
 
@@ -40,9 +46,9 @@ class GetSwitchState : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        stateReceived = false; //force node to collect another message
+        killedReceived = false; //force node to collect another message
+        auxReceived = false;
         startTime = rosnode->get_clock()->now();
-
         return BT::NodeStatus::RUNNING;
     }
 
@@ -51,12 +57,12 @@ class GetSwitchState : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        if(!stateReceived && (rosnode->get_clock()->now() - startTime).seconds() > 3) {
+        if((rosnode->get_clock()->now() - startTime).seconds() > 3) {
             RCLCPP_ERROR(log, "Timed out getting switch state.");
             return BT::NodeStatus::FAILURE;
-        } else if (stateReceived) {
-            setOutput<bool>("kill_switch_inserted", latestState.kill_switch_inserted);
-            setOutput<bool>("aux_switch_inserted", latestState.aux_switch_inserted);
+        } else if (killedReceived && auxReceived) {
+            setOutput<bool>("kill_switch_inserted", latestKilledState.data);
+            setOutput<bool>("aux_switch_inserted", latestAuxState.data);
             
             return BT::NodeStatus::SUCCESS;
         }
@@ -72,13 +78,27 @@ class GetSwitchState : public UWRTActionNode {
     }
 
     private:
-    void robotStateCallback(const riptide_msgs2::msg::RobotState::SharedPtr msg) {
-        latestState = *msg;
-        stateReceived = true;
+    void killedCallback(const std_msgs::msg::Bool::SharedPtr msg) {
+        latestKilledState = *msg;
+        killedReceived = true;
     }
 
-    bool stateReceived = false;
-    riptide_msgs2::msg::RobotState latestState;
-    rclcpp::Subscription<riptide_msgs2::msg::RobotState>::SharedPtr stateSub;
+    void auxCallback(const std_msgs::msg::Bool::SharedPtr msg) {
+        latestAuxState = *msg;
+        auxReceived = true;
+    }
+
+    bool 
+        killedReceived = false,
+        auxReceived = false;
+    
+    std_msgs::msg::Bool
+        latestKilledState,
+        latestAuxState;
+
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr 
+        killedSub,
+        auxSub;
+
     rclcpp::Time startTime;
 };
