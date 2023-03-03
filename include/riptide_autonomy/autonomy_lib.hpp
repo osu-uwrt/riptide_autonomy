@@ -32,6 +32,14 @@ const std::string
  */
 
 /**
+ * @brief Gets the value of an environment variable. Prints to the console and returns "" if no value could be found.
+ * 
+ * @param name The name of the environment variable to get.
+ * @return std::string The value of the environment variable.
+ */
+std::string getEnvVar(const char *name);
+
+/**
  * @brief Registers plugins needed to run UWRTs behavior trees or test nodes.
  * Using a register function also allows test suite to ensure that plugins being
  * tested are being loaded by the executor

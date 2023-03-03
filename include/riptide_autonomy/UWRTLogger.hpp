@@ -37,20 +37,16 @@ public:
     virtual void callback(BT::Duration timestamp, const BT::TreeNode &node, BT::NodeStatus prev_status,
                           BT::NodeStatus status) override
     {
-
-        // std::cout << node.name().c_str() << " ";
+        (void) timestamp; //suppress unused var warning
 
         // nodes that take time
         if(prev_status != BT::NodeStatus::RUNNING && status == BT::NodeStatus::RUNNING){
             treeStack.emplace_back(node.name());
             sendStack();
-            // std::cout << "added to stack " << treeStack.size();
         }
 
         // cleanup for nodes that take time
         else if(prev_status == BT::NodeStatus::RUNNING && status != BT::NodeStatus::RUNNING){
-            // std::cout << "removed from stack " << treeStack.size();
-
             safePop();
             sendStack();
         }
@@ -58,15 +54,9 @@ public:
         // nodes that complete immediately
         else if (prev_status == BT::NodeStatus::IDLE && status != BT::NodeStatus::RUNNING){
             treeStack.emplace_back(node.name());
-
-            // std::cout << "added and removed stack " << treeStack.size();
             sendStack();
-
             safePop();
-        }
-
-        // std::cout << std::endl;
-        
+        }        
     }
 
     void flush() override
