@@ -1,6 +1,6 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
-TEST(BtTest, test_ActuateDroppers) {
+TEST_F(BtTest, test_ActuateDroppers) {
     //TODO: define a test here and delete below line when you do
     GTEST_SKIP();
 }
