@@ -33,7 +33,7 @@ NON_CIRCLE_PRIORITY                 = 1.3 #measure of how much more "important" 
 MAX_LEFT_RIGHT_DETECTION_DIFFERENCE = 10 #maximum number of times a detection is allowed to be seen by one camera but not the other
 
 #frame names
-ROBOT_NAME        = "tempest"
+ROBOT_NAME        = "talos"
 TORPEDO_FRAME     = ROBOT_NAME + "/torpedo_link"
 BASE_LINK_FRAME   = ROBOT_NAME + "/base_link"
 LEFT_CAMERA_FRAME = ROBOT_NAME + "/stereo/left_link"
@@ -284,7 +284,7 @@ class AlignTorpedosAction(Node):
             
             # odom: Odometry = self.odomQueue.get(block=True, timeout=2.5)
             # curPos: Vector3 = odom.pose.pose.position
-            # propPos: Vector3 = self.transformBetweenFrames(Vector3(), PROP_FRAME, BASE_LINK_FRAME)
+            # propPos: Vector3 = self.transformBetweenFrasmes(Vector3(), PROP_FRAME, BASE_LINK_FRAME)
             # dist = abs(curPos.x - propPos.x)
             # targetDisparity = self.camModel.getDisparity(dist)            
             
@@ -294,7 +294,7 @@ class AlignTorpedosAction(Node):
             # (holeCamPos.x, holeCamPos.y, holeCamPos.z) = self.camModel.projectPixelTo3d((target.x, target.y), targetDisparity) # In camera frame: (z, y, x)
             self.get_logger().info("Found hole at camera frame coords {}, {}, {} with {} segments".format(holeCamPos.x, holeCamPos.y, holeCamPos.z, target.numSegments))
             
-            #figure out where to move Tempest to have torpedos aligned with the hole
+            #figure out where to move talos to have torpedos aligned with the hole
             torpedoPosition = self.transformBetweenFrames(Vector3(), TORPEDO_FRAME, BASE_LINK_FRAME) #position of base link relative to torpedo launcher
             holeTorpedoPos = self.transformBetweenFrames(holeCamPos, LEFT_CAMERA_FRAME, TORPEDO_FRAME) #location of detection in torpedo frame
             

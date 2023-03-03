@@ -208,13 +208,13 @@
     </BehaviorTree>
     <BehaviorTree ID="KillController">
         <Sequence>
-            <Action ID="PublishToController" isOrientation="1" mode="0" x="0" y="0" z="0"/>
+            <Action ID="PublishToController" isOrientation="1" mode="0" x="0" y="0" z="0"/>`
             <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="LessCoolTorpedoAlign">
         <Sequence name="Less cool align">
-            <Action ID="TransformPose" from_frame="tempest/torpedo_link" name="get torpedo in origin frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="" out_y="{torp_y}" out_z="{torp_z}" oy="0" to_frame="tempest/base_link" x="0" y="0" z="0"/>
+            <Action ID="TransformPose" from_frame="talos/torpedo_link" name="get torpedo in origin frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="" out_y="{torp_y}" out_z="{torp_z}" oy="0" to_frame="talos/base_link" x="0" y="0" z="0"/>
             <Action ID="Math" a="0" b="{torp_z}" operator="-" out="{prop_z}"/>
             <Action ID="TransformPose" from_frame="torpedoHole_frame" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="3.1415" to_frame="world" x="0.5" y="{torp_y}" z="{prop_z}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
@@ -260,7 +260,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring Tempest to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -609,4 +609,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-

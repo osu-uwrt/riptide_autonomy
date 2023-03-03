@@ -1,12 +1,18 @@
 import launch
 import launch.actions
 from launch_ros.actions import Node, PushRosNamespace
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration as LC
 
 def generate_launch_description():
     return launch.LaunchDescription([
+        DeclareLaunchArgument('robot', default_value="tempest", description="Name of the vehicle"),
         launch.actions.GroupAction(
             actions=[
-                PushRosNamespace("/tempest"),
+                PushRosNamespace(
+                    LC("robot"),
+                ),
+
                 # create the nodes
                 Node(
                     package='tf2_ros',
