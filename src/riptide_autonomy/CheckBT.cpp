@@ -424,8 +424,6 @@ int main() {
 
     std::string workspaceLoc = HOME + std::string(AUTONOMY_WORKSPACE);
 
-
-
     //load behavior tree factory
     auto factory = std::make_shared<BT::BehaviorTreeFactory>();
     registerPluginsForFactory(factory, AUTONOMY_PKG_NAME);
@@ -435,3 +433,4 @@ int main() {
 
     return 0;
 }
+

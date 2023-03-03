@@ -40,61 +40,33 @@ class Actuate : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
+        RCLCPP_WARN(log, "The Actuate node is deprecated. Use the fancy action client actuators!");
+
         //get inputs from BT
-        BT::Optional<bool> 
-            drop1                = getInput<bool>("drop_1"),
-            drop2                = getInput<bool>("drop_2"),
-            clear_dropper_status = getInput<bool>("clear_dropper_status"),
-            arm_torpedo          = getInput<bool>("arm_torpedo"),
-            disarm_torpedo       = getInput<bool>("disarm_torpedo"),
-            fire_torpedo_1       = getInput<bool>("fire_torpedo_1"),
-            fire_torpedo_2       = getInput<bool>("fire_torpedo_2"),
-            open_claw            = getInput<bool>("open_claw"),
-            close_claw           = getInput<bool>("close_claw"),
-            reset_actuators      = getInput<bool>("reset_actuators");
+        bool 
+            drop1                = tryGetOptionalInput<bool>(this, "drop_1", false),
+            drop2                = tryGetOptionalInput<bool>(this, "drop_2", false),
+            clear_dropper_status = tryGetOptionalInput<bool>(this, "clear_dropper_status", false),
+            arm_torpedo          = tryGetOptionalInput<bool>(this, "arm_torpedo", false),
+            disarm_torpedo       = tryGetOptionalInput<bool>(this, "disarm_torpedo", false),
+            fire_torpedo_1       = tryGetOptionalInput<bool>(this, "fire_torpedo_1", false),
+            fire_torpedo_2       = tryGetOptionalInput<bool>(this, "fire_torpedo_2", false),
+            open_claw            = tryGetOptionalInput<bool>(this, "open_claw", false),
+            close_claw           = tryGetOptionalInput<bool>(this, "close_claw", false),
+            reset_actuators      = tryGetOptionalInput<bool>(this, "reset_actuators", false);
 
         //set wanted actuator states
         riptide_msgs2::msg::ActuatorCommand cmd;
-        
-        if(drop1.has_value()) {
-            cmd.drop_1 = drop1.value();
-        }
-
-        if(drop2.has_value()) {
-            cmd.drop_2 = drop2.value();
-        }
-
-        if(clear_dropper_status.has_value()) {
-            cmd.clear_dropper_status = clear_dropper_status.value();
-        }
-
-        if(arm_torpedo.has_value()) {
-            cmd.arm_torpedo = arm_torpedo.value();
-        }
-
-        if(disarm_torpedo.has_value()) {
-            cmd.disarm_torpedo = disarm_torpedo.value();
-        }
-
-        if(fire_torpedo_1.has_value()) {
-            cmd.fire_torpedo_1 = fire_torpedo_1.value();
-        }
-
-        if(fire_torpedo_2.has_value()) {
-            cmd.fire_torpedo_2 = fire_torpedo_2.value();
-        }
-
-        if(open_claw.has_value()) {
-            cmd.open_claw = open_claw.value();
-        }
-
-        if(close_claw.has_value()) {
-            cmd.close_claw = close_claw.value();
-        }
-
-        if(reset_actuators.has_value()) {
-            cmd.reset_actuators = reset_actuators.value();
-        }
+        cmd.drop_2 = drop2;
+        cmd.drop_1 = drop1;
+        cmd.clear_dropper_status = clear_dropper_status;
+        cmd.arm_torpedo = arm_torpedo;
+        cmd.disarm_torpedo = disarm_torpedo;
+        cmd.fire_torpedo_1 = fire_torpedo_1;
+        cmd.fire_torpedo_2 = fire_torpedo_2;
+        cmd.open_claw = open_claw;
+        cmd.close_claw = close_claw;
+        cmd.reset_actuators = reset_actuators;
 
         publisher->publish(cmd);
 

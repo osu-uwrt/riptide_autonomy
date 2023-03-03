@@ -39,14 +39,14 @@ class PublishToController : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         //which metric are we publishing?
-        bool isOrientation = getInput<bool>("isOrientation").value();
+        bool isOrientation = tryGetOptionalInput<bool>(this, "isOrientation", false);
 
         //create message to publish
         riptide_msgs2::msg::ControllerCommand cmd;
-        cmd.mode = getInput<int>("mode").value();
-        cmd.setpoint_vect.x = getInput<double>("x").value();
-        cmd.setpoint_vect.y = getInput<double>("y").value();
-        cmd.setpoint_vect.z = getInput<double>("z").value();
+        cmd.mode = tryGetRequiredInput<int>(this, "mode", 3);
+        cmd.setpoint_vect.x = tryGetRequiredInput<double>(this, "x", 0);
+        cmd.setpoint_vect.y = tryGetRequiredInput<double>(this, "y", 0);
+        cmd.setpoint_vect.z = tryGetRequiredInput<double>(this, "z", 0);
         
         //if in orientation position mode, must fill out quat. vect will not be considered
         if(isOrientation && cmd.mode == riptide_msgs2::msg::ControllerCommand::POSITION) {

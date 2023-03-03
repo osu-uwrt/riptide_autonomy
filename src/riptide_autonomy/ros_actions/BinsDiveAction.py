@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #Really calculate dive/align for bins
-#Assumes Tempest down view camera can view bins
+#Assumes talos down view camera can view bins
 
 from queue import Empty, Queue
 import math
@@ -25,7 +25,7 @@ from utils.BinsVision import processImage
 #TODO - find correct image topic
 RIGHT_IMAGE_TOPIC = "stereo/right/image_rect_color"
 LEFT_IMAGE_TOPIC = "stereo/left/image_rect_color"
-ODOM_TOPIC= "/tempest/odometry/filtered"
+ODOM_TOPIC= "/talos/odometry/filtered"
 
 TARGET_DETECTIONS = 50
 DETECTIONS_TIMEOUT = 5

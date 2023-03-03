@@ -1,6 +1,6 @@
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
+#include "riptide_autonomy/autonomy_base.hpp"
 
 class UwrtBtNode {
     public:
@@ -9,8 +9,7 @@ class UwrtBtNode {
         rosInit();
     }
 
-    virtual void rosInit() = 0;
-
     protected:
+    virtual void rosInit() = 0;    
     rclcpp::Node::SharedPtr rosnode;
 };

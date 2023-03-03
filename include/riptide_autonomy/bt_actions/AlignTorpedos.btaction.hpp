@@ -40,11 +40,11 @@ class AlignTorpedos : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        timeout = getInput<double>("timeout").value();
+        timeout = tryGetRequiredInput<double>(this, "timeout", 0);
 
         double 
-            currentDistance = getInput<double>("current_distance").value(),
-            goalDistance = getInput<double>("goal_distance").value();
+            currentDistance = tryGetRequiredInput<double>(this, "current_distance", 0),
+            goalDistance = tryGetRequiredInput<double>(this, "goal_distance", 0);
         
         if(!client->wait_for_action_server(std::chrono::duration<double>(timeout))) {
             RCLCPP_ERROR(log, "AlignTorpedos action server not available.");

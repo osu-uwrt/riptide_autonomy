@@ -38,7 +38,7 @@ class ActuateClaw : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        bool clawopen = getInput<bool>("claw_open").value();
+        bool clawopen = tryGetRequiredInput<bool>(this, "claw_open", false);
 
         if(!client->wait_for_action_server(3s)) {
             RCLCPP_ERROR(log, "ActuateClaw action server not available.");
