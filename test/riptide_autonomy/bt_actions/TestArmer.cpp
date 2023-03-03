@@ -1,6 +1,6 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
-TEST(BtTest, test_FireTorpedos) {
+TEST(BtTest, test_Armer) {
     //TODO: define a test here and delete below line when you do
     GTEST_SKIP();
 }

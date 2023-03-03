@@ -26,7 +26,6 @@
 #ifndef AUTONOMY_PKG_NAME
 #define AUTONOMY_PKG_NAME "riptide_autonomy2"
 #endif
-
 #define AUTONOMY_TREE_DIR \
     std::string(__FILE__).substr(0, std::string(__FILE__).find("/riptide_autonomy/")) + std::string("/riptide_autonomy/trees")
 
