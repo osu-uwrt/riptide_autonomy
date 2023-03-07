@@ -309,17 +309,21 @@ bool traverseTree(XMLElement *tree, std::list<std::string> blackboard){
         return true;
     }
     while(tree != nullptr){
-        if(std::strcmp(tree->Value(), "SetBlackBoard") == 0){
+        if(std::strcmp(tree->Value(), "SetBlackboard") == 0){
             //add blackboard vals to the list
             blackboard.push_back(tree->Attribute("output_key"));
         }
         if(std::strcmp(tree->Value(), "SubTree") == 0){
             //check to make sure ports are blackboard vals;
-            RCLCPP_INFO(log, "checking ports");
             //get fist attribute skipping the name
             auto attribute = tree->FirstAttribute()->Next();
             while(attribute){
-                RCLCPP_INFO(log, attribute->Value());
+                if(std::strcmp(attribute->Name(), "__shared_blackboard")){
+                    if(!(std::find(blackboard.begin(), blackboard.end(), attribute->Value()) != blackboard.end())){
+                        RCLCPP_WARN(log, "%s is listed as a port value for %s but is not a blackboard pointer.",attribute->Value(),tree->Attribute("ID"));
+                        RCLCPP_WARN(log,"Would you like to make one? (Y/n)");
+                    }
+                }
                 attribute = attribute->Next();
             }
         }
