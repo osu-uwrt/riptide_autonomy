@@ -62,7 +62,7 @@ set(deps
   tf2
   tf2_ros
   tf2_geometry_msgs
-  robot_localization
+  robot_localization # needed for ResetOdom
   tinyxml2_vendor
 )
 

@@ -22,8 +22,7 @@ static std::tuple<BT::NodeStatus, std::vector<riptide_msgs2::msg::ControllerComm
     BT::NodeStatus mostRecentStatus = BT::NodeStatus::IDLE;
     while(rclcpp::ok() && sub.getMessages().size() <= 0 && toolNode->get_clock()->now() - startTime < 1s) {
         mostRecentStatus = node->executeTick();
-
-        usleep(10000); //sleep 10000 microseconds
+        toolNode->spinForTime(1ms);
     }
 
     return std::make_tuple(mostRecentStatus, sub.getMessages());

@@ -2,103 +2,139 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
 using namespace std::placeholders;
-using namespace std::chrono_literals;
 
-/**
- * @brief This class allows for testing of action client BT nodes through very primitive execution and logging.
- * 
- * @tparam T The base action type.
- * @tparam TGoal The action goal type. should be action::Goal
- * @tparam TResult The action result type. should be action::Result
- */
-template<typename T, typename TGoal, typename TResult>
+template<typename ActionT>
 class DummyActionServer {
     public:
-    using TGoalHandle = rclcpp_action::ServerGoalHandle<T>;
+    typedef rclcpp_action::ServerGoalHandle<ActionT> GoalHandleT;
+    typedef typename ActionT::Goal ActionGoalT;
+    typedef typename ActionT::Feedback ActionFeedbackT;
+    typedef typename ActionT::Result ActionResultT;
 
-    DummyActionServer(rclcpp::Node::SharedPtr rosnode, std::string serverName) {
-        this->rosnode = rosnode;
-
-        server = rclcpp_action::create_server<T>(
-            rosnode,
-            serverName,
+    DummyActionServer(rclcpp::Node::SharedPtr n, const std::string& name) {
+        this->node = n;
+        this->server = rclcpp_action::create_server<ActionT>(
+            n, 
+            name,
             std::bind(&DummyActionServer::handleGoal, this, _1, _2),
             std::bind(&DummyActionServer::handleCancel, this, _1),
             std::bind(&DummyActionServer::handleAccepted, this, _1)
         );
 
-        configureExecution(
-            rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE,
-            rclcpp_action::CancelResponse::ACCEPT,
-            3,
-            std::make_shared<TResult>()
-        );
+        this->feedbackEnabled = false;
+        this->gotRequest = false;
     }
 
-    void configureExecution(
-        rclcpp_action::GoalResponse goalResponse, 
-        rclcpp_action::CancelResponse cancelResponse, 
-        double executionTimeSeconds,
-        std::shared_ptr<TResult> result) 
+    void configureNoFeedback(
+        rclcpp_action::GoalResponse goalResponse,
+        rclcpp_action::CancelResponse cancelResponse,
+        std::chrono::duration<double> execTime,
+        bool succeed,
+        std::shared_ptr<ActionResultT> result,
+        std::shared_ptr<ActionResultT> canceledResult = std::make_shared<ActionResultT>())
     {
         this->goalResponse = goalResponse;
         this->cancelResponse = cancelResponse;
-        this->executionTime = executionTimeSeconds;
+        this->execTime = execTime;
+        this->succeed = succeed;
         this->result = result;
+        this->canceledResult = canceledResult;
+        this->gotRequest = false;
     }
 
-    std::shared_ptr<const TGoal> getLatestGoal() {
-        return latestGoal;
+    void configureWithFeedback(
+        rclcpp_action::GoalResponse goalResponse,
+        rclcpp_action::CancelResponse cancelResponse,
+        std::chrono::duration<double> execTime,
+        bool succeed,
+        std::shared_ptr<ActionResultT> result,
+        std::shared_ptr<ActionFeedbackT> feedback,
+        std::chrono::duration<double> feedbackPeriod,
+        std::shared_ptr<ActionResultT> canceledResult = std::make_shared<ActionResultT>())
+    {
+        configureNoFeedback(
+            goalResponse,
+            cancelResponse,
+            execTime,
+            succeed,
+            result,
+            canceledResult
+        );
+
+        this->feedbackEnabled = true;
+        this->feedback = feedback;
+        this->feedbackPeriod = feedbackPeriod;
     }
 
-    private:
-    rclcpp_action::GoalResponse handleGoal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const TGoal> goal) {
-        //get rid of unused parameter warnings
-        (void)uuid;
+    bool receivedRequest() {
+        return gotRequest;
+    }
 
-        latestGoal = goal;
+    std::shared_ptr<const ActionGoalT> getReceivedRequest() {
+        return receivedGoalHandle;
+    }
+
+    protected:
+    rclcpp::Node::SharedPtr node;
+    typename rclcpp_action::Server<ActionT>::SharedPtr server;
+
+    rclcpp_action::GoalResponse goalResponse;
+    rclcpp_action::CancelResponse cancelResponse;
+    std::chrono::duration<double> 
+        execTime, 
+        feedbackPeriod;
+    std::shared_ptr<ActionResultT> 
+        result,
+        canceledResult;
+    std::shared_ptr<ActionFeedbackT> feedback;
+    bool 
+        succeed,
+        feedbackEnabled,
+        gotRequest;
+
+    std::shared_ptr<const ActionGoalT> receivedGoalHandle;
+
+    rclcpp_action::GoalResponse handleGoal(
+        const rclcpp_action::GoalUUID &uuid,
+        std::shared_ptr<const ActionGoalT> goal)
+    {
+        (void) uuid;
+        this->gotRequest = true;
+        this->receivedGoalHandle = goal;
         return goalResponse;
     }
 
-    rclcpp_action::CancelResponse handleCancel(const std::shared_ptr<TGoalHandle> goal_handle) {
-        //get rid of unused parameter warnings
-        (void)goal_handle;
+    rclcpp_action::CancelResponse handleCancel(
+        const std::shared_ptr<GoalHandleT> goalHandle)
+    {
+        (void) goalHandle;
         return cancelResponse;
     }
 
-    void handleAccepted(const std::shared_ptr<TGoalHandle> goal_handle) {
-        using namespace std::placeholders;
-        // this needs to return quickly to avoid blocking the executor, so spin up a new thread
-        std::thread{std::bind(&DummyActionServer::execute, this, _1), goal_handle}.detach();
+    void handleAccepted(const std::shared_ptr<GoalHandleT> goalHandle) {
+        std::thread{std::bind(&DummyActionServer::execute, this, _1), goalHandle}.detach();
     }
 
-    void execute(const std::shared_ptr<TGoalHandle> goalHandle) {
-        if(executionTime >= 0) {
-            std::chrono::duration<double> secs(executionTime);
-            rclcpp::sleep_for(std::chrono::duration_cast<std::chrono::nanoseconds>(secs));
-            goalHandle->succeed(result);
-            return; //we done. if the code goes any further it will block until rclcpp goes bad
+    //NOTE: must manually spin node in your test while this callback is happening!
+    void execute(const std::shared_ptr<GoalHandleT> goalHandle) {
+        rclcpp::Time startTime = node->get_clock()->now();
+        while(rclcpp::ok() && node->get_clock()->now() - startTime < execTime) {
+            if(goalHandle->is_canceling() && this->cancelResponse == rclcpp_action::CancelResponse::ACCEPT) {
+                goalHandle->canceled(canceledResult);
+                return;
+            }
+
+            if(feedbackEnabled) {
+                goalHandle->publish_feedback(feedback);
+            }
         }
 
-        //okay, this part is weird. basically if the action server stays alive for too long after rclcpp goes down, a bunch of cool segfaults happen
-        //in future tests. to combat this, if the action server is supposed to hang forever, it will simply sleep until rclcpp::ok() returns false
-        while(rclcpp::ok()) {
-            rclcpp::sleep_for(5ms);
+        if(rclcpp::ok()) {
+            if(succeed) {
+                goalHandle->succeed(result);
+            } else {
+                goalHandle->abort(result);
+            }
         }
     }
-
-    //ros node
-    rclcpp::Node::SharedPtr rosnode;
-
-    //ros action server
-    std::shared_ptr<rclcpp_action::Server<T>> server;
-
-    //execution information
-    rclcpp_action::GoalResponse goalResponse;
-    rclcpp_action::CancelResponse cancelResponse;
-    double executionTime;
-    std::shared_ptr<TResult> result;
-
-    //storage
-    std::shared_ptr<const TGoal> latestGoal;
 };

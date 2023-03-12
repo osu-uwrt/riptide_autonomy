@@ -120,14 +120,10 @@ class BtTestTool : public rclcpp::Node {
     std::shared_ptr<BT::TreeNode> createDecoratorNodeFromConfig(std::string name, BT::NodeConfiguration config, BT::TreeNode::Ptr child);
     std::shared_ptr<DummyActionNode> createDummyActionNode();
     BT::NodeStatus tickUntilFinished(std::shared_ptr<BT::TreeNode> node);
-    bool isSpinning();
+    void spinForTime(std::chrono::duration<double> time);
 
     private:
-    void spinTimer();
-
-    rclcpp::TimerBase::SharedPtr heartTimer;
     std::shared_ptr<BT::BehaviorTreeFactory> factory;
-    bool spinning;
 };
 
 /**
@@ -138,7 +134,6 @@ class BtTest : public ::testing::Test {
     void SetUp() override;
     void TearDown() override;
 
-    std::thread executionThread;
     std::shared_ptr<BtTestTool> toolNode;
 };
 

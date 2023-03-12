@@ -19,8 +19,7 @@ TEST_F(BtTest, test_Actuate_empty) {
     auto mostRecentStatus = BT::NodeStatus::IDLE;
     while(sub.getMessages().size() < 1 && toolNode->get_clock()->now() - startTime < 2s) {
         mostRecentStatus = node->executeTick();
-
-        usleep(10000); //sleep 10000 microseconds
+        toolNode->spinForTime(1ms);
     }
 
     ASSERT_EQ(mostRecentStatus, BT::NodeStatus::SUCCESS);
