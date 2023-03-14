@@ -108,8 +108,8 @@ def onCheck(args, autonomyRootLoc: str):
     
     #if changes were made, ask the user to rebuild them
     if actionsHadChanges or conditionsHadChanges or decoratorsHadChanges:
-        if askConfirmation(args, "Changes were made to the workspace that need to be built. Rebuild autonomy now?"):
-            onReconfigureAutonomy(args)
+        if askConfirmation(args, "Changes were made to the colcon workspace that need to be built. Rebuild autonomy now?"):
+            onReconfigureAutonomy(args, autonomyRootLoc)
         else:
             info(args, "Not rebuilding autonomy. Remember to rebuild it yourself before running it so your changes can take effect")
     

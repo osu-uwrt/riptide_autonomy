@@ -98,15 +98,15 @@ def createFileFromTemplate(templatePath: str, targetPath: str, args: 'list[str]'
 
 
 #creates a node file for a node with name nodeName with type nodeType
-def createNodeFile(args, nodeName: str, nodeType: BtNodeType, srcLoc: str, includeLoc: str):
+def createNodeFile(args, nodeName: str, nodeType: BtNodeType, rootLoc: str):
     #check node type
     if not isinstance(nodeType, BtNodeType):
         raise TypeError("Parameter nodeType must be a member of the BtNodeType enum.")
     
     template = "actionnode_hpp_template" if nodeType == BtNodeType.ACTION else "nonactionnode_hpp_template"
         
-    templatePath = "{}/assistant/templates/{}".format(srcLoc, template)    
-    newFileName = "{0}/bt_{1}s/{2}.bt{1}.hpp".format(includeLoc, nodeType.name.lower(), nodeName)
+    templatePath = "{}/assistant/templates/{}".format(autonomySrcLocation(rootLoc), template)    
+    newFileName = "{0}/bt_{1}s/{2}.bt{1}.hpp".format(autonomyIncludeLocation(rootLoc), nodeType.name.lower(), nodeName)
     
     if os.path.exists(newFileName):
         if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):
@@ -118,13 +118,13 @@ def createNodeFile(args, nodeName: str, nodeType: BtNodeType, srcLoc: str, inclu
 
 
 #creates a test file for a node with name nodeName of type nodeType.
-def createTestFile(args, nodeName: str, nodeType: BtNodeType, srcLoc: str, testLoc: str):
+def createTestFile(args, nodeName: str, nodeType: BtNodeType, rootLoc: str):
     #check node type
     if not isinstance(nodeType, BtNodeType):
         raise TypeError("Parameter nodeType must be a member of the BtNodeType enum.")
     
-    templatePath = "{}/assistant/templates/test_template".format(srcLoc)
-    newFileName = "{0}/bt_{1}s/Test{2}.cpp".format(testLoc, nodeType.name.lower(), nodeName)
+    templatePath = "{}/assistant/templates/test_template".format(autonomySrcLocation(rootLoc))
+    newFileName = "{0}/bt_{1}s/Test{2}.cpp".format(autonomyTestLocation(rootLoc), nodeType.name.lower(), nodeName)
 
     if os.path.exists(newFileName):
         if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):

@@ -15,12 +15,12 @@ def onCreate(args, autonomyRootLoc: str):
         exit(1)
     
     #create file
-    createNodeFile(args, args.name, nodeType)
-    createTestFile(args, args.name, nodeType)
+    createNodeFile(args, args.name, nodeType, autonomyRootLoc)
+    createTestFile(args, args.name, nodeType, autonomyRootLoc)
     
     #rebuild autonomy to force cmake to configure and generate appropriate headers
     if args.no_rebuild:
         info(args, "You need to completely rebuild riptide_autonomy2 for the changes to take effect.")
     else:
-        onReconfigureAutonomy(args)
+        onReconfigureAutonomy(args, autonomyRootLoc)
 
