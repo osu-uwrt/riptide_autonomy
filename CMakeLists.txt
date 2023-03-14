@@ -226,7 +226,7 @@ if(AUTONOMY_BUILD_TESTS)
     file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.cpp)
     file(GLOB tool_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/tools/*.cpp)
 
-    ament_add_gtest(test_bt
+    ament_add_gtest(test_nodes
       ${action_test_sources}
       ${condition_test_sources}
       ${decorator_test_sources}
@@ -237,14 +237,14 @@ if(AUTONOMY_BUILD_TESTS)
       test/riptide_autonomy/executeTests.cpp #overrides default main() method
     )
 
-    ament_target_dependencies(test_bt ${deps})
-    target_link_libraries(test_bt autonomy_utils)
+    ament_target_dependencies(test_nodes ${deps})
+    target_link_libraries(test_nodes autonomy_utils)
 
-    target_include_directories(test_bt PUBLIC
+    target_include_directories(test_nodes PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>)
     
-    install(TARGETS test_bt
+    install(TARGETS test_nodes
       DESTINATION lib/${PROJECT_NAME}
     )
   endif()

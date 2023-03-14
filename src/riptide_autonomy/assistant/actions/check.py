@@ -1,9 +1,13 @@
 import os
-from util import prompt, BtNodeType, fileNameNoExt, info, createTestFile, askConfirmation, createNodeFile, categorizedGlob, autonomyIncludeLocation, autonomyTestLocation
-from actions.reconfigure import onReconfigureAutonomy
 
-#called when the check task is invoked
-def onCheck(args, autonomyRootLoc: str):
+from actions.reconfigure import doReconfigure
+from ament_index_python import get_package_prefix
+from util import (BtNodeType, askConfirmation, autonomyIncludeLocation,
+                  autonomyTestLocation, categorizedGlob, createNodeFile,
+                  createTestFile, fileNameNoExt, info, prompt)
+
+
+def checkFiles(args, autonomyRootLoc: str):
     skipAllPrompts = args.force
     
     #gives a prompt to the user as long as skipAllPrompts is False. Returns the user-selected result as an integer
@@ -90,8 +94,10 @@ def onCheck(args, autonomyRootLoc: str):
                 skipAllPrompts = True
         
         return madeChanges
-            
-    #ACTUAL CHECK FUNCTION STUFF STARTS HERE
+    
+    #
+    # ACTUAL FILE CHECK FUNCTION STUFF STARTS HERE
+    #
     
     #get list of bt node and test files
     actionFiles, conditionFiles, decoratorFiles = categorizedGlob(autonomyIncludeLocation(autonomyRootLoc), "*.hpp")
@@ -109,9 +115,62 @@ def onCheck(args, autonomyRootLoc: str):
     #if changes were made, ask the user to rebuild them
     if actionsHadChanges or conditionsHadChanges or decoratorsHadChanges:
         if askConfirmation(args, "Changes were made to the colcon workspace that need to be built. Rebuild autonomy now?"):
-            onReconfigureAutonomy(args, autonomyRootLoc)
+            doReconfigure(args, autonomyRootLoc, False, False)
         else:
             info(args, "Not rebuilding autonomy. Remember to rebuild it yourself before running it so your changes can take effect")
     
-    info(args, "Check complete.")
+    return True
+    
+#invokes the checkBT executable.
+#returns True on success, False on fail.
+def checkBT():
+    return not os.system("ros2 run riptide_autonomy2 checkBT")
 
+
+#invokes the test_nodes executable
+def checkNodes(args, autonomyRootLoc: str):
+    testExecPath = os.path.join(get_package_prefix("riptide_autonomy2"), "lib", "riptide_autonomy2", "test_nodes")
+    
+    #reconfigure and rebuild autonomy with tests enabled
+    info(args, "Building autonomy with tests enabled")
+    success = doReconfigure(args, autonomyRootLoc, True, False)
+    
+    if not success:
+        info(args, "Error rebuilding autonomy.")
+        return
+        
+    #directly invoke test_nodes executable
+    return not os.system(testExecPath)
+
+
+#runs all checks and summarizes results
+def checkSystem(args, autonomyRootLoc: str):
+    fileCheck = checkFiles(args, autonomyRootLoc)
+    btCheck   = checkBT()
+    nodeCheck = checkNodes(args, autonomyRootLoc)
+    
+    info(args, "\n\nCHECK SUMMARY:")
+    info(args, f"Files: {'good' if fileCheck else 'bad'}")
+    info(args, f"BehaviorTree workspace: {'good' if btCheck else 'bad'}")
+    info(args, f"Nodes: {'good' if nodeCheck else 'bad'}")
+    
+    return fileCheck and btCheck and nodeCheck
+
+
+#called when the check task is invoked
+def onCheck(args, autonomyRootLoc: str):
+    success = False
+    
+    if args.module == "files":
+        success = checkFiles(args, autonomyRootLoc)
+    elif args.module == "behaviortree":
+        success = checkBT()
+    elif args.module == "nodes":
+        success = checkNodes(args, autonomyRootLoc)
+    elif args.module == "system":
+        success = checkSystem(args, autonomyRootLoc)
+    else:
+        info(args, f"Fatal: cannot check module {args.module}. Check is undefined")
+
+    info(args, "\nCheck completed.")
+    info(args, f"Check was {'good' if success else 'bad'}.")

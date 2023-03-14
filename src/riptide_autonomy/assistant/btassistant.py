@@ -10,7 +10,8 @@ from actions.check import onCheck
 from actions.create import onCreate
 from actions.generateRegistrators import onGenerateRegistrators
 from actions.reconfigure import onReconfigureAutonomy
-from util import info, autonomySrcLocation, autonomyIncludeLocation, autonomyTestLocation
+from util import (autonomyIncludeLocation, autonomySrcLocation,
+                  autonomyTestLocation, info)
 
 #
 # VERIFY AUTONOMY SRC PACKAGE LOCATION BEFORE COMMANDS ARE RUN
@@ -60,7 +61,10 @@ taskOptions = {
     "reconfigure_autonomy" : Task(
         onReconfigureAutonomy,
         "Clean and re-build the riptide_autonomy2 package.",
-        []
+        [
+            Task.Argument("--with-tests", optional=True),
+            Task.Argument("--debug", optional=True)
+        ]
     ),
     
     "check" : Task(

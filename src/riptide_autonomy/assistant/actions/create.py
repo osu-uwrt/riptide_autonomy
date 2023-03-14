@@ -1,7 +1,8 @@
 import sys
 
+from actions.reconfigure import doReconfigure
 from util import BtNodeType, createNodeFile, createTestFile, info
-from actions.reconfigure import onReconfigureAutonomy
+
 
 #called when the create task is invoked.
 def onCreate(args, autonomyRootLoc: str):
@@ -22,5 +23,5 @@ def onCreate(args, autonomyRootLoc: str):
     if args.no_rebuild:
         info(args, "You need to completely rebuild riptide_autonomy2 for the changes to take effect.")
     else:
-        onReconfigureAutonomy(args, autonomyRootLoc)
+        doReconfigure(args, autonomyRootLoc, False, False)
 
