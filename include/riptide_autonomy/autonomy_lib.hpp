@@ -24,7 +24,8 @@ const std::string
 const std::string 
     CLAW_SERVER_NAME = "actuate_claw",
     DROPPER_SERVER_NAME = "actuate_droppers",
-    TORPEDO_SERVER_NAME = "fire_torpedos";
+    TORPEDO_SERVER_NAME = "fire_torpedos",
+    ARMER_SERVER_NAME = "arm_torpedo_dropper";
 
 /**
  *

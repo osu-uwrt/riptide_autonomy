@@ -3,6 +3,7 @@
 #include "riptide_autonomy/autonomy_lib.hpp"
 
 using ChangeTorpedoState = riptide_msgs2::action::ActuateTorpedos;
+using GoalHandleTorpedo = rclcpp_action::ClientGoalHandle<ChangeTorpedoState>;
 using TorpedoResult = rclcpp_action::ClientGoalHandle<ChangeTorpedoState>::WrappedResult;
 using namespace std::chrono_literals;
 using namespace std::placeholders;
@@ -50,15 +51,12 @@ class FireTorpedos : public UWRTActionNode {
 
         actionResult.code = rclcpp_action::ResultCode::UNKNOWN;
         auto options = rclcpp_action::Client<ChangeTorpedoState>::SendGoalOptions();
+        options.goal_response_callback = std::bind(&FireTorpedos::goalResponseCB, this, _1);
         options.result_callback = std::bind(&FireTorpedos::resultCB, this, _1);
 
         startTime = rosnode->get_clock()->now();
         auto future = client->async_send_goal(goal, options);
-
-        if(future.get() == nullptr) {
-            RCLCPP_ERROR(log, "Could not fire the torpedos, the goal was rejected by the server!");
-            return BT::NodeStatus::FAILURE;
-        }
+        goalAccepted = true;
 
         return BT::NodeStatus::RUNNING;
     }
@@ -68,7 +66,11 @@ class FireTorpedos : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        if(rclcpp::ok() && (rosnode->get_clock()->now() - startTime) < 10s && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) {
+        if( goalAccepted 
+            && rclcpp::ok() 
+            && (rosnode->get_clock()->now() - startTime) < 10s 
+            && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) 
+        {
             return BT::NodeStatus::RUNNING;
         }
 
@@ -86,12 +88,22 @@ class FireTorpedos : public UWRTActionNode {
     void onHalted() override { } 
 
     private:
+
+    void goalResponseCB(const GoalHandleTorpedo::SharedPtr& goalHandle) {
+        if(!goalHandle) {
+            RCLCPP_ERROR(log, "Could not fire the torpedos, the goal was rejected by the server!");
+            goalAccepted = false;
+        } else {
+            RCLCPP_INFO(log, "Torpedo action accepted by server; waiting for result");
+        }
+    }
+
     void resultCB(const TorpedoResult& result) {
         RCLCPP_INFO(log, "Action completed.");
         actionResult = result;
     }
     
-
+    bool goalAccepted = true;
     rclcpp::Time startTime;
     TorpedoResult actionResult;
     rclcpp_action::Client<ChangeTorpedoState>::SharedPtr client;

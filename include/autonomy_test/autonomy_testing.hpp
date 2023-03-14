@@ -133,7 +133,9 @@ class BtTest : public ::testing::Test {
     protected:
     void SetUp() override;
     void TearDown() override;
+    rclcpp::Duration testElapsed();
 
+    rclcpp::Time startTime;
     std::shared_ptr<BtTestTool> toolNode;
 };
 

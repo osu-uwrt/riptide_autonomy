@@ -9,6 +9,7 @@ void BtTest::SetUp() {
     //init ros
     rclcpp::init(0, nullptr);
     toolNode = std::make_shared<BtTestTool>();
+    startTime = toolNode->get_clock()->now();
 }
 
 /**
@@ -17,4 +18,9 @@ void BtTest::SetUp() {
 void BtTest::TearDown() {
     rclcpp::shutdown();
     toolNode.reset();
+}
+
+
+rclcpp::Duration BtTest::testElapsed() {
+    return toolNode->get_clock()->now() - startTime;
 }

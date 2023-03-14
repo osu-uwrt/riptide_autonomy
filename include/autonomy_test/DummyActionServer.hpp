@@ -3,6 +3,10 @@
 
 using namespace std::placeholders;
 
+/**
+ * @brief A simple server to test action clients on
+ * @tparam ActionT The action type to make the server for.
+ */
 template<typename ActionT>
 class DummyActionServer {
     public:
@@ -11,6 +15,11 @@ class DummyActionServer {
     typedef typename ActionT::Feedback ActionFeedbackT;
     typedef typename ActionT::Result ActionResultT;
 
+    /**
+     * @brief Creates a new DummyActionServer.
+     * @param n The ROS node to attach the server to.
+     * @param name The name of the server
+     */
     DummyActionServer(rclcpp::Node::SharedPtr n, const std::string& name) {
         this->node = n;
         this->server = rclcpp_action::create_server<ActionT>(
@@ -23,8 +32,18 @@ class DummyActionServer {
 
         this->feedbackEnabled = false;
         this->gotRequest = false;
+        this->gotCancel = false;
     }
 
+    /**
+     * @brief Configures the server to run without feedback.
+     * @param goalResponse The response to new goal requests.
+     * @param cancelResponse The response to new cancel requests.
+     * @param execTime The duration that execution will take
+     * @param succeed true if the server should succeed, false if it should abort.
+     * @param result The result to return at the end of the action.
+     * @param canceledResult The result to return if the goal is canceled.
+     */
     void configureNoFeedback(
         rclcpp_action::GoalResponse goalResponse,
         rclcpp_action::CancelResponse cancelResponse,
@@ -40,8 +59,21 @@ class DummyActionServer {
         this->result = result;
         this->canceledResult = canceledResult;
         this->gotRequest = false;
+        this->gotCancel = false;
+        this->stopped = false;
     }
 
+    /**
+     * @brief Configures the server to run with feedback
+     * @param goalResponse The response to new goal requests.
+     * @param cancelResponse The response to new cancel requests.
+     * @param execTime The duration that execution will take
+     * @param succeed true if the server should succeed, false if it should abort.
+     * @param result The result to return at the end of the action.
+     * @param feedback The feedback to send periodically.
+     * @param feedbackPeriod The time between feedback messages.
+     * @param canceledResult The result to return if the goal is canceled.
+     */
     void configureWithFeedback(
         rclcpp_action::GoalResponse goalResponse,
         rclcpp_action::CancelResponse cancelResponse,
@@ -66,10 +98,33 @@ class DummyActionServer {
         this->feedbackPeriod = feedbackPeriod;
     }
 
+    /**
+     * Stops execution of any goals.
+     */
+    void forceStop() {
+        stopped = true;
+    }
+
+    /**
+     * Returns whether or not the server has received a goal request since configureWithFeedback() wsa called.
+     */
     bool receivedRequest() {
         return gotRequest;
     }
 
+    /**
+     * Returns whether or not the server has received a cancel request since a goal request was last received.
+     */
+    bool receivedCancel() {
+        return gotCancel;
+    }
+
+    /**
+     * @brief Returns the most recent goal request.
+     * Before calling this, make sure that a goal request exists with receivedRequest()
+     * 
+     * @return The most recent goal request
+     */
     std::shared_ptr<const ActionGoalT> getReceivedRequest() {
         return receivedGoalHandle;
     }
@@ -90,7 +145,9 @@ class DummyActionServer {
     bool 
         succeed,
         feedbackEnabled,
-        gotRequest;
+        gotRequest,
+        gotCancel,
+        stopped;
 
     std::shared_ptr<const ActionGoalT> receivedGoalHandle;
 
@@ -100,6 +157,7 @@ class DummyActionServer {
     {
         (void) uuid;
         this->gotRequest = true;
+        this->gotCancel = false; //reset the cancel flag
         this->receivedGoalHandle = goal;
         return goalResponse;
     }
@@ -118,17 +176,18 @@ class DummyActionServer {
     //NOTE: must manually spin node in your test while this callback is happening!
     void execute(const std::shared_ptr<GoalHandleT> goalHandle) {
         rclcpp::Time startTime = node->get_clock()->now();
-        while(rclcpp::ok() && node->get_clock()->now() - startTime < execTime) {
+        while(!stopped && rclcpp::ok() && node->get_clock()->now() - startTime < execTime) {
             if(goalHandle->is_canceling() && this->cancelResponse == rclcpp_action::CancelResponse::ACCEPT) {
                 goalHandle->canceled(canceledResult);
                 return;
             }
 
             if(feedbackEnabled) {
-                goalHandle->publish_feedback(feedback);
+                goalHandle->publish_feedback(feedback); //TODO: make this respect feedback period
             }
         }
 
+        //only send results if rclcpp is ok. otherwise we will get an error that we tried to publish to a goal that doesnt exist
         if(rclcpp::ok()) {
             if(succeed) {
                 goalHandle->succeed(result);
