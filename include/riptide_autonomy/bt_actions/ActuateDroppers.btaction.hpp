@@ -3,6 +3,7 @@
 #include "riptide_autonomy/autonomy_lib.hpp"
 
 using ChangeDropperState = riptide_msgs2::action::ActuateDroppers;
+using GoalHandleDroppers = rclcpp_action::ClientGoalHandle<ChangeDropperState>;
 using DroppersResult = rclcpp_action::ClientGoalHandle<ChangeDropperState>::WrappedResult;
 using namespace std::chrono_literals;
 using namespace std::placeholders;
@@ -48,16 +49,13 @@ class ActuateDroppers : public UWRTActionNode {
 
         actionResult.code = rclcpp_action::ResultCode::UNKNOWN;
         auto options = rclcpp_action::Client<ChangeDropperState>::SendGoalOptions();
+        options.goal_response_callback = std::bind(&ActuateDroppers::goalResponseCallback, this, _1);
         options.result_callback = std::bind(&ActuateDroppers::resultCB, this, _1);
 
         RCLCPP_INFO(log, "Sending goal to ActuateDroppers server.");
         startTime = rosnode->get_clock()->now();
+        goalAccepted = true;
         auto future = client->async_send_goal(goal, options);
-
-        if(future.get() == nullptr) {
-            RCLCPP_ERROR(log, "Could not actuate the droppers, the goal was rejected by the server!");
-            return BT::NodeStatus::FAILURE;
-        }
 
         return BT::NodeStatus::RUNNING;
     }
@@ -67,7 +65,11 @@ class ActuateDroppers : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        if(rclcpp::ok() && (rosnode->get_clock()->now() - startTime) < 10s && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) {
+        if( goalAccepted 
+            && rclcpp::ok() 
+            && (rosnode->get_clock()->now() - startTime) < 10s 
+            && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) 
+        {
             return BT::NodeStatus::RUNNING;
         }
 
@@ -85,10 +87,21 @@ class ActuateDroppers : public UWRTActionNode {
     void onHalted() override { }
 
     private:
+
+    void goalResponseCallback(const GoalHandleDroppers::SharedPtr& goal_handle) {
+        if(!goal_handle) {
+            RCLCPP_ERROR(log, "Dropper goal was rejected by the server");
+            goalAccepted = false;
+        } else {
+            RCLCPP_INFO(log, "Dropper goal accepted by the server, waiting for result");
+        }
+    }
+
     void resultCB(const DroppersResult& result) {
         actionResult = result;
     }
 
+    bool goalAccepted;
     rclcpp::Time startTime;
     DroppersResult actionResult;
     rclcpp_action::Client<ChangeDropperState>::SharedPtr client;

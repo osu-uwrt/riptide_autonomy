@@ -3,6 +3,7 @@
 #include "riptide_autonomy/autonomy_lib.hpp"
 
 using ChangeClawState = riptide_msgs2::action::ChangeClawState;
+using GoalHandleClaw = rclcpp_action::ClientGoalHandle<ChangeClawState>;
 using ClawResult = rclcpp_action::ClientGoalHandle<ChangeClawState>::WrappedResult;
 using namespace std::chrono_literals;
 using namespace std::placeholders;
@@ -50,16 +51,13 @@ class ActuateClaw : public UWRTActionNode {
 
         actionResult.code = rclcpp_action::ResultCode::UNKNOWN;
         auto options = rclcpp_action::Client<ChangeClawState>::SendGoalOptions();
+        options.goal_response_callback = std::bind(&ActuateClaw::goalResponseCallback, this, _1);
         options.result_callback = std::bind(&ActuateClaw::resultCB, this, _1);
 
         RCLCPP_INFO(log, "Sending goal to ActuateClaw client.");
         startTime = rosnode->get_clock()->now();
+        goalAccepted = true; //will be set to false if we get a rejection later
         auto future = client->async_send_goal(goal, options);
-
-        if(future.get() == nullptr) {
-            RCLCPP_ERROR(log, "Could not actuate the claw, the goal was rejected by the server!");
-            return BT::NodeStatus::FAILURE;
-        }
 
         return BT::NodeStatus::RUNNING;
     }
@@ -69,7 +67,11 @@ class ActuateClaw : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        if(rclcpp::ok() && (rosnode->get_clock()->now() - startTime) < 10s && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) {
+        if( goalAccepted 
+            && rclcpp::ok() 
+            && (rosnode->get_clock()->now() - startTime) < 10s 
+            && actionResult.code == rclcpp_action::ResultCode::UNKNOWN) 
+        {
             return BT::NodeStatus::RUNNING;
         }
 
@@ -88,11 +90,21 @@ class ActuateClaw : public UWRTActionNode {
 
     private:
 
+    void goalResponseCallback(const GoalHandleClaw::SharedPtr & goal_handle) {
+        if (!goal_handle) {
+            RCLCPP_ERROR(log, "Claw actuation goal was rejected by the server");
+            goalAccepted = false;
+        } else {
+            RCLCPP_INFO(log, "Claw actuation goal accepted by the server, waiting for result");
+        }
+    }
+
     void resultCB(const ClawResult& result) {
         RCLCPP_INFO(log, "Action result received.");
         actionResult = result;
     }
     
+    bool goalAccepted;
     rclcpp::Time startTime;
     ClawResult actionResult;
     rclcpp_action::Client<ChangeClawState>::SharedPtr client;

@@ -34,7 +34,7 @@ class Armer : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        client = rclcpp_action::create_client<ArmTorpedoDropperMSG>(this->rosnode, "arm_torpedo_dropper");
+        client = rclcpp_action::create_client<ArmTorpedoDropperMSG>(this->rosnode, ARMER_SERVER_NAME);
     }
 
     /**
@@ -55,8 +55,6 @@ class Armer : public UWRTActionNode {
         auto goal = ArmTorpedoDropperMSG::Goal();
         goal.arm_droppers = arm_droppers;
         goal.arm_torpedos = arm_torpedos;
-
-
 
         auto options = rclcpp_action::Client<ArmTorpedoDropperMSG>::SendGoalOptions();
         options.goal_response_callback = std::bind(&Armer::goalResponseCB, this, _1);
