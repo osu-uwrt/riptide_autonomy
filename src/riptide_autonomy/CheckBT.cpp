@@ -304,24 +304,39 @@ void CheckWorkspace(std::shared_ptr<BehaviorTreeFactory> factory) {
     }
 }
 
-bool traverseTree(XMLElement *tree, std::list<std::string> blackboard){
-    if(tree == nullptr){
+bool traverseTree(XMLElement *testTree, XMLElement *bb, std::list<std::string> blackboard){
+    if(testTree == nullptr){
         return true;
     }
-    while(tree != nullptr){
-        if(std::strcmp(tree->Value(), "SetBlackboard") == 0){
+    while(testTree != nullptr){
+        if(std::strcmp(testTree->Value(), "SetBlackboard") == 0){
             //add blackboard vals to the list
-            blackboard.push_back(tree->Attribute("output_key"));
+            if(bb->Parent() != testTree->Parent()){
+                blackboard.clear();
+            }
+            blackboard.push_back(testTree->Attribute("output_key"));
+            bb = testTree;
         }
-        if(std::strcmp(tree->Value(), "SubTree") == 0){
+        if(std::strcmp(testTree->Value(), "SubTree") == 0){
+            RCLCPP_INFO(log, "found subtree %s", testTree->Attribute("ID"));
             //check to make sure ports are blackboard vals;
             //get fist attribute skipping the name
-            auto attribute = tree->FirstAttribute()->Next();
+            auto attribute = testTree->FirstAttribute()->Next();
             while(attribute){
                 if(std::strcmp(attribute->Name(), "__shared_blackboard")){
+                    RCLCPP_INFO(log, "%s", attribute->Name());
                     if(!(std::find(blackboard.begin(), blackboard.end(), attribute->Value()) != blackboard.end())){
-                        RCLCPP_WARN(log, "%s is listed as a port value for %s but is not a blackboard pointer.",attribute->Value(),tree->Attribute("ID"));
+                        RCLCPP_WARN(log, "%s is listed as a port value for %s but is not a blackboard pointer.",attribute->Value(),testTree->Attribute("ID"));
                         RCLCPP_WARN(log,"Would you like to make one? (Y/n)");
+                        std::string ans;
+                        std::cin>>ans;
+                        if(std::tolower(ans[0]) == 'y'){
+                            XMLElement *newNode = tree.NewElement("SetBlackboard");
+                            newNode->SetAttribute("output_key", attribute->Value());
+                            newNode->SetAttribute("value", attribute->Value());
+                            bb->Parent()->InsertAfterChild(bb,newNode);
+                            tree.SaveFile(treePath.c_str());
+                        }
                     }
                 }
                 attribute = attribute->Next();
@@ -329,20 +344,20 @@ bool traverseTree(XMLElement *tree, std::list<std::string> blackboard){
         }
         //can add more checks here as needed
 
-        traverseTree(tree->FirstChildElement(), blackboard);
-        tree = tree->NextSiblingElement();
+        traverseTree(testTree->FirstChildElement(), bb, blackboard);
+        testTree = testTree->NextSiblingElement();
     }
     return true;
 }
 
 bool CheckTree(){
     auto mainTree = tree.RootElement()->FirstChildElement();
-    //find main tree. ID="BehaviorTree"
+    //find main testTree. ID="BehaviorTree"
     while(mainTree !=nullptr &&  std::strcmp(mainTree->Attribute("ID"),"BehaviorTree")){
         mainTree = mainTree->NextSiblingElement();
     }
     std::list<std::string> blackboard;
-    traverseTree(mainTree->FirstChildElement(),blackboard);
+    traverseTree(mainTree->FirstChildElement(), mainTree->FirstChildElement(), blackboard);
     return true;
 }
 
@@ -358,8 +373,8 @@ int main(int argc, char **argv) {
         treePath = argv[1];
         tree.LoadFile(argv[1]);
         if(!tree.RootElement()) {
-            //if there is no root element then the tree was not loaded correctly
-            std::cerr << "FATAL: Could not load tree. Does it exist?" << std::endl;
+            //if there is no root element then the testTree was not loaded correctly
+            std::cerr << "FATAL: Could not load testTree. Does it exist?" << std::endl;
             std::cerr << "Looked in file path: " << treePath << std::endl;
             return 1; //bail out; nothing else we can do here
         }
@@ -370,13 +385,13 @@ int main(int argc, char **argv) {
         treePath = HOME + std::string(AUTONOMY_WORKSPACE);
         tree.LoadFile(treePath.c_str());
         if(!tree.RootElement()) {
-            //if there is no root element then the tree was not loaded correctly
+            //if there is no root element then the testTree was not loaded correctly
             std::cerr << "FATAL: Could not load Groot workspace file (riptide_autonomy/trees/.groot/workspace.xml). Does it exist?" << std::endl;
             std::cerr << "Looked in file path: " << treePath << std::endl;
             return 1; //bail out; nothing else we can do here
         }
         RCLCPP_INFO(log, "Workspace loaded");
-        //load behavior tree factory
+        //load behavior testTree factory
         auto factory = std::make_shared<BT::BehaviorTreeFactory>();
         registerPluginsForFactory(factory, AUTONOMY_PKG_NAME);
         
