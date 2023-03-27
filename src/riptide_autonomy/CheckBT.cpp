@@ -17,6 +17,7 @@ using namespace BT;
 
 std::string treePath = "";
 XMLDocument tree;
+bool yta = false;
 
 /**
  * @brief Goes through Include to get all custom nodes
@@ -126,7 +127,7 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
             std::string ans;
             std::cin>>ans;
 
-            if(std::tolower(ans[0]) == 'y'){
+            if(std::tolower(ans[0]) == 'y' || yta){
                 port->Parent()->DeleteChild(port);
             }
             else{
@@ -144,7 +145,7 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
                 std::string ans;
                 std::cin>>ans;
 
-                if(std::tolower(ans[0]) == 'y'){
+                if(std::tolower(ans[0]) == 'y' || yta){
                     addPortToWorkspace(check.first, check.second, node);
                 }
                 else{
@@ -266,7 +267,7 @@ void CheckWorkspace(std::shared_ptr<BehaviorTreeFactory> factory) {
                 std::string ans;
                 std::cin>>ans;
 
-                if(std::tolower(ans[0]) == 'y'){
+                if(std::tolower(ans[0]) == 'y'||yta){
                     has_errors = false || res.second;
                     node = node->PreviousSiblingElement();
                     node->Parent()->DeleteChild(node->NextSiblingElement());
@@ -285,7 +286,7 @@ void CheckWorkspace(std::shared_ptr<BehaviorTreeFactory> factory) {
             std::string ans;
             std::cin>>ans;
 
-            if(std::tolower(ans[0]) == 'y'){
+            if(std::tolower(ans[0]) == 'y' || yta){
                 auto node_info = factory->manifests().at(node);
                 addNodeToWorkspace(node.c_str(), node_info.ports,node_info.type);
             }
@@ -330,7 +331,7 @@ bool traverseTree(XMLElement *testTree, XMLElement *bb, std::list<std::string> b
                         RCLCPP_WARN(log,"Would you like to make one? (Y/n)");
                         std::string ans;
                         std::cin>>ans;
-                        if(std::tolower(ans[0]) == 'y'){
+                        if(std::tolower(ans[0]) == 'y' || yta){
                             XMLElement *newNode = tree.NewElement("SetBlackboard");
                             newNode->SetAttribute("output_key", attribute->Value());
                             newNode->SetAttribute("value", attribute->Value());
@@ -369,9 +370,13 @@ int main(int argc, char **argv) {
         std::cerr << "Failed to find HOME directory!" << std::endl;
         return 1; //cant do anything more without HOME directory
     }
-    if(argc == 2){
-        treePath = argv[1];
-        tree.LoadFile(argv[1]);
+    for(int i = 1; i < argc; i++){
+        if(argv[i]  == "-y"){
+            yta=true;
+        }
+        else{
+        treePath = argv[i];
+        tree.LoadFile(argv[i]);
         if(!tree.RootElement()) {
             //if there is no root element then the testTree was not loaded correctly
             std::cerr << "FATAL: Could not load testTree. Does it exist?" << std::endl;
@@ -380,8 +385,9 @@ int main(int argc, char **argv) {
         }
         RCLCPP_INFO(log, "Workspace loaded");
         CheckTree();
+        }
     }
-    else{
+    if(!tree.RootElement()){
         treePath = HOME + std::string(AUTONOMY_WORKSPACE);
         tree.LoadFile(treePath.c_str());
         if(!tree.RootElement()) {
