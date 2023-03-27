@@ -54,7 +54,6 @@ std::list<std::string> getCustomNodes(){
         nodes.push_back(path);
     }
     return nodes;
-
 }
 
 /**
@@ -398,10 +397,9 @@ int main(int argc, char **argv) {
         }
         RCLCPP_INFO(log, "Workspace loaded");
         //load behavior testTree factory
-        auto factory = std::make_shared<BT::BehaviorTreeFactory>();
-        registerPluginsForFactory(factory, AUTONOMY_PKG_NAME);
-        
-        CheckWorkspace(factory);
     }
+    auto factory = std::make_shared<BT::BehaviorTreeFactory>();
+    registerPluginsForFactory(factory, AUTONOMY_PKG_NAME);
+    CheckWorkspace(factory);   
     return 0;
 }
