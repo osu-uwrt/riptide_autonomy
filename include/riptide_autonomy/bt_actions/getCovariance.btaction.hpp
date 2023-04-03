@@ -64,7 +64,7 @@ class getCovariance : public UWRTActionNode {
     void topic_callback(const Cov::SharedPtr msg)
     {
         for(int i = 0; i < 6; i++){
-            error += msg.get()->pose.covariance[(6*i)];
+            error += msg.get()->pose.covariance.at((6*i) + i);
         }
         RCLCPP_INFO(log,"Error recieved");
     }

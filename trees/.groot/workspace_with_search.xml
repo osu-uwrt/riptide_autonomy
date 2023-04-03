@@ -317,21 +317,28 @@
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="SearchFailure">
-        <Action ID="Info" message="Fixing Panic"/>
+        <Sequence>
+            <Action ID="Info" message="Fixing Panic"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="{x}" y="{y}" z="{z}"/>
+        </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <BehaviorTree ID="SearchNew">
         <Sequence>
+            <SetBlackboard output_key="{starting_x}" value="0"/>
+            <SetBlackboard output_key="{starting_y}" value="0"/>
+            <SetBlackboard output_key="{starting_z}" value="0"/>
             <SetBlackboard output_key="x" value="0"/>
-            <SetBlackboard output_key="y" value=""/>
+            <SetBlackboard output_key="y" value="0"/>
             <SetBlackboard output_key="z" value="0"/>
             <SetBlackboard output_key="cov" value="0"/>
             <SetBlackboard output_key="dist" value="0"/>
+            <Action ID="GetOdometry" op="" or="" oy="" x="{starting_x}" y="{syarting_y}" z="{starting+z"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
                 <Sequence>
                     <Fallback>
                         <Action ID="Info" message="Fear. Panic. Chaos"/>
-                        <SubTree ID="SearchFailure" __shared_blackboard="true"/>
+                        <SubTree ID="SearchFailure" __shared_blackboard="true" x="" y="" z=""/>
                     </Fallback>
                     <WhileDoElse>
                         <Sequence>
@@ -642,6 +649,9 @@
         </Action>
         <SubTree ID="SearchFailure">
             <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
         </SubTree>
         <SubTree ID="SearchNew">
             <input_port name="Error_Threshold"/>
