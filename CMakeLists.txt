@@ -153,25 +153,32 @@ ament_target_dependencies(doTask
   riptide_msgs2
 )
 
-#
-# BT Health Checker executable
-#
-add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
+if(NOT BUILD_DEPLOY)
+  #
+  # BT Health Checker executable
+  #
+  add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
 
-target_include_directories(checkBT PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
-    $<INSTALL_INTERFACE:include>)
+  target_include_directories(checkBT PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
+      $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(checkBT autonomy_utils)
-target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
+  target_link_libraries(checkBT autonomy_utils)
+  target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
-ament_target_dependencies(checkBT
-  behaviortree_cpp_v3
-)
+  ament_target_dependencies(checkBT
+    behaviortree_cpp_v3
+  )
+  install(TARGETS checkBT
+    DESTINATION lib/${PROJECT_NAME}
+  )
+else()
+  message("Skipping BT Health checker for deploy build")
+endif()
 
 #install executable
-install(TARGETS doTask checkBT
+install(TARGETS doTask
   DESTINATION lib/${PROJECT_NAME}
 )
 
