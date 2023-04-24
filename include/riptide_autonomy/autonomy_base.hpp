@@ -23,18 +23,10 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <riptide_msgs2/msg/actuator_command.hpp>
 #include <riptide_msgs2/msg/actuator_status.hpp>
-#include <riptide_msgs2/msg/robot_state.hpp>
 #include <riptide_msgs2/msg/controller_command.hpp>
 
 #include <robot_localization/srv/set_pose.hpp>
-
-#include <riptide_msgs2/action/align_torpedos.hpp>
-#include <riptide_msgs2/action/actuate_torpedos.hpp>
-#include <riptide_msgs2/action/change_claw_state.hpp>
-#include <riptide_msgs2/action/actuate_droppers.hpp>
-#include <riptide_msgs2/action/arm_torpedo_dropper.hpp>
 
 //define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
 #define log rclcpp::get_logger("autonomy")

@@ -192,10 +192,8 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
 
 # Install Python executables
-file(GLOB ros_actions_py RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/ros_actions/*.py)
 file(GLOB assistant_py_files RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/assistant/*.py)
 install(PROGRAMS
-  ${ros_actions_py}
   ${assistant_py_files}
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -206,11 +204,6 @@ install(DIRECTORY src/riptide_autonomy/assistant/actions
 
 install(DIRECTORY trees
   DESTINATION share/${PROJECT_NAME})
-
-install(DIRECTORY
-  src/riptide_autonomy/ros_actions/utils
-  DESTINATION lib/${PROJECT_NAME}
-)
 
 if(AUTONOMY_BUILD_TESTS)
   #set up GTest
