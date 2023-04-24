@@ -22,7 +22,7 @@ The **doTask** node contains an action server which allows for easy running of b
 
 ```ros2 launch riptide_autonomy2 autonomy.launch.py robot:=<robot name>```
 
-The action server should appear as ```<robot name>/autonomy/run_tree``` and ingests the ```riptide_msgs2/action/ExecuteTree``` action type (see [riptide_core](github.com/osu-uwrt/riptide_core) for more information). 
+The action server should appear as ```<robot name>/autonomy/run_tree``` and ingests the ```riptide_msgs2/action/ExecuteTree``` action type (see [riptide_core](https://github.com/osu-uwrt/riptide_core) for more information). 
 
 ### Running using RViz
 Behavior trees can also be run from UWRTs MissionPanel RViz plugin (see riptide_rviz in UWRTs [riptide_gui](https://github.com/osu-uwrt/riptide_gui) repo for more information). So long as the action server is running, the MissionPanel can be used to select behavior trees found in the *trees* directory and run them with the press of a button.
