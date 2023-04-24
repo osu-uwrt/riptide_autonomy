@@ -248,6 +248,7 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
 
     while(node != nullptr){
         std::string nodetype = node->Name();
+        XMLElement *nextElement = node->NextSiblingElement();
 
         //if node is not a subtree...
         if(nodetype.compare("SubTree") != 0){
@@ -264,8 +265,7 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
 
                 if(std::tolower(ans[0]) == 'y' || yta){
                     //delete from the model we are iterating through
-                    node = node->PreviousSiblingElement();
-                    node->Parent()->DeleteChild(node->NextSiblingElement());
+                    node->Parent()->DeleteChild(node);
                     removed = true;
                 } else {
                     RCLCPP_ERROR(log, "Not removing %s from the workspace. To fix this issue, use the BT assistant tool to create a proper C++ file for the node.", node->Attribute("ID"));
@@ -278,7 +278,7 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
             }
         }
 
-        node = node->NextSiblingElement();       
+        node = nextElement;
     }
         
     std::list<std::string> customNodes = getCustomNodes(); //list of nodes in riptide_autonomy2

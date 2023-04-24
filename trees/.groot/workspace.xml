@@ -370,26 +370,6 @@
         </Sequence>
     </BehaviorTree>
     <TreeNodesModel>
-        <Action ID="Actuate">
-            <input_port name="arm_torpedo" required="false"/>
-            <input_port name="clear_dropper_status" required="false"/>
-            <input_port name="close_claw" required="false"/>
-            <input_port name="disarm_torpedo" required="false"/>
-            <input_port name="drop_1" required="false"/>
-            <input_port name="drop_2" required="false"/>
-            <input_port name="fire_torpedo_1" required="false"/>
-            <input_port name="fire_torpedo_2" required="false"/>
-            <input_port name="open_claw" required="false"/>
-            <input_port name="reset_actuators" required="false"/>
-        </Action>
-        <Action ID="AlignTorpedos">
-            <input_port name="current_distance" required="false"/>
-            <input_port name="goal_distance" required="false"/>
-            <input_port name="timeout" required="false"/>
-            <output_port name="x" required="false"/>
-            <output_port name="y" required="false"/>
-            <output_port name="z" required="false"/>
-        </Action>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="false"/>
             <input_port name="b" required="false"/>
@@ -599,20 +579,6 @@
             <input_port name="y" required="false"/>
             <output_port name="out_y" required="false"/>
             <input_port name="x" required="false"/>
-        </Action>
-        <Action ID="ActuateClaw">
-            <input_port name="claw_open" required="false"/>
-        </Action>
-        <Action ID="ActuateDroppers">
-            <input_port name="DropperID" required="false"/>
-        </Action>
-        <Action ID="Armer">
-            <output_port name="IsArmed" required="false"/>
-            <input_port name="ArmDroppers" required="false"/>
-            <input_port name="ArmTorpedos" required="false"/>
-        </Action>
-        <Action ID="FireTorpedos">
-            <input_port name="TorpedoID" required="false"></input_port>
         </Action>
     </TreeNodesModel>
     <!-- ////////// -->
