@@ -18,7 +18,8 @@ const std::string
     ACTUATOR_COMMAND_TOPIC = "command/actuator",
     ACTUATOR_STATUS_TOPIC = "state/actuator",
     ROBOT_KILLED_TOPIC = "state/kill",
-    ROBOT_AUX_TOPIC = "state/aux";
+    ROBOT_AUX_TOPIC = "state/aux",
+    LED_COMMAND_TOPIC = "command/led";
 
 //action server names for autonomy
 const std::string 
