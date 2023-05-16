@@ -208,8 +208,9 @@
     </BehaviorTree>
     <BehaviorTree ID="KillController">
         <Sequence>
-            <Action ID="PublishToController" isOrientation="1" mode="0" x="0" y="0" z="0"/>`
-            <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/></Sequence>
+            <Action ID="PublishToController" isOrientation="1" mode="0" x="0" y="0" z="0"/>
+            <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="LessCoolTorpedoAlign">
         <Sequence name="Less cool align">
@@ -259,7 +260,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -370,6 +371,18 @@
         </Sequence>
     </BehaviorTree>
     <TreeNodesModel>
+        <Action ID="Actuate">
+            <inout_port name="arm_torpedo" required="true"/>
+            <inout_port name="clear_dropper_status" required="true"/>
+            <inout_port name="close_claw" required="true"/>
+            <inout_port name="disarm_torpedo" required="true"/>
+            <inout_port name="drop_1" required="true"/>
+            <inout_port name="drop_2" required="true"/>
+            <inout_port name="fire_torpedo_1" required="true"/>
+            <inout_port name="fire_torpedo_2" required="true"/>
+            <inout_port name="open_claw" required="true"/>
+            <inout_port name="reset_actuators" required="true"/>
+        </Action>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="false"/>
             <input_port name="b" required="false"/>
@@ -389,8 +402,17 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="false"/>
             <input_port name="b" required="false"/>
-            <input_port name="test" required="false">can be "&lt;", "&gt;", or "=".</input_port>
+            <input_port name="test" required="false">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
+        <Action ID="ComputeFrameAlignment">
+            <input_port name="frameName" required="false"/>
+            <output_port name="out_x" required="false"/>
+            <output_port name="out_y" required="false"/>
+            <output_port name="out_z" required="false"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="z" required="false"/>
+        </Action>
         <SubTree ID="DisarmTorpedos"/>
         <SubTree ID="Dive">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -494,7 +516,7 @@
         <Action ID="Math">
             <input_port name="a" required="false"/>
             <input_port name="b" required="false"/>
-            <input_port default="+" name="operator" required="false">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="false">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="Move">
@@ -506,6 +528,10 @@
             <input_port name="y" required="false"/>
             <input_port name="z" required="false"/>
         </SubTree>
+        <Condition ID="NumsEqual">
+            <inout_port name="a" required="true"/>
+            <inout_port name="b" required="true"/>
+        </Condition>
         <SubTree ID="PrimitiveMoveOrientation">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="p" required="false"/>
@@ -571,15 +597,7 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="torpedo_id" required="false"/>
         </SubTree>
-        <Action ID="ComputeFrameAlignment">
-            <output_port name="out_x" required="false"/>
-            <input_port name="frameName" required="false"/>
-            <input_port name="z" required="false"/>
-            <output_port name="out_z" required="false"/>
-            <input_port name="y" required="false"/>
-            <output_port name="out_y" required="false"/>
-            <input_port name="x" required="false"/>
-        </Action>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
+
