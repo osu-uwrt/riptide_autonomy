@@ -338,7 +338,7 @@
             <Action ID="Wait" seconds="5"/>
             <RetryUntilSuccessful num_attempts="-1">
                 <Sequence>
-                    <Action ID="GetSwitchState" aux_switch_inserted="" kill_switch_inserted="kill_switch_inserted"/>
+                    <Action ID="GetBoolTopic" topic="state/kill" value="{kill_switch_inserted}"/>
                     <Condition ID="IsTrue" value="{kill_switch_inserted}"/>
                     <Action ID="Info" message="KILL SWITCH INSERTED, TREE STARTING IN 5 SECONDS"/>
                 </Sequence>
@@ -453,6 +453,10 @@
             <output_port name="dropper2_state" required="false"/>
             <output_port name="torpedo1_state" required="false"/>
             <output_port name="torpedo2_state" required="false"/>
+        </Action>
+        <Action ID="GetBoolTopic">
+            <input_port name="topic" required="true">The topic to subscribe to.</input_port>
+            <output_port name="value" required="false"/>
         </Action>
         <Action ID="GetOdometry">
             <output_port name="op" required="false"/>
