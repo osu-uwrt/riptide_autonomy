@@ -55,3 +55,62 @@ class DummyService {
     bool haveRequest;
     std::shared_ptr<TRequest> receivedRequest;
 };
+
+
+template<typename T>
+class ServiceTest : public BtTest {
+    typedef typename T::Request  TRequest;
+    typedef typename T::Response TResponse;
+
+    protected:
+    void SetUp() override {
+        BtTest::SetUp();
+
+        serviceAllowed = true;
+        requestAvailable = false;
+    }
+
+    void TearDown() override {
+        BtTest::TearDown();
+    }
+
+    void configSrv(const std::string& name, std::shared_ptr<TResponse> response, std::chrono::duration<double> execTime) {
+        srvThread = std::thread(
+            std::bind(&ServiceTest::srvThreadFunc, this, _1, _2, _3), 
+            name, 
+            response, 
+            execTime);
+    }
+
+    bool killSrvAndGetRequest(typename TRequest::SharedPtr request) {
+        //kill the srv
+        serviceAllowed = false;
+        srvThread.join();
+
+        //populate request data and return whether or not the data was available
+        if(requestAvailable) {
+            *request = *receivedRequest;
+        }
+
+        return requestAvailable;
+    }
+
+    private:
+    void srvThreadFunc(const std::string& name, std::shared_ptr<TResponse> response, std::chrono::duration<double> execTime) {
+        srvNode = std::make_shared<rclcpp::Node>("testsrv", "bt_testing");
+        DummyService<T> srv(srvNode, name);
+        srv.configureExecution(response, execTime);
+
+        while(serviceAllowed) {
+            rclcpp::spin_some(srvNode);
+        }
+
+        receivedRequest = srv.getReceivedRequest();
+        requestAvailable = srv.requestAvailable();
+    }
+
+    rclcpp::Node::SharedPtr srvNode;
+    std::thread srvThread;
+    bool serviceAllowed, requestAvailable;
+    typename TRequest::SharedPtr receivedRequest;
+};

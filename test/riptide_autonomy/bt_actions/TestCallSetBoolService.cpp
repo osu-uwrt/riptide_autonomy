@@ -2,65 +2,10 @@
 #include "autonomy_test/DummyService.hpp"
 
 using namespace std::chrono_literals;
-using namespace std::placeholders;
 using SetBool = std_srvs::srv::SetBool;
+using SetBoolTest = ServiceTest<SetBool>;
 
 const std::chrono::duration<double> TESTSETBOOLSRV_TIMEOUT = 5s;
-
-class SetBoolTest : public BtTest {
-    protected:
-    void SetUp() override {
-        BtTest::SetUp();
-
-        serviceAllowed = true;
-        requestAvailable = false;
-    }
-
-    void TearDown() override {
-        BtTest::TearDown();
-    }
-
-    void configSrv(const std::string& name, std::shared_ptr<SetBool::Response> response, std::chrono::duration<double> execTime) {
-        srvThread = std::thread(
-            std::bind(&SetBoolTest::srvThreadFunc, this, _1, _2, _3), 
-            name, 
-            response, 
-            execTime);
-    }
-
-    bool killSrvAndGetRequest(SetBool::Request::SharedPtr request) {
-        //kill the srv
-        serviceAllowed = false;
-        srvThread.join();
-
-        //populate request data and return whether or not the data was available
-        if(requestAvailable) {
-            *request = *receivedRequest;
-        }
-
-        return requestAvailable;
-    }
-
-    private:
-    void srvThreadFunc(const std::string& name, std::shared_ptr<SetBool::Response> response, std::chrono::duration<double> execTime) {
-        srvNode = std::make_shared<rclcpp::Node>("testsetbool_srv", "bt_testing");
-        DummyService<SetBool> srv(srvNode, name);
-        srv.configureExecution(response, execTime);
-
-        while(serviceAllowed) {
-            rclcpp::spin_some(srvNode);
-        }
-
-        receivedRequest = srv.getReceivedRequest();
-        requestAvailable = srv.requestAvailable();
-    }
-
-    rclcpp::Node::SharedPtr srvNode;
-    std::thread srvThread;
-    bool serviceAllowed, requestAvailable;
-    SetBool::Request::SharedPtr receivedRequest;
-};
-
 
 BT::NodeStatus testCallSetBoolSrv(
     std::shared_ptr<BtTestTool> toolNode, 
