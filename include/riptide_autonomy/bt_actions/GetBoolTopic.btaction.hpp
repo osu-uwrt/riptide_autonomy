@@ -62,6 +62,7 @@ class GetBoolTopic : public UWRTActionNode {
 
         if(rosnode->get_clock()->now() - startTime > 3s) {
             RCLCPP_ERROR(log, "Timed out waiting for bool on topic %s!", topic.c_str());
+            setOutput<bool>("value", false); // set a value on the blackboard so the rest of the tree doesnt crash if access is attempted
             return BT::NodeStatus::FAILURE;
         }
 
