@@ -3,7 +3,7 @@
 
 using namespace std::chrono_literals;
 
-const std::chrono::seconds TESTBOOL_TIMEOUT = 5s;
+const std::chrono::duration<double> TESTBOOL_TIMEOUT = 5s;
 
 BT::NodeStatus testGetBoolTopic(std::shared_ptr<BtTestTool> toolNode, const std::string& topic, const bool valToPub, bool& receivedVal, const int pubPeriodMs = 125) {
     //set up node
@@ -23,7 +23,7 @@ BT::NodeStatus testGetBoolTopic(std::shared_ptr<BtTestTool> toolNode, const std:
     while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE && toolNode->get_clock()->now() - startTime < TESTBOOL_TIMEOUT) {
         status = node->executeTick();
         rclcpp::spin_some(toolNode);
-    }
+    } //if timed out, status will be RUNNING
 
     //node done, get result
     bool gotFromBb = getFromBlackboard(*node, "value", receivedVal);
