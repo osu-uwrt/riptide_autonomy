@@ -15,6 +15,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -58,6 +59,7 @@ set(deps
   nav_msgs
   sensor_msgs
   riptide_msgs2
+  std_srvs
   behaviortree_cpp_v3
   tf2
   tf2_ros

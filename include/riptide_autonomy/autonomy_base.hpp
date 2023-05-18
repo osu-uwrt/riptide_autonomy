@@ -25,7 +25,10 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <riptide_msgs2/msg/actuator_status.hpp>
 #include <riptide_msgs2/msg/controller_command.hpp>
+#include <riptide_msgs2/msg/led_command.hpp>
 
+#include <std_srvs/srv/set_bool.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <robot_localization/srv/set_pose.hpp>
 
 //define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
