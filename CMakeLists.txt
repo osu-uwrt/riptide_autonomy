@@ -10,17 +10,20 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclpy REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(riptide_msgs2 REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(riptide_msgs2 REQUIRED)
-find_package(behaviortree_cpp_v3 REQUIRED)
-find_package(robot_localization REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(robot_localization REQUIRED)
+find_package(tinyxml2_vendor REQUIRED)
+
 
 #create directory for auto-generated code which will include headers for custom nodes as well as source code that registers custom nodes
 make_directory(${PROJECT_BINARY_DIR}/autonomy_generator)
@@ -56,11 +59,13 @@ set(deps
   nav_msgs
   sensor_msgs
   riptide_msgs2
+  std_srvs
   behaviortree_cpp_v3
   tf2
   tf2_ros
   tf2_geometry_msgs
-  robot_localization
+  robot_localization # needed for ResetOdom
+  tinyxml2_vendor
 )
 
 #
@@ -131,12 +136,6 @@ ament_target_dependencies(autonomy_decorators ${deps})
 target_link_libraries(autonomy_decorators autonomy_utils)
 
 #
-# tinyxml2 library
-#
-add_library(tinyxml2 SHARED
-  3rdparty/tinyxml/tinyxml2.cpp)
-
-#
 # Tree execution executable
 #
 add_executable(doTask src/riptide_autonomy/DoTask.cpp)
@@ -156,25 +155,32 @@ ament_target_dependencies(doTask
   riptide_msgs2
 )
 
-#
-# BT Health Checker executable
-#
-add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
+if(NOT BUILD_DEPLOY)
+  #
+  # BT Health Checker executable
+  #
+  add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
 
-target_include_directories(checkBT PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
-    $<INSTALL_INTERFACE:include>)
+  target_include_directories(checkBT PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
+      $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(checkBT autonomy_utils tinyxml2)
-target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
+  target_link_libraries(checkBT autonomy_utils)
+  target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
-ament_target_dependencies(checkBT
-  behaviortree_cpp_v3
-)
+  ament_target_dependencies(checkBT
+    behaviortree_cpp_v3
+  )
+  install(TARGETS checkBT
+    DESTINATION lib/${PROJECT_NAME}
+  )
+else()
+  message("Skipping BT Health checker for deploy build")
+endif()
 
 #install executable
-install(TARGETS doTask checkBT
+install(TARGETS doTask
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -188,62 +194,62 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
 
 # Install Python executables
-file(GLOB ros_actions_py RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/ros_actions/*.py)
+file(GLOB assistant_py_files RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/assistant/*.py)
 install(PROGRAMS
-  ${ros_actions_py}
-  src/riptide_autonomy/assistant/btassistant.py
+  ${assistant_py_files}
   DESTINATION lib/${PROJECT_NAME}
 )
+
+#install bt assistant "actions" directory
+install(DIRECTORY src/riptide_autonomy/assistant/actions
+  DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY trees
   DESTINATION share/${PROJECT_NAME})
 
-install(DIRECTORY
-  src/riptide_autonomy/ros_actions/utils
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-if(BUILD_TESTING)
-  #ament lint auto things
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-
+if(AUTONOMY_BUILD_TESTS)
   #set up GTest
-  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_gtest QUIET)
 
-  #glob all test sources together
-  file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.cpp)
-  file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.cpp)
-  file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.cpp)
-  file(GLOB tool_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/tools/*.cpp)
+  if(ament_cmake_gtest_FOUND)
+    #ament lint auto things
+    find_package(ament_lint_auto REQUIRED)
+    # the following line skips the linter which checks for copyrights
+    # uncomment the line when a copyright and license is not present in all source files
+    set(ament_cmake_copyright_FOUND TRUE)
+    # the following line skips cpplint (only works in a git repo)
+    # uncomment the line when this package is not in a git repo
+    #set(ament_cmake_cpplint_FOUND TRUE)
+    ament_lint_auto_find_test_dependencies()
 
-  ament_add_gtest(test_bt
-    ${action_test_sources}
-    ${condition_test_sources}
-    ${decorator_test_sources}
-    ${tool_test_sources}
-    test/riptide_autonomy/DummyActionNode.cpp
-    test/riptide_autonomy/BtTestTool.cpp
-    test/riptide_autonomy/BtTest.cpp
-    test/riptide_autonomy/executeTests.cpp #overrides default main() method
-  )
+    #glob all test sources together
+    file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.cpp)
+    file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.cpp)
+    file(GLOB decorator_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_decorators/*.cpp)
+    file(GLOB tool_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/tools/*.cpp)
 
-  ament_target_dependencies(test_bt ${deps})
-  target_link_libraries(test_bt autonomy_utils)
+    ament_add_gtest(test_nodes
+      ${action_test_sources}
+      ${condition_test_sources}
+      ${decorator_test_sources}
+      ${tool_test_sources}
+      test/riptide_autonomy/DummyActionNode.cpp
+      test/riptide_autonomy/BtTestTool.cpp
+      test/riptide_autonomy/BtTest.cpp
+      test/riptide_autonomy/executeTests.cpp #overrides default main() method
+    )
 
-  target_include_directories(test_bt PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-  
-  install(TARGETS test_bt
-    DESTINATION lib/${PROJECT_NAME}
-  )
+    ament_target_dependencies(test_nodes ${deps})
+    target_link_libraries(test_nodes autonomy_utils)
+
+    target_include_directories(test_nodes PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>)
+    
+    install(TARGETS test_nodes
+      DESTINATION lib/${PROJECT_NAME}
+    )
+  endif()
 endif()
 
 ament_package()

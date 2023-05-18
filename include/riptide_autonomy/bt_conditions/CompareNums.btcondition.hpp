@@ -40,11 +40,11 @@ class CompareNums : public UWRTConditionNode {
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     BT::NodeStatus tick() override {
-        std::string test = getInput<std::string>("test").value();
+        std::string test = tryGetRequiredInput<std::string>(this, "test", "");
 
         double
-            a = getInput<double>("a").value(),
-            b = getInput<double>("b").value();
+            a = tryGetRequiredInput<double>(this, "a", 0),
+            b = tryGetRequiredInput<double>(this, "b", 0);
 
         if (test == ">")
         { // check a > b

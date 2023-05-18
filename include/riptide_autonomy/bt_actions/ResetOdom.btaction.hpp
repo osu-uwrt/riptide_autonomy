@@ -5,9 +5,12 @@
 using namespace std::chrono_literals;
 
 class ResetOdom : public UWRTActionNode {
+    using SetPose = robot_localization::srv::SetPose;
+
     public:
     ResetOdom(const std::string& name, const BT::NodeConfiguration& config)
-    : UWRTActionNode(name, config) {
+    : UWRTActionNode(name, config),
+      result(std::future<std::shared_ptr<SetPose::Response>>(), 0) {
         
     }
 
@@ -32,7 +35,7 @@ class ResetOdom : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        client = rosnode->create_client<robot_localization::srv::SetPose>("/tempest/set_pose");
+        client = rosnode->create_client<SetPose>("/talos/set_pose");
     }
 
     /**
@@ -41,24 +44,25 @@ class ResetOdom : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         //get inputs from BT
-        auto request = std::make_shared<robot_localization::srv::SetPose::Request>();
+        auto request = std::make_shared<SetPose::Request>();
 
-        request->pose.pose.pose.position.x = getInput<double>("x").value();
-        request->pose.pose.pose.position.y = getInput<double>("y").value();
-        request->pose.pose.pose.position.z = getInput<double>("z").value();
+        request->pose.pose.pose.position.x = tryGetRequiredInput<double>(this, "x", 0);
+        request->pose.pose.pose.position.y = tryGetRequiredInput<double>(this, "y", 0);
+        request->pose.pose.pose.position.z = tryGetRequiredInput<double>(this, "z", 0);
 
         geometry_msgs::msg::Vector3 orient;
-        orient.x = getInput<double>("or").value();
-        orient.y = getInput<double>("op").value();
-        orient.z = getInput<double>("oy").value();
+        orient.x = tryGetRequiredInput<double>(this, "or", 0);
+        orient.y = tryGetRequiredInput<double>(this, "op", 0);
+        orient.z = tryGetRequiredInput<double>(this, "oy", 0);
 
         request->pose.pose.pose.orientation = toQuat(orient);
 
         while(! client->wait_for_service(1s)){
-            if(! rclcpp::ok()) return BT::NodeStatus::FAILURE;
+            RCLCPP_ERROR(log, "ResetOdom service is not available.");
+            return BT::NodeStatus::FAILURE;
         }
 
-        future = client->async_send_request(request);
+        result = client->async_send_request(request);
         startTime = rosnode->get_clock()->now();
 
         return BT::NodeStatus::RUNNING;
@@ -70,9 +74,9 @@ class ResetOdom : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         // should be valid now 
-        if(!future.valid() && rosnode->get_clock()->now() - startTime > 5s){
+        if(!result.valid() && rosnode->get_clock()->now() - startTime > 5s){
             return BT::NodeStatus::FAILURE;
-        } else if (future.valid()) {
+        } else if (result.wait_for(0s) == std::future_status::ready) {
             return BT::NodeStatus::SUCCESS;
         }
         
@@ -87,7 +91,7 @@ class ResetOdom : public UWRTActionNode {
     }
 
     private:
-    rclcpp::Client<robot_localization::srv::SetPose>::SharedPtr client;
-    rclcpp::Client<robot_localization::srv::SetPose>::SharedFuture future;
+    rclcpp::Client<SetPose>::SharedPtr client;
+    rclcpp::Client<SetPose>::FutureAndRequestId result;
     rclcpp::Time startTime;
 };

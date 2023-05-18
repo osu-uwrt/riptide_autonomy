@@ -6,9 +6,6 @@ BtTestTool::BtTestTool()
  : rclcpp::Node("BtTester", "bt_testing") {
     factory = std::make_shared<BT::BehaviorTreeFactory>();
     registerPluginsForFactory(factory, "riptide_autonomy2");
-    spinning = false;
-
-    heartTimer = create_wall_timer(1ms, std::bind(&BtTestTool::spinTimer, this));
 }
 
 
@@ -61,19 +58,16 @@ std::shared_ptr<DummyActionNode> BtTestTool::createDummyActionNode() {
 BT::NodeStatus BtTestTool::tickUntilFinished(std::shared_ptr<BT::TreeNode> node) {
     BT::NodeStatus status = BT::NodeStatus::IDLE;
     while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE) {
+        rclcpp::spin_some(shared_from_this()); //spin should come before executing tick for things like action servers that need to go online
         status = node->executeTick();
     }
 
     return status;
 }
 
-
-bool BtTestTool::isSpinning() {
-    return spinning;
-}
-
-//marks that the node is spinning so that test cases dont shut down ros prematurely
-void BtTestTool::spinTimer() {
-    spinning = true; 
-    heartTimer->cancel();
+void BtTestTool::spinForTime(std::chrono::duration<double> time) {
+    auto startTime = this->get_clock()->now();
+    while(rclcpp::ok() && this->get_clock()->now() - startTime < time) {
+        rclcpp::spin_some(shared_from_this());
+    }
 }

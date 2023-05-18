@@ -8,7 +8,7 @@
  * @return BT::NodeStatus return status.
  */
 BT::NodeStatus printInfo(BT::TreeNode& n) {
-    std::string message = n.getInput<std::string>("message").value();
+    std::string message = tryGetRequiredInput<std::string>(&n, "message", "");
     RCLCPP_INFO(log, "%s", stringWithBlackboardEntries(message, n).c_str()); 
     return BT::NodeStatus::SUCCESS; 
 }
@@ -20,7 +20,7 @@ BT::NodeStatus printInfo(BT::TreeNode& n) {
  * @return BT::NodeStatus return status.
  */
 BT::NodeStatus printError(BT::TreeNode& n) {
-    std::string message = n.getInput<std::string>("message").value();
+    std::string message = tryGetRequiredInput<std::string>(&n, "message", "");
     RCLCPP_ERROR(log, "%s", stringWithBlackboardEntries(message, n).c_str());
     return BT::NodeStatus::SUCCESS;
 }
@@ -52,12 +52,12 @@ BT::NodeStatus numToString(BT::TreeNode& n) {
  */
 BT::NodeStatus calculateDistance(BT::TreeNode& n) {
     geometry_msgs::msg::Vector3 p1, p2;
-    p1.x = n.getInput<double>("x1").value();
-    p1.y = n.getInput<double>("y1").value();
-    p1.z = n.getInput<double>("z1").value();
-    p2.x = n.getInput<double>("x2").value();
-    p2.y = n.getInput<double>("y2").value();
-    p2.z = n.getInput<double>("z2").value();
+    p1.x = tryGetRequiredInput<double>(&n, "x1", 0);
+    p1.y = tryGetRequiredInput<double>(&n, "y1", 0);
+    p1.z = tryGetRequiredInput<double>(&n, "z1", 0);
+    p2.x = tryGetRequiredInput<double>(&n, "x2", 0);
+    p2.y = tryGetRequiredInput<double>(&n, "y2", 0);
+    p2.z = tryGetRequiredInput<double>(&n, "z2", 0);
 
     n.setOutput<double>("dist", distance(p1, p2));
     return BT::NodeStatus::SUCCESS;
@@ -71,11 +71,11 @@ BT::NodeStatus calculateDistance(BT::TreeNode& n) {
  */
 BT::NodeStatus doMath(BT::TreeNode& n) {
     double
-        a = n.getInput<double>("a").value(),
-        b = n.getInput<double>("b").value(),
+        a = tryGetRequiredInput<double>(&n, "a", 0),
+        b = tryGetRequiredInput<double>(&n, "b", 0),
         output = 0;
     
-    std::string op = n.getInput<std::string>("operator").value();
+    std::string op = tryGetRequiredInput<std::string>(&n, "operator", "+");
 
     if(op == "+") {
         output = a + b;
@@ -99,10 +99,10 @@ BT::NodeStatus doMath(BT::TreeNode& n) {
  */
 BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
     double
-        currX = n.getInput<double>("currX").value(),
-        currY = n.getInput<double>("currY").value(),
-        targX = n.getInput<double>("targX").value(),
-        targY = n.getInput<double>("targY").value();
+        currX = tryGetRequiredInput<double>(&n, "currX", 0),
+        currY = tryGetRequiredInput<double>(&n, "currY", 0),
+        targX = tryGetRequiredInput<double>(&n, "targX", 0),
+        targY = tryGetRequiredInput<double>(&n, "targY", 0);
 
     double
         dx = targX - currX,

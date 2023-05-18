@@ -24,7 +24,7 @@ class Wait : public UWRTActionNode {
      * Anything requiring the ROS node handle to construct should be initialized here. Do not do it in the 
      * constructor or you will be very sad
      */
-    void rosInit() override { 
+    void rosInit() override {
     }
 
     /**
@@ -33,7 +33,7 @@ class Wait : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         startTime = rosnode->get_clock()->now();
-        goalTime = getInput<double>("seconds").value();
+        goalTime = tryGetRequiredInput<double>(this, "seconds", 0);
         return BT::NodeStatus::RUNNING;
     }
 

@@ -56,7 +56,7 @@ TEST_F(TimedPublisherTest, test_TimedPublisher_qos10_1s) {
     TimedPublisher<std_msgs::msg::String> timedPub(toolNode, "test_topic", msg);
 
     while(getReceivedMsgs().size() < 3) {
-        usleep(10000);
+        rclcpp::spin_some(toolNode);
     }
 
     unsigned int correctMsgs = numOccurrances<std_msgs::msg::String>(getReceivedMsgs(), msg);
@@ -75,7 +75,7 @@ TEST_F(TimedPublisherTest, test_TimedPublisher_sensordataqos_quartersecond) {
     TimedPublisher<std_msgs::msg::String> timedPub(toolNode, "another_test_topic", msg, rclcpp::SensorDataQoS(), 250);
 
     while(getReceivedMsgs().size() < 5) {
-        usleep(10000);
+        rclcpp::spin_some(toolNode);
     }
 
     unsigned int correctMsgs = numOccurrances<std_msgs::msg::String>(getReceivedMsgs(), msg);
@@ -95,7 +95,7 @@ TEST_F(TimedPublisherTest, test_TimedPublisher_changeMsg) {
 
     //wait for timed pub to publish one message
     while(getReceivedMsgs().size() < 1) {
-        usleep(10000); //sleep 1/100 seconds
+        rclcpp::spin_some(toolNode);
     }
 
     ASSERT_EQ(getReceivedMsgs()[0].data, msg.data);
@@ -108,7 +108,7 @@ TEST_F(TimedPublisherTest, test_TimedPublisher_changeMsg) {
 
     //wait for timed pub to publish one message
     while(getReceivedMsgs().size() < 3) {
-        usleep(10000); //sleep 1/100 seconds
+        rclcpp::spin_some(toolNode);
     }
 
     //make sure that 
@@ -123,7 +123,7 @@ TEST_F(TimedPublisherTest, test_TimedPublsher_cancel) {
     TimedPublisher<std_msgs::msg::String> timedPub(toolNode, "maybe_the_last_test_topic", msg, rclcpp::SensorDataQoS(), 125);
 
     while(getReceivedMsgs().size() < 2) {
-        usleep(10000);
+        rclcpp::spin_some(toolNode);
     }
 
     ASSERT_EQ(getReceivedMsgs()[1].data, msg.data);
@@ -132,7 +132,6 @@ TEST_F(TimedPublisherTest, test_TimedPublsher_cancel) {
     unsigned int expectedMsgCount = getReceivedMsgs().size();
 
     //sleep 1 second. should receive around 8 messages in this time
-    usleep(1000000);
-
+    toolNode->spinForTime(1s);
     ASSERT_EQ(getReceivedMsgs().size(), expectedMsgCount);
 }

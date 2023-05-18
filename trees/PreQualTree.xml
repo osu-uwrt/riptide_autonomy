@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<root>
+<root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="ArmTorpedos">
         <Sequence>
             <Action ID="Info" message="Arming Torpedos..."/>
@@ -22,6 +22,47 @@
                 </ForceFailure>
             </Fallback>
             <Action ID="Info" message="Torpedos Armed."/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <SetBlackboard output_key="pole_radius" value="2"/>
+            <SetBlackboard output_key="-0.5" value="-0.5"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
+            <SetBlackboard output_key="cash_frame" value="cash_frame"/>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SetBlackboard output_key="-1.5707" value="-1.5707"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="SetStatus" status="moving"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="GateTask"/>
+            <Action ID="SetStatus" status="moving"/>
+            <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <Action ID="TransformPose" from_frame="cash_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="" out_y="" out_z="pole_depth" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="oy" x="x" y="y" z="pole_depth"/>
+            <Action ID="Info" message="POLE TIME"/>
+            <Sequence>
+                <Action ID="SetStatus" status="aligning"/>
+                <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="cash_frame" op="0" or="0" oy="3.1415" x="pole_radius" y="0" z="0"/>
+                <Action ID="SetStatus" status="performing"/>
+                <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="cash_frame" op="0" or="0" oy="3.1415" x="0" y="pole_radius" z="0"/>
+                <Action ID="Math" a="{pole_radius}" b="-1" operator="*" out="neg_pole_radius"/>
+                <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="cash_frame" op="0" or="0" oy="-1.5707" x="neg_pole_radius" y="0" z="0"/>
+                <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="cash_frame" op="0" or="0" oy="0" x="0" y="neg_pole_radius" z="0"/>
+                <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="cash_frame" op="0" or="0" oy="0" x="pole_radius" y="0" z="0"/>
+            </Sequence>
+            <Action ID="Info" message="GATE TIME 2 ELECTRIC BOOGALOO"/>
+            <Action ID="SetStatus" status="moving"/>
+            <Action ID="TransformPose" from_frame="gman_frame" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="0" to_frame="world" x="-1" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="pole_depth"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="0" x="-1" y="0" z="-0.5"/>
+            <Action ID="SetStatus" status="performing"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="0" x="1" y="0" z="-0.5"/>
+            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
@@ -364,7 +405,21 @@
             <Action ID="Info" message="Torpedo {torpedo_id} charged."/>
         </Sequence>
     </BehaviorTree>
+    <!-- ////////// -->
     <TreeNodesModel>
+        <Action ID="Actuate">
+            <inout_port name="arm_torpedo" required="false"/>
+            <inout_port name="clear_dropper_status" required="false"/>
+            <inout_port name="close_claw" required="false"/>
+            <inout_port name="disarm_torpedo" required="false"/>
+            <inout_port name="drop_1" required="false"/>
+            <inout_port name="drop_2" required="false"/>
+            <inout_port name="fire_torpedo_1" required="false"/>
+            <inout_port name="fire_torpedo_2" required="false"/>
+            <inout_port name="open_claw" required="false"/>
+            <inout_port name="reset_actuators" required="false"/>
+            <input_port name="some_port" required="false"/>
+        </Action>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="false"/>
             <input_port name="b" required="false"/>
@@ -548,12 +603,13 @@
         </Action>
         <SubTree ID="RelativeMove">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="op" required="false"/>
-            <input_port name="or" required="false"/>
-            <input_port name="oy" required="false"/>
-            <input_port name="x" required="false"/>
-            <input_port name="y" required="false"/>
-            <input_port name="z" required="false"/>
+            <input_port name="frame_name" required="true">the frame to move relative to</input_port>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <Action ID="ResetOdom">
             <input_port default="0" name="op" required="false">new EKF pose pitch</input_port>

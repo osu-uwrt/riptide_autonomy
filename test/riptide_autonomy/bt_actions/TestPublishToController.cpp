@@ -22,8 +22,7 @@ static std::tuple<BT::NodeStatus, std::vector<riptide_msgs2::msg::ControllerComm
     BT::NodeStatus mostRecentStatus = BT::NodeStatus::IDLE;
     while(rclcpp::ok() && sub.getMessages().size() <= 0 && toolNode->get_clock()->now() - startTime < 1s) {
         mostRecentStatus = node->executeTick();
-
-        usleep(10000); //sleep 10000 microseconds
+        toolNode->spinForTime(1ms);
     }
 
     return std::make_tuple(mostRecentStatus, sub.getMessages());
@@ -37,7 +36,7 @@ TEST_F(BtTest, test_PublishToController_linear_position) {
         1.2,
         3.4,
         5.6,
-        POSITION_TOPIC
+        CONTROL_LINEAR_TOPIC
     );
 
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
@@ -56,7 +55,7 @@ TEST_F(BtTest, test_PublishToController_linear_velocity) {
         0.2,
         7.5,
         2.3,
-        POSITION_TOPIC
+        CONTROL_LINEAR_TOPIC
     );
 
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
@@ -80,7 +79,7 @@ TEST_F(BtTest, test_PublishToController_angular_position) {
         rpy.x,
         rpy.y,
         rpy.z,
-        ORIENTATION_TOPIC
+        CONTROL_ANGULAR_TOPIC
     );
 
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
@@ -104,7 +103,7 @@ TEST_F(BtTest, test_PublishToController_angular_velocity) {
         3.1415,
         0.1,
         0.5,
-        ORIENTATION_TOPIC
+        CONTROL_ANGULAR_TOPIC
     );
 
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
@@ -123,7 +122,7 @@ TEST_F(BtTest, test_PublishToController_feedforward) {
         0,
         0,
         0,
-        POSITION_TOPIC
+        CONTROL_LINEAR_TOPIC
     );
 
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
@@ -142,7 +141,7 @@ TEST_F(BtTest, test_PublishToController_disabled_linear) {
         0,
         0,
         0,
-        POSITION_TOPIC
+        CONTROL_LINEAR_TOPIC
     );
 
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
@@ -161,7 +160,7 @@ TEST_F(BtTest, test_PublishToController_disabled_angular) {
         0,
         0,
         0,
-        ORIENTATION_TOPIC
+        CONTROL_ANGULAR_TOPIC
     );
 
 

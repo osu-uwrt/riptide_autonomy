@@ -10,7 +10,7 @@ TEST_F(TestToolTest, test_BufferedSubscriber_noMsgs) {
     ASSERT_EQ(bufferedSub.getMessages().size(), 0U);
 
     //sleep 1 second
-    usleep(1000000);
+    toolNode->spinForTime(1s);
 
     ASSERT_EQ(bufferedSub.getMessages().size(), 0U);
 }
@@ -25,7 +25,7 @@ TEST_F(TestToolTest, test_BufferedSubscriber_someMsgs) {
     msg.data = "Hello World!";
     for(int i=0; i<10; i++) {
         publisher->publish(msg);
-        usleep(50000); //sleep a twentieth of a second
+        toolNode->spinForTime(50ms);
     }
 
     //how many messages were received?
@@ -51,7 +51,7 @@ TEST_F(TestToolTest, test_BufferedSubscriber_clear_msgs) {
     msg.data = "Hello World!";
     for(unsigned int i=0; i<10; i++) {
         publisher->publish(msg);
-        usleep(100000); //sleep a tenth of a second
+        toolNode->spinForTime(100ms);
     }
 
     ASSERT_GT(bufferedSub.getMessages().size(), (unsigned int) 7);
