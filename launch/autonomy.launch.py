@@ -37,7 +37,7 @@ def generate_launch_description():
                         }
                     ]
                 )
-            ]
+            ], scoped=True
         )
     ])
 
