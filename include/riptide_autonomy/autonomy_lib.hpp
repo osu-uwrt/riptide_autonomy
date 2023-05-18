@@ -13,8 +13,8 @@
 //useful topic names for autonomy
 const std::string
     ODOMETRY_TOPIC = "odometry/filtered",
-    POSITION_TOPIC = "controller/linear",
-    ORIENTATION_TOPIC = "controller/angular",
+    CONTROL_LINEAR_TOPIC = "controller/linear",
+    CONTROL_ANGULAR_TOPIC = "controller/angular",
     ACTUATOR_COMMAND_TOPIC = "command/actuator",
     ACTUATOR_STATUS_TOPIC = "state/actuator",
     ROBOT_KILLED_TOPIC = "state/kill",
@@ -208,7 +208,7 @@ T tryGetInput(const BT::TreeNode *n, const std::string& key, const T defaultValu
  */
 template<typename T>
 T tryGetRequiredInput(const BT::TreeNode *n, const std::string& key, const T defaultValue) {
-    return tryGetInput(n, key, defaultValue, true);
+    return tryGetInput<T>(n, key, defaultValue, true);
 }
 
 /**
@@ -222,7 +222,7 @@ T tryGetRequiredInput(const BT::TreeNode *n, const std::string& key, const T def
  */
 template<typename T>
 T tryGetOptionalInput(const BT::TreeNode *n, const std::string& key, const T defaultValue) {
-    return tryGetInput(n, key, defaultValue, false);
+    return tryGetInput<T>(n, key, defaultValue, false);
 }
 
 /**

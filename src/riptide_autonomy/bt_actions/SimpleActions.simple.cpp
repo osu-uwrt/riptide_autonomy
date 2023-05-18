@@ -75,7 +75,7 @@ BT::NodeStatus doMath(BT::TreeNode& n) {
         b = tryGetRequiredInput<double>(&n, "b", 0),
         output = 0;
     
-    std::string op = tryGetRequiredInput<std::string>(&n, "operator", 0);
+    std::string op = tryGetRequiredInput<std::string>(&n, "operator", "+");
 
     if(op == "+") {
         output = a + b;

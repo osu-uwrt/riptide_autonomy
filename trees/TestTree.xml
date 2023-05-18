@@ -26,9 +26,10 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <Action ID="Math" a="0" b="0" operator="+" out="0"/>
-            <SubTree ID="WaitForKillSwitch"/>
-            <Action ID="Info" message="LETS GOOOO"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <Action ID="Math" a="{x}" b="1" operator="+" out="x"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
@@ -382,24 +383,16 @@
     <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="Actuate">
-            <input_port name="arm_torpedo" required="false"/>
-            <input_port name="clear_dropper_status" required="false"/>
-            <input_port name="close_claw" required="false"/>
-            <input_port name="disarm_torpedo" required="false"/>
-            <input_port name="drop_1" required="false"/>
-            <input_port name="drop_2" required="false"/>
-            <input_port name="fire_torpedo_1" required="false"/>
-            <input_port name="fire_torpedo_2" required="false"/>
-            <input_port name="open_claw" required="false"/>
-            <input_port name="reset_actuators" required="false"/>
-        </Action>
-        <Action ID="AlignTorpedos">
-            <input_port name="current_distance" required="false"/>
-            <input_port name="goal_distance" required="false"/>
-            <input_port name="timeout" required="false"/>
-            <output_port name="x" required="false"/>
-            <output_port name="y" required="false"/>
-            <output_port name="z" required="false"/>
+            <inout_port name="arm_torpedo" required="false"/>
+            <inout_port name="clear_dropper_status" required="false"/>
+            <inout_port name="close_claw" required="false"/>
+            <inout_port name="disarm_torpedo" required="false"/>
+            <inout_port name="drop_1" required="false"/>
+            <inout_port name="drop_2" required="false"/>
+            <inout_port name="fire_torpedo_1" required="false"/>
+            <inout_port name="fire_torpedo_2" required="false"/>
+            <inout_port name="open_claw" required="false"/>
+            <inout_port name="reset_actuators" required="false"/>
         </Action>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="false"/>
@@ -444,6 +437,7 @@
             <output_port name="output" required="false"/>
             <input_port name="x" required="false"/>
             <input_port name="y" required="false"/>
+            <input_port name="z" required="false"/>
         </Action>
         <SubTree ID="DisarmTorpedos"/>
         <SubTree ID="Dive">
@@ -565,8 +559,8 @@
             <input_port name="z" required="false"/>
         </SubTree>
         <Condition ID="NumsEqual">
-            <input_port name="a" required="false"/>
-            <input_port name="b" required="false"/>
+            <inout_port name="a" required="true"/>
+            <inout_port name="b" required="true"/>
         </Condition>
         <SubTree ID="PrimitiveMoveOrientation">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -607,11 +601,6 @@
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
             <input_port name="num_seconds" required="false">number of seconds until abandonment.</input_port>
         </Decorator>
-        <Action ID="Search">
-            <input_port name="frame" required="false">The frame to search for</input_port>
-            <input_port name="target_error" required="false">The goal amount of error for the state to succeed.</input_port>
-            <input_port name="update_sec" required="false">How much time to wait for update</input_port>
-        </Action>
         <SubTree ID="SurfaceTree"/>
         <SubTree ID="TorpedoTree"/>
         <Action ID="TransformPose">

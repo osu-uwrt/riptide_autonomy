@@ -29,8 +29,8 @@ class PublishToController : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        positionPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(POSITION_TOPIC, 10);
-        orientationPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(ORIENTATION_TOPIC, 10);
+        positionPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_LINEAR_TOPIC, 10);
+        orientationPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_ANGULAR_TOPIC, 10);
     }
 
     /**
