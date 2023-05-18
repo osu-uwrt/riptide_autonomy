@@ -37,12 +37,16 @@ namespace do_task
     using namespace std::placeholders;
     using ExecuteTree = riptide_msgs2::action::ExecuteTree;
     using GoalHandleExecuteTree = rclcpp_action::ServerGoalHandle<ExecuteTree>;
+    using LedCmd = riptide_msgs2::msg::LedCommand;
 
     class BTExecutor : public rclcpp::Node
     {
     public:
         BTExecutor() : Node("autonomy_dotask")
         {
+            //initialize ros pubs
+            statusPub = create_publisher<LedCmd>(LED_COMMAND_TOPIC, 10);
+
             // make an action server for running the autonomy trees
             actionServer = rclcpp_action::create_server<ExecuteTree>(
                 this,
@@ -122,6 +126,10 @@ namespace do_task
             }
 
             // test if the tree exists
+            if(!std::filesystem::exists(goal->tree)) {
+                RCLCPP_ERROR(log, "Rejecting request to run tree %s because the file does not exist.", goal->tree.c_str());
+                return rclcpp_action::GoalResponse::REJECT;
+            }
 
             return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
         }
@@ -220,6 +228,15 @@ namespace do_task
 
                 RCLCPP_INFO(log, "Tree ended with status %s", resultStr.c_str());
 
+                //publish led command to indicate finish status
+                LedCmd ledCmd;
+                ledCmd.red   = (tickStatus == BT::NodeStatus::SUCCESS ? 0 : 255);
+                ledCmd.green = (tickStatus == BT::NodeStatus::SUCCESS ? 255 : 0);
+                ledCmd.blue  = 0;
+                ledCmd.mode  = LedCmd::MODE_BREATH;
+                ledCmd.target = LedCmd::TARGET_ALL;
+                statusPub->publish(ledCmd);
+
                 // wrap this party up and finish execution
                 result->returncode = (int)tickStatus;
                 goal_handle->succeed(result);
@@ -235,7 +252,16 @@ namespace do_task
             {
                 RCLCPP_ERROR(log, "Unknown error while ticking tree. Aborting tree!");
             }
-            // if error, abort
+            // if error, publish led command indicate error status
+            LedCmd ledCmd;
+            ledCmd.red = 255;
+            ledCmd.green = 0;
+            ledCmd.blue = 0;
+            ledCmd.mode = LedCmd::MODE_FAST_FLASH;
+            ledCmd.target = LedCmd::TARGET_ALL;
+            statusPub->publish(ledCmd);
+
+            //...then abort
             result->returncode = -1;
             goal_handle->abort(result);
         }
@@ -264,6 +290,8 @@ namespace do_task
         }
 
     private:
+        rclcpp::Publisher<LedCmd>::SharedPtr statusPub;
+
         // ros action and service servers
         rclcpp_action::Server<ExecuteTree>::SharedPtr actionServer;
         rclcpp::Service<riptide_msgs2::srv::ListTrees>::SharedPtr listTreeServer;

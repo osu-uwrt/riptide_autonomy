@@ -26,6 +26,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
+            <Action ID="Math" a="0" b="0" operator="+" out="0"/>
             <SubTree ID="WaitForKillSwitch"/>
             <Action ID="Info" message="LETS GOOOO"/>
         </Sequence>
@@ -345,7 +346,9 @@
             <RetryUntilSuccessful num_attempts="-1">
                 <Sequence>
                     <Action ID="GetBoolTopic" topic="state/kill" value="{kill_switch_inserted}"/>
-                    <Condition ID="IsTrue" value="{kill_switch_inserted}"/>
+                    <Inverter name="IsFalse">
+                        <Condition ID="IsTrue" value="{kill_switch_inserted}"/>
+                    </Inverter>
                     <Action ID="Info" message="KILL SWITCH INSERTED, TREE STARTING IN 5 SECONDS"/>
                 </Sequence>
             </RetryUntilSuccessful>
