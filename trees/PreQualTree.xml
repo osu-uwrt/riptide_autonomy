@@ -611,14 +611,6 @@
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
         </SubTree>
-        <Action ID="ResetOdom">
-            <input_port default="0" name="op" required="false">new EKF pose pitch</input_port>
-            <input_port default="0" name="or" required="false">new EKF pose roll</input_port>
-            <input_port default="0" name="oy" required="false">new EKF pose yaw</input_port>
-            <input_port default="0" name="x" required="false">new EKF pose X</input_port>
-            <input_port default="0" name="y" required="false">new EKF pose Y</input_port>
-            <input_port default="0" name="z" required="false">new EKF pose Z</input_port>
-        </Action>
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
             <input_port name="num_seconds" required="false">number of seconds until abandonment.</input_port>
         </Decorator>
@@ -654,4 +646,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
