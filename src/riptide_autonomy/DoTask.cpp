@@ -14,6 +14,8 @@
 #include <chrono>
 #include <filesystem>
 
+#include <unistd.h>
+
 #include "riptide_autonomy/autonomy_lib.hpp"
 #include "riptide_autonomy/UWRTLogger.hpp"
 

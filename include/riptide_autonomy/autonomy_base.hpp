@@ -29,7 +29,6 @@
 
 #include <std_srvs/srv/set_bool.hpp>
 #include <std_srvs/srv/trigger.hpp>
-#include <robot_localization/srv/set_pose.hpp>
 
 //define logger for RCLCPP_INFO, RCLCPP_WARN, and RCLCPP_ERROR
 #define log rclcpp::get_logger("autonomy")

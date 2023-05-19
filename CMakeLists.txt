@@ -21,7 +21,6 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(robot_localization REQUIRED)
 find_package(tinyxml2_vendor REQUIRED)
 
 
@@ -64,7 +63,6 @@ set(deps
   tf2
   tf2_ros
   tf2_geometry_msgs
-  robot_localization # needed for ResetOdom
   tinyxml2_vendor
 )
 
