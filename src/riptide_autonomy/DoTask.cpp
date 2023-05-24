@@ -14,6 +14,8 @@
 #include <chrono>
 #include <filesystem>
 
+#include <unistd.h>
+
 #include "riptide_autonomy/autonomy_lib.hpp"
 #include "riptide_autonomy/UWRTLogger.hpp"
 
@@ -38,6 +40,30 @@ namespace do_task
     using GoalHandleExecuteTree = rclcpp_action::ServerGoalHandle<ExecuteTree>;
     using LedCmd = riptide_msgs2::msg::LedCommand;
 
+    const std::string get_hostname()
+    {
+        // retrieve the system hostname in hopefully MAX_HOST_LEN characters -1 for null term
+        char hostCstr[HOST_NAME_MAX];
+        gethostname(hostCstr, HOST_NAME_MAX);
+
+        std::string hostnameInternal(hostCstr);
+
+        // make sure we have a null termination
+        if (hostnameInternal.length() >= HOST_NAME_MAX)
+        {
+            hostnameInternal = "unknown_host";
+            std::cerr << "Failed to discover system hostname, falling back to default, " << hostnameInternal;
+        }
+        else
+        {
+            // replace the dashes with underscores, because the spec doesnt like dashes
+            std::replace(hostnameInternal.begin(), hostnameInternal.end(), '-', '_');
+        }
+
+        // kinda important.... without this strings raise a bad_alloc
+        return hostnameInternal;
+    }
+
     class BTExecutor : public rclcpp::Node
     {
     public:
@@ -48,10 +74,8 @@ namespace do_task
             angularPub = this->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_ANGULAR_TOPIC, 10);
             statusPub = create_publisher<LedCmd>(LED_COMMAND_TOPIC, 10);
 
-            //determine bag trigger topic for RViz: /<hostname>/autonomy/bag_trigger
-            char hostname[HOST_NAME_MAX];
-            gethostname(hostname, HOST_NAME_MAX);
-            std::string bagTriggerTopic = "/" + std::string(hostname) + "/autonomy/bag_trigger";
+
+            std::string bagTriggerTopic = "/" + get_hostname() + "/autonomy/bag_trigger";
             bagTriggerPub = this->create_publisher<std_msgs::msg::Bool>(bagTriggerTopic, 10);
 
             // make an action server for running the autonomy trees
