@@ -1,0 +1,73 @@
+#pragma once
+
+#include "riptide_autonomy/autonomy_lib.hpp"
+
+using Cov = geometry_msgs::msg::PoseWithCovarianceStamped;
+using namespace std::placeholders;
+
+
+class getCovariance : public UWRTActionNode {
+    public:
+    getCovariance(const std::string& name, const BT::NodeConfiguration& config)
+    : UWRTActionNode(name, config) {
+        
+    }
+
+    /**
+     * @brief Declares ports needed by this node.
+     * @return PortsList Needed ports.
+     */
+    static BT::PortsList providedPorts() {
+        return {
+            BT::InputPort<std::string>("Target"),
+            BT::OutputPort<int>("Covariance")
+        };
+    }
+
+    /**
+     * @brief Initializes ROS peripherals such as publishers, subscribers, actions, services, etc.
+     * Anything requiring the ROS node handle to construct should be initialized here. Do not do it in the 
+     * constructor or you will be very sad
+     */
+    void rosInit() override { 
+        std::string topic = "/mapping" + getInput<std::string>("Input").value();
+        subscriber = rosnode->create_subscription<Cov>(topic,  rclcpp::SensorDataQoS(), std::bind(&getCovariance::topic_callback, this, _1));
+        }
+
+    /**
+     * @brief Called when the node runs for the first time. If it returns RUNNING, node becomes async
+     * @return NodeStatus status of the node after execution
+     */
+    BT::NodeStatus onStart() override {
+        RCLCPP_INFO(log, "Getting error from covariance");
+        rclcpp::spin(rosnode);
+        rclcpp::shutdown();
+    }
+
+    /**
+     * @brief Called periodically while the node status is RUNNING
+     * @return NodeStatus The node status after 
+     */
+    BT::NodeStatus onRunning() override {
+        setOutput<int>("Covariance", error);
+        return BT::NodeStatus::SUCCESS;
+    }
+
+    /**
+     * @brief Called when the node is halted.
+     */
+    void onHalted() override {
+
+    }
+
+    private:
+    void topic_callback(const Cov::SharedPtr msg)
+    {
+        for(int i = 0; i < 6; i++){
+            error += msg.get()->pose.covariance.at((6*i) + i);
+        }
+        RCLCPP_INFO(log,"Error recieved");
+    }
+    rclcpp::Subscription<Cov>::SharedPtr subscriber;
+    int error;
+};
