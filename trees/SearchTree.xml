@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
-<root>
+<root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="ArmTorpedos">
         <Sequence>
             <Action ID="Info" message="Arming Torpedos..."/>
             <Fallback>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
                     <Sequence>
-                        <Action ID="Actuate" arm_torpedo="1" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
+                        <Action ID="Actuate" arm_torpedo="1" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
                         <Action ID="Wait" seconds="1"/>
                         <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
                         <Inverter>
@@ -22,6 +22,17 @@
                 </ForceFailure>
             </Fallback>
             <Action ID="Info" message="Torpedos Armed."/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <SetBlackboard output_key="120" value="120"/>
+            <SetBlackboard output_key="0.01" value="0.01"/>
+            <SetBlackboard output_key="0.25" value="0.25"/>
+            <SetBlackboard output_key="obj" value="bootlegger"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="obj" target_cov="0.25" timeout_secs="120"/>
+            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
@@ -44,7 +55,7 @@
             <Fallback>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
                     <Sequence>
-                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="1" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
+                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="1" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
                         <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
                         <Fallback>
                             <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo1_state}"/>
@@ -71,16 +82,7 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="DoSearch">
-        <Sequence>
-            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="3.1415" value="3.1415"/>
-            <Action ID="Info" message="Searching for prop"/>
-            <Action ID="SetStatus" status="searching"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="proximity" y="0" z="0"/>
-            <Action ID="Info" message="Letting mapping gather detections for a few seconds"/>
-            <Action ID="Wait" name="Wait for mapping" seconds="5"/>
-        </Sequence>
+        <AlwaysFailure/>
     </BehaviorTree>
     <BehaviorTree ID="DropMarker">
         <Fallback>
@@ -91,8 +93,8 @@
                         <Action ID="Info" message="Attempting to drop dropper {dropper}..."/>
                         <IfThenElse>
                             <Condition ID="NumsEqual" a="{dropper}" b="1"/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="1" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="1" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="1" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="1" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
                         </IfThenElse>
                         <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
                         <IfThenElse>
@@ -133,8 +135,8 @@
                         <SetBlackboard name="Set &quot;1&quot;" output_key="1" value="1"/>
                         <IfThenElse name="Select Torpedo">
                             <Condition ID="NumsEqual" a="1" b="{torpedo_id}"/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="1" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="1" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators="" some_port=""/>
                         </IfThenElse>
                         <Action ID="Wait" seconds="1"/>
                         <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
@@ -158,27 +160,13 @@
         </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="GateTask">
-        <Sequence>
-            <Action ID="Info" message="GATE TIME"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="-1" value="-1"/>
-            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="1.5" value="1.5"/>
-            <SetBlackboard output_key="3.1415" value="3.1415"/>
-            <SetBlackboard output_key="-0.5" value="-0.5"/>
-            <SubTree ID="DoSearch" __shared_blackboard="false" frame="gman_frame" proximity="1.5"/>
-            <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="1" y="0" z="0"/>
-            <Action ID="SetStatus" status="performing"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="-1" y="0" z="0"/>
-        </Sequence>
+        <AlwaysFailure/>
     </BehaviorTree>
     <BehaviorTree ID="GetActuatorStates">
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
                 <Sequence>
-                    <Action ID="GetActuatorStatus" actuators_busy="" claw_state="{claw_state}" dropper_available_count="" dropper_state="" torpedo_available_count="" torpedo_state=""/>
+                    <Action ID="GetActuatorStatus" claw_state="{claw_state}" dropper1_state="{dropper1_state}" dropper2_state="{dropper2_state}" torpedo1_state="{torpedo1_state}" torpedo2_state="{torpedo2_state}"/>
                 </Sequence>
             </Decorator>
             <ForceFailure>
@@ -395,6 +383,7 @@
             <Action ID="Info" message="Torpedo {torpedo_id} charged."/>
         </Sequence>
     </BehaviorTree>
+    <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="Actuate">
             <inout_port name="arm_torpedo" required="false"/>
@@ -407,7 +396,6 @@
             <inout_port name="fire_torpedo_2" required="false"/>
             <inout_port name="open_claw" required="false"/>
             <inout_port name="reset_actuators" required="false"/>
-            <inout_port name="some_port" required="false"/>
         </Action>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="false"/>
@@ -478,11 +466,12 @@
             <input_port default="true" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
         <Action ID="GetActuatorStatus">
-            <inout_port name="claw_state" required="true"/>
-            <inout_port name="dropper1_state" required="true"/>
-            <inout_port name="dropper2_state" required="true"/>
-            <inout_port name="torpedo1_state" required="true"/>
-            <inout_port name="torpedo2_state" required="true"/>
+            <output_port name="actuators_busy" required="false"/>
+            <output_port name="claw_state" required="false"/>
+            <output_port name="dropper_available_count" required="false"/>
+            <output_port name="dropper_state" required="false"/>
+            <output_port name="torpedo_available_count" required="false"/>
+            <output_port name="torpedo_state" required="false"/>
         </Action>
         <Action ID="GetBoolTopic">
             <input_port name="topic" required="true">The topic to subscribe to.</input_port>
@@ -616,7 +605,7 @@
         </Decorator>
         <SubTree ID="Search">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="frame_name" required="true">Frame to search for</input_port>
+            <input_port name="object_name" required="true">Frame to search for</input_port>
             <input_port default="0.01" name="target_cov" required="true">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="true">Timeout for search</input_port>
         </SubTree>
