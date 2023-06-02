@@ -26,10 +26,8 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
-            <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
-            <Action ID="Math" a="{x}" b="1" operator="+" out="x"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <Action ID="GetActuatorStatus" actuators_busy="busy" claw_state="cs" dropper_available_count="dac" dropper_state="ds" torpedo_available_count="tac" torpedo_state="ts"/>
+            <Action ID="Info" message="busy: {busy}, claw state: {cs}, dropper available: {dac}, dropper state: {ds}, torpedo available: {tac}, torpedo state: {ts}"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
@@ -80,9 +78,12 @@
     </BehaviorTree>
     <BehaviorTree ID="DoSearch">
         <Sequence>
+            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
             <Action ID="Info" message="Searching for prop"/>
-            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <Action ID="SetStatus" status="searching"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="proximity" y="0" z="0"/>
             <Action ID="Info" message="Letting mapping gather detections for a few seconds"/>
             <Action ID="Wait" name="Wait for mapping" seconds="5"/>
         </Sequence>
@@ -168,29 +169,22 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="gman_frame" value="gman_frame"/>
+            <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="1.5" value="1.5"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SetBlackboard output_key="-0.5" value="-0.5"/>
             <SubTree ID="DoSearch" __shared_blackboard="false" frame="gman_frame" proximity="1.5"/>
-            <Action ID="TransformPose" from_frame="gman_frame" op="0" or="0" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="3.1415" to_frame="world" x="1" y="0" z="-0.5"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
-            <Action ID="TransformPose" from_frame="gman_frame" name=" Move under gman" op="0" or="0" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="3.1415" to_frame="world" x="0" y="0" z="-0.75"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
-            <Action ID="Wait" seconds="5"/>
-            <Action ID="GetOdometry" op="" or="" oy="{yaw}" x="" y="" z="{depth}"/>
-            <Action ID="ResetOdom" op="0" or="0" oy="{yaw}" x="0" y="0" z="{depth}"/>
-            <Action ID="PublishToController" isOrientation="0" mode="3" x="0" y="0" z="{gz}"/>
-            <Action ID="Wait" seconds="5"/>
-            <Action ID="Math" a="{goy}" b="3.1415" operator="+" out="{spin_yaw}"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="gop" r="gor" y="spin_yaw"/>
-            <Action ID="Info" message="I live in spin"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="gop" r="gor" y="goy"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="0" x="0" y="-1" z="0"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="1" y="0" z="0"/>
+            <Action ID="SetStatus" status="performing"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="-1" y="0" z="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GetActuatorStates">
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
                 <Sequence>
-                    <Action ID="GetActuatorStatus" claw_state="{claw_state}" dropper1_state="{dropper1_state}" dropper2_state="{dropper2_state}" torpedo1_state="{torpedo1_state}" torpedo2_state="{torpedo2_state}"/>
+                    <Action ID="GetActuatorStatus" actuators_busy="" claw_state="{claw_state}" dropper_available_count="" dropper_state="" torpedo_available_count="" torpedo_state=""/>
                 </Sequence>
             </Decorator>
             <ForceFailure>
@@ -297,14 +291,8 @@
     </BehaviorTree>
     <BehaviorTree ID="RelativeMove">
         <Sequence>
-            <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
-            <Action ID="Math" a="{cor}" b="{or}" operator="+" out="{gor}"/>
-            <Action ID="Math" a="{cop}" b="{op}" operator="+" out="{gop}"/>
-            <Action ID="Math" a="{coy}" b="{oy}" operator="+" out="{goy}"/>
-            <Action ID="Math" a="{cx}" b="{x}" operator="+" out="{gx}"/>
-            <Action ID="Math" a="{cy}" b="{y}" operator="+" out="{gy}"/>
-            <Action ID="Math" a="{cz}" b="{z}" operator="+" out="{gz}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="cop" or="cor" oy="coy" x="cx" y="cy" z="cz"/>
+            <Action ID="TransformPose" from_frame="{frame_name}" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurfaceTree">
@@ -342,6 +330,7 @@
     </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
         <Sequence>
+            <Action ID="SetStatus" status="waiting"/>
             <Action ID="Info" message="Waiting for kill switch insert..."/>
             <Action ID="Wait" seconds="5"/>
             <RetryUntilSuccessful num_attempts="-1">
@@ -353,6 +342,7 @@
                     <Action ID="Info" message="KILL SWITCH INSERTED, TREE STARTING IN 5 SECONDS"/>
                 </Sequence>
             </RetryUntilSuccessful>
+            <Action ID="SetStatus" status="starting"/>
             <Action ID="Wait" seconds="5"/>
         </Sequence>
     </BehaviorTree>
@@ -465,11 +455,12 @@
             <input_port default="true" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
         <Action ID="GetActuatorStatus">
+            <output_port name="actuators_busy" required="false"/>
             <output_port name="claw_state" required="false"/>
-            <output_port name="dropper1_state" required="false"/>
-            <output_port name="dropper2_state" required="false"/>
-            <output_port name="torpedo1_state" required="false"/>
-            <output_port name="torpedo2_state" required="false"/>
+            <output_port name="dropper_available_count" required="false"/>
+            <output_port name="dropper_state" required="false"/>
+            <output_port name="torpedo_available_count" required="false"/>
+            <output_port name="torpedo_state" required="false"/>
         </Action>
         <Action ID="GetBoolTopic">
             <input_port name="topic" required="true">The topic to subscribe to.</input_port>
@@ -601,6 +592,9 @@
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
             <input_port name="num_seconds" required="false">number of seconds until abandonment.</input_port>
         </Decorator>
+        <Action ID="SetStatus">
+            <input_port name="status" required="false"/>
+        </Action>
         <SubTree ID="SurfaceTree"/>
         <SubTree ID="TorpedoTree"/>
         <Action ID="TransformPose">
