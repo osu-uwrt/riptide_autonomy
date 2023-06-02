@@ -366,17 +366,17 @@
     </BehaviorTree>
     <TreeNodesModel>
         <Action ID="Actuate">
-            <inout_port name="arm_torpedo" required="true"/>
-            <inout_port name="clear_dropper_status" required="true"/>
-            <inout_port name="close_claw" required="true"/>
-            <inout_port name="disarm_torpedo" required="true"/>
-            <inout_port name="drop_1" required="true"/>
-            <inout_port name="drop_2" required="true"/>
-            <inout_port name="fire_torpedo_1" required="true"/>
-            <inout_port name="fire_torpedo_2" required="true"/>
-            <inout_port name="open_claw" required="true"/>
-            <inout_port name="reset_actuators" required="true"/>
-            <inout_port name="some_port" required="true"/>
+            <inout_port name="arm_torpedo" required="false"/>
+            <inout_port name="clear_dropper_status" required="false"/>
+            <inout_port name="close_claw" required="false"/>
+            <inout_port name="disarm_torpedo" required="false"/>
+            <inout_port name="drop_1" required="false"/>
+            <inout_port name="drop_2" required="false"/>
+            <inout_port name="fire_torpedo_1" required="false"/>
+            <inout_port name="fire_torpedo_2" required="false"/>
+            <inout_port name="open_claw" required="false"/>
+            <inout_port name="reset_actuators" required="false"/>
+            <inout_port name="some_port" required="false"/>
         </Action>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="false"/>
