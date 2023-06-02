@@ -29,18 +29,18 @@ Behavior trees can also be run from UWRTs MissionPanel RViz plugin (see riptide_
 
 ### LED Status Patterns
 UWRT's AUV has strips of LEDs in both cages to indicate robot status to swimmers and operators on the surface. riptide_autonomy commands these LEDs to display colors and patterns to indicate what the behavior is commanding the robot to do. States are set using the SetStatus action. The following table matches status names (which go into the "name" port on the SetStatus node) to their LED behaviors and descriptions.
-| Status     | LED behavior     | Description                 |
-|---------   |------------------|-----------------------------|
-| undefined  | Solid white      | Invalid status received.    |
-| waiting    | Solid red        | Waiting for kill switch     |
-| starting   | Slow blink blue  | Kill inserted, starting run |
-| moving     | Solid green      | Positioning for next task   |
-| searching  | Solid purple     | Searching for next task     |
-| aligning   | Slow blink green | Aligning with task          |
-| performing | Fast blink green | Performing task             |
-| success    | Pulsing green    | Tree ended with SUCCESS     |
-| failure    | Pulsing red      | Tree ended with FAILURE     |
-| panic      | Fast blink red   | Tree crashed                |
+| Status     | LED behavior      | Description                 |
+|---------   |------------------ |-----------------------------|
+| undefined  | Solid white       | Invalid status received.    |
+| waiting    | Solid red         | Waiting for kill switch     |
+| starting   | Slow blink blue   | Kill inserted, starting run |
+| moving     | Solid green       | Positioning for next task   |
+| searching  | Solid yellow      | Searching for next task     |
+| aligning   | Slow blink purple | Aligning with task          |
+| performing | Fast blink blue   | Performing task             |
+| success    | Pulsing green     | Tree ended with SUCCESS     |
+| failure    | Pulsing red       | Tree ended with FAILURE     |
+| panic      | Fast blink red    | Tree crashed                |
 
 ## Editing BehaviorTrees
 Use UWRTs fork of [Groot](https://github.com/osu-uwrt/Groot) to edit behavior trees used by the system.

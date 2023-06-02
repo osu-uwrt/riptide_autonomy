@@ -15,18 +15,17 @@ const std::string
     ODOMETRY_TOPIC = "odometry/filtered",
     CONTROL_LINEAR_TOPIC = "controller/linear",
     CONTROL_ANGULAR_TOPIC = "controller/angular",
-    ACTUATOR_COMMAND_TOPIC = "command/actuator",
-    ACTUATOR_STATUS_TOPIC = "state/actuator",
+    ACTUATOR_BUSY_TOPIC = "state/actuator/busy",
+    ACTUATOR_STATUS_TOPIC = "state/actuator/status",
     ROBOT_KILLED_TOPIC = "state/kill",
     ROBOT_AUX_TOPIC = "state/aux",
     LED_COMMAND_TOPIC = "command/led";
 
-//action server names for autonomy
+//service names for autonomy
 const std::string 
-    CLAW_SERVER_NAME = "actuate_claw",
-    DROPPER_SERVER_NAME = "actuate_droppers",
-    TORPEDO_SERVER_NAME = "fire_torpedos",
-    ARMER_SERVER_NAME = "arm_torpedo_dropper";
+    CLAW_SERVER_NAME = "command/actuator/claw",
+    DROPPER_SERVER_NAME = "command/actuator/dropper",
+    TORPEDO_SERVER_NAME = "command/actuator/torpedo";
 
 /**
  *

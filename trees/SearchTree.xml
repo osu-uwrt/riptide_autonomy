@@ -6,7 +6,7 @@
             <Fallback>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
                     <Sequence>
-                        <Action ID="Actuate" arm_torpedo="1" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
+                        <Action ID="Actuate" arm_torpedo="1" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
                         <Action ID="Wait" seconds="1"/>
                         <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
                         <Inverter>
@@ -26,8 +26,13 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <Action ID="GetActuatorStatus" actuators_busy="busy" claw_state="cs" dropper_available_count="dac" dropper_state="ds" torpedo_available_count="tac" torpedo_state="ts"/>
-            <Action ID="Info" message="busy: {busy}, claw state: {cs}, dropper available: {dac}, dropper state: {ds}, torpedo available: {tac}, torpedo state: {ts}"/>
+            <SetBlackboard output_key="120" value="120"/>
+            <SetBlackboard output_key="0.01" value="0.01"/>
+            <SetBlackboard output_key="0.25" value="0.25"/>
+            <SetBlackboard output_key="obj" value="bootlegger"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="obj" target_cov="0.25" timeout_secs="120"/>
+            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
@@ -50,7 +55,7 @@
             <Fallback>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
                     <Sequence>
-                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="1" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
+                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="1" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
                         <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
                         <Fallback>
                             <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo1_state}"/>
@@ -77,16 +82,7 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="DoSearch">
-        <Sequence>
-            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="3.1415" value="3.1415"/>
-            <Action ID="Info" message="Searching for prop"/>
-            <Action ID="SetStatus" status="searching"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="proximity" y="0" z="0"/>
-            <Action ID="Info" message="Letting mapping gather detections for a few seconds"/>
-            <Action ID="Wait" name="Wait for mapping" seconds="5"/>
-        </Sequence>
+        <AlwaysFailure/>
     </BehaviorTree>
     <BehaviorTree ID="DropMarker">
         <Fallback>
@@ -97,8 +93,8 @@
                         <Action ID="Info" message="Attempting to drop dropper {dropper}..."/>
                         <IfThenElse>
                             <Condition ID="NumsEqual" a="{dropper}" b="1"/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="1" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="1" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="1" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="1" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
                         </IfThenElse>
                         <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
                         <IfThenElse>
@@ -139,8 +135,8 @@
                         <SetBlackboard name="Set &quot;1&quot;" output_key="1" value="1"/>
                         <IfThenElse name="Select Torpedo">
                             <Condition ID="NumsEqual" a="1" b="{torpedo_id}"/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="1" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="1" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators="" some_port=""/>
                         </IfThenElse>
                         <Action ID="Wait" seconds="1"/>
                         <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
@@ -164,27 +160,13 @@
         </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="GateTask">
-        <Sequence>
-            <Action ID="Info" message="GATE TIME"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="-1" value="-1"/>
-            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="1.5" value="1.5"/>
-            <SetBlackboard output_key="3.1415" value="3.1415"/>
-            <SetBlackboard output_key="-0.5" value="-0.5"/>
-            <SubTree ID="DoSearch" __shared_blackboard="false" frame="gman_frame" proximity="1.5"/>
-            <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="1" y="0" z="0"/>
-            <Action ID="SetStatus" status="performing"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="-1" y="0" z="0"/>
-        </Sequence>
+        <AlwaysFailure/>
     </BehaviorTree>
     <BehaviorTree ID="GetActuatorStates">
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
                 <Sequence>
-                    <Action ID="GetActuatorStatus" actuators_busy="" claw_state="{claw_state}" dropper_available_count="" dropper_state="" torpedo_available_count="" torpedo_state=""/>
+                    <Action ID="GetActuatorStatus" claw_state="{claw_state}" dropper1_state="{dropper1_state}" dropper2_state="{dropper2_state}" torpedo1_state="{torpedo1_state}" torpedo2_state="{torpedo2_state}"/>
                 </Sequence>
             </Decorator>
             <ForceFailure>
@@ -293,6 +275,37 @@
         <Sequence>
             <Action ID="TransformPose" from_frame="{frame_name}" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="Search">
+        <Sequence name="Search">
+            <Action ID="Format" format="{object_name}_frame" out="frame"/>
+            <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="f_op" out_or="f_or" out_oy="f_oy" out_x="f_x" out_y="f_y" out_z="f_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <Action ID="CalculateDistance" dist="dist" x1="{x}" x2="{f_x}" y1="{y}" y2="{f_y}" z1="{z]" z2="{f_z}"/>
+            <Action ID="Info" message="dist: {dist}"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Search_loop" num_seconds="{timeout_secs}">
+                <Sequence>
+                    <Action ID="Math" a="{dist}" b="0.67" operator="*" out="dist"/>
+                    <Action ID="Info" message="Search moving to {dist} meters away from {object_name}"/>
+                    <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" to_frame="world" x="{dist}" y="0" z="0"/>
+                    <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+                    <Action ID="Info" message="Let mapping gather detections on {object_name}"/>
+                    <Action ID="Wait" seconds="10"/>
+                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                    <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}"/>
+                    <Fallback>
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                        <Condition ID="CompareNums" a="{dist}" b="1" test="&lt;"/>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+            <Fallback>
+                <Condition ID="CompareNums" a="{dist}" b="1" test="&gt;"/>
+                <ForceFailure>
+                    <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn't converge the estimate."/>
+                </ForceFailure>
+            </Fallback>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurfaceTree">
@@ -423,12 +436,6 @@
             <input_port name="y" required="false"/>
             <input_port name="z" required="false"/>
         </Action>
-        <Action ID="ComputeYawAngle">
-            <output_port name="output" required="false"/>
-            <input_port name="x" required="false"/>
-            <input_port name="y" required="false"/>
-            <input_port name="z" required="false"/>
-        </Action>
         <SubTree ID="DisarmTorpedos"/>
         <SubTree ID="Dive">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -450,6 +457,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="torpedo_id" required="false"/>
         </SubTree>
+        <Action ID="Format">
+            <input_port name="format" required="true"/>
+            <output_port name="out" required="false"/>
+        </Action>
         <SubTree ID="GateTask"/>
         <SubTree ID="GetActuatorStates">
             <input_port default="true" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -592,6 +603,12 @@
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
             <input_port name="num_seconds" required="false">number of seconds until abandonment.</input_port>
         </Decorator>
+        <SubTree ID="Search">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_name" required="true">Frame to search for</input_port>
+            <input_port default="0.01" name="target_cov" required="true">Target covariance to end search</input_port>
+            <input_port default="120" name="timeout_secs" required="true">Timeout for search</input_port>
+        </SubTree>
         <Action ID="SetStatus">
             <input_port name="status" required="false"/>
         </Action>
@@ -621,6 +638,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="torpedo_id" required="false"/>
         </SubTree>
+        <Action ID="getCovariance">
+            <output_port name="Covariance" required="false">Covariance of frame</output_port>
+            <input_port name="Target" required="true">Frame to get covariance of</input_port>
+        </Action>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>

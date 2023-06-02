@@ -63,8 +63,8 @@ TEST_F(BtTest, test_SetStatus_searching) {
     BT::NodeStatus result = testSetStatus(toolNode, "searching", cmd);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
     ASSERT_EQ(cmd.red, 255);
-    ASSERT_EQ(cmd.green, 0);
-    ASSERT_EQ(cmd.blue, 255);
+    ASSERT_EQ(cmd.green, 255);
+    ASSERT_EQ(cmd.blue, 0);
     ASSERT_EQ(cmd.mode, LedCmd::MODE_SOLID);
     ASSERT_EQ(cmd.target, LedCmd::TARGET_ALL);
 }
@@ -73,9 +73,9 @@ TEST_F(BtTest, test_SetStatus_aligning) {
     riptide_msgs2::msg::LedCommand cmd;
     BT::NodeStatus result = testSetStatus(toolNode, "aligning", cmd);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-    ASSERT_EQ(cmd.red, 0);
-    ASSERT_EQ(cmd.green, 255);
-    ASSERT_EQ(cmd.blue, 0);
+    ASSERT_EQ(cmd.red, 255);
+    ASSERT_EQ(cmd.green, 0);
+    ASSERT_EQ(cmd.blue, 255);
     ASSERT_EQ(cmd.mode, LedCmd::MODE_SLOW_FLASH);
     ASSERT_EQ(cmd.target, LedCmd::TARGET_ALL);
 }
@@ -85,8 +85,8 @@ TEST_F(BtTest, test_SetStatus_performing) {
     BT::NodeStatus result = testSetStatus(toolNode, "performing", cmd);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
     ASSERT_EQ(cmd.red, 0);
-    ASSERT_EQ(cmd.green, 255);
-    ASSERT_EQ(cmd.blue, 0);
+    ASSERT_EQ(cmd.green, 0);
+    ASSERT_EQ(cmd.blue, 255);
     ASSERT_EQ(cmd.mode, LedCmd::MODE_FAST_FLASH);
     ASSERT_EQ(cmd.target, LedCmd::TARGET_ALL);
 }
