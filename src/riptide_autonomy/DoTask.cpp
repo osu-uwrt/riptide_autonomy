@@ -77,6 +77,8 @@ namespace do_task
 
             std::string bagTriggerTopic = "/" + get_hostname() + "/autonomy/bag_trigger";
             bagTriggerPub = this->create_publisher<std_msgs::msg::Bool>(bagTriggerTopic, 10);
+            bagTriggerTimer = this->create_wall_timer(1s, std::bind(&BTExecutor::bagTriggerCb, this));
+            treeRunning = false;
 
             // make an action server for running the autonomy trees
             actionServer = rclcpp_action::create_server<ExecuteTree>(
@@ -186,6 +188,8 @@ namespace do_task
             riptide_msgs2::action::ExecuteTree::Result::SharedPtr result =
                 std::make_shared<riptide_msgs2::action::ExecuteTree::Result>();
 
+            treeRunning = true;
+
             try
             {
                 // load the tree file contents in to a BT context
@@ -217,11 +221,6 @@ namespace do_task
                 // set up idle sleep rate
                 rclcpp::Rate loop_rate(10ms);
 
-                // indicate to the bagger that autonomy is starting by sending true to the bag trigger
-                std_msgs::msg::Bool boolMsg;
-                boolMsg.data = true;
-                bagTriggerPub->publish(boolMsg);
-
                 // start ticking the tree with feedback
                 // keep executing tick until it returns either SUCCESS or FAILURE
                 auto tickStatus = NodeStatus::RUNNING;
@@ -236,6 +235,7 @@ namespace do_task
                         result->returncode = 0;
                         tree.haltTree();
                         goal_handle->canceled(result);
+                        treeRunning = false;
                         RCLCPP_INFO(log, "DoTask: Cancelled current action goal");
                         return;
                     }
@@ -243,10 +243,6 @@ namespace do_task
                     // sleep a bit while we wait
                     loop_rate.sleep();
                 }
-
-                // indicate to bagging that the tree is done by sending a false to the bag trigger
-                boolMsg.data = false;
-                bagTriggerPub->publish(boolMsg);
 
                 //stop the controller. no reason for it to be going
                 riptide_msgs2::msg::ControllerCommand disable;
@@ -274,6 +270,7 @@ namespace do_task
                 }
 
                 RCLCPP_INFO(log, "Tree ended with status %s", resultStr.c_str());
+                treeRunning = false;
 
                 //publish led command to indicate finish status
                 LedCmd ledCmd;
@@ -299,6 +296,8 @@ namespace do_task
             {
                 RCLCPP_ERROR(log, "Unknown error while ticking tree. Aborting tree!");
             }
+
+            treeRunning = false;
             
             // if error, publish led command indicate error status
             LedCmd ledCmd;
@@ -308,11 +307,6 @@ namespace do_task
             ledCmd.mode = LedCmd::MODE_FAST_FLASH;
             ledCmd.target = LedCmd::TARGET_ALL;
             statusPub->publish(ledCmd);
-
-            //stop bagging
-            std_msgs::msg::Bool boolMsg;
-            boolMsg.data = false;
-            bagTriggerPub->publish(boolMsg);
 
             //stop the controller
             riptide_msgs2::msg::ControllerCommand disable;
@@ -348,6 +342,12 @@ namespace do_task
             response->trees = treeFiles;
         }
 
+        void bagTriggerCb() {
+            std_msgs::msg::Bool triggerMsg;
+            triggerMsg.data = treeRunning;
+            bagTriggerPub->publish(triggerMsg);
+        }
+
     private:
         // ros publishers
         rclcpp::Publisher<LedCmd>::SharedPtr statusPub;
@@ -356,6 +356,8 @@ namespace do_task
             angularPub;
         
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr bagTriggerPub;
+        rclcpp::TimerBase::SharedPtr bagTriggerTimer;
+        bool treeRunning;
 
         // ros action and service servers
         rclcpp_action::Server<ExecuteTree>::SharedPtr actionServer;
