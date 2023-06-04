@@ -1,29 +1,5 @@
 <?xml version="1.0"?>
 <root>
-    <BehaviorTree ID="ArmTorpedos">
-        <Sequence>
-            <Action ID="Info" message="Arming Torpedos..."/>
-            <Fallback>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
-                    <Sequence>
-                        <Action ID="Actuate" arm_torpedo="1" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                        <Action ID="Wait" seconds="1"/>
-                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                        <Inverter>
-                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo1_state}"/>
-                        </Inverter>
-                        <Inverter>
-                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo2_state}"/>
-                        </Inverter>
-                    </Sequence>
-                </Decorator>
-                <ForceFailure>
-                    <Action ID="Error" message="Failed to arm torpedos!"/>
-                </ForceFailure>
-            </Fallback>
-            <Action ID="Info" message="Torpedos Armed."/>
-        </Sequence>
-    </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
         <Sequence>
             <Action ID="Info" message="BUOY TIME"/>
@@ -36,29 +12,6 @@
             <Action ID="PublishToController" isOrientation="0" mode="2" name="move forward" x="0.5" y="0" z="0"/>
             <Action ID="Wait" seconds="10"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="gx" y="gy" z="gz"/>
-        </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="DisarmTorpedos">
-        <Sequence>
-            <Action ID="Info" message="Disarming Torpedos."/>
-            <Fallback>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
-                    <Sequence>
-                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="1" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                        <Fallback>
-                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo1_state}"/>
-                            <Condition ID="IsTorpedoError" torpedo_state="{torpedo1_state}"/>
-                        </Fallback>
-                        <Fallback>
-                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo2_state}"/>
-                            <Condition ID="IsTorpedoError" torpedo_state="{torpedo2_state}"/>
-                        </Fallback>
-                    </Sequence>
-                </Decorator>
-                <Action ID="Error" message="Failed to disarm torpedos!"/>
-            </Fallback>
-            <Action ID="Info" message="Disarmed torpedos."/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="Dive">
@@ -82,81 +35,6 @@
             <Action ID="Wait" name="Wait for mapping" seconds="5"/>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="DropMarker">
-        <Fallback>
-            <Sequence>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
-                    <Sequence>
-                        <Action ID="Wait" seconds="1"/>
-                        <Action ID="Info" message="Attempting to drop dropper {dropper}..."/>
-                        <IfThenElse>
-                            <Condition ID="NumsEqual" a="{dropper}" b="1"/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="1" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="1" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                        </IfThenElse>
-                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-                        <IfThenElse>
-                            <Condition ID="NumsEqual" a="{dropper}" b="1"/>
-                            <SetBlackboard output_key="dropper_state" value="{dropper1_state}"/>
-                            <SetBlackboard output_key="dropper_state" value="{dropper2_state}"/>
-                        </IfThenElse>
-                        <Fallback name="is dropper in an error state?">
-                            <Inverter>
-                                <Condition ID="IsDropperError" dropper_state="{dropper_state}"/>
-                            </Inverter>
-                            <ForceFailure>
-                                <Action ID="Error" message="Dropper {dropper} is in an error state!"/>
-                            </ForceFailure>
-                        </Fallback>
-                        <Condition ID="IsDropperDropped" dropper_state="{dropper_state}"/>
-                    </Sequence>
-                </Decorator>
-                <Action ID="Info" message="Successfully dropped dropper {dropper}."/>
-            </Sequence>
-            <Action ID="Error" message="Failed to drop dropper {dropper}!"/>
-        </Fallback>
-    </BehaviorTree>
-    <BehaviorTree ID="FireTorpedo">
-        <Fallback>
-            <Sequence>
-                <Action ID="Info" message="Attempting to fire torpedo {torpedo_id}"/>
-                <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
-                <Inverter>
-                    <Sequence>
-                        <Condition ID="IsTorpedoFired" torpedo_state="{torpedo_state}"/>
-                        <Action ID="Error" message="Torpedo {torpedo_id} is already fired!"/>
-                    </Sequence>
-                </Inverter>
-                <SubTree ID="WaitForTorpedoCharged" __shared_blackboard="false" torpedo_id="torpedo_id"/>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
-                    <Sequence name="Attempt to fire torpedo">
-                        <SetBlackboard name="Set &quot;1&quot;" output_key="1" value="1"/>
-                        <IfThenElse name="Select Torpedo">
-                            <Condition ID="NumsEqual" a="1" b="{torpedo_id}"/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="1" fire_torpedo_2="" open_claw="" reset_actuators=""/>
-                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators=""/>
-                        </IfThenElse>
-                        <Action ID="Wait" seconds="1"/>
-                        <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
-                        <Fallback>
-                            <Condition ID="IsTorpedoFired" torpedo_state="{torpedo_state}"/>
-                            <Sequence>
-                                <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
-                                <Action ID="Error" message="Torpedo {torpedo_id} is in an error state!"/>
-                            </Sequence>
-                        </Fallback>
-                    </Sequence>
-                </Decorator>
-                <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
-                <IfThenElse>
-                    <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
-                    <Action ID="Error" message="Failed to fire torpedo {torpedo_id}!"/>
-                    <Action ID="Info" message="Successfully fired torpedo {torpedo_id}"/>
-                </IfThenElse>
-            </Sequence>
-            <Action ID="Error" message="Failed to fire torpedo {torpedo_id}!"/>
-        </Fallback>
-    </BehaviorTree>
     <BehaviorTree ID="GateTask">
         <Sequence>
             <Action ID="Info" message="GATE TIME"/>
@@ -172,34 +50,6 @@
             <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="1" y="0" z="0"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="-1" y="0" z="0"/>
-        </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="GetActuatorStates">
-        <Fallback>
-            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
-                <Sequence>
-                    <Action ID="GetActuatorStatus" actuators_busy="" claw_state="{claw_state}" dropper_available_count="" dropper_state="" torpedo_available_count="" torpedo_state=""/>
-                </Sequence>
-            </Decorator>
-            <ForceFailure>
-                <Action ID="Error" message="Failed to get actuator states!"/>
-            </ForceFailure>
-        </Fallback>
-    </BehaviorTree>
-    <BehaviorTree ID="GetTorpedoState">
-        <Sequence>
-            <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
-            <IfThenElse name="Choose appropriate torpedo">
-                <Condition ID="NumsEqual" a="1" b="{torpedo_id}"/>
-                <SetBlackboard name="choose torpedo 1" output_key="torpedo_state" value="{torpedo1_state}"/>
-                <SetBlackboard name="choose torpedo 2" output_key="torpedo_state" value="{torpedo2_state}"/>
-            </IfThenElse>
-            <ForceSuccess>
-                <Sequence>
-                    <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
-                    <Action ID="Error" message="Torpedo {torpedo_id} is in an error state!"/>
-                </Sequence>
-            </ForceSuccess>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="KillController">
@@ -329,30 +179,6 @@
             <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="0.25"/>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="TorpedoTree">
-        <Sequence>
-            <Action ID="Info" message="TORPEDO TIME"/>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="2" value="2"/>
-            <SetBlackboard output_key="frame" value="torpedoBootlegger_frame"/>
-            <SetBlackboard output_key="4" value="4"/>
-            <SubTree ID="DoSearch" __shared_blackboard="false" frame="frame" proximity="4"/>
-            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
-            <ForceSuccess>
-                <SubTree ID="ArmTorpedos"/>
-            </ForceSuccess>
-            <SubTree ID="LessCoolTorpedoAlign"/>
-            <ForceSuccess>
-                <Sequence>
-                    <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="1"/>
-                    <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="2"/>
-                    <SubTree ID="DisarmTorpedos"/>
-                    <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
-                </Sequence>
-            </ForceSuccess>
-        </Sequence>
-    </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
         <Sequence>
             <Action ID="SetStatus" status="waiting"/>
@@ -369,30 +195,6 @@
             </RetryUntilSuccessful>
             <Action ID="SetStatus" status="starting"/>
             <Action ID="Wait" seconds="5"/>
-        </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="WaitForTorpedoCharged">
-        <Sequence>
-            <Action ID="Info" message="Waiting for torpedo {torpedo_id} to charge."/>
-            <SetBlackboard name="Set &quot;1&quot;" output_key="1" value="1"/>
-            <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Wait until charged or error" num_seconds="30">
-                <Sequence>
-                    <Action ID="Wait" seconds="1"/>
-                    <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
-                    <Fallback name="assess state">
-                        <Condition ID="IsTorpedoCharged" torpedo_state="{torpedo_state}"/>
-                        <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
-                    </Fallback>
-                </Sequence>
-            </Decorator>
-            <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
-            <Fallback>
-                <Condition ID="IsTorpedoCharged" torpedo_state="{torpedo_state}"/>
-                <ForceFailure>
-                    <Action ID="Error" message="Torpedo {torpedo_id} failed to charge!"/>
-                </ForceFailure>
-            </Fallback>
-            <Action ID="Info" message="Torpedo {torpedo_id} charged."/>
         </Sequence>
     </BehaviorTree>
     <TreeNodesModel>
@@ -414,7 +216,6 @@
             <input_port name="b" required="false"/>
             <input_port name="range" required="false"/>
         </Condition>
-        <SubTree ID="ArmTorpedos"/>
         <SubTree ID="BuoyTree"/>
         <Action ID="CalculateDistance">
             <output_port name="dist" required="false"/>
@@ -448,7 +249,6 @@
             <input_port name="y" required="false"/>
             <input_port name="z" required="false"/>
         </Action>
-        <SubTree ID="DisarmTorpedos"/>
         <SubTree ID="Dive">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="depth" required="false">depth to submerge to</input_port>
@@ -458,25 +258,14 @@
             <input_port name="frame" required="false">Prop to search for (ex. gman)</input_port>
             <input_port name="proximity" required="false">Proximity to prop estimate to search</input_port>
         </SubTree>
-        <SubTree ID="DropMarker">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="dropper" required="false">marker dropper ID. 1 or 2</input_port>
-        </SubTree>
         <Action ID="Error">
             <input_port name="message" required="false">The message to print.</input_port>
         </Action>
-        <SubTree ID="FireTorpedo">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="torpedo_id" required="false"/>
-        </SubTree>
         <Action ID="Format">
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="GateTask"/>
-        <SubTree ID="GetActuatorStates">
-            <input_port default="true" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-        </SubTree>
         <Action ID="GetActuatorStatus">
             <inout_port name="claw_state" required="true"/>
             <inout_port name="dropper1_state" required="true"/>
@@ -500,11 +289,6 @@
             <inout_port name="aux_switch_inserted" required="false"/>
             <inout_port name="kill_switch_inserted" required="false"/>
         </Action>
-        <SubTree ID="GetTorpedoState">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="torpedo_id" required="false"/>
-            <output_port name="torpedo_state" required="false"/>
-        </SubTree>
         <Action ID="HeadingToPoint">
             <input_port name="currX" required="false"/>
             <input_port name="currY" required="false"/>
@@ -624,7 +408,6 @@
             <input_port name="status" required="false"/>
         </Action>
         <SubTree ID="SurfaceTree"/>
-        <SubTree ID="TorpedoTree"/>
         <Action ID="TransformPose">
             <input_port name="from_frame" required="false"/>
             <input_port name="op" required="false"/>
@@ -645,10 +428,6 @@
             <input_port name="seconds" required="false">number of seconds to wait.</input_port>
         </Action>
         <SubTree ID="WaitForKillSwitch"/>
-        <SubTree ID="WaitForTorpedoCharged">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="torpedo_id" required="false"/>
-        </SubTree>
         <Action ID="getCovariance">
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
