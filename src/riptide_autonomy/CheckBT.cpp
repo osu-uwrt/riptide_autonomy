@@ -17,6 +17,27 @@ using namespace BT;
 
 bool yta = false;
 
+const char *nodeId(XMLElement *node) {
+    if(node->Attribute("ID")) {
+        return node->Attribute("ID");
+    }
+
+    return node->Name();
+}
+
+XMLElement *findFirstChildByName(XMLElement *parent, const char *childName) {
+    XMLElement *child = parent->FirstChildElement();
+    while(child != nullptr) {
+        if(strcmp(child->Value(), childName) == 0) {
+            return child;
+        }
+
+        child = child->NextSiblingElement();
+    }
+
+    return child;
+}
+
 /**
  * @brief Goes through Include to get all custom nodes
  * @return a list of the names of every custom node
@@ -135,7 +156,7 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
     if(src_ports.size() != ports_found.size()){
         for(auto check : src_ports){
             if(!(std::find(ports_found.begin(), ports_found.end(), check.first) != ports_found.end())){
-                RCLCPP_WARN(log, "%s was not found in groot workspace for node %s. Would you like to add it? (Y/n)",check.first.c_str(),node->Attribute("ID"));
+                RCLCPP_WARN(log, "%s was not found in groot workspace for node %s. Would you like to add it? (Y/n)",check.first.c_str(), nodeId(node));
                 std::string ans;
                 std::cin>>ans;
 
@@ -167,12 +188,12 @@ std::pair<bool,bool> findNodeInManifest(XMLElement *test, std::shared_ptr<Behavi
     //arbitrarily return true for subtrees we only care about conditions/actions/decorators
     std::string testNodeType = test->Name();
     
-    RCLCPP_INFO(log,"Checking Node %s", test->Attribute("ID"));
+    RCLCPP_INFO(log,"Checking Node %s", nodeId(test));
     //get the manifest
     std::unordered_map<std::string, BT::TreeNodeManifest> src_manifest = factory->manifests();    
     // try to find node in manifest
     try{
-        BT::TreeNodeManifest node_maifest = src_manifest.at(test->Attribute("ID"));
+        BT::TreeNodeManifest node_maifest = src_manifest.at(nodeId(test));
         node_error = false;
         // node exists! check to make sure ports match. checkPorts returns true if the ports match, so false means error
         port_error = !checkPorts(test, node_maifest.ports);
@@ -256,10 +277,10 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
             std::pair<bool, bool> res = findNodeInManifest(node, implementations);
             bool removed = false;
             if(!res.first) {
-                nodesfound.push_back(node->Attribute("ID"));
+                nodesfound.push_back(nodeId(node));
             }
             else{
-                RCLCPP_WARN(log,"Riptide_autonomy does not have a valid c++ file for %s. Would you like to remove it from the workspace? (Y/n): ", node->Attribute("ID"));
+                RCLCPP_WARN(log,"Riptide_autonomy does not have a valid c++ file for %s. Would you like to remove it from the workspace? (Y/n): ", nodeId(node));
                 std::string ans;
                 std::cin >> ans;
 
@@ -268,7 +289,7 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
                     node->Parent()->DeleteChild(node);
                     removed = true;
                 } else {
-                    RCLCPP_ERROR(log, "Not removing %s from the workspace. To fix this issue, use the BT assistant tool to create a proper C++ file for the node.", node->Attribute("ID"));
+                    RCLCPP_ERROR(log, "Not removing %s from the workspace. To fix this issue, use the BT assistant tool to create a proper C++ file for the node.", nodeId(node));
                 }
             }
             
@@ -311,39 +332,79 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
  * @brief Recursively traverses a tree scanning for possible blackboard issues.
  * @param doc Document containing the tree being checked. Will be modified if user approves fixes.
  * @param testTree The tree to check for issues.
- * @param bb The location in the tree to insert SetBlackboard nodes as needed.
+ * @param treeNodesModel a pointer to the TreeNodesModel element tag
  * @param blackboard A list containing the names of known blackboard entries in the tree.
  * @return true if the check was a success. false if there are outstanding issues.
  */
-bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *bb, std::list<std::string> blackboard){
-    if(testTree == nullptr){
+bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesModel, std::list<std::string>& blackboard){
+    XMLElement *tree = testTree;    
+    
+    if(tree == nullptr){
         return true;
     }
 
     bool noErrors = true;
-    while(testTree != nullptr){
-        //if the node sets a blackboard pointer, record it
-        if(std::strcmp(testTree->Value(), "SetBlackboard") == 0){
-            //add blackboard vals to the list
-            if(bb->Parent() != testTree->Parent()){
-                blackboard.clear();
+    while(tree != nullptr){
+        //add any output or inout ports to the blackboard
+        if(const char *treeId = tree->Attribute("ID")) {
+            //if the tree has an ID, try to find it in the node model
+            XMLElement *nodeModel = treeNodesModel->FirstChildElement();
+            while(nodeModel != nullptr) {
+                const char *nodeModelId = nodeModel->Attribute("ID");
+                if(nodeModelId) {
+                    if(strcmp(nodeModelId, treeId) == 0) {
+                        //found the node in the model. now find all inout and output ports and add their values to blackboard
+                        XMLElement *nextPort = nodeModel->FirstChildElement();
+                        while(nextPort != nullptr) {
+                            const char *portType = nextPort->Value();
+                            if(strcmp(portType, "output_port") == 0 || strcmp(portType, "inout_port") == 0) {
+                                //found an out port. whats its name?
+                                if(const char *portName = nextPort->Attribute("name")) {
+                                    //now, what value was passed to it? thats the name of our blackboard entry
+                                    if(const char *portVal = tree->Attribute(portName)) {
+                                        //strip the {} off of the port, then add to list
+                                        std::string stripped(portVal);
+                                        if(stripped.back() == '}') {
+                                            if(stripped[0] == '{') {
+                                                stripped = stripped.substr(1, stripped.length() - 2);
+                                            } else if(stripped[0] == '$' && stripped[1] == '{') {
+                                                stripped = stripped.substr(2, stripped.size() - 3);
+                                            }
+                                        }
+                                        
+                                        blackboard.push_back(stripped);
+                                        RCLCPP_INFO(log, "Found bb value \"%s\" from node %s", stripped.c_str(), treeId);
+                                    }
+                                }
+                            }
+
+                            nextPort = nextPort->NextSiblingElement();
+                        }
+                    }
+                }
+
+                nodeModel = nodeModel->NextSiblingElement();
             }
-            blackboard.push_back(testTree->Attribute("output_key"));
-            bb = testTree;
+        } else if(strcmp(tree->Value(), "SetBlackboard") == 0) {
+            //set add the name of the blackboard entry to the list
+            if(const char *bbEntryName = tree->Attribute("output_key")) {
+                RCLCPP_INFO(log, "Found bb value \"%s\" from node SetBlackboard", bbEntryName);
+                blackboard.push_back(bbEntryName);
+            }
         }
 
         //check that if the node is a subtree, all parameters going to it are valid blackboard pointers.
         //if there is a pointer that doesnt exist, prompt user, then create one with the value being the name
-        if(std::strcmp(testTree->Value(), "SubTree") == 0){
-            RCLCPP_INFO(log, "found subtree %s", testTree->Attribute("ID"));
+        if(std::strcmp(tree->Value(), "SubTree") == 0){
             //check to make sure ports are blackboard vals;
             //get fist attribute skipping the name
-            auto attribute = testTree->FirstAttribute()->Next();
+            auto attribute = tree->FirstAttribute()->Next();
             while(attribute){
-                if(std::strcmp(attribute->Name(), "__shared_blackboard")){
-                    RCLCPP_INFO(log, "%s", attribute->Name());
+                //TODO: we do want to take this into account but thats gonna kinda be an edge case ngl
+                if(std::strcmp(attribute->Name(), "__shared_blackboard") != 0) { //name != __shared_blackboard
+                    // RCLCPP_INFO(log, "%s", attribute->Name());
                     if(!(std::find(blackboard.begin(), blackboard.end(), attribute->Value()) != blackboard.end())){
-                        RCLCPP_WARN(log, "%s is listed as a port value for %s but is not a blackboard pointer.",attribute->Value(),testTree->Attribute("ID"));
+                        RCLCPP_WARN(log, "%s is listed as a port value for %s but may not exist.", attribute->Value(), nodeId(tree));
                         RCLCPP_WARN(log,"Would you like to make one? (Y/n)");
                         std::string ans;
                         std::cin >> ans;
@@ -351,7 +412,7 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *bb, std::l
                             XMLElement *newNode = doc.NewElement("SetBlackboard");
                             newNode->SetAttribute("output_key", attribute->Value());
                             newNode->SetAttribute("value", attribute->Value());
-                            bb->Parent()->InsertAfterChild(bb,newNode);
+                            tree->Parent()->InsertFirstChild(newNode);
                         } else {
                             noErrors = false;
                         }
@@ -363,8 +424,9 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *bb, std::l
 
         //can add more checks here as needed
 
-        noErrors = noErrors && traverseTree(doc, testTree->FirstChildElement(), bb, blackboard);
-        testTree = testTree->NextSiblingElement();
+        //if node has children, check them here
+        noErrors = traverseTree(doc, tree->FirstChildElement(), treeNodesModel, blackboard) && noErrors;
+        tree = tree->NextSiblingElement();
     }
 
     return noErrors;
@@ -376,16 +438,49 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *bb, std::l
  * @param fileName Name of the file containing the behavior tree to check.
  * @return true if the check succeeded. false if there are outstanding issues.
  */
-bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument& tree, const std::string& fileName) {
-    auto mainTree = tree.RootElement()->FirstChildElement();
-    //find main testTree. ID="BehaviorTree"
-    while(mainTree !=nullptr && std::strcmp(mainTree->Attribute("ID"),"BehaviorTree")){
-        mainTree = mainTree->NextSiblingElement();
-    }
-    std::list<std::string> blackboard;
+bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument& doc, const std::string& fileName) {
+    bool noErrors = true;
+    XMLElement *tree = doc.RootElement()->FirstChildElement();
+    XMLElement *treeNodesModel = findFirstChildByName(doc.RootElement(), "TreeNodesModel");
 
-    bool noErrors = traverseTree(tree, mainTree->FirstChildElement(), mainTree->FirstChildElement(), blackboard);
-    noErrors = noErrors || CheckManifest(implementations, tree, fileName);
+    //traverse all behavior trees in the file and look for blackboard issues
+    while(tree != nullptr) {
+        RCLCPP_INFO(log, "Check subtree %s", nodeId(tree));
+        std::list<std::string> blackboard;
+
+        //if the node is a subtree, add its ports to the blackboard
+        if(const char *name = tree->Attribute("ID")) {
+            //find subtree in root/TreeNodesModel
+            XMLElement *st = treeNodesModel->FirstChildElement();
+            while(st != nullptr) {
+                if(const char *stName = st->Attribute("ID")) {
+                    if(strcmp(st->Value(), "SubTree") == 0 && strcmp(stName, name) == 0) {
+                        //found it! Iterate through input ports and add to blackboard
+                        XMLElement *port = st->FirstChildElement();
+                        while(port != nullptr) {
+                            if(strcmp(port->Value(), "input_port") == 0) {
+                                if(const char *portName = port->Attribute("name")) {
+                                    blackboard.push_back(portName);
+                                    RCLCPP_INFO(log, "Found subtree port %s", portName);
+                                }
+                            }
+
+                            port = port->NextSiblingElement();
+                        }
+
+                        break; //ensures st can never be nullptr if subtree exists and makes check after while valid
+                    }
+                }
+
+                st = st->NextSiblingElement();
+            }
+        }
+
+        noErrors = traverseTree(doc, tree->FirstChildElement(), treeNodesModel, blackboard) && noErrors; //noErrors LAST because short-circuit logic
+        tree = tree->NextSiblingElement();
+    }
+
+    noErrors = noErrors || CheckManifest(implementations, doc, fileName);
     return noErrors;
 }
 
@@ -407,18 +502,18 @@ int main(int argc, char **argv) {
 
     for(int i = 1; i < argc; i++){
         if(strcmp(argv[i], "-y") == 0){
-            yta=true;
+            yta = true;
         } else {
             treePath = argv[i];
             tree.LoadFile(argv[i]);
             if(!tree.RootElement()) {
-                //if there is no root element then the testTree was not loaded correctly
-                RCLCPP_ERROR(log, "FATAL: Could not load testTree. Does it exist?");
+                //if there is no root element then the test tree was not loaded correctly
+                RCLCPP_ERROR(log, "FATAL: Could not load tree. Does it exist?");
                 RCLCPP_ERROR(log, "Looked in file path: %s", treePath.c_str());
                 return 1; //bail out; nothing else we can do here
             }
             RCLCPP_INFO(log, "Loaded file %s", treePath.c_str());
-            noErrors = noErrors && CheckTree(factory, tree, treePath);
+            noErrors = CheckTree(factory, tree, treePath) && noErrors; //&& noErrors LAST to avoid short-circuit logic
         }
     }
 
@@ -433,7 +528,7 @@ int main(int argc, char **argv) {
         }
 
         RCLCPP_INFO(log, "Loaded workspace (%s)", treePath.c_str());
-        noErrors = noErrors && CheckManifest(factory, tree, treePath);
+        noErrors = CheckManifest(factory, tree, treePath) && noErrors;
     }
 
     //attempt to save the file after checks are complete
