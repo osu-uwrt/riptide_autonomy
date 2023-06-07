@@ -158,11 +158,10 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
         if(const char *portName = port->Attribute("name")) {
             //found a port with a name
             bool portFoundInCpp = src_ports.find(portName) != src_ports.end();
-            bool portTypesMatch = (portFoundInCpp ? src_ports.at(portName).direction() == grootPortDirection : false);
             
             ports_found.insert({portName, grootPortDirection});
 
-            if(!(portFoundInCpp && portTypesMatch)) {
+            if(!portFoundInCpp) {
                 //port of correct name and type not found in c++ implementation
                 RCLCPP_WARN(log, "%s Port %s in groot was not found in c++ implementation. Would you like to remove it? (Y/n): ", portVal, port->Attribute("name"));
                 std::string ans;
@@ -185,55 +184,52 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
     }
 
     // check the other way. make sure every port in the manifest is in groot
-    if(src_ports.size() != ports_found.size()){
-        for(auto srcPair : src_ports) {
-            if(ports_found.find(srcPair.first) == ports_found.end()) {
-                RCLCPP_WARN(log, "Port %s was not found in groot workspace for node %s. Would you like to add it? (Y/n)", srcPair.first.c_str(), nodeId(node));
-                std::string ans;
-                std::cin>>ans;
+    for(auto srcPair : src_ports) {
+        if(ports_found.find(srcPair.first) == ports_found.end()) {
+            RCLCPP_WARN(log, "Port %s was not found in groot workspace for node %s. Would you like to add it? (Y/n)", srcPair.first.c_str(), nodeId(node));
+            std::string ans;
+            std::cin>>ans;
 
-                if(std::tolower(ans[0]) == 'y' || yta){
-                    addPortToWorkspace(srcPair.first, srcPair.second, node);
-                }
-                else{
-                    port_match = false;
-                }
-                
-            } else {
-                //port exists, check direction
-                //TODO: this not fully working yet
-                if(srcPair.second.direction() != ports_found[srcPair.first]) {
-                    std::string 
-                        srcDirectionStr = portDirectionToString(srcPair.second.direction()),
-                        grootDirectionStr = portDirectionToString(ports_found[srcPair.first]),
-                        ans;
+            if(std::tolower(ans[0]) == 'y' || yta){
+                addPortToWorkspace(srcPair.first, srcPair.second, node);
+            }
+            else{
+                port_match = false;
+            }
+            
+        } else {
+            //port exists, check direction
+            if(srcPair.second.direction() != ports_found[srcPair.first]) {
+                std::string 
+                    srcDirectionStr = portDirectionToString(srcPair.second.direction()),
+                    grootDirectionStr = portDirectionToString(ports_found[srcPair.first]),
+                    ans;
 
-                    RCLCPP_WARN(log,
-                        "Port %s for node %s listed as an %s port in the c++ implementation, but as a %s port in Groot. Would you like to change the Groot type to %s (Y/n)?", 
-                        srcPair.first.c_str(),
-                        nodeId(node),
-                        srcDirectionStr.c_str(),
-                        grootDirectionStr.c_str(),
-                        srcDirectionStr.c_str()
-                    );
+                RCLCPP_WARN(log,
+                    "Port %s for node %s listed as an %s port in the c++ implementation, but as a %s port in Groot. Would you like to change the Groot type to %s (Y/n)?", 
+                    srcPair.first.c_str(),
+                    nodeId(node),
+                    srcDirectionStr.c_str(),
+                    grootDirectionStr.c_str(),
+                    srcDirectionStr.c_str()
+                );
 
-                    std::cin >> ans;
-                    if(std::tolower(ans[0]) == 'y' || yta) {
-                        //change the value of the port to srcDirectionStr
-                        //need to find the node first
-                        XMLElement *p = node->FirstChildElement();
-                        while(p != nullptr) {
-                            if(const char *pName = p->Attribute("name")) {
-                                if(strcmp(pName, srcPair.first.c_str()) == 0) {
-                                    p->SetValue(srcDirectionStr.c_str());
-                                    break;
-                                }
+                std::cin >> ans;
+                if(std::tolower(ans[0]) == 'y' || yta) {
+                    //change the value of the port to srcDirectionStr
+                    //need to find the node first
+                    XMLElement *p = node->FirstChildElement();
+                    while(p != nullptr) {
+                        if(const char *pName = p->Attribute("name")) {
+                            if(strcmp(pName, srcPair.first.c_str()) == 0) {
+                                p->SetValue(srcDirectionStr.c_str());
+                                break;
                             }
-                            p = p->NextSiblingElement();
                         }
-                    } else {
-                        port_match = false;
+                        p = p->NextSiblingElement();
                     }
+                } else {
+                    port_match = false;
                 }
             }
         }
