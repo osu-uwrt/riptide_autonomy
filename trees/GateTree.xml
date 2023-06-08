@@ -2,12 +2,11 @@
 <root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="120" value="120"/>
-            <SetBlackboard output_key="0.01" value="0.01"/>
-            <SetBlackboard output_key="0.25" value="0.25"/>
-            <SetBlackboard output_key="obj" value="bootlegger"/>
+            <SetBlackboard output_key="-1" value="-1"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Search" __shared_blackboard="false" frame_name="obj" target_cov="0.25" timeout_secs="120"/>
+            <Action ID="SetStatus" status="moving"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="GateTree"/>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
@@ -18,6 +17,34 @@
             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="depth"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="oy"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="GateTree">
+        <Sequence>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SetBlackboard output_key="-0.5" value="-0.5"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
+            <SetBlackboard output_key="120" value="120"/>
+            <SetBlackboard output_key="0.25" value="0.25"/>
+            <SetBlackboard output_key="gman" value="gman"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="gman" target_cov="0.25" timeout_secs="120"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="-0.5"/>
+            <Action ID="SetStatus" status="performing"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-0.5"/>
+            <Repeat name="Spin time" num_cycles="2">
+                <Sequence>
+                    <SetBlackboard output_key="-1.03" value="-1.03"/>
+                    <SetBlackboard output_key="1.05" value="1.05"/>
+                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="1.05" x="0" y="0" z="-0.5"/>
+                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="-1.03" x="0" y="0" z="-0.5"/>
+                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-0.5"/>
+                </Sequence>
+            </Repeat>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="-0.5"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="KillController">
@@ -107,27 +134,29 @@
             <Action ID="CalculateDistance" dist="dist" x1="{x}" x2="{f_x}" y1="{y}" y2="{f_y}" z1="{z]" z2="{f_z}"/>
             <Action ID="Info" message="dist: {dist}"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Search_loop" num_seconds="{timeout_secs}">
-                <Sequence>
-                    <Action ID="Math" a="{dist}" b="0.67" operator="*" out="dist"/>
-                    <Action ID="Info" message="Search moving to {dist} meters away from {object_name}"/>
-                    <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" to_frame="world" x="{dist}" y="0" z="0"/>
-                    <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
-                    <Action ID="Info" message="Let mapping gather detections on {object_name}"/>
-                    <Action ID="Wait" seconds="10"/>
-                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
-                    <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}"/>
-                    <Fallback>
-                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
-                        <Condition ID="CompareNums" a="{dist}" b="1" test="&lt;"/>
+                <Fallback>
+                    <Sequence>
+                        <Action ID="Math" a="{dist}" b="0.67" operator="*" out="dist"/>
+                        <Action ID="Info" message="Search moving to {dist} meters away from {object_name}"/>
+                        <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" to_frame="world" x="{dist}" y="0" z="0"/>
+                        <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+                        <Action ID="Info" message="Let mapping gather detections on {object_name}"/>
+                        <Action ID="Wait" seconds="10"/>
+                        <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                        <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}"/>
+                        <Fallback>
+                            <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                            <Condition ID="CompareNums" a="{dist}" b="1" test="&lt;"/>
+                        </Fallback>
+                    </Sequence>
+                    <Fallback name="check distance">
+                        <Condition ID="CompareNums" a="{dist}" b="1" test="&gt;"/>
+                        <ForceFailure>
+                            <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn't converge the estimate."/>
+                        </ForceFailure>
                     </Fallback>
-                </Sequence>
+                </Fallback>
             </Decorator>
-            <Fallback>
-                <Condition ID="CompareNums" a="{dist}" b="1" test="&gt;"/>
-                <ForceFailure>
-                    <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn't converge the estimate."/>
-                </ForceFailure>
-            </Fallback>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
@@ -199,6 +228,7 @@
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
         </Action>
+        <SubTree ID="GateTree"/>
         <Action ID="GetActuatorStatus">
             <output_port name="actuators_busy" required="false"/>
             <output_port name="claw_state" required="false"/>
@@ -286,7 +316,7 @@
         </Decorator>
         <SubTree ID="Search">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="frame_name" required="true">Frame to search for</input_port>
+            <input_port name="object_name" required="true">Frame to search for</input_port>
             <input_port default="0.01" name="target_cov" required="true">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="true">Timeout for search</input_port>
         </SubTree>
