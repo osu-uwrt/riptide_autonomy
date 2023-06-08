@@ -477,6 +477,7 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesM
                             newNode->SetAttribute("output_key", attribute->Value());
                             newNode->SetAttribute("value", attribute->Value());
                             tree->Parent()->InsertFirstChild(newNode);
+                            blackboard.push_back(attribute->Value());
                         } else {
                             noErrors = false;
                         }
