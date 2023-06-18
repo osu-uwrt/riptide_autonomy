@@ -153,10 +153,26 @@ ament_target_dependencies(doTask
   riptide_msgs2
 )
 
-if(NOT BUILD_DEPLOY)
-  #
-  # BT Health Checker executable
-  #
+#
+# BT Health Checker executable
+#
+
+#check that we are on Ubuntu 22.04. otherwise tinyxml will be sad
+execute_process(COMMAND lsb_release -s -i
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  OUTPUT_VARIABLE OS_NAME
+)
+
+execute_process(COMMAND lsb_release -s -r
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  OUTPUT_VARIABLE OS_VERSION
+)
+
+string(COMPARE EQUAL ${OS_NAME} "Ubuntu\n" OS_NAME_UBUNTU)
+string(COMPARE EQUAL ${OS_VERSION} "20.04\n" OS_VERSION_20_04)
+if((OS_NAME_UBUNTU AND OS_VERSION_20_04) OR BUILD_DEPLOY)
+  message("Skipping BT Health checker for deploy build or OS version incompatibility")
+else()
   add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
 
   target_include_directories(checkBT PUBLIC
@@ -173,8 +189,6 @@ if(NOT BUILD_DEPLOY)
   install(TARGETS checkBT
     DESTINATION lib/${PROJECT_NAME}
   )
-else()
-  message("Skipping BT Health checker for deploy build")
 endif()
 
 #install executable
