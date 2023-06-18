@@ -1,0 +1,628 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <BehaviorTree ID="ArmTorpedos">
+        <Sequence>
+            <Action ID="Info" message="Arming Torpedos..."/>
+            <Fallback>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
+                    <Sequence>
+                        <Action ID="Actuate" arm_torpedo="1" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                        <Action ID="Wait" seconds="1"/>
+                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
+                        <Inverter>
+                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo1_state}"/>
+                        </Inverter>
+                        <Inverter>
+                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo2_state}"/>
+                        </Inverter>
+                    </Sequence>
+                </Decorator>
+                <ForceFailure>
+                    <Action ID="Error" message="Failed to arm torpedos!"/>
+                </ForceFailure>
+            </Fallback>
+            <Action ID="Info" message="Torpedos Armed."/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="SetStatus" status="moving"/>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="0" to_frame="world" x="1" y="0" z="0"/>
+            <Action ID="SetStatus" status="performing"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="BuoyTree">
+        <Sequence>
+            <Action ID="Info" message="BUOY TIME"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="3" value="3"/>
+            <SetBlackboard output_key="badge_frame" value="badge_frame"/>
+            <SubTree ID="DoSearch" __shared_blackboard="false" frame="badge_frame" proximity="3"/>
+            <Action ID="TransformPose" from_frame="badge_frame" op="0" or="0" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+            <Action ID="PublishToController" isOrientation="0" mode="2" name="move forward" x="0.5" y="0" z="0"/>
+            <Action ID="Wait" seconds="10"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="gx" y="gy" z="gz"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="DisarmTorpedos">
+        <Sequence>
+            <Action ID="Info" message="Disarming Torpedos."/>
+            <Fallback>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
+                    <Sequence>
+                        <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="1" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
+                        <Fallback>
+                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo1_state}"/>
+                            <Condition ID="IsTorpedoError" torpedo_state="{torpedo1_state}"/>
+                        </Fallback>
+                        <Fallback>
+                            <Condition ID="IsTorpedoDisarmed" torpedo_state="{torpedo2_state}"/>
+                            <Condition ID="IsTorpedoError" torpedo_state="{torpedo2_state}"/>
+                        </Fallback>
+                    </Sequence>
+                </Decorator>
+                <Action ID="Error" message="Failed to disarm torpedos!"/>
+            </Fallback>
+            <Action ID="Info" message="Disarmed torpedos."/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="Dive">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="{op}" or="{or}" oy="{oy}" x="{x}" y="{y}" z="{z}"/>
+            <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="depth"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="oy"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="DoSearch">
+        <Sequence>
+            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <Action ID="Info" message="Searching for prop"/>
+            <Action ID="SetStatus" status="searching"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="proximity" y="0" z="0"/>
+            <Action ID="Info" message="Letting mapping gather detections for a few seconds"/>
+            <Action ID="Wait" name="Wait for mapping" seconds="5"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="DropMarker">
+        <Fallback>
+            <Sequence>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
+                    <Sequence>
+                        <Action ID="Wait" seconds="1"/>
+                        <Action ID="Info" message="Attempting to drop dropper {dropper}..."/>
+                        <IfThenElse>
+                            <Condition ID="NumsEqual" a="{dropper}" b="1"/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="1" drop_2="" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="1" fire_torpedo_1="" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                        </IfThenElse>
+                        <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
+                        <IfThenElse>
+                            <Condition ID="NumsEqual" a="{dropper}" b="1"/>
+                            <SetBlackboard output_key="dropper_state" value="{dropper1_state}"/>
+                            <SetBlackboard output_key="dropper_state" value="{dropper2_state}"/>
+                        </IfThenElse>
+                        <Fallback name="is dropper in an error state?">
+                            <Inverter>
+                                <Condition ID="IsDropperError" dropper_state="{dropper_state}"/>
+                            </Inverter>
+                            <ForceFailure>
+                                <Action ID="Error" message="Dropper {dropper} is in an error state!"/>
+                            </ForceFailure>
+                        </Fallback>
+                        <Condition ID="IsDropperDropped" dropper_state="{dropper_state}"/>
+                    </Sequence>
+                </Decorator>
+                <Action ID="Info" message="Successfully dropped dropper {dropper}."/>
+            </Sequence>
+            <Action ID="Error" message="Failed to drop dropper {dropper}!"/>
+        </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="FireTorpedo">
+        <Fallback>
+            <Sequence>
+                <Action ID="Info" message="Attempting to fire torpedo {torpedo_id}"/>
+                <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
+                <Inverter>
+                    <Sequence>
+                        <Condition ID="IsTorpedoFired" torpedo_state="{torpedo_state}"/>
+                        <Action ID="Error" message="Torpedo {torpedo_id} is already fired!"/>
+                    </Sequence>
+                </Inverter>
+                <SubTree ID="WaitForTorpedoCharged" __shared_blackboard="false" torpedo_id="torpedo_id"/>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
+                    <Sequence name="Attempt to fire torpedo">
+                        <SetBlackboard name="Set &quot;1&quot;" output_key="1" value="1"/>
+                        <IfThenElse name="Select Torpedo">
+                            <Condition ID="NumsEqual" a="1" b="{torpedo_id}"/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="1" fire_torpedo_2="" open_claw="" reset_actuators="" some_port=""/>
+                            <Action ID="Actuate" arm_torpedo="" clear_dropper_status="" close_claw="" disarm_torpedo="" drop_1="" drop_2="" fire_torpedo_1="" fire_torpedo_2="1" open_claw="" reset_actuators="" some_port=""/>
+                        </IfThenElse>
+                        <Action ID="Wait" seconds="1"/>
+                        <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
+                        <Fallback>
+                            <Condition ID="IsTorpedoFired" torpedo_state="{torpedo_state}"/>
+                            <Sequence>
+                                <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
+                                <Action ID="Error" message="Torpedo {torpedo_id} is in an error state!"/>
+                            </Sequence>
+                        </Fallback>
+                    </Sequence>
+                </Decorator>
+                <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
+                <IfThenElse>
+                    <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
+                    <Action ID="Error" message="Failed to fire torpedo {torpedo_id}!"/>
+                    <Action ID="Info" message="Successfully fired torpedo {torpedo_id}"/>
+                </IfThenElse>
+            </Sequence>
+            <Action ID="Error" message="Failed to fire torpedo {torpedo_id}!"/>
+        </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="GateTask">
+        <Sequence>
+            <Action ID="Info" message="GATE TIME"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="1.5" value="1.5"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SetBlackboard output_key="-0.5" value="-0.5"/>
+            <SubTree ID="DoSearch" __shared_blackboard="false" frame="gman_frame" proximity="1.5"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="1" y="0" z="-0.5"/>
+            <Action ID="SetStatus" status="performing"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" op="0" or="0" oy="3.1415" x="-1" y="0" z="-0.5"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="GetActuatorStates">
+        <Fallback>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="7">
+                <Sequence>
+                    <Action ID="GetActuatorStatus" claw_state="{claw_state}" dropper1_state="{dropper1_state}" dropper2_state="{dropper2_state}" torpedo1_state="{torpedo1_state}" torpedo2_state="{torpedo2_state}"/>
+                </Sequence>
+            </Decorator>
+            <ForceFailure>
+                <Action ID="Error" message="Failed to get actuator states!"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="GetTorpedoState">
+        <Sequence>
+            <SubTree ID="GetActuatorStates" __shared_blackboard="true"/>
+            <IfThenElse name="Choose appropriate torpedo">
+                <Condition ID="NumsEqual" a="1" b="{torpedo_id}"/>
+                <SetBlackboard name="choose torpedo 1" output_key="torpedo_state" value="{torpedo1_state}"/>
+                <SetBlackboard name="choose torpedo 2" output_key="torpedo_state" value="{torpedo2_state}"/>
+            </IfThenElse>
+            <ForceSuccess>
+                <Sequence>
+                    <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
+                    <Action ID="Error" message="Torpedo {torpedo_id} is in an error state!"/>
+                </Sequence>
+            </ForceSuccess>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="KillController">
+        <Sequence>
+            <Action ID="PublishToController" isOrientation="1" mode="0" x="0" y="0" z="0"/>
+            <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="LessCoolTorpedoAlign">
+        <Sequence name="Less cool align">
+            <Action ID="TransformPose" from_frame="talos/torpedo_link" name="get torpedo in origin frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="" out_y="{torp_y}" out_z="{torp_z}" oy="0" to_frame="talos/base_link" x="0" y="0" z="0"/>
+            <Action ID="Math" a="0" b="{torp_z}" operator="-" out="{prop_z}"/>
+            <Action ID="TransformPose" from_frame="torpedoHole_frame" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="3.1415" to_frame="world" x="0.5" y="{torp_y}" z="{prop_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="Move">
+        <Sequence>
+            <Action ID="Info" message="Moving to XYZ {x}, {y}, {z} with RPY {or}, {op}, {oy}"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
+            <Action ID="CalculateDistance" dist="{dist}" x1="{cx}" x2="{x}" y1="{cy}" y2="{y}" z1="0" z2="0"/>
+            <IfThenElse name="have robot face goal point if far away from it">
+                <Condition ID="CompareNums" a="{dist}" b="0.75" test="&gt;"/>
+                <Sequence name="Get yaw to face towards goal point">
+                    <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="{yaw}" targX="{x}" targY="{y}"/>
+                    <SetBlackboard output_key="goal_yaw" value="{yaw}"/>
+                </Sequence>
+                <Sequence>
+                    <SetBlackboard output_key="goal_yaw" value="{coy}"/>
+                </Sequence>
+            </IfThenElse>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="cx" y="cy" z="cz"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="goal_yaw"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" y="oy"/>
+            <Action ID="Wait" seconds="2"/>
+            <Action ID="Info" message="Move Complete."/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="PrimitiveMoveOrientation">
+        <Sequence>
+            <Action ID="Info" message="Rotating to RPY {r}, {p}, {y}"/>
+            <Fallback>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
+                    <Sequence>
+                        <Action ID="PublishToController" isOrientation="1" mode="3" x="{r}" y="{p}" z="{y}"/>
+                        <Action ID="GetOdometry" name="Get Current RPY" op="{cp}" or="{cr}" oy="{cy}" x="" y="" z=""/>
+                        <Condition ID="ApproxEqualTo" a="{cr}" b="{r}" name="At goal roll?" range="0.25"/>
+                        <Condition ID="ApproxEqualTo" a="{cp}" b="{p}" name="At goal pitch?" range="0.25"/>
+                        <Condition ID="ApproxEqualTo" a="{cy}" b="{y}" name="At goal yaw?" range="0.25"/>
+                    </Sequence>
+                </Decorator>
+                <ForceSuccess>
+                    <Sequence>
+                        <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                    </Sequence>
+                </ForceSuccess>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="PrimitiveMovePosition">
+        <Sequence>
+            <Action ID="Info" message="Translating to XYZ: {x}, {y}, {z}"/>
+            <Fallback>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="30">
+                    <Sequence>
+                        <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="{y}" z="{z}"/>
+                        <Action ID="GetOdometry" name="Get Current XYZ" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
+                        <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="{cx}" y1="{y}" y2="{cy}" z1="{z}" z2="{cz}"/>
+                        <Condition ID="CompareNums" a="{dist}" b="0.25" name="At goal point?" test="&lt;"/>
+                    </Sequence>
+                </Decorator>
+                <ForceSuccess>
+                    <Sequence>
+                        <Action ID="GetOdometry" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
+                        <Action ID="Error" message="Failed to move to position! Wanted {x}, {y}, {z} but got {cx}, {cy}, {cz}"/>
+                    </Sequence>
+                </ForceSuccess>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="RelativeMove">
+        <Sequence>
+            <Action ID="TransformPose" from_frame="{frame_name}" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="SurfaceTree">
+        <Sequence>
+            <Action ID="Info" message="SURFACING TIME"/>
+            <SetBlackboard output_key="0.25" value="0.25"/>
+            <Action ID="TransformPose" from_frame="cash_frame" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="0.25"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="TorpedoTree">
+        <Sequence>
+            <Action ID="Info" message="TORPEDO TIME"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="2" value="2"/>
+            <SetBlackboard output_key="frame" value="torpedoBootlegger_frame"/>
+            <SetBlackboard output_key="4" value="4"/>
+            <SubTree ID="DoSearch" __shared_blackboard="false" frame="frame" proximity="4"/>
+            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <ForceSuccess>
+                <SubTree ID="ArmTorpedos"/>
+            </ForceSuccess>
+            <SubTree ID="LessCoolTorpedoAlign"/>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="1"/>
+                    <SubTree ID="FireTorpedo" __shared_blackboard="false" torpedo_id="2"/>
+                    <SubTree ID="DisarmTorpedos"/>
+                    <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+                </Sequence>
+            </ForceSuccess>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="WaitForKillSwitch">
+        <Sequence>
+            <Action ID="SetStatus" status="waiting"/>
+            <Action ID="Info" message="Waiting for kill switch insert..."/>
+            <Action ID="Wait" seconds="5"/>
+            <RetryUntilSuccessful num_attempts="-1">
+                <Sequence>
+                    <Action ID="GetBoolTopic" topic="state/kill" value="{kill_switch_inserted}"/>
+                    <Inverter name="IsFalse">
+                        <Condition ID="IsTrue" value="{kill_switch_inserted}"/>
+                    </Inverter>
+                    <Action ID="Info" message="KILL SWITCH INSERTED, TREE STARTING IN 5 SECONDS"/>
+                </Sequence>
+            </RetryUntilSuccessful>
+            <Action ID="SetStatus" status="starting"/>
+            <Action ID="Wait" seconds="5"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="WaitForTorpedoCharged">
+        <Sequence>
+            <Action ID="Info" message="Waiting for torpedo {torpedo_id} to charge."/>
+            <SetBlackboard name="Set &quot;1&quot;" output_key="1" value="1"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Wait until charged or error" num_seconds="30">
+                <Sequence>
+                    <Action ID="Wait" seconds="1"/>
+                    <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
+                    <Fallback name="assess state">
+                        <Condition ID="IsTorpedoCharged" torpedo_state="{torpedo_state}"/>
+                        <Condition ID="IsTorpedoError" torpedo_state="{torpedo_state}"/>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+            <SubTree ID="GetTorpedoState" __shared_blackboard="false" torpedo_id="torpedo_id" torpedo_state="torpedo_state"/>
+            <Fallback>
+                <Condition ID="IsTorpedoCharged" torpedo_state="{torpedo_state}"/>
+                <ForceFailure>
+                    <Action ID="Error" message="Torpedo {torpedo_id} failed to charge!"/>
+                </ForceFailure>
+            </Fallback>
+            <Action ID="Info" message="Torpedo {torpedo_id} charged."/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="Actuate">
+            <inout_port name="arm_torpedo" required="false"/>
+            <inout_port name="clear_dropper_status" required="false"/>
+            <inout_port name="close_claw" required="false"/>
+            <inout_port name="disarm_torpedo" required="false"/>
+            <inout_port name="drop_1" required="false"/>
+            <inout_port name="drop_2" required="false"/>
+            <inout_port name="fire_torpedo_1" required="false"/>
+            <inout_port name="fire_torpedo_2" required="false"/>
+            <inout_port name="open_claw" required="false"/>
+            <inout_port name="reset_actuators" required="false"/>
+            <input_port name="some_port" required="false"/>
+        </Action>
+        <Condition ID="ApproxEqualTo">
+            <input_port name="a" required="false"/>
+            <input_port name="b" required="false"/>
+            <input_port name="range" required="false"/>
+        </Condition>
+        <SubTree ID="ArmTorpedos"/>
+        <SubTree ID="BuoyTree"/>
+        <Action ID="CalculateDistance">
+            <output_port name="dist" required="false"/>
+            <input_port name="x1" required="false"/>
+            <input_port name="x2" required="false"/>
+            <input_port name="y1" required="false"/>
+            <input_port name="y2" required="false"/>
+            <input_port name="z1" required="false"/>
+            <input_port name="z2" required="false"/>
+        </Action>
+        <Action ID="CallSetBoolService">
+            <input_port name="data" required="true">boolean value to set the thing to</input_port>
+            <input_port name="srv_name" required="true">Name of the service to call</input_port>
+            <input_port name="time_limit_secs" required="true">time limit for service after the call is made. Another second may be consumed waiting for it to come up</input_port>
+        </Action>
+        <Action ID="CallTriggerService">
+            <input_port name="srv_name" required="true"/>
+            <input_port name="time_limit_secs" required="true"/>
+        </Action>
+        <Condition ID="CompareNums">
+            <input_port name="a" required="false"/>
+            <input_port name="b" required="false"/>
+            <input_port name="test" required="false">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+        </Condition>
+        <Action ID="ComputeFrameAlignment">
+            <input_port name="frameName" required="false"/>
+            <output_port name="out_x" required="false"/>
+            <output_port name="out_y" required="false"/>
+            <output_port name="out_z" required="false"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="z" required="false"/>
+        </Action>
+        <SubTree ID="DisarmTorpedos"/>
+        <SubTree ID="Dive">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="depth" required="false">depth to submerge to</input_port>
+        </SubTree>
+        <SubTree ID="DoSearch">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="false">Prop to search for (ex. gman)</input_port>
+            <input_port name="proximity" required="false">Proximity to prop estimate to search</input_port>
+        </SubTree>
+        <SubTree ID="DropMarker">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="dropper" required="false">marker dropper ID. 1 or 2</input_port>
+        </SubTree>
+        <Action ID="Error">
+            <input_port name="message" required="false">The message to print.</input_port>
+        </Action>
+        <SubTree ID="FireTorpedo">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="torpedo_id" required="false"/>
+        </SubTree>
+        <SubTree ID="GateTask"/>
+        <SubTree ID="GetActuatorStates">
+            <input_port default="true" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+        </SubTree>
+        <Action ID="GetActuatorStatus">
+            <inout_port name="claw_state" required="true"/>
+            <inout_port name="dropper1_state" required="true"/>
+            <inout_port name="dropper2_state" required="true"/>
+            <inout_port name="torpedo1_state" required="true"/>
+            <inout_port name="torpedo2_state" required="true"/>
+        </Action>
+        <Action ID="GetBoolTopic">
+            <input_port name="topic" required="true">The topic to subscribe to.</input_port>
+            <output_port name="value" required="false"/>
+        </Action>
+        <Action ID="GetOdometry">
+            <output_port name="op" required="false"/>
+            <output_port name="or" required="false"/>
+            <output_port name="oy" required="false"/>
+            <output_port name="x" required="false"/>
+            <output_port name="y" required="false"/>
+            <output_port name="z" required="false"/>
+        </Action>
+        <Action ID="GetSwitchState">
+            <inout_port name="aux_switch_inserted" required="false"/>
+            <inout_port name="kill_switch_inserted" required="false"/>
+        </Action>
+        <SubTree ID="GetTorpedoState">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="torpedo_id" required="false"/>
+            <output_port name="torpedo_state" required="false"/>
+        </SubTree>
+        <Action ID="HeadingToPoint">
+            <input_port name="currX" required="false"/>
+            <input_port name="currY" required="false"/>
+            <output_port name="heading" required="false"/>
+            <input_port name="targX" required="false"/>
+            <input_port name="targY" required="false"/>
+        </Action>
+        <Action ID="Info">
+            <input_port name="message" required="false">The message to print.</input_port>
+        </Action>
+        <Condition ID="IsClawClosed">
+            <input_port name="claw_state" required="false"/>
+        </Condition>
+        <Condition ID="IsClawError">
+            <input_port name="claw_state" required="false"/>
+        </Condition>
+        <Condition ID="IsClawOpen">
+            <input_port name="claw_state" required="false"/>
+        </Condition>
+        <Condition ID="IsClawUnknown">
+            <input_port name="claw_state" required="false"/>
+        </Condition>
+        <Condition ID="IsDropperDropped">
+            <input_port name="dropper_state" required="false"/>
+        </Condition>
+        <Condition ID="IsDropperError">
+            <input_port name="dropper_state" required="false"/>
+        </Condition>
+        <Condition ID="IsDropperReady">
+            <input_port name="dropper_state" required="false"/>
+        </Condition>
+        <Condition ID="IsTorpedoCharged">
+            <input_port name="torpedo_state" required="false"/>
+        </Condition>
+        <Condition ID="IsTorpedoCharging">
+            <input_port name="torpedo_state" required="false"/>
+        </Condition>
+        <Condition ID="IsTorpedoDisarmed">
+            <input_port name="torpedo_state" required="false"/>
+        </Condition>
+        <Condition ID="IsTorpedoError">
+            <input_port name="torpedo_state" required="false"/>
+        </Condition>
+        <Condition ID="IsTorpedoFired">
+            <input_port name="torpedo_state" required="false"/>
+        </Condition>
+        <Condition ID="IsTrue">
+            <input_port name="value" required="false"/>
+        </Condition>
+        <SubTree ID="KillController"/>
+        <SubTree ID="LessCoolTorpedoAlign"/>
+        <Action ID="Math">
+            <input_port name="a" required="false"/>
+            <input_port name="b" required="false"/>
+            <input_port default="+" name="operator" required="false">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <output_port name="out" required="false"/>
+        </Action>
+        <SubTree ID="Move">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="op" required="false"/>
+            <input_port name="or" required="false"/>
+            <input_port name="oy" required="false"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="z" required="false"/>
+        </SubTree>
+        <Condition ID="NumsEqual">
+            <inout_port name="a" required="true"/>
+            <inout_port name="b" required="true"/>
+        </Condition>
+        <SubTree ID="PrimitiveMoveOrientation">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="p" required="false"/>
+            <input_port name="r" required="false"/>
+            <input_port name="y" required="false"/>
+        </SubTree>
+        <SubTree ID="PrimitiveMovePosition">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="z" required="false"/>
+        </SubTree>
+        <Action ID="PublishToController">
+            <input_port name="isOrientation" required="false"/>
+            <input_port name="mode" required="false"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="z" required="false"/>
+        </Action>
+        <SubTree ID="RelativeMove">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true">the frame to move relative to</input_port>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
+        </SubTree>
+        <Action ID="ResetOdom">
+            <input_port default="0" name="op" required="false">new EKF pose pitch</input_port>
+            <input_port default="0" name="or" required="false">new EKF pose roll</input_port>
+            <input_port default="0" name="oy" required="false">new EKF pose yaw</input_port>
+            <input_port default="0" name="x" required="false">new EKF pose X</input_port>
+            <input_port default="0" name="y" required="false">new EKF pose Y</input_port>
+            <input_port default="0" name="z" required="false">new EKF pose Z</input_port>
+        </Action>
+        <Decorator ID="RetryUntilSuccessfulOrTimeout">
+            <input_port name="num_seconds" required="false">number of seconds until abandonment.</input_port>
+        </Decorator>
+        <Action ID="SetStatus">
+            <input_port name="status" required="false"/>
+        </Action>
+        <SubTree ID="SurfaceTree"/>
+        <SubTree ID="TorpedoTree"/>
+        <Action ID="TransformPose">
+            <input_port name="from_frame" required="false"/>
+            <input_port name="op" required="false"/>
+            <input_port name="or" required="false"/>
+            <output_port name="out_op" required="false"/>
+            <output_port name="out_or" required="false"/>
+            <output_port name="out_oy" required="false"/>
+            <output_port name="out_x" required="false"/>
+            <output_port name="out_y" required="false"/>
+            <output_port name="out_z" required="false"/>
+            <input_port name="oy" required="false"/>
+            <input_port name="to_frame" required="false"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="z" required="false"/>
+        </Action>
+        <Action ID="Wait">
+            <input_port name="seconds" required="false">number of seconds to wait.</input_port>
+        </Action>
+        <SubTree ID="WaitForKillSwitch"/>
+        <SubTree ID="WaitForTorpedoCharged">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="torpedo_id" required="false"/>
+        </SubTree>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+
