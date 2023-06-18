@@ -2,7 +2,7 @@
 <root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="pole_radius" value="2"/>
+            <SetBlackboard output_key="pole_radius" value="3"/>
             <SetBlackboard output_key="-0.5" value="-0.5"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>

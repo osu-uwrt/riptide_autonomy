@@ -3,11 +3,13 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
             <SetBlackboard output_key="120" value="120"/>
+            <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="0.01" value="0.01"/>
             <SetBlackboard output_key="0.25" value="0.25"/>
             <SetBlackboard output_key="obj" value="bootlegger"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Search" __shared_blackboard="false" frame_name="obj" target_cov="0.25" timeout_secs="120"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="obj" target_cov="0.25" timeout_secs="120"/>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
@@ -101,6 +103,7 @@
     </BehaviorTree>
     <BehaviorTree ID="Search">
         <Sequence name="Search">
+            <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="f_op" out_or="f_or" out_oy="f_oy" out_x="f_x" out_y="f_y" out_z="f_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
