@@ -92,6 +92,18 @@ BT::NodeStatus doMath(BT::TreeNode& n) {
 }
 
 /**
+ * @brief Formats a string for BT
+ * @param n Tree node
+ * @return execution status
+ */
+BT::NodeStatus format(BT::TreeNode &n) {
+    std::string formatStr = tryGetRequiredInput<std::string>(&n, "format", "");
+    std::string out = stringWithBlackboardEntries(formatStr, n);
+    n.setOutput<std::string>("out", out);
+    return BT::NodeStatus::SUCCESS;
+}
+
+/**
  * @brief Get the Heading To Point
  * 
  * @param n The BehaviorTree node.
@@ -155,6 +167,13 @@ void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
             BT::InputPort<double>("b"),
             BT::InputPort<std::string>("operator"),
             BT::OutputPort<double>("out")
+        }
+    );
+
+    factory.registerSimpleAction("Format", format,
+        {
+            BT::InputPort<std::string>("format"),
+            BT::OutputPort<std::string>("out")
         }
     );
 

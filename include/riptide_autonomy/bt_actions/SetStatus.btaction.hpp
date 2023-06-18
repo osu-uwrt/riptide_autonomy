@@ -101,22 +101,22 @@ class SetStatus : public UWRTActionNode {
                 break;
             case TreeStatus::SEARCHING:
                 cmd.red = 255;
-                cmd.green = 0;
-                cmd.blue = 255;
+                cmd.green = 255;
+                cmd.blue = 0;
                 cmd.mode = LedCmd::MODE_SOLID;
                 cmd.target = LedCmd::TARGET_ALL;
                 break;
             case TreeStatus::ALIGNING:
-                cmd.red = 0;
-                cmd.green = 255;
-                cmd.blue = 0;
+                cmd.red = 255;
+                cmd.green = 0;
+                cmd.blue = 255;
                 cmd.mode = LedCmd::MODE_SLOW_FLASH;
                 cmd.target = LedCmd::TARGET_ALL;
                 break;
             case TreeStatus::PERFORMING:
                 cmd.red = 0;
-                cmd.green = 255;
-                cmd.blue = 0;
+                cmd.green = 0;
+                cmd.blue = 255;
                 cmd.mode = LedCmd::MODE_FAST_FLASH;
                 cmd.target = LedCmd::TARGET_ALL;
                 break;
