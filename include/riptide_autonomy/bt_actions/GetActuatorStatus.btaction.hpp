@@ -35,13 +35,13 @@ class GetActuatorStatus : public UWRTActionNode {
     void rosInit() override { 
         statusSub = rosnode->create_subscription<riptide_msgs2::msg::ActuatorStatus>(
             ACTUATOR_STATUS_TOPIC,
-            10,
+            rclcpp::SensorDataQoS(),
             std::bind(&GetActuatorStatus::statusCb, this, _1)
         );
 
         busySub = rosnode->create_subscription<std_msgs::msg::Bool>(
             ACTUATOR_BUSY_TOPIC,
-            10,
+            rclcpp::SensorDataQoS(),
             std::bind(&GetActuatorStatus::busyCb, this, _1)
         );
     }

@@ -16,8 +16,8 @@ class CompareNums : public UWRTConditionNode {
     static BT::PortsList providedPorts() {
         return {
             BT::InputPort<std::string>("test"),
-            BT::InputPort<double>("a"),
-            BT::InputPort<double>("b")
+            BT::InputPort<std::string>("a"),
+            BT::InputPort<std::string>("b")
         };
     }
 
@@ -43,8 +43,8 @@ class CompareNums : public UWRTConditionNode {
         std::string test = tryGetRequiredInput<std::string>(this, "test", "");
 
         double
-            a = tryGetRequiredInput<double>(this, "a", 0),
-            b = tryGetRequiredInput<double>(this, "b", 0);
+            a = std::stod(tryGetRequiredInput<std::string>(this, "a", "0")),
+            b = std::stod(tryGetRequiredInput<std::string>(this, "b", "0"));
 
         if (test == ">")
         { // check a > b
