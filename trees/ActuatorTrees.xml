@@ -1,14 +1,7 @@
 <?xml version="1.0"?>
 <root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="BehaviorTree">
-        <Sequence>
-            <SetBlackboard output_key="-1" value="-1"/>
-            <SubTree ID="WaitForKillSwitch"/>
-            <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
-            <SubTree ID="GateTree"/>
-            <SubTree ID="KillController"/>
-        </Sequence>
+        <SubTree ID="DropMarker"/>
     </BehaviorTree>
     <BehaviorTree ID="Dive">
         <Sequence>
@@ -19,32 +12,50 @@
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="oy"/>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="GateTree">
+    <BehaviorTree ID="DropMarker">
         <Sequence>
-            <SetBlackboard output_key="-1" value="-1"/>
-            <SetBlackboard output_key="-0.5" value="-0.5"/>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="3.1415" value="3.1415"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
-            <SetBlackboard output_key="120" value="120"/>
-            <SetBlackboard output_key="0.25" value="0.25"/>
-            <SetBlackboard output_key="gman" value="gman"/>
-            <SubTree ID="Search" __shared_blackboard="false" object_name="gman" target_cov="0.25" timeout_secs="120"/>
-            <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="-0.5"/>
-            <Action ID="SetStatus" status="performing"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-0.5"/>
-            <Repeat name="Spin time" num_cycles="2">
-                <Sequence>
-                    <SetBlackboard output_key="-1.03" value="-1.03"/>
-                    <SetBlackboard output_key="1.05" value="1.05"/>
-                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="1.05" x="0" y="0" z="-0.5"/>
-                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="-1.03" x="0" y="0" z="-0.5"/>
-                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-0.5"/>
+            <SetBlackboard output_key="10" value="10"/>
+            <Action ID="Info" message="Attempting to fire dropper..."/>
+            <SetBlackboard output_key="dropper_srv" value="command/dropper"/>
+            <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
+            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="droppers_available" dropper_state="" torpedo_available_count="" torpedo_state=""/>
+            <Action ID="Info" message="{droppers_available} droppers available."/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{droppers_available}" b="0" name="droppers available?" test="&gt;"/>
+                <Sequence name="fire dropper">
+                    <Action ID="Info" message="Calling trigger service {dropper_srv}"/>
+                    <Action ID="CallTriggerService" srv_name="{dropper_srv}" time_limit_secs="1"/>
+                    <Action ID="Wait" seconds="1"/>
+                    <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
+                    <Action ID="Info" message="Dropper dropped!"/>
                 </Sequence>
-            </Repeat>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="-0.5"/>
+                <ForceFailure>
+                    <Action ID="Error" message="No droppers available!"/>
+                </ForceFailure>
+            </IfThenElse>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="FireTorpedo">
+        <Sequence>
+            <SetBlackboard output_key="10" value="10"/>
+            <Action ID="Info" message="Attempting to fire torpedo..."/>
+            <SetBlackboard output_key="torpedo_srv" value="command/torpedo"/>
+            <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
+            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="torpedos_available" torpedo_state=""/>
+            <Action ID="Info" message="{torpedoes_available} torpedos available."/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{torpedoes_available}" b="0" name="are torpedos available?" test="&gt;"/>
+                <Sequence name="If torpedos available">
+                    <Action ID="Info" message="Calling trigger service {torpedo_srv}..."/>
+                    <Action ID="CallTriggerService" srv_name="{torpedo_srv}" time_limit_secs="1"/>
+                    <Action ID="Wait" seconds="1"/>
+                    <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
+                    <Action ID="Info" message="Torpedo fired."/>
+                </Sequence>
+                <ForceFailure>
+                    <Action ID="Error" message="No torpedos available! Not firing!"/>
+                </ForceFailure>
+            </IfThenElse>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="KillController">
@@ -93,7 +104,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -152,12 +163,30 @@
                     <Fallback name="check distance">
                         <Condition ID="CompareNums" a="{dist}" b="1" test="&gt;"/>
                         <ForceFailure>
-                            <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn't converge the estimate."/>
+                            <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn&apos;t converge the estimate."/>
                         </ForceFailure>
                     </Fallback>
                 </Fallback>
             </Decorator>
         </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="WaitForActuators">
+        <Fallback name="Wait for not busy">
+            <Action ID="Info" message="Waiting for actuators..."/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
+                <Sequence>
+                    <Action ID="Wait" seconds="0.25"/>
+                    <Action ID="GetActuatorStatus" actuators_busy="busy" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="" torpedo_state=""/>
+                    <Inverter>
+                        <Condition ID="IsTrue" value="{busy}"/>
+                    </Inverter>
+                </Sequence>
+            </Decorator>
+            <ForceFailure>
+                <Action ID="Error" message="Actuators busy!"/>
+            </ForceFailure>
+            <Action ID="Info" message="Actuators free"/>
+        </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
         <Sequence>
@@ -206,7 +235,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="frameName" required="true"/>
@@ -221,14 +250,15 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="depth" required="true">depth to submerge to</input_port>
         </SubTree>
+        <SubTree ID="DropMarker"/>
         <Action ID="Error">
             <input_port name="message" required="true">The message to print.</input_port>
         </Action>
+        <SubTree ID="FireTorpedo"/>
         <Action ID="Format">
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
         </Action>
-        <SubTree ID="GateTree"/>
         <Action ID="GetActuatorStatus">
             <output_port name="actuators_busy" required="false"/>
             <output_port name="claw_state" required="false"/>
@@ -270,7 +300,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="Move">
@@ -342,6 +372,10 @@
         <Action ID="Wait">
             <input_port name="seconds" required="true">number of seconds to wait.</input_port>
         </Action>
+        <SubTree ID="WaitForActuators">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="10" name="timeout_secs" required="true">How long to wait for the actuators to free up</input_port>
+        </SubTree>
         <SubTree ID="WaitForKillSwitch"/>
         <Action ID="getCovariance">
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
@@ -350,4 +384,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
