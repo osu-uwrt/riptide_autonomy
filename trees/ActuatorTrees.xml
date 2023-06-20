@@ -2,7 +2,7 @@
 <root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SubTree ID="SetActuatorsArmed"/>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <SubTree ID="DropMarker"/>
         </Sequence>
     </BehaviorTree>
@@ -360,7 +360,10 @@
             <input_port default="0.01" name="target_cov" required="true">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="true">Timeout for search</input_port>
         </SubTree>
-        <SubTree ID="SetActuatorsArmed"/>
+        <SubTree ID="SetActuatorsArmed">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="armed" required="true">1 for armed, 0 for unarmed</input_port>
+        </SubTree>
         <Action ID="SetStatus">
             <input_port name="status" required="true"/>
         </Action>

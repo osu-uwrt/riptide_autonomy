@@ -15,20 +15,20 @@ class TransformPose : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<std::string>("from_frame"),
-            BT::InputPort<std::string>("to_frame"),
-            BT::InputPort<double>("x"),
-            BT::InputPort<double>("y"),
-            BT::InputPort<double>("z"),
-            BT::InputPort<double>("or"),
-            BT::InputPort<double>("op"),
-            BT::InputPort<double>("oy"),
-            BT::OutputPort<double>("out_x"),
-            BT::OutputPort<double>("out_y"),
-            BT::OutputPort<double>("out_z"),
-            BT::OutputPort<double>("out_or"),
-            BT::OutputPort<double>("out_op"),
-            BT::OutputPort<double>("out_oy")
+            UwrtInput("from_frame"),
+            UwrtInput("to_frame"),
+            UwrtInput("x"),
+            UwrtInput("y"),
+            UwrtInput("z"),
+            UwrtInput("or"),
+            UwrtInput("op"),
+            UwrtInput("oy"),
+            UwrtOutput("out_x"),
+            UwrtOutput("out_y"),
+            UwrtOutput("out_z"),
+            UwrtOutput("out_or"),
+            UwrtOutput("out_op"),
+            UwrtOutput("out_oy")
         };
     }
 
@@ -70,14 +70,14 @@ class TransformPose : public UWRTActionNode {
             geometry_msgs::msg::Vector3 transformedRPY = toRPY(transformed.orientation);
 
             //set output ports
-            setOutput<double>("out_x", transformed.position.x);
-            setOutput<double>("out_y", transformed.position.y);
-            setOutput<double>("out_z", transformed.position.z);
+            postOutput<double>(this,"out_x", transformed.position.x);
+            postOutput<double>(this,"out_y", transformed.position.y);
+            postOutput<double>(this,"out_z", transformed.position.z);
 
             //convert orientation back to RPY and return that
-            setOutput<double>("out_or", transformedRPY.x);
-            setOutput<double>("out_op", transformedRPY.y);
-            setOutput<double>("out_oy", transformedRPY.z);
+            postOutput<double>(this, "out_or", transformedRPY.x);
+            postOutput<double>(this, "out_op", transformedRPY.y);
+            postOutput<double>(this, "out_oy", transformedRPY.z);
             
             return BT::NodeStatus::SUCCESS;
         } else {

@@ -15,7 +15,7 @@ class IsTrue : public UWRTConditionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<bool>("value")
+            UwrtInput("value")
         };
     }
 

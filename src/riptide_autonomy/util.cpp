@@ -67,6 +67,7 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry
     return result;
 }
 
+
 bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
     bool printedWarning = false;
     
@@ -90,6 +91,7 @@ bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2
     return false;
 }
 
+
 bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
     std::shared_ptr<tf2_ros::Buffer> buffer = std::make_shared<tf2_ros::Buffer>(rosnode->get_clock());
     tf2_ros::TransformListener listener(*buffer);
@@ -106,6 +108,7 @@ geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point pt) {
     return v;
 }
 
+
 geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3 v) {
     geometry_msgs::msg::Point pt;
     pt.x = v.x;
@@ -114,9 +117,11 @@ geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3 v) {
     return pt;
 }
 
+
 double vector3Length(geometry_msgs::msg::Vector3 v) {
     return sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
 }
+
 
 geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion orientation) {
     tf2::Quaternion tf2Orientation;
@@ -127,6 +132,7 @@ geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion orientation) {
     return rpy;
 }
 
+
 geometry_msgs::msg::Quaternion toQuat(geometry_msgs::msg::Vector3 rpy) {
     tf2::Quaternion tf2Quat;
     tf2Quat.setRPY(rpy.x, rpy.y, rpy.z);
@@ -135,13 +141,16 @@ geometry_msgs::msg::Quaternion toQuat(geometry_msgs::msg::Vector3 rpy) {
     return tf2::toMsg(tf2Quat);
 }
 
+
 double distance(geometry_msgs::msg::Point point1, geometry_msgs::msg::Point point2) {
     return sqrt(pow(point2.x - point1.x, 2) +pow(point2.y - point1.y, 2) + pow(point2.z - point1.z, 2));
 }
 
+
 double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 point2) {
     return distance(vector3ToPoint(point1), vector3ToPoint(point2));
 }
+
 
 std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
     std::string result = "";

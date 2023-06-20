@@ -2,10 +2,6 @@
 
 using namespace std::chrono_literals;
 
-//
-// TEST UTIL THINGS
-//
-
 static geometry_msgs::msg::TransformStamped createTransform(std::shared_ptr<BtTestTool> toolNode, double x, double y, double z, double roll, double pitch, double yaw, std::string parentFrame, std::string childFrame) {
     geometry_msgs::msg::TransformStamped transform;
     transform.header.stamp = toolNode->get_clock()->now();
@@ -77,7 +73,7 @@ class TransformPoseTest : public BtTest {
  * 
  * @return The resulting node status
  */
-BT::NodeStatus testTransform(std::shared_ptr<BtTestTool> toolNode, double x, double y, double z, double roll, double pitch, double yaw, std::string fromFrame, std::string toFrame, double results[6]) {
+BT::NodeStatus testTransform(std::shared_ptr<BtTestTool> toolNode, double x, double y, double z, double roll, double pitch, double yaw, std::string fromFrame, std::string toFrame, bool& outputsSet, double results[6]) {
     BT::NodeConfiguration cfg;
     cfg.input_ports["from_frame"] = fromFrame;
     cfg.input_ports["to_frame"] = toFrame;
@@ -91,15 +87,15 @@ BT::NodeStatus testTransform(std::shared_ptr<BtTestTool> toolNode, double x, dou
     auto node = toolNode->createLeafNodeFromConfig("TransformPose", cfg);
     auto result = toolNode->tickUntilFinished(node);
 
-    const double UNDEFINED_VALUE = 999.99;
     auto blackboard = node->config().blackboard;
 
-    results[0] = getFromBlackboardWithDefault<double>(blackboard, "out_x", UNDEFINED_VALUE),
-    results[1] = getFromBlackboardWithDefault<double>(blackboard, "out_y", UNDEFINED_VALUE),
-    results[2] = getFromBlackboardWithDefault<double>(blackboard, "out_z", UNDEFINED_VALUE),
-    results[3] = getFromBlackboardWithDefault<double>(blackboard, "out_or", UNDEFINED_VALUE),
-    results[4] = getFromBlackboardWithDefault<double>(blackboard, "out_op", UNDEFINED_VALUE),
-    results[5] = getFromBlackboardWithDefault<double>(blackboard, "out_oy", UNDEFINED_VALUE);
+    outputsSet = true;
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_x", results[0]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_y", results[1]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_z", results[2]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_or", results[3]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_op", results[4]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_oy", results[5]);
 
     return result;
 }
@@ -109,11 +105,13 @@ BT::NodeStatus testTransform(std::shared_ptr<BtTestTool> toolNode, double x, dou
 // TEST CASES
 //
 
-TEST_F(TransformPoseTest, test_TransformPose_A_to_world) {
-    double results[6];
-    auto result = testTransform(toolNode, 1, 1, 1, 0, 0, 1.5707, "transA", "world", results);
+TEST_F(TransformPoseTest, test_TransformPose_success_A_to_world) {
+    bool outputsSet = false;
+    double results[6] = {0};
+    auto result = testTransform(toolNode, 1, 1, 1, 0, 0, 1.5707, "transA", "world", outputsSet, results);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
+    ASSERT_TRUE(outputsSet);
     ASSERT_NEAR(results[0], 2, 0.001);
     ASSERT_NEAR(results[1], 5, 0.001);
     ASSERT_NEAR(results[2], -4, 0.001);
@@ -122,11 +120,13 @@ TEST_F(TransformPoseTest, test_TransformPose_A_to_world) {
     ASSERT_NEAR(results[5], 3.1415, 0.001);
 }
 
-TEST_F(TransformPoseTest, test_TransformPose_B_to_world) {
-    double results[6];
-    auto result = testTransform(toolNode, 0, 0, 0, 0, 0, 0, "transB", "world", results);
+TEST_F(TransformPoseTest, test_TransformPose_success_B_to_world) {
+    bool outputsSet = false;
+    double results[6] = {0};
+    auto result = testTransform(toolNode, 0, 0, 0, 0, 0, 0, "transB", "world", outputsSet, results);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
+    ASSERT_TRUE(outputsSet);
     ASSERT_NEAR(results[0], -3, 0.001);
     ASSERT_NEAR(results[1], 2, 0.001);
     ASSERT_NEAR(results[2], -1, 0.001);
@@ -135,11 +135,13 @@ TEST_F(TransformPoseTest, test_TransformPose_B_to_world) {
     ASSERT_NEAR(results[5], -0.78535, 0.001);
 }
 
-TEST_F(TransformPoseTest, test_TransformPose_C_to_world) {
-    double results[6];
-    auto result = testTransform(toolNode, 0, 0, 0, 0, 0, 1.5707, "transC", "world", results);
+TEST_F(TransformPoseTest, test_TransformPose_success_C_to_world) {
+    bool outputsSet = false;
+    double results[6] = {0};
+    auto result = testTransform(toolNode, 0, 0, 0, 0, 0, 1.5707, "transC", "world", outputsSet, results);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
+    ASSERT_TRUE(outputsSet);
     ASSERT_NEAR(results[0], 5, 0.001);
     ASSERT_NEAR(results[1], 2, 0.001);
     ASSERT_NEAR(results[2], -7, 0.001);
@@ -148,15 +150,33 @@ TEST_F(TransformPoseTest, test_TransformPose_C_to_world) {
     ASSERT_NEAR(results[5], 3.1415, 0.001);
 }
 
-TEST_F(TransformPoseTest, test_TransformPose_C_to_A) {
-    double results[6];
-    auto result = testTransform(toolNode, 2, 2, 2, 0, 0, 0, "transC", "transA", results);
+TEST_F(TransformPoseTest, test_TransformPose_success_C_to_A) {
+    bool outputsSet = false;
+    double results[6] = {0};
+    auto result = testTransform(toolNode, 2, 2, 2, 0, 0, 0, "transC", "transA", outputsSet, results);
 
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
+    ASSERT_TRUE(outputsSet);
     ASSERT_NEAR(results[0], 0, 0.001);
     ASSERT_NEAR(results[1], 0, 0.001);
     ASSERT_NEAR(results[2], 0, 0.001);
     ASSERT_NEAR(results[3], 0, 0.001);
     ASSERT_NEAR(results[4], 0, 0.001);
     ASSERT_NEAR(results[5], 0, 0.001);
+}
+
+TEST_F(TransformPoseTest, test_TransformPose_fail_lookup_both) {
+    bool outputsSet = false;
+    double results[6] = {0};
+    auto result = testTransform(toolNode, 3, 4, 5, 8, 9, 1, "nonexistent_frame", "aaaaa", outputsSet, results);
+
+    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
+}
+
+TEST_F(TransformPoseTest, test_TransformPose_fail_lookup_one) {
+    bool outputsSet = false;
+    double results[6] = {0};
+    auto result = testTransform(toolNode, 3, 4, 5, 8, 9, 1, "transB", "another_bad_frame", outputsSet, results);
+
+    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
 }

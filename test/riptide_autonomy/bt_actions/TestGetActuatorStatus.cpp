@@ -45,12 +45,12 @@ BT::NodeStatus testGetActuatorStatus(std::shared_ptr<BtTestTool> toolNode, GetAc
     outputsSet = true;
     auto blackboard = node->config().blackboard;
 
-    outputsSet = getFromBlackboard<int>(blackboard, "claw_state", out.clawState) && outputsSet;
-    outputsSet = getFromBlackboard<int>(blackboard, "torpedo_state", out.torpedoState) && outputsSet;
-    outputsSet = getFromBlackboard<int>(blackboard, "torpedo_available_count", out.torpedoAvailable) && outputsSet;
-    outputsSet = getFromBlackboard<int>(blackboard, "dropper_state", out.dropperState) && outputsSet;
-    outputsSet = getFromBlackboard<int>(blackboard, "dropper_available_count", out.dropperAvailable) && outputsSet;
-    outputsSet = getFromBlackboard<bool>(blackboard, "actuators_busy", out.busy) && outputsSet;
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "claw_state", out.clawState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "torpedo_state", out.torpedoState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "torpedo_available_count", out.torpedoAvailable);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "dropper_state", out.dropperState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "dropper_available_count", out.dropperAvailable);
+    outputsSet = outputsSet && getOutputFromBlackboard<bool>(blackboard, "actuators_busy", out.busy);
 
     return status;
 }
@@ -74,8 +74,8 @@ TEST_F(BtTest, test_GetActuatorStatus_success_busy) {
     BT::NodeStatus status = testGetActuatorStatus(toolNode, in, out, outputsSet);
 
     //eval result
-    ASSERT_TRUE(outputsSet);
     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+    ASSERT_TRUE(outputsSet);
     ASSERT_EQ(out.clawState, in.clawState);
     ASSERT_EQ(out.torpedoState, in.torpedoState);
     ASSERT_EQ(out.torpedoAvailable, in.torpedoAvailable);
@@ -102,8 +102,8 @@ TEST_F(BtTest, test_GetActuatorStatus_success_not_busy) {
     BT::NodeStatus status = testGetActuatorStatus(toolNode, in, out, outputsSet);
 
     //eval result
-    ASSERT_TRUE(outputsSet);
     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+    ASSERT_TRUE(outputsSet);
     ASSERT_EQ(out.clawState, in.clawState);
     ASSERT_EQ(out.torpedoState, in.torpedoState);
     ASSERT_EQ(out.torpedoAvailable, in.torpedoAvailable);
@@ -130,8 +130,8 @@ TEST_F(BtTest, test_GetActuatorStatus_success_one_more_time) {
     BT::NodeStatus status = testGetActuatorStatus(toolNode, in, out, outputsSet);
 
     //eval result
-    ASSERT_TRUE(outputsSet);
     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+    ASSERT_TRUE(outputsSet);
     ASSERT_EQ(out.clawState, in.clawState);
     ASSERT_EQ(out.torpedoState, in.torpedoState);
     ASSERT_EQ(out.torpedoAvailable, in.torpedoAvailable);
@@ -158,8 +158,8 @@ TEST_F(BtTest, test_GetActuatorStatus_fail_timed_out_no_publish) {
     BT::NodeStatus status = testGetActuatorStatus(toolNode, in, out, outputsSet);
 
     //eval result
-    ASSERT_FALSE(outputsSet);
     ASSERT_EQ(status, BT::NodeStatus::FAILURE);
+    ASSERT_FALSE(outputsSet);
 }
 
 TEST_F(BtTest, test_GetActuatorStatus_fail_timed_out_publish_only_busy) {
@@ -180,8 +180,8 @@ TEST_F(BtTest, test_GetActuatorStatus_fail_timed_out_publish_only_busy) {
     BT::NodeStatus status = testGetActuatorStatus(toolNode, in, out, outputsSet);
 
     //eval result
-    ASSERT_FALSE(outputsSet);
     ASSERT_EQ(status, BT::NodeStatus::FAILURE);
+    ASSERT_FALSE(outputsSet);
 }
 
 TEST_F(BtTest, test_GetActuatorStatus_fail_timed_out_publish_only_status) {
@@ -202,6 +202,6 @@ TEST_F(BtTest, test_GetActuatorStatus_fail_timed_out_publish_only_status) {
     BT::NodeStatus status = testGetActuatorStatus(toolNode, in, out, outputsSet);
 
     //eval result
-    ASSERT_FALSE(outputsSet);
     ASSERT_EQ(status, BT::NodeStatus::FAILURE);
+    ASSERT_FALSE(outputsSet);
 }

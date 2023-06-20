@@ -15,12 +15,12 @@ class GetOdometry : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::OutputPort<double>("x"),
-            BT::OutputPort<double>("y"),
-            BT::OutputPort<double>("z"),
-            BT::OutputPort<double>("or"),
-            BT::OutputPort<double>("op"),
-            BT::OutputPort<double>("oy")
+            UwrtOutput("x"),
+            UwrtOutput("y"),
+            UwrtOutput("z"),
+            UwrtOutput("or"),
+            UwrtOutput("op"),
+            UwrtOutput("oy")
         };
     }
 
@@ -58,15 +58,15 @@ class GetOdometry : public UWRTActionNode {
             return BT::NodeStatus::FAILURE;
         } else if(msgReceived) {
             //set linear position outputs
-            setOutput<double>("x", odom.pose.pose.position.x);
-            setOutput<double>("y", odom.pose.pose.position.y);
-            setOutput<double>("z", odom.pose.pose.position.z);
+            postOutput<double>(this, "x", odom.pose.pose.position.x);
+            postOutput<double>(this, "y", odom.pose.pose.position.y);
+            postOutput<double>(this, "z", odom.pose.pose.position.z);
 
             //convert quaternion to rpy and set outputs
             geometry_msgs::msg::Vector3 rpy = toRPY(odom.pose.pose.orientation);
-            setOutput<double>("or", rpy.x);
-            setOutput<double>("op", rpy.y);
-            setOutput<double>("oy", rpy.z);
+            postOutput<double>(this, "or", rpy.x);
+            postOutput<double>(this, "op", rpy.y);
+            postOutput<double>(this, "oy", rpy.z);
 
             return BT::NodeStatus::SUCCESS;
         }

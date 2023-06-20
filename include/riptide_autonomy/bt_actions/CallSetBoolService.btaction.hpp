@@ -18,9 +18,9 @@ class CallSetBoolService : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<std::string>("srv_name"),
-            BT::InputPort<bool>("data"),
-            BT::InputPort<double>("time_limit_secs")
+            UwrtInput("srv_name"),
+            UwrtInput("data"),
+            UwrtInput("time_limit_secs")
         };
     }
 

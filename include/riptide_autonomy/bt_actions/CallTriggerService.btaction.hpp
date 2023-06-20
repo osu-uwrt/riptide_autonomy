@@ -18,8 +18,8 @@ class CallTriggerService : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<std::string>("srv_name"),
-            BT::InputPort<double>("time_limit_secs")
+            UwrtInput("srv_name"),
+            UwrtInput("time_limit_secs")
         };
     }
 

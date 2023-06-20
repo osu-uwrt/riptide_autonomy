@@ -15,9 +15,9 @@ class ApproxEqualTo : public UWRTConditionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<double>("a"),
-            BT::InputPort<double>("b"),
-            BT::InputPort<double>("range")
+            UwrtInput("a"),
+            UwrtInput("b"),
+            UwrtInput("range")
         };
     }
 

@@ -15,11 +15,11 @@ class PublishToController : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<bool>("isOrientation"),
-            BT::InputPort<int>("mode"),
-            BT::InputPort<double>("x"),
-            BT::InputPort<double>("y"),
-            BT::InputPort<double>("z"),
+            UwrtInput("isOrientation"),
+            UwrtInput("mode"),
+            UwrtInput("x"),
+            UwrtInput("y"),
+            UwrtInput("z"),
         };
     }
 

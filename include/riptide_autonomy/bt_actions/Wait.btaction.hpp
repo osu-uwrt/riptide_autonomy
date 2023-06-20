@@ -15,7 +15,7 @@ class Wait : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<double>("seconds")
+            UwrtInput("seconds")
         };
     }
 

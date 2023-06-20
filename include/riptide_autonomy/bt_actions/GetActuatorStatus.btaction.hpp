@@ -18,12 +18,12 @@ class GetActuatorStatus : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::OutputPort<int>("claw_state"),
-            BT::OutputPort<int>("torpedo_state"),
-            BT::OutputPort<int>("torpedo_available_count"),
-            BT::OutputPort<int>("dropper_state"),
-            BT::OutputPort<int>("dropper_available_count"),
-            BT::OutputPort<bool>("actuators_busy")
+            UwrtOutput("claw_state"),
+            UwrtOutput("torpedo_state"),
+            UwrtOutput("torpedo_available_count"),
+            UwrtOutput("dropper_state"),
+            UwrtOutput("dropper_available_count"),
+            UwrtOutput("actuators_busy")
         };
     }
 
@@ -71,12 +71,12 @@ class GetActuatorStatus : public UWRTActionNode {
 
         //have we gotten the messages we need?
         if(statusReceived && busyReceived) {
-            setOutput<int>("claw_state", latestStatus.claw_state);
-            setOutput<int>("torpedo_state", latestStatus.torpedo_state);
-            setOutput<int>("torpedo_available_count", latestStatus.torpedo_available_count);
-            setOutput<int>("dropper_state", latestStatus.dropper_state);
-            setOutput<int>("dropper_available_count", latestStatus.dropper_available_count);
-            setOutput<bool>("actuators_busy", latestBusy.data);
+            postOutput<int>(this, "claw_state", latestStatus.claw_state);
+            postOutput<int>(this, "torpedo_state", latestStatus.torpedo_state);
+            postOutput<int>(this, "torpedo_available_count", latestStatus.torpedo_available_count);
+            postOutput<int>(this, "dropper_state", latestStatus.dropper_state);
+            postOutput<int>(this, "dropper_available_count", latestStatus.dropper_available_count);
+            postOutput<bool>(this, "actuators_busy", latestBusy.data);
             return BT::NodeStatus::SUCCESS;
         }
 

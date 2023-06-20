@@ -15,13 +15,13 @@ class ComputeFrameAlignment : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<double>("x"),
-            BT::InputPort<double>("y"),
-            BT::InputPort<double>("z"),
-            BT::InputPort<std::string>("frameName"),
-            BT::OutputPort<double>("out_x"),
-            BT::OutputPort<double>("out_y"),
-            BT::OutputPort<double>("out_z"),
+            UwrtInput("x"),
+            UwrtInput("y"),
+            UwrtInput("z"),
+            UwrtInput("frameName"),
+            UwrtOutput("out_x"),
+            UwrtOutput("out_y"),
+            UwrtOutput("out_z"),
         };
     }
 
@@ -39,10 +39,12 @@ class ComputeFrameAlignment : public UWRTActionNode {
     BT::NodeStatus onStart() override {
         tf2_ros::Buffer buffer(rosnode->get_clock());
         rclcpp::Time startTime = rosnode->get_clock()->now();
-
-        std::string finalFrame = tryGetRequiredInput<std::string>(this, "frameName", "");
-        std::string fromOdom = "odom";
-        std::string BaseFrame = "tempest/base_link";
+        std::string 
+            ns = rosnode->get_namespace(),
+            robotName = ns.substr(1, ns.find('/', 1)), // start at 1 to skip leading /
+            finalFrame = tryGetRequiredInput<std::string>(this, "frameName", ""),
+            fromOdom = "odom",
+            BaseFrame = robotName + "/base_link";
 
         //make a pose  that represents the desired position of the given frame
         geometry_msgs::msg::Pose finalRes;
@@ -67,10 +69,9 @@ class ComputeFrameAlignment : public UWRTActionNode {
 
         //set outputs to the odom coords that get the desired frame to the desired position
 
-        setOutput<double>("out_x", finalRes.position.x);
-        setOutput<double>("out_y", finalRes.position.y);
-        setOutput<double>("out_z", finalRes.position.z);
-
+        postOutput<double>(this, "out_x", finalRes.position.x);
+        postOutput<double>(this, "out_y", finalRes.position.y);
+        postOutput<double>(this, "out_z", finalRes.position.z);
 
         return BT::NodeStatus::SUCCESS;
     }
