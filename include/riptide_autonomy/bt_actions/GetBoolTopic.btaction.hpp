@@ -2,9 +2,6 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-using namespace std::placeholders;
-using namespace std::chrono_literals;
-
 /**
  * This is here for now - may replace later with a generic subscription node for trivial types (int, double, string, bool)
  */

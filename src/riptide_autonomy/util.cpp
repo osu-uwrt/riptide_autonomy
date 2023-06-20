@@ -39,40 +39,25 @@ void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext) {
 
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry_msgs::msg::TransformStamped transform) {
     geometry_msgs::msg::Pose result;
-
-    //rotate the position on the yaw based on the transform rotation to the object
-    double yaw = toRPY(transform.transform.rotation).z;
-    
-    geometry_msgs::msg::Vector3 newRelative;
-    newRelative.x = relative.position.x * cos(yaw) - relative.position.y * sin(yaw);
-    newRelative.y = relative.position.x * sin(yaw) + relative.position.y * cos(yaw);
-    
-    //translate point to new frame
-    geometry_msgs::msg::Vector3 translation = transform.transform.translation;
-    result.position.x = newRelative.x + translation.x;
-    result.position.y = newRelative.y + translation.y;
-    result.position.z = relative.position.z + translation.z;
-
-    //transform the orientation quaternions
-    tf2::Quaternion transformQuat;
-    tf2::fromMsg(transform.transform.rotation, transformQuat);
-
-    tf2::Quaternion relativeQuat;
-    tf2::fromMsg(relative.orientation, relativeQuat);
-
-    tf2::Quaternion resultQuat = relativeQuat * transformQuat;
-    resultQuat.normalize();
-    result.orientation = tf2::toMsg(resultQuat);
-
+    tf2::doTransform(relative, result, transform);
     return result;
 }
 
-
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
-    bool printedWarning = false;
-    
+/**
+ * @brief Transforms a relative pose between frames.
+ *  
+ * @param rosnode A ros node handle
+ * @param buffer TF Buffer. THIS MUST BE ATTACHED TO A LISTENER THAT WAS CREATED WITH SPIN_THREAD = TRUE or else the function will not work
+ * @param original Pose to tranform
+ * @param fromFrame The frame original is currently in
+ * @param toFrame The frame to transform original to
+ * @param result The transformed pose
+ * @return true if the operation succeeded, false otherwise
+ */
+bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {    
     //look up transform with a three second timeout to find one
     rclcpp::Time startTime = rosnode->get_clock()->now();
+    
     while((rosnode->get_clock()->now() - startTime) < 3s) {
         try {
             geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
@@ -81,10 +66,7 @@ bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2
             return true;
 
         } catch(tf2::LookupException &ex) {
-            if(!printedWarning) {
-                RCLCPP_WARN(log, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
-                printedWarning = true;
-            }
+            RCLCPP_WARN_SKIPFIRST_THROTTLE(log, *rosnode->get_clock(), 500, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
         }
     }
     RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());

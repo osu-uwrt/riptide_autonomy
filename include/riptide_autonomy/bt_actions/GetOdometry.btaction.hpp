@@ -2,8 +2,6 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-using namespace std::placeholders;
-
 class GetOdometry : public UWRTActionNode {
     public:
     GetOdometry(const std::string& name, const BT::NodeConfiguration& config)

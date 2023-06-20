@@ -2,8 +2,6 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-using namespace std::placeholders;
-
 class ComputeFrameAlignment : public UWRTActionNode {
     public:
     ComputeFrameAlignment(const std::string& name, const BT::NodeConfiguration& config)

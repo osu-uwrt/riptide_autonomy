@@ -10,6 +10,9 @@
 #include "riptide_autonomy/autonomy_base.hpp"
 #include "riptide_autonomy/UwrtBtNode.hpp"
 
+using namespace std::chrono_literals;
+using namespace std::placeholders;
+
 //useful topic names for autonomy
 const std::string
     ODOMETRY_TOPIC = "odometry/filtered",
@@ -305,42 +308,5 @@ double distance(geometry_msgs::msg::Point pt1, geometry_msgs::msg::Point pt2);
  * @return double The distance between point1 and point2.
  */
 double distance(geometry_msgs::msg::Vector3 pt1, geometry_msgs::msg::Vector3 pt2);
-
-
-/**
- * 
- * CLASSES 
- * 
- */
-
-/**
- * @brief UWRT superclass for BT action nodes
- */
-class UWRTActionNode : public BT::StatefulActionNode, public UwrtBtNode {
-    public:
-    UWRTActionNode(const std::string& name, const BT::NodeConfiguration& config)
-     : StatefulActionNode(name, config) { };
-};
-
-/**
- * @brief UWRT superclass for integrating ConditionNodes with ROS.
- * Similar to UWRTSyncActionNode, this class inherits both the BT 
- * ConditionNode and UwrtBtNode.
- */
-class UWRTConditionNode : public BT::ConditionNode, public UwrtBtNode {
-    public:
-    UWRTConditionNode(const std::string& name, const BT::NodeConfiguration& config)
-     : ConditionNode(name, config) { };
-};
-
-/**
- * @brief UWRT superclass for integrating DecoratorNodes with ROS.
- * Operates exactly the same as UWRTConditionNode and UWRTActionNode.
- */
-class UWRTDecoratorNode : public BT::DecoratorNode, public UwrtBtNode {
-    public:
-    UWRTDecoratorNode(const std::string& name, const BT::NodeConfiguration& config)
-     : DecoratorNode(name, config) { };
-};
 
 #endif // AUTONOMY_LIB_H
