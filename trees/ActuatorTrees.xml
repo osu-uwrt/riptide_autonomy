@@ -2,8 +2,32 @@
 <root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SubTree ID="CheckActuatorStates" __shared_blackboard="false"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-            <SubTree ID="DropMarker"/>
+            <ForceSuccess>
+                <SubTree ID="DropMarker"/>
+            </ForceSuccess>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="CheckActuatorStates">
+        <Sequence>
+            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="clawstate" dropper_available_count="" dropper_state="dropperstate" torpedo_available_count="" torpedo_state="torpedostate"/>
+            <Fallback>
+                <Sequence name="Check states">
+                    <Inverter name="dropperstate not error">
+                        <Condition ID="CompareNums" a="{dropperstate}" b="0" test="=="/>
+                    </Inverter>
+                    <Inverter name="torpedostate not error">
+                        <Condition ID="CompareNums" a="{torpedostate}" b="0" test="=="/>
+                    </Inverter>
+                </Sequence>
+                <ForceFailure>
+                    <Action ID="Error" message="Check Actuators! States are problematic; dropper: {dropperstate}, torpedo: {torpedostate}"/>
+                </ForceFailure>
+            </Fallback>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="Dive">
@@ -20,6 +44,7 @@
             <SetBlackboard output_key="10" value="10"/>
             <Action ID="Info" message="Attempting to fire dropper..."/>
             <SetBlackboard output_key="dropper_srv" value="command/actuator/dropper"/>
+            <SubTree ID="CheckActuatorStates" __shared_blackboard="false"/>
             <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
             <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="droppers" dropper_state="" torpedo_available_count="" torpedo_state=""/>
             <Action ID="Info" message="{droppers} droppers available."/>
@@ -242,6 +267,9 @@
             <input_port name="srv_name" required="true"/>
             <input_port name="time_limit_secs" required="true"/>
         </Action>
+        <SubTree ID="CheckActuatorStates">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+        </SubTree>
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
@@ -288,10 +316,6 @@
             <output_port name="x" required="false"/>
             <output_port name="y" required="false"/>
             <output_port name="z" required="false"/>
-        </Action>
-        <Action ID="GetSwitchState">
-            <output_port name="aux_switch_inserted" required="false"/>
-            <output_port name="kill_switch_inserted" required="false"/>
         </Action>
         <Action ID="HeadingToPoint">
             <input_port name="currX" required="true"/>
