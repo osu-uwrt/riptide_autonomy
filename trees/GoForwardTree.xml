@@ -5,12 +5,12 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="depth" value="-1.5"/>
             <SetBlackboard output_key="forward_distance" value="5"/>
+            <SubTree ID="WaitForKillSwitch"/>
             <Action ID="SetStatus" status="moving"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="0" to_frame="world" x="{forward_distance}" y="0" z="0"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="0" y="0" z="0"/>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
@@ -305,12 +305,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="p" required="true"/>
             <input_port name="r" required="true"/>
-            <input_port default="10" name="timeout" required="true"/>
             <input_port name="y" required="true"/>
         </SubTree>
         <SubTree ID="PrimitiveMovePosition">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port default="30" name="timeout" required="true"/>
             <input_port name="x" required="true"/>
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
