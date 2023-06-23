@@ -106,7 +106,11 @@
                     <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
                     <Fallback>
                         <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
-                        <Condition ID="CompareNums" a="{dist}" b="1" test="&lt;"/>
+                        <Sequence name="handle bad distance accoringly">
+                            <Condition ID="CompareNums" a="{dist}" b="1" test="&lt;"/>
+                            <SetBlackboard output_key="dist" value="2"/>
+                            <AlwaysFailure name="force back to start of loop"/>
+                        </Sequence>
                     </Fallback>
                 </Sequence>
             </Decorator>
