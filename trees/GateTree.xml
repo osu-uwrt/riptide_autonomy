@@ -2,10 +2,10 @@
 <root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="-1" value="-1"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="depth" value="-1.5"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <SubTree ID="GateTree"/>
             <SubTree ID="KillController"/>
         </Sequence>
@@ -21,36 +21,50 @@
     </BehaviorTree>
     <BehaviorTree ID="GateTree">
         <Sequence>
-            <SetBlackboard output_key="-1" value="-1"/>
-            <SetBlackboard output_key="-0.5" value="-0.5"/>
-            <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SetBlackboard output_key="gate_frame" value="gate_frame"/>
+            <SetBlackboard output_key="earth_frame" value="earth_frame"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="earth" value="earth"/>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="gman_frame" value="gman_frame"/>
             <SetBlackboard output_key="120" value="120"/>
-            <SetBlackboard output_key="0.25" value="0.25"/>
-            <SetBlackboard output_key="gman" value="gman"/>
-            <SubTree ID="Search" __shared_blackboard="false" object_name="gman" target_cov="0.25" timeout_secs="120"/>
+            <SetBlackboard output_key="1.25" value="1.25"/>
+            <SetBlackboard output_key="gate" value="gate"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="gate" target_cov="1.25" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="earth" target_cov="1.25" timeout_secs="60"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="-0.5"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="earth_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="-1"/>
             <Action ID="SetStatus" status="performing"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-0.5"/>
-            <Repeat name="Spin time" num_cycles="2">
-                <Sequence>
-                    <SetBlackboard output_key="-1.03" value="-1.03"/>
-                    <SetBlackboard output_key="1.05" value="1.05"/>
-                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="1.05" x="0" y="0" z="-0.5"/>
-                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="-1.03" x="0" y="0" z="-0.5"/>
-                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-0.5"/>
-                </Sequence>
-            </Repeat>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gman_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="-0.5"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="earth_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-1"/>
+            <SubTree ID="SpinTree" __shared_blackboard="false"/>
+            <Action ID="Wait" seconds="2"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="earth_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="-1"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="KillController">
         <Sequence>
             <Action ID="PublishToController" isOrientation="1" mode="0" x="0" y="0" z="0"/>
             <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="MiniSearch">
+        <Sequence name="minisearch">
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="SetStatus" status="searching"/>
+            <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
+            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
+                <Sequence name="shrink cov">
+                    <Action ID="Wait" seconds="1"/>
+                    <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+                    <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                </Sequence>
+            </Decorator>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="Move">
@@ -93,7 +107,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -128,35 +142,59 @@
     </BehaviorTree>
     <BehaviorTree ID="Search">
         <Sequence name="Search">
+            <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="f_op" out_or="f_or" out_oy="f_oy" out_x="f_x" out_y="f_y" out_z="f_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-            <Action ID="CalculateDistance" dist="dist" x1="{x}" x2="{f_x}" y1="{y}" y2="{f_y}" z1="{z]" z2="{f_z}"/>
-            <Action ID="Info" message="dist: {dist}"/>
+            <Action ID="CalculateDistance" dist="dist" x1="{x}" x2="{f_x}" y1="{y}" y2="{f_y}" z1="{z}" z2="{f_z}"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Search_loop" num_seconds="{timeout_secs}">
-                <Fallback>
-                    <Sequence>
-                        <Action ID="Math" a="{dist}" b="0.67" operator="*" out="dist"/>
-                        <Action ID="Info" message="Search moving to {dist} meters away from {object_name}"/>
-                        <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" to_frame="world" x="{dist}" y="0" z="0"/>
-                        <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
-                        <Action ID="Info" message="Let mapping gather detections on {object_name}"/>
-                        <Action ID="Wait" seconds="10"/>
-                        <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
-                        <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}"/>
-                        <Fallback>
-                            <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
-                            <Condition ID="CompareNums" a="{dist}" b="1" test="&lt;"/>
-                        </Fallback>
-                    </Sequence>
-                    <Fallback name="check distance">
-                        <Condition ID="CompareNums" a="{dist}" b="1" test="&gt;"/>
-                        <ForceFailure>
-                            <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn't converge the estimate."/>
-                        </ForceFailure>
+                <Sequence>
+                    <Action ID="Math" a="{dist}" b="0.67" operator="*" out="dist"/>
+                    <Action ID="Info" message="Search moving to {dist} meters away from {object_name}"/>
+                    <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" to_frame="world" x="{dist}" y="0" z="0"/>
+                    <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+                    <Action ID="Info" message="Let mapping gather detections on {object_name}"/>
+                    <Action ID="Wait" seconds="10"/>
+                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                    <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
+                    <Fallback>
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                        <Sequence name="handle bad distance accoringly">
+                            <Condition ID="CompareNums" a="{dist}" b="1.333" test="&lt;"/>
+                            <SetBlackboard output_key="dist" value="4"/>
+                            <AlwaysFailure name="force back to start of loop"/>
+                        </Sequence>
                     </Fallback>
-                </Fallback>
+                </Sequence>
             </Decorator>
+            <Fallback name="check distance">
+                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                <Condition ID="CompareNums" a="{dist}" b="1.333" test="&gt;"/>
+                <ForceFailure>
+                    <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn&apos;t converge the estimate."/>
+                </ForceFailure>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="SpinTree">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="" or="" oy="orig_y" x="" y="" z=""/>
+            <Repeat num_cycles="7">
+                <Sequence name="spin_2pi/3">
+                    <Action ID="Info" message="Spinning once"/>
+                    <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="new_yaw" out_x="" out_y="" out_z="" oy="2.09" to_frame="world" x="0" y="0" z="0"/>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
+                        <Sequence>
+                            <Action ID="PublishToController" isOrientation="1" mode="2" x="0" y="0" z="1.5707"/>
+                            <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
+                            <Action ID="Info" message="curr: {curr_yaw}, new: {new_yaw}"/>
+                            <Condition ID="ApproxEqualTo" a="{curr_yaw}" b="{new_yaw}" range="0.25"/>
+                        </Sequence>
+                    </Decorator>
+                </Sequence>
+            </Repeat>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="orig_y"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
@@ -206,7 +244,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="frameName" required="true"/>
@@ -270,9 +308,15 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
+        <SubTree ID="MiniSearch">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_name" required="true"/>
+            <input_port default="1.25" name="target_cov" required="true"/>
+            <input_port default="60" name="timeout_secs" required="true"/>
+        </SubTree>
         <SubTree ID="Move">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="op" required="true"/>
@@ -317,12 +361,15 @@
         <SubTree ID="Search">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_name" required="true">Frame to search for</input_port>
-            <input_port default="0.01" name="target_cov" required="true">Target covariance to end search</input_port>
+            <input_port default="1.25" name="target_cov" required="true">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="true">Timeout for search</input_port>
         </SubTree>
         <Action ID="SetStatus">
             <input_port name="status" required="true"/>
         </Action>
+        <SubTree ID="SpinTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+        </SubTree>
         <Action ID="TransformPose">
             <input_port name="from_frame" required="true"/>
             <input_port name="op" required="true"/>
@@ -350,4 +397,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
