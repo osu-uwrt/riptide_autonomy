@@ -2,12 +2,9 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-using Cov = geometry_msgs::msg::PoseWithCovarianceStamped;
-using namespace std::placeholders;
-using namespace std::chrono_literals;
-
-
 class getCovariance : public UWRTActionNode {
+    using Cov = geometry_msgs::msg::PoseWithCovarianceStamped;
+    
     public:
     getCovariance(const std::string& name, const BT::NodeConfiguration& config)
     : UWRTActionNode(name, config) {
@@ -20,8 +17,8 @@ class getCovariance : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<std::string>("Target"),
-            BT::OutputPort<double>("Covariance")
+            UwrtInput("Target"),
+            UwrtOutput("Covariance")
         };
     }
 
@@ -53,7 +50,7 @@ class getCovariance : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         if(msgReceived) {
-            setOutput<double>("Covariance", error);
+            postOutput<double>(this, "Covariance", error);
             return BT::NodeStatus::SUCCESS;
         }
 

@@ -2,8 +2,6 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-using namespace std::chrono_literals;
-
 class CallTriggerService : public UWRTActionNode {
     using Trigger = std_srvs::srv::Trigger;
 
@@ -18,8 +16,8 @@ class CallTriggerService : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<std::string>("srv_name"),
-            BT::InputPort<double>("time_limit_secs")
+            UwrtInput("srv_name"),
+            UwrtInput("time_limit_secs")
         };
     }
 

@@ -41,7 +41,7 @@ class SetStatus : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<std::string>("status")
+            UwrtInput("status")
         };
     }
 

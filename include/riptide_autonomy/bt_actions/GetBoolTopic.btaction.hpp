@@ -2,9 +2,6 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-using namespace std::placeholders;
-using namespace std::chrono_literals;
-
 /**
  * This is here for now - may replace later with a generic subscription node for trivial types (int, double, string, bool)
  */
@@ -19,8 +16,8 @@ class GetBoolTopic : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<std::string>("topic"),
-            BT::OutputPort<bool>("value")
+            UwrtInput("topic"),
+            UwrtOutput("value")
         };
     }
 
@@ -56,13 +53,13 @@ class GetBoolTopic : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         if(dataReceived) {
-            setOutput<bool>("value", data);
+            postOutput<bool>(this, "value", data);
             return BT::NodeStatus::SUCCESS;
         }
 
         if(rosnode->get_clock()->now() - startTime > 3s) {
             RCLCPP_ERROR(log, "Timed out waiting for bool on topic %s!", topic.c_str());
-            setOutput<bool>("value", false); // set a value on the blackboard so the rest of the tree doesnt crash if access is attempted
+            postOutput<bool>(this, "value", false); // set a value on the blackboard so the rest of the tree doesnt crash if access is attempted
             return BT::NodeStatus::FAILURE;
         }
 

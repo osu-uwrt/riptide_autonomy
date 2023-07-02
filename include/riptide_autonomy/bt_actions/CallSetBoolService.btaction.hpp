@@ -2,8 +2,6 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-using namespace std::chrono_literals;
-
 class CallSetBoolService : public UWRTActionNode {
     using SetBool = std_srvs::srv::SetBool;
 
@@ -18,9 +16,9 @@ class CallSetBoolService : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<std::string>("srv_name"),
-            BT::InputPort<bool>("data"),
-            BT::InputPort<double>("time_limit_secs")
+            UwrtInput("srv_name"),
+            UwrtInput("data"),
+            UwrtInput("time_limit_secs")
         };
     }
 

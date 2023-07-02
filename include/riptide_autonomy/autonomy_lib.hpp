@@ -10,6 +10,9 @@
 #include "riptide_autonomy/autonomy_base.hpp"
 #include "riptide_autonomy/UwrtBtNode.hpp"
 
+using namespace std::chrono_literals;
+using namespace std::placeholders;
+
 //useful topic names for autonomy
 const std::string
     ODOMETRY_TOPIC = "odometry/filtered",
@@ -26,6 +29,20 @@ const std::string
     CLAW_SERVER_NAME = "command/actuator/claw",
     DROPPER_SERVER_NAME = "command/actuator/dropper",
     TORPEDO_SERVER_NAME = "command/actuator/torpedo";
+
+
+/**
+ * 
+ * TYPES
+ *  
+ */
+inline std::pair<std::string, BT::PortInfo> UwrtInput(BT::StringView name, BT::StringView description = {}) {
+    return BT::InputPort<std::string>(name, description);
+}
+
+inline std::pair<std::string, BT::PortInfo> UwrtOutput(BT::StringView name, BT::StringView description = {}) {
+    return BT::OutputPort<std::string>(name, description);
+}
 
 /**
  *
@@ -148,8 +165,8 @@ bool getFromBlackboard(BT::Blackboard::Ptr blackboard, std::string key, T& value
         if(blackboard->get<T>(key, value)) {
             return true;
         }
-    } catch (std::runtime_error const&) {
-        RCLCPP_ERROR(log, "Could not cast blackboard entry \"%s\" to the correct type.", key.c_str());
+    } catch (std::runtime_error& ex) {
+        RCLCPP_ERROR(log, "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
     }
 
     return false;
@@ -174,6 +191,15 @@ bool getFromBlackboard(BT::TreeNode& n, std::string key, T& value) {
     return getFromBlackboard(n.config().blackboard, key, value);
 }
 
+
+template<typename T>
+void postOutput(BT::TreeNode *n, const std::string& key, T value) {
+    std::ostringstream stream;
+    stream << value;
+
+    n->setOutput(key, stream.str());
+}
+
 /**
  * @brief Attempts to get a port input from a TreeNode.
  * 
@@ -186,9 +212,9 @@ bool getFromBlackboard(BT::TreeNode& n, std::string key, T& value) {
  */
 template<typename T> 
 T tryGetInput(const BT::TreeNode *n, const std::string& key, const T defaultValue, bool warnIfUndefined) {
-    auto op = n->getInput<T>(key);
+    auto op = n->getInput<std::string>(key);
     if(op.has_value()) {
-        return op.value();
+        return BT::convertFromString<T>(op.value());
     } else if(warnIfUndefined) {
         RCLCPP_WARN(log, "Node %s does not have a value for required port with name %s!", n->name().c_str(), key.c_str());
     }
@@ -282,48 +308,5 @@ double distance(geometry_msgs::msg::Point pt1, geometry_msgs::msg::Point pt2);
  * @return double The distance between point1 and point2.
  */
 double distance(geometry_msgs::msg::Vector3 pt1, geometry_msgs::msg::Vector3 pt2);
-
-
-/**
- * 
- * CLASSES 
- * 
- */
-
-/**
- * @brief UWRT superclass for BT action nodes
- */
-class UWRTActionNode : public BT::StatefulActionNode, public UwrtBtNode {
-    public:
-    UWRTActionNode(const std::string& name, const BT::NodeConfiguration& config)
-     : StatefulActionNode(name, config) { };
-
-    // static BT::PortsList providedPorts();
-};
-
-/**
- * @brief UWRT superclass for integrating ConditionNodes with ROS.
- * Similar to UWRTSyncActionNode, this class inherits both the BT 
- * ConditionNode and UwrtBtNode.
- */
-class UWRTConditionNode : public BT::ConditionNode, public UwrtBtNode {
-    public:
-    UWRTConditionNode(const std::string& name, const BT::NodeConfiguration& config)
-     : ConditionNode(name, config) { };
-    
-    // static BT::PortsList providedPorts();
-};
-
-/**
- * @brief UWRT superclass for integrating DecoratorNodes with ROS.
- * Operates exactly the same as UWRTConditionNode and UWRTSyncActionNode.
- */
-class UWRTDecoratorNode : public BT::DecoratorNode, public UwrtBtNode {
-    public:
-    UWRTDecoratorNode(const std::string& name, const BT::NodeConfiguration& config)
-     : DecoratorNode(name, config) { };
-    
-    // static BT::PortsList providedPorts();
-};
 
 #endif // AUTONOMY_LIB_H

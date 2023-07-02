@@ -35,10 +35,10 @@ BT::NodeStatus numToString(BT::TreeNode& n) {
     BT::Optional<double> doubleIn = n.getInput<double>("double_in");
     BT::Optional<int> intIn = n.getInput<int>("int_in");
     if(doubleIn.has_value()) {
-        n.setOutput<std::string>("str_out", std::to_string(doubleIn.value()));
+        postOutput<std::string>(&n, "str_out", std::to_string(doubleIn.value()));
     } else if(intIn.has_value()) {
         RCLCPP_INFO(log, "got intin as %i.", intIn.value());
-        n.setOutput<std::string>("str_out", std::to_string(intIn.value()));
+        postOutput<std::string>(&n, "str_out", std::to_string(intIn.value()));
     }
 
     return BT::NodeStatus::SUCCESS;
@@ -59,7 +59,7 @@ BT::NodeStatus calculateDistance(BT::TreeNode& n) {
     p2.y = tryGetRequiredInput<double>(&n, "y2", 0);
     p2.z = tryGetRequiredInput<double>(&n, "z2", 0);
 
-    n.setOutput<double>("dist", distance(p1, p2));
+    postOutput<double>(&n, "dist", distance(p1, p2));
     return BT::NodeStatus::SUCCESS;
 }
 
@@ -87,7 +87,7 @@ BT::NodeStatus doMath(BT::TreeNode& n) {
         output = a / b;
     }
 
-    n.setOutput<double>("out", output);
+    postOutput<double>(&n, "out", output);
     return BT::NodeStatus::SUCCESS;
 }
 
@@ -99,7 +99,7 @@ BT::NodeStatus doMath(BT::TreeNode& n) {
 BT::NodeStatus format(BT::TreeNode &n) {
     std::string formatStr = tryGetRequiredInput<std::string>(&n, "format", "");
     std::string out = stringWithBlackboardEntries(formatStr, n);
-    n.setOutput<std::string>("out", out);
+    postOutput<std::string>(&n, "out", out);
     return BT::NodeStatus::SUCCESS;
 }
 
@@ -122,7 +122,7 @@ BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
 
     double heading = atan2(dy, dx);
 
-    n.setOutput<double>("heading", heading);
+    postOutput<double>(&n, "heading", heading);
     return BT::NodeStatus::SUCCESS;
 }
 
@@ -137,9 +137,9 @@ void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
 
     factory.registerSimpleAction("ToString", numToString,
         { 
-            BT::InputPort<double>("double_in"), 
-            BT::InputPort<int>("int_in"), 
-            BT::OutputPort<std::string>("str_out") 
+            UwrtInput("double_in"), 
+            UwrtInput("int_in"), 
+            UwrtOutput("str_out") 
         }
     );
 
@@ -148,13 +148,13 @@ void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
      */
     factory.registerSimpleAction("CalculateDistance", calculateDistance,
         {
-            BT::InputPort<double>("x1"),
-            BT::InputPort<double>("y1"),
-            BT::InputPort<double>("z1"),
-            BT::InputPort<double>("x2"),
-            BT::InputPort<double>("y2"),
-            BT::InputPort<double>("z2"),
-            BT::OutputPort<double>("dist")
+            UwrtInput("x1"),
+            UwrtInput("y1"),
+            UwrtInput("z1"),
+            UwrtInput("x2"),
+            UwrtInput("y2"),
+            UwrtInput("z2"),
+            UwrtOutput("dist")
         }
     );
 
@@ -163,27 +163,27 @@ void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
      */
     factory.registerSimpleAction("Math", doMath, 
         {
-            BT::InputPort<double>("a"),
-            BT::InputPort<double>("b"),
-            BT::InputPort<std::string>("operator"),
-            BT::OutputPort<double>("out")
+            UwrtInput("a"),
+            UwrtInput("b"),
+            UwrtInput("operator"),
+            UwrtOutput("out")
         }
     );
 
     factory.registerSimpleAction("Format", format,
         {
-            BT::InputPort<std::string>("format"),
-            BT::OutputPort<std::string>("out")
+            UwrtInput("format"),
+            UwrtOutput("out")
         }
     );
 
     factory.registerSimpleAction("HeadingToPoint", getHeadingToPoint,
         {
-            BT::InputPort<double>("currX"),
-            BT::InputPort<double>("currY"),
-            BT::InputPort<double>("targX"),
-            BT::InputPort<double>("targY"),
-            BT::OutputPort<double>("heading")
+            UwrtInput("currX"),
+            UwrtInput("currY"),
+            UwrtInput("targX"),
+            UwrtInput("targY"),
+            UwrtOutput("heading")
         }
     );
 }

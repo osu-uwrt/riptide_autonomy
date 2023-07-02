@@ -21,7 +21,7 @@ BT::NodeStatus testGetCovariance(std::shared_ptr<BtTestTool> toolNode, const std
     }
 
     //collect results
-    outputSet = getFromBlackboard<double>(node->config().blackboard, "Covariance", covariance);
+    outputSet = getOutputFromBlackboard<double>(node->config().blackboard, "Covariance", covariance);
     return status;
 }
 
@@ -68,7 +68,7 @@ TEST_F(BtTest, test_getCovariance_success_2) {
     const double expectedCov = .1 + .4 + 1 + .9 + 2 + .9;
     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outputSet);
-    ASSERT_EQ(result, expectedCov);
+    ASSERT_NEAR(result, expectedCov, 0.01);
 }
 
 TEST_F(BtTest, test_getCovariance_fail_timed_out) {

@@ -16,7 +16,7 @@ class RetryUntilSuccessfulOrTimeout : public UWRTDecoratorNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            BT::InputPort<double>("num_seconds")
+            UwrtInput("num_seconds")
         };
     }
 
