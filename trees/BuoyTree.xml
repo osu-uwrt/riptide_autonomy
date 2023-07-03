@@ -1,5 +1,44 @@
 <?xml version="1.0"?>
-<root>
+<root main_tree_to_execute="BehaviorTree">
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="SetStatus" status="moving"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="BuoyTree"/>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="BumpObject">
+        <Sequence name="bump">
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="orig_oy" out_x="orig_x" out_y="orig_y" out_z="orig_z" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="orig_oy" x="orig_x" y="orig_y" z="orig_z"/>
+            <Action ID="SetStatus" status="performing"/>
+            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="-0.125" y="0" z="0"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="orig_x" y="orig_y" z="orig_z"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="BuoyTree">
+        <Sequence name="buoy">
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="120" value="120"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="prop" value="buoy"/>
+            <SetBlackboard output_key="subprop_1" value="buoy_glyph_1"/>
+            <Action ID="Format" format="{subprop_1}_frame" out="subprop_1_frame"/>
+            <SetBlackboard output_key="subprop_2" value="buoy_glyph_2"/>
+            <Action ID="Format" format="{subprop_2}_frame" out="subprop_2_frame"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="prop" target_cov="1" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_1" target_cov="1" timeout_secs="60"/>
+            <SubTree ID="BumpObject" __shared_blackboard="false" object_frame="subprop_1_frame"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_2" target_cov="1" timeout_secs="60"/>
+            <SubTree ID="BumpObject" __shared_blackboard="false" object_frame="subprop_2_frame"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="Dive">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
@@ -182,12 +221,18 @@
             <Action ID="Wait" seconds="5"/>
         </Sequence>
     </BehaviorTree>
+    <!-- ////////// -->
     <TreeNodesModel>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
             <input_port name="range" required="true"/>
         </Condition>
+        <SubTree ID="BumpObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_frame" required="true"/>
+        </SubTree>
+        <SubTree ID="BuoyTree"/>
         <Action ID="CalculateDistance">
             <output_port name="dist" required="false"/>
             <input_port name="x1" required="true"/>

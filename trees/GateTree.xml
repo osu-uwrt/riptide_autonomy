@@ -23,24 +23,24 @@
         <Sequence>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="gate_frame" value="gate_frame"/>
-            <SetBlackboard output_key="earth_frame" value="earth_frame"/>
             <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="earth" value="earth"/>
+            <SetBlackboard output_key="prop" value="gate"/>
+            <SetBlackboard output_key="subprop" value="earth_glyph"/>
+            <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="120" value="120"/>
             <SetBlackboard output_key="1.25" value="1.25"/>
-            <SetBlackboard output_key="gate" value="gate"/>
-            <SubTree ID="Search" __shared_blackboard="false" object_name="gate" target_cov="1.25" timeout_secs="120"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="earth" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="prop" target_cov="1.25" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" target_cov="1.25" timeout_secs="60"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="earth_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="-1"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="-1"/>
             <Action ID="SetStatus" status="performing"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="earth_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-1"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="-1"/>
             <SubTree ID="SpinTree" __shared_blackboard="false"/>
             <Action ID="Wait" seconds="2"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="earth_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="-1"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="-1"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="KillController">
@@ -107,7 +107,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -171,7 +171,7 @@
                 <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
                 <Condition ID="CompareNums" a="{dist}" b="1.333" test="&gt;"/>
                 <ForceFailure>
-                    <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn&apos;t converge the estimate."/>
+                    <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn't converge the estimate."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -244,7 +244,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
+            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="frameName" required="true"/>
@@ -308,7 +308,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -397,3 +397,4 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
+
