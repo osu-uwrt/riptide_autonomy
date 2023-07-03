@@ -127,6 +127,7 @@
                         <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
                         <Sequence name="handle bad distance accoringly">
                             <Condition ID="CompareNums" a="{dist}" b="1.333" test="&lt;"/>
+                            <Action ID="Info" message="Got too close ({dist} meters) without finding object. Backing up"/>
                             <SetBlackboard output_key="dist" value="4"/>
                             <AlwaysFailure name="force back to start of loop"/>
                         </Sequence>
