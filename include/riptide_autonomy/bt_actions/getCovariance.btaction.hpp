@@ -74,9 +74,13 @@ class getCovariance : public UWRTActionNode {
     {
         error = 0;
 
+        // use sum of sqared errors
         for(int i = 0; i < 6; i++){
-            error += msg.get()->pose.covariance.at((6*i) + i);
+            error += std::pow(msg.get()->pose.covariance.at((6*i) + i), 2);
         }
+
+        error = std::sqrt(error);
+
 
         msgReceived = true;
     }
