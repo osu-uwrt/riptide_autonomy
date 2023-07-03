@@ -26,25 +26,6 @@ BT::NodeStatus printError(BT::TreeNode& n) {
 }
 
 /**
- * @brief Converts a double or integer to a string and returns it to the appropriate port.
- * 
- * @param n The BehaviorTree node.
- * @return BT::NodeStatus return status
- */
-BT::NodeStatus numToString(BT::TreeNode& n) {
-    BT::Optional<double> doubleIn = n.getInput<double>("double_in");
-    BT::Optional<int> intIn = n.getInput<int>("int_in");
-    if(doubleIn.has_value()) {
-        postOutput<std::string>(&n, "str_out", std::to_string(doubleIn.value()));
-    } else if(intIn.has_value()) {
-        RCLCPP_INFO(log, "got intin as %i.", intIn.value());
-        postOutput<std::string>(&n, "str_out", std::to_string(intIn.value()));
-    }
-
-    return BT::NodeStatus::SUCCESS;
-}
-
-/**
  * @brief Calculates the distance between two 3d points and returns it to the appropriate port.
  * 
  * @param n The BehaviorTree node.
@@ -134,14 +115,6 @@ BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
 void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
     factory.registerSimpleAction("Info", printInfo, { BT::InputPort<std::string>("message") } );
     factory.registerSimpleAction("Error", printError, { BT::InputPort<std::string>("message") } );
-
-    factory.registerSimpleAction("ToString", numToString,
-        { 
-            UwrtInput("double_in"), 
-            UwrtInput("int_in"), 
-            UwrtOutput("str_out") 
-        }
-    );
 
     /**
      * Basic action that calculates the distance between two points.

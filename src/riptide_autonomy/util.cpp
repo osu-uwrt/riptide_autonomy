@@ -6,10 +6,9 @@ using namespace std::chrono_literals;
 std::string getEnvVar(const char *name)
 {
     const char *env = std::getenv(name);
-    if (env == nullptr)
+    if (!env)
     {
-        RCLCPP_INFO(log, "DoTask: %s environment variable not found!", name);
-        return "";
+        throw std::invalid_argument(name);
     }
 
     return std::string(env);
@@ -66,10 +65,10 @@ bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2
             return true;
 
         } catch(tf2::LookupException &ex) {
-            RCLCPP_WARN_SKIPFIRST_THROTTLE(log, *rosnode->get_clock(), 500, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
+            RCLCPP_WARN_SKIPFIRST_THROTTLE(rosnode->get_logger(), *rosnode->get_clock(), 500, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
         }
     }
-    RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
+    RCLCPP_ERROR(rosnode->get_logger(), "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
     return false;
 }
 
@@ -134,7 +133,7 @@ double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 
 }
 
 
-std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
+std::string stringWithBlackboardEntries(const std::string& str, UwrtBtNode *n) {
     std::string result = "";
     int pos = 0;
     while(str.find_first_of('{', pos) != std::string::npos) {
@@ -150,7 +149,7 @@ std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
                 valueOfEntry;
 
             //get the value of the entry
-            if(getFromBlackboard<std::string>(btNode, nameOfEntry, valueOfEntry)) {
+            if(getFromBlackboard<std::string>(n, nameOfEntry, valueOfEntry)) {
                 //if nameOfEntry exists, valueOfEntry was populated by the call above
                 result += valueOfEntry;
             } else {

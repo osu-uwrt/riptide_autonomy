@@ -12,6 +12,8 @@
 #define AUTONOMY_CONDITIONS "/osu-uwrt/development/software/src/riptide_autonomy/include/riptide_autonomy/bt_conditions"
 #define AUTONOMY_DECORATORS "/osu-uwrt/development/software/src/riptide_autonomy/include/riptide_autonomy/bt_decorators"
 
+#define log rclcpp::get_logger("btchecker")
+
 using namespace tinyxml2;
 using namespace BT;
 

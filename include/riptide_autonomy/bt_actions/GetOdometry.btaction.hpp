@@ -52,7 +52,7 @@ class GetOdometry : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         if(!msgReceived && (rosnode->get_clock()->now() - startTime).seconds() > 3) {
-            RCLCPP_ERROR(log, "Timed out waiting for odometry.");
+            RCLCPP_ERROR(rosnode->get_logger(), "Timed out waiting for odometry.");
             return BT::NodeStatus::FAILURE;
         } else if(msgReceived) {
             //set linear position outputs

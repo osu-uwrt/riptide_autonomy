@@ -160,35 +160,21 @@ double vector3Length(geometry_msgs::msg::Vector3 vec3);
  * @return false If the operation fails
  */
 template<typename T>
-bool getFromBlackboard(BT::Blackboard::Ptr blackboard, std::string key, T& value) {
-    try {
-        if(blackboard->get<T>(key, value)) {
-            return true;
-        }
-    } catch (std::runtime_error& ex) {
-        RCLCPP_ERROR(log, "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
-    }
-
-    return false;
-}
-
-/**
- * @brief Get a thing from the BT blackboard.
- *
- * @tparam T The type of the pointer to grab.
- * @param treeNode The behaviortree node to grab the blackboard value from.
- * @param name The name of the blackboard value to get.
- * @param value Will be populated with the value grabbed from the blackboard.
- * @return true if the operation succeeded, false otherwise.
- */
-template<typename T>
-bool getFromBlackboard(BT::TreeNode& n, std::string key, T& value) {
-    if(!n.config().blackboard) {
-        RCLCPP_ERROR(log, "Cannot get from blackboard! The passed TreeNode does not have one!");
+bool getFromBlackboard(const UwrtBtNode *n, const std::string& key, T& value) {
+    if(!n->treeNode()->config().blackboard) {
+        RCLCPP_ERROR(n->rosNode()->get_logger(), "Cannot get from blackboard! The passed TreeNode does not have one!");
         return false;
     }
 
-    return getFromBlackboard(n.config().blackboard, key, value);
+    try {
+        if(n->treeNode()->config().blackboard->get<T>(key, value)) {
+            return true;
+        }
+    } catch (std::runtime_error& ex) {
+        RCLCPP_ERROR(n->rosNode()->get_logger(), "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
+    }
+
+    return false;
 }
 
 
@@ -211,12 +197,12 @@ void postOutput(BT::TreeNode *n, const std::string& key, T value) {
  * @return T The value of the port or the default if there is none.
  */
 template<typename T> 
-T tryGetInput(const BT::TreeNode *n, const std::string& key, const T defaultValue, bool warnIfUndefined) {
-    auto op = n->getInput<std::string>(key);
+T tryGetInput(const UwrtBtNode *n, const std::string& key, const T defaultValue, bool warnIfUndefined) {
+    auto op = n->treeNode()->getInput<std::string>(key);
     if(op.has_value()) {
         return BT::convertFromString<T>(op.value());
     } else if(warnIfUndefined) {
-        RCLCPP_WARN(log, "Node %s does not have a value for required port with name %s!", n->name().c_str(), key.c_str());
+        RCLCPP_WARN(n->rosNode()->get_logger(), "Node %s does not have a value for required port with name %s!", n->treeNode()->name().c_str(), key.c_str());
     }
 
     return defaultValue;
@@ -232,7 +218,7 @@ T tryGetInput(const BT::TreeNode *n, const std::string& key, const T defaultValu
  * @return T The value of the port, or the default value if there is no such value.
  */
 template<typename T>
-T tryGetRequiredInput(const BT::TreeNode *n, const std::string& key, const T defaultValue) {
+T tryGetRequiredInput(const UwrtBtNode *n, const std::string& key, const T defaultValue) {
     return tryGetInput<T>(n, key, defaultValue, true);
 }
 
@@ -246,7 +232,7 @@ T tryGetRequiredInput(const BT::TreeNode *n, const std::string& key, const T def
  * @return T The value of the port, or the default value if there is no such value.
  */
 template<typename T>
-T tryGetOptionalInput(const BT::TreeNode *n, const std::string& key, const T defaultValue) {
+T tryGetOptionalInput(const UwrtBtNode *n, const std::string& key, const T defaultValue) {
     return tryGetInput<T>(n, key, defaultValue, false);
 }
 
