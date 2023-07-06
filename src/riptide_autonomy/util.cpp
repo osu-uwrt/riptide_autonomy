@@ -66,7 +66,7 @@ bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2
             return true;
 
         } catch(tf2::TransformException &ex) {
-            RCLCPP_WARN_SKIPFIRST_THROTTLE(log, *rosnode->get_clock(), 500, "LookupException encountered while looking up transform from %s to %s.", fromFrame.c_str(), toFrame.c_str());
+            RCLCPP_WARN_SKIPFIRST_THROTTLE(log, *rosnode->get_clock(), 500, "LookupException encountered while looking up transform from %s to %s: %s", fromFrame.c_str(), toFrame.c_str(), ex.what());
         }
     }
     RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());

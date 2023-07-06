@@ -59,6 +59,7 @@ class RetryUntilSuccessfulOrTimeout : public UWRTDecoratorNode {
         } 
         
         //timeElapsed > duration
+        RCLCPP_ERROR(log, "RetryUntilSuccessfulOrTimeout named \"%s\" timed out.", this->name());
         return BT::NodeStatus::FAILURE;
     }
 
