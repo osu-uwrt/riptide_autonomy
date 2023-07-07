@@ -7,10 +7,15 @@
 #define AUTONOMY_PKG_NAME "riptide_autonomy2"
 #endif
 
-#define AUTONOMY_WORKSPACE "/osu-uwrt/development/software/src/riptide_autonomy/trees/.groot/workspace.xml"
-#define AUTONOMY_ACTIONS "/osu-uwrt/development/software/src/riptide_autonomy/include/riptide_autonomy/bt_actions"
-#define AUTONOMY_CONDITIONS "/osu-uwrt/development/software/src/riptide_autonomy/include/riptide_autonomy/bt_conditions"
-#define AUTONOMY_DECORATORS "/osu-uwrt/development/software/src/riptide_autonomy/include/riptide_autonomy/bt_decorators"
+#define AUTONOMY_ROOT_DIR \
+    std::string(__FILE__).substr(0, std::string(__FILE__).find("/riptide_autonomy/")) + std::string("/riptide_autonomy")
+
+#define AUTONOMY_WORKSPACE  AUTONOMY_ROOT_DIR + "/trees/.groot/workspace.xml"
+#define AUTONOMY_ACTIONS    AUTONOMY_ROOT_DIR + "/include/riptide_autonomy/bt_actions"
+#define AUTONOMY_CONDITIONS AUTONOMY_ROOT_DIR + "/include/riptide_autonomy/bt_conditions"
+#define AUTONOMY_DECORATORS AUTONOMY_ROOT_DIR + "/include/riptide_autonomy/bt_decorators"
+#define AUTONOMY_TREES      AUTONOMY_ROOT_DIR + "/trees"
+
 
 using namespace tinyxml2;
 using namespace BT;
@@ -56,33 +61,34 @@ std::string portDirectionToString(PortDirection direction) {
  * @return a list of the names of every custom node
  */
 std::list<std::string> getCustomNodes(){
-    const std::string HOME = getEnvVar("HOME");
-    std::string actionsLoc = HOME + std::string(AUTONOMY_ACTIONS);
-    std::string conditionsLoc = HOME + std::string(AUTONOMY_CONDITIONS);
-    std::string decoratorsLoc = HOME + std::string(AUTONOMY_DECORATORS);
+    const std::string 
+        actionsLoc = AUTONOMY_ACTIONS,
+        conditionsLoc = AUTONOMY_CONDITIONS,
+        decoratorsLoc = AUTONOMY_DECORATORS;
+
     std::list<std::string> nodes;
     for (const auto & entry : std::filesystem::directory_iterator(actionsLoc)){
         //remove everything but file name
         std::string path = entry.path();
-        path.erase(0,actionsLoc.length()+1);
+        path.erase(0, actionsLoc.length() + 1);
         int dot = path.find(".");
-        path.erase(dot,path.length());
+        path.erase(dot, path.length());
         nodes.push_back(path);
     }
     for (const auto & entry : std::filesystem::directory_iterator(conditionsLoc)){
         //remove everything but file name
         std::string path = entry.path();
-        path.erase(0,conditionsLoc.length()+1);
+        path.erase(0, conditionsLoc.length() + 1);
         int dot = path.find(".");
-        path.erase(dot,path.length());
+        path.erase(dot, path.length());
         nodes.push_back(path);
     }
     for (const auto & entry : std::filesystem::directory_iterator(decoratorsLoc)){
         //remove everything but file name
         std::string path = entry.path();
-        path.erase(0,decoratorsLoc.length()+1);
+        path.erase(0, decoratorsLoc.length() + 1);
         int dot = path.find(".");
-        path.erase(dot,path.length());
+        path.erase(dot, path.length());
         nodes.push_back(path);
     }
     return nodes;
@@ -550,13 +556,87 @@ bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument
 }
 
 
-int main(int argc, char **argv) {
-    const std::string HOME = getEnvVar("HOME");
-    if(HOME.length() == 0) {
-        RCLCPP_ERROR(log, "Failed to find HOME directory!");
-        return 1; //cant do anything more without HOME directory
-    }
+void treeMerge(XMLElement *dst, XMLElement *src) {
+    if(dst && src) {
+        XMLElement *currentSrcElem = src->FirstChildElement();
 
+        while(currentSrcElem) {
+            const char
+                *srcElemVal = currentSrcElem->Value(),
+                *srcElemId = currentSrcElem->Attribute("ID");
+
+            if(srcElemVal && srcElemId) {
+                //have a valid src tree. now check dst for the same tree. if it exists replace it. otherwise, add it
+                XMLElement *currentDstElem = dst->FirstChildElement();
+                bool itemInserted = false;
+
+                while(currentDstElem) {
+                    const char
+                        *dstElemVal = currentDstElem->Value(),
+                        *dstElemId = currentDstElem->Attribute("ID");
+                    
+                    if(dstElemVal && dstElemId && strcmp(dstElemVal, srcElemVal) == 0 && strcmp(dstElemId, srcElemId) == 0) {
+                        //tree names and values match between tree. replace the dst tree with the src tree
+                        XMLNode *toInsert = currentSrcElem->DeepClone(dst->GetDocument());
+                        currentDstElem->Parent()->InsertAfterChild(currentDstElem, toInsert); //...insert new tree
+                        currentDstElem->Parent()->DeleteChild(currentDstElem); //...and delete old one
+                        // currentDstElem->GetDocument()->DeleteNode(currentDstElem); //...and delete old one
+                        itemInserted = true;                        
+                        break; //break dst loop and move onto next src tree
+                    }
+
+                    currentDstElem = currentDstElem->NextSiblingElement();
+                }
+
+                if(!itemInserted) {
+                    XMLNode *toInsert = currentSrcElem->DeepClone(dst->GetDocument());
+                    dst->InsertEndChild(toInsert);
+                }
+            }
+            
+            currentSrcElem = currentSrcElem->NextSiblingElement();
+        }
+    }
+}
+
+
+void applyWorkspace(XMLDocument& workspaceDoc) {
+    RCLCPP_INFO(log, "Applying current workspace to trees");
+
+    XMLDocument currentTree;
+    XMLElement *workspaceElem = workspaceDoc.RootElement(); //assumed this exists
+
+    for (const auto & entry : std::filesystem::directory_iterator(AUTONOMY_TREES)) {
+        if(entry.path().string().find(".xml") != std::string::npos) { //if its an xml file...
+            RCLCPP_INFO(log, "Loading tree %s", entry.path().c_str());
+
+            currentTree.LoadFile(entry.path().c_str());
+            XMLElement *currentTreeElem = currentTree.RootElement();
+            if(currentTreeElem) {
+                treeMerge(currentTreeElem, workspaceElem); //merge workspace subtrees into the current tree
+                
+                workspaceElem = workspaceElem->FirstChildElement("TreeNodesModel");
+                currentTreeElem = currentTreeElem->FirstChildElement("TreeNodesModel");
+
+                if(workspaceElem && currentTreeElem) {
+                    treeMerge(currentTreeElem, workspaceElem);
+                } else {
+                    RCLCPP_ERROR(log, "Could not find a TreeNodesModel when merging between the workspace and the current tree (%s). Check that both trees have a TreeNodesModel.", entry.path().c_str());
+                }
+
+                //save modifications to file
+                if(currentTree.SaveFile(entry.path().c_str()) != XML_SUCCESS) {
+                    RCLCPP_ERROR(log, "Error saving tree %s!", entry.path().c_str());
+                }
+            } else {
+                RCLCPP_ERROR(log, "ERROR loading tree %s!", entry.path().c_str());
+            }
+        }
+    }
+}
+
+
+int main(int argc, char **argv) {
     std::string treePath = "";
     XMLDocument tree;
     bool noErrors = true;
@@ -568,6 +648,18 @@ int main(int argc, char **argv) {
     for(int i = 1; i < argc; i++){
         if(strcmp(argv[i], "-y") == 0){
             yta = true;
+        } else if(strcmp(argv[i], "--apply-workspace") == 0) {
+            treePath = AUTONOMY_WORKSPACE;
+            tree.LoadFile(treePath.c_str());
+            if(!tree.RootElement()) {
+                //if there is no root element then the testTree was not loaded correctly
+                RCLCPP_ERROR(log, "FATAL: Could not load Groot workspace file (%s). Does it exist?", treePath.c_str());
+                return 1; //bail out; nothing else we can do here
+            }
+
+            RCLCPP_INFO(log, "Loaded workspace (%s)", treePath.c_str());
+            applyWorkspace(tree);
+            return 0;
         } else {
             treePath = argv[i];
             tree.LoadFile(argv[i]);
@@ -584,7 +676,7 @@ int main(int argc, char **argv) {
 
     //tree did not load. load the workspace and check that.
     if(!tree.RootElement()){
-        treePath = HOME + std::string(AUTONOMY_WORKSPACE);
+        treePath = AUTONOMY_WORKSPACE;
         tree.LoadFile(treePath.c_str());
         if(!tree.RootElement()) {
             //if there is no root element then the testTree was not loaded correctly
