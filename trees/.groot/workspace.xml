@@ -48,7 +48,7 @@
             <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
             <Action ID="CalculateDistance" dist="{dist}" x1="{cx}" x2="{x}" y1="{cy}" y2="{y}" z1="0" z2="0"/>
             <IfThenElse name="have robot face goal point if far away from it">
-                <Condition ID="CompareNums" a="{dist}" b="0.75" test="&gt;"/>
+                <Condition ID="CompareNums" a="{dist}" b="1.5" test="&gt;"/>
                 <Sequence name="Get yaw to face towards goal point">
                     <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="{yaw}" targX="{x}" targY="{y}"/>
                     <SetBlackboard output_key="goal_yaw" value="{yaw}"/>
@@ -173,6 +173,8 @@
                                         <SetBlackboard output_key="20" value="20"/>
                                         <SetBlackboard output_key="15" value="15"/>
                                         <Action ID="Info" message="Detected an obstacle. Attempting to move out of the way"/>
+                                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="old_x" y="old_y" z="old_z"/>
+                                        <Action ID="Wait" name="Wait to stablize" seconds="3"/>
                                         <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="" out_x="em_x" out_y="em_y" out_z="em_z" oy="0" to_frame="world" x="-1" y="1" z="0"/>
                                         <ForceSuccess>
                                             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="curr_z"/>
