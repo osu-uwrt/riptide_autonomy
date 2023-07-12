@@ -41,7 +41,7 @@ class ComputeFrameAlignment : public UWRTActionNode {
             ns = rosnode->get_namespace(),
             robotName = ns.substr(1, ns.find('/', 1)), // start at 1 to skip leading /
             finalFrame = tryGetRequiredInput<std::string>(this, "frameName", ""),
-            fromOdom = "odom",
+            fromOdom = "world",
             BaseFrame = robotName + "/base_link";
 
         //make a pose  that represents the desired position of the given frame

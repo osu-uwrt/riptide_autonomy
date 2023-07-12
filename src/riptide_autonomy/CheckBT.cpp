@@ -556,9 +556,9 @@ bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument
 }
 
 
-void treeMerge(XMLElement *dst, XMLElement *src) {
+void treeMerge(XMLElement *dst, const XMLElement *src) {
     if(dst && src) {
-        XMLElement *currentSrcElem = src->FirstChildElement();
+        const XMLElement *currentSrcElem = src->FirstChildElement();
 
         while(currentSrcElem) {
             const char
@@ -600,36 +600,43 @@ void treeMerge(XMLElement *dst, XMLElement *src) {
 }
 
 
-void applyWorkspace(XMLDocument& workspaceDoc) {
+//applies the workspace to all files in the given list
+void applyWorkspace(XMLDocument& workspaceDoc, const std::list<std::string>& files) {
     RCLCPP_INFO(log, "Applying current workspace to trees");
 
     XMLDocument currentTree;
-    XMLElement *workspaceElem = workspaceDoc.RootElement(); //assumed this exists
+    const XMLElement 
+        *workspaceRoot = workspaceDoc.RootElement(), //assumed root exists
+        *workspaceModel = workspaceRoot->FirstChildElement("TreeNodesModel");
 
-    for (const auto & entry : std::filesystem::directory_iterator(AUTONOMY_TREES)) {
-        if(entry.path().string().find(".xml") != std::string::npos) { //if its an xml file...
-            RCLCPP_INFO(log, "Loading tree %s", entry.path().c_str());
+    for (const std::string& file : files) {
+        if(file.find(".xml") != std::string::npos) { //if its an xml file...
+            RCLCPP_INFO(log, "Loading tree %s", file.c_str());
+            currentTree.LoadFile(file.c_str());
 
-            currentTree.LoadFile(entry.path().c_str());
-            XMLElement *currentTreeElem = currentTree.RootElement();
-            if(currentTreeElem) {
-                treeMerge(currentTreeElem, workspaceElem); //merge workspace subtrees into the current tree
-                
-                workspaceElem = workspaceElem->FirstChildElement("TreeNodesModel");
-                currentTreeElem = currentTreeElem->FirstChildElement("TreeNodesModel");
+            XMLElement
+                *currentTreeRoot = currentTree.RootElement(),
+                *currentTreeModel = currentTreeRoot->FirstChildElement("TreeNodesModel");
 
-                if(workspaceElem && currentTreeElem) {
-                    treeMerge(currentTreeElem, workspaceElem);
-                } else {
-                    RCLCPP_ERROR(log, "Could not find a TreeNodesModel when merging between the workspace and the current tree (%s). Check that both trees have a TreeNodesModel.", entry.path().c_str());
-                }
+            if(!currentTreeRoot) {
+                RCLCPP_ERROR(log, "ERROR loading tree %s!", file.c_str());
+            }
 
-                //save modifications to file
-                if(currentTree.SaveFile(entry.path().c_str()) != XML_SUCCESS) {
-                    RCLCPP_ERROR(log, "Error saving tree %s!", entry.path().c_str());
-                }
+            if(currentTreeRoot && workspaceRoot) {
+                treeMerge(currentTreeRoot, workspaceRoot); //merge workspace subtrees into the current tree
             } else {
-                RCLCPP_ERROR(log, "ERROR loading tree %s!", entry.path().c_str());
+                RCLCPP_ERROR(log, "Could not find a root when merging between the workspace and the current tree (%s). Check that both trees have a TreeNodesModel.", file.c_str());
+            }
+
+            if(currentTreeModel) {
+                treeMerge(currentTreeModel, workspaceModel); //merge workspace models into the current tree
+            } else {
+                RCLCPP_ERROR(log, "Could not find a TreeNodesModel when merging between the workspace and the current tree (%s). Check that both trees have a TreeNodesModel.", file.c_str());
+            }
+
+            //save modifications to file
+            if(currentTree.SaveFile(file.c_str()) != XML_SUCCESS) {
+                RCLCPP_ERROR(log, "Error saving tree %s!", file.c_str());
             }
         }
     }
@@ -657,8 +664,20 @@ int main(int argc, char **argv) {
                 return 1; //bail out; nothing else we can do here
             }
 
+            //if there is another argument supplied, the user wants a specific tree to be workspace-ified
+            std::list<std::string> trees;
+            if(argc > i + 1 && strcmp(strstr(argv[i + 1], ".xml"), ".xml") == 0)
+            {
+                trees.push_back(argv[i + 1]);
+            } else {
+                //add all trees in directory
+                for (const auto & entry : std::filesystem::directory_iterator(AUTONOMY_ROOT_DIR + "/trees")) {
+                    trees.push_back(entry.path().string());
+                }
+            }
+
             RCLCPP_INFO(log, "Loaded workspace (%s)", treePath.c_str());
-            applyWorkspace(tree);
+            applyWorkspace(tree, trees);
             return 0;
         } else {
             treePath = argv[i];

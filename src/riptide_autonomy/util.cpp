@@ -61,7 +61,7 @@ bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2
     
     while((rosnode->get_clock()->now() - startTime) < 3s) {
         try {
-            geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
+            geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero, 1500ms);
             result = doTransform(original, transform);
 
             RCLCPP_DEBUG(rosnode->get_logger(), "Transform from %s to %s looked up as XYZ %.3f %.3f %.3f with XYZW %.3f %.3f %.3f %.3f", 

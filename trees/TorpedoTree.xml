@@ -1,16 +1,19 @@
 <?xml version="1.0"?>
 <root main_tree_to_execute="BehaviorTree">
+    <BehaviorTree ID="AlignLink">
+        <Sequence name="align torpedos">
+            <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
+            <Action ID="ComputeFrameAlignment" frameName="{link_name}" out_x="x" out_y="y" out_z="z" x="{obj_x}" y="{obj_y}" z="{obj_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="depth" value="-1"/>
-            <SetBlackboard output_key="forward_distance" value="5"/>
+            <SetBlackboard output_key="-1" value="-1"/>
             <SubTree ID="WaitForKillSwitch"/>
             <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="0" to_frame="world" x="{forward_distance}" y="0" z="0"/>
-            <Action ID="SetStatus" status="performing"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="TorpedoTree"/>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
@@ -25,6 +28,13 @@
             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="depth"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="oy"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="FireTorpedo">
+        <Sequence>
+            <Action ID="Info" message="Firing &quot;torpedo&quot;..."/>
+            <Action ID="Wait" seconds="5"/>
+            <Action ID="Info" message="&quot;TORPEDO&quot; FIRED"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="KillController">
@@ -166,6 +176,37 @@
             </Fallback>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="SetActuatorsArmed">
+        <Sequence>
+            <Action ID="Info" message="Setting &quot;Actuators&quot; armed state to {armed}"/>
+            <Action ID="Wait" seconds="1"/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{armed}" b="1" test="=="/>
+                <Action ID="Info" message="&quot;ACTUATORS&quot; ARMED"/>
+                <Action ID="Info" message="&quot;ACTUATORS&quot; DISARMED"/>
+            </IfThenElse>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="ShootObject">
+        <Sequence name="shootobject">
+            <SetBlackboard output_key="talos/torpedo_link" value="talos/torpedo_link"/>
+            <SetBlackboard output_key="0.25" value="0.25"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="0.5" value="0.5"/>
+            <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
+            <Action ID="Info" message="Attempting to shoot object {object_name}"/>
+            <ForceSuccess>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" target_cov="0.5" timeout_secs="60"/>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="talos/torpedo_link" proximity="1"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="talos/torpedo_link" proximity="0.25"/>
+            <RetryUntilSuccessful num_attempts="2">
+                <SubTree ID="FireTorpedo"/>
+            </RetryUntilSuccessful>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
@@ -241,6 +282,47 @@
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="orig_y"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="TorpedoTree">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <Fallback>
+                <Sequence name="torpedo">
+                    <SetBlackboard output_key="180" value="180"/>
+                    <SetBlackboard output_key="0.5" value="0.5"/>
+                    <SetBlackboard output_key="torpedo" value="torpedo"/>
+                    <SetBlackboard output_key="1" value="1"/>
+                    <SetBlackboard output_key="shoot_upper_first" value="1"/>
+                    <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+                    <ForceSuccess>
+                        <SubTree ID="Search" __shared_blackboard="false" object_name="torpedo" target_cov="0.5" timeout_secs="180"/>
+                    </ForceSuccess>
+                    <IfThenElse>
+                        <Condition ID="CompareNums" a="{shoot_upper_first}" b="1" test="=="/>
+                        <Sequence name="shoot upper then lower">
+                            <SetBlackboard output_key="torpedo_lower_hole" value="torpedo_lower_hole"/>
+                            <SetBlackboard output_key="torpedo_upper_hole" value="torpedo_upper_hole"/>
+                            <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_upper_hole"/>
+                            <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_lower_hole"/>
+                        </Sequence>
+                        <Sequence name="shoot lower then upper">
+                            <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_lower_hole"/>
+                            <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_upper_hole"/>
+                        </Sequence>
+                    </IfThenElse>
+                </Sequence>
+                <ForceFailure>
+                    <Sequence name="handle fail">
+                        <Action ID="Error" message="Torpedo tree failed, disarming actuators"/>
+                        <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+                    </Sequence>
+                </ForceFailure>
+            </Fallback>
+            <Sequence name="handle success">
+                <Action ID="Info" message="Torpedo tree succeeded, disarming torpedos"/>
+                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            </Sequence>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
         <Sequence>
             <Action ID="SetStatus" status="waiting"/>
@@ -262,6 +344,12 @@
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
+        <SubTree ID="AlignLink">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true">frame to align to</input_port>
+            <input_port name="link_name" required="true">link to align</input_port>
+            <input_port name="proximity" required="true">how far away to be</input_port>
+        </SubTree>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
@@ -306,6 +394,7 @@
         <Action ID="Error">
             <input_port name="message" required="true">The message to print.</input_port>
         </Action>
+        <SubTree ID="FireTorpedo"/>
         <Action ID="Format">
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
@@ -405,9 +494,17 @@
             <input_port default="1.25" name="target_cov" required="true">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="true">Timeout for search</input_port>
         </SubTree>
+        <SubTree ID="SetActuatorsArmed">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="armed" required="true"/>
+        </SubTree>
         <Action ID="SetStatus">
             <input_port name="status" required="true"/>
         </Action>
+        <SubTree ID="ShootObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_name" required="true"/>
+        </SubTree>
         <SubTree ID="SmartMovePosition">
             <inout_port name="__shared_blackboard" required="true"/>
             <input_port name="x" required="true"/>
@@ -417,6 +514,7 @@
         <SubTree ID="SpinTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
+        <SubTree ID="TorpedoTree"/>
         <Action ID="TransformPose">
             <input_port name="from_frame" required="true"/>
             <input_port name="op" required="true"/>
@@ -441,19 +539,6 @@
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
-        <SubTree ID="AlignLink">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="frame_name" required="true">frame to align to</input_port>
-            <input_port name="link_name" required="true">link to align</input_port>
-            <input_port name="proximity" required="true">how far away to be</input_port>
-        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
-    <BehaviorTree ID="AlignLink">
-        <Sequence name="align torpedos">
-            <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
-            <Action ID="ComputeFrameAlignment" frameName="{link_name}" out_x="x" out_y="y" out_z="z" x="{obj_x}" y="{obj_y}" z="{obj_z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
-        </Sequence>
-    </BehaviorTree>
 </root>

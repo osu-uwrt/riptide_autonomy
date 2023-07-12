@@ -35,6 +35,7 @@
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
+            <Action ID="Info" message="Refining esimate for object {object_name}"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
@@ -58,7 +59,7 @@
             <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
             <Action ID="CalculateDistance" dist="{dist}" x1="{cx}" x2="{x}" y1="{cy}" y2="{y}" z1="0" z2="0"/>
             <IfThenElse name="have robot face goal point if far away from it">
-                <Condition ID="CompareNums" a="{dist}" b="0.75" test="&gt;"/>
+                <Condition ID="CompareNums" a="{dist}" b="1.5" test="&gt;"/>
                 <Sequence name="Get yaw to face towards goal point">
                     <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="{yaw}" targX="{x}" targY="{y}"/>
                     <SetBlackboard output_key="goal_yaw" value="{yaw}"/>
@@ -156,7 +157,7 @@
                 <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
                 <Condition ID="CompareNums" a="{dist}" b="1.333" test="&gt;"/>
                 <ForceFailure>
-                    <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn&apos;t converge the estimate."/>
+                    <Action ID="Error" message="Could not find {object_name} after {timeout_secs} seconds."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -165,8 +166,8 @@
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
                 <Sequence name="Try move to position">
-                    <SetBlackboard output_key="timeout" value="5"/>
-                    <Action ID="Info" message="Attempting to move forward for 5 seconds"/>
+                    <SetBlackboard output_key="timeout" value="7"/>
+                    <Action ID="Info" message="Attempting to move forward for {timeout} seconds"/>
                     <Action ID="GetOdometry" op="" or="" oy="" x="old_x" y="old_y" z="old_z"/>
                     <Fallback>
                         <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="timeout" x="x" y="y" z="z"/>
@@ -183,9 +184,15 @@
                                         <SetBlackboard output_key="20" value="20"/>
                                         <SetBlackboard output_key="15" value="15"/>
                                         <Action ID="Info" message="Detected an obstacle. Attempting to move out of the way"/>
+                                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="old_x" y="old_y" z="old_z"/>
+                                        <Action ID="Wait" name="Wait to stablize" seconds="3"/>
                                         <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="" out_x="em_x" out_y="em_y" out_z="em_z" oy="0" to_frame="world" x="-1" y="1" z="0"/>
-                                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="curr_z"/>
-                                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="-0.75"/>
+                                        <ForceSuccess>
+                                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="curr_z"/>
+                                        </ForceSuccess>
+                                        <ForceSuccess>
+                                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="-0.75"/>
+                                        </ForceSuccess>
                                         <Action ID="Wait" name="wait for stable orientation" seconds="3"/>
                                         <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="" out_x="em_x" out_y="em_y" out_z="em_z" oy="0" to_frame="world" x="2" y="0" z="0"/>
                                         <Fallback name="move past obstacle">
@@ -196,7 +203,7 @@
                                         </Fallback>
                                     </Sequence>
                                 </Decorator>
-                                <Action ID="Info" message="Not there after 5 seconds, but made progress"/>
+                                <Action ID="Info" message="Not there after {timeout} seconds, but made progress"/>
                             </IfThenElse>
                             <AlwaysFailure name="try move again"/>
                         </Sequence>
@@ -430,6 +437,19 @@
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
+        <SubTree ID="AlignLink">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true">frame to align to</input_port>
+            <input_port name="link_name" required="true">link to align</input_port>
+            <input_port name="proximity" required="true">how far away to be</input_port>
+        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
+    <BehaviorTree ID="AlignLink">
+        <Sequence name="align torpedos">
+            <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
+            <Action ID="ComputeFrameAlignment" frameName="{link_name}" out_x="x" out_y="y" out_z="z" x="{obj_x}" y="{obj_y}" z="{obj_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+        </Sequence>
+    </BehaviorTree>
 </root>
