@@ -1,12 +1,23 @@
 <?xml version="1.0"?>
 <root>
+    <BehaviorTree ID="AlignLink">
+        <Sequence name="align torpedos">
+            <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
+            <Action ID="ComputeFrameAlignment" frameName="{link_name}" out_x="x" out_y="y" out_z="z" x="{obj_x}" y="{obj_y}" z="{obj_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="Dive">
         <Sequence>
+            <SetBlackboard output_key="15" value="15"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="10" value="10"/>
+            <SetBlackboard output_key="30" value="30"/>
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="GetOdometry" op="{op}" or="{or}" oy="{oy}" x="{x}" y="{y}" z="{z}"/>
             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
-            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="depth"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="oy"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="depth"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="oy"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="KillController">
@@ -17,13 +28,15 @@
     </BehaviorTree>
     <BehaviorTree ID="MiniSearch">
         <Sequence name="minisearch">
+            <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
+            <Action ID="Info" message="Refining esimate for object {object_name}"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
-            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="z"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
                 <Sequence name="shrink cov">
                     <Action ID="Wait" seconds="1"/>
@@ -35,12 +48,15 @@
     </BehaviorTree>
     <BehaviorTree ID="Move">
         <Sequence>
+            <SetBlackboard output_key="15" value="15"/>
             <Action ID="Info" message="Moving to XYZ {x}, {y}, {z} with RPY {or}, {op}, {oy}"/>
+            <SetBlackboard output_key="30" value="30"/>
+            <SetBlackboard output_key="10" value="10"/>
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
             <Action ID="CalculateDistance" dist="{dist}" x1="{cx}" x2="{x}" y1="{cy}" y2="{y}" z1="0" z2="0"/>
             <IfThenElse name="have robot face goal point if far away from it">
-                <Condition ID="CompareNums" a="{dist}" b="0.75" test="&gt;"/>
+                <Condition ID="CompareNums" a="{dist}" b="1.5" test="&gt;"/>
                 <Sequence name="Get yaw to face towards goal point">
                     <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="{yaw}" targX="{x}" targY="{y}"/>
                     <SetBlackboard output_key="goal_yaw" value="{yaw}"/>
@@ -49,10 +65,9 @@
                     <SetBlackboard output_key="goal_yaw" value="{coy}"/>
                 </Sequence>
             </IfThenElse>
-            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="cx" y="cy" z="cz"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="goal_yaw"/>
-            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" y="oy"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="goal_yaw"/>
+            <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" timeout="15" y="oy"/>
             <Action ID="Wait" seconds="2"/>
             <Action ID="Info" message="Move Complete."/>
         </Sequence>
@@ -61,7 +76,7 @@
         <Sequence>
             <Action ID="Info" message="Rotating to RPY {r}, {p}, {y}"/>
             <Fallback>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout}">
                     <Sequence>
                         <Action ID="PublishToController" isOrientation="1" mode="3" x="{r}" y="{p}" z="{y}"/>
                         <Action ID="GetOdometry" name="Get Current RPY" op="{cp}" or="{cr}" oy="{cy}" x="" y="" z=""/>
@@ -81,23 +96,24 @@
     </BehaviorTree>
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
-            <Action ID="Info" message="Translating to XYZ: {x}, {y}, {z}"/>
-            <Fallback>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="30">
-                    <Sequence>
-                        <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="{y}" z="{z}"/>
-                        <Action ID="GetOdometry" name="Get Current XYZ" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
-                        <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="{cx}" y1="{y}" y2="{cy}" z1="{z}" z2="{cz}"/>
-                        <Condition ID="CompareNums" a="{dist}" b="0.25" name="At goal point?" test="&lt;"/>
-                    </Sequence>
-                </Decorator>
-                <ForceSuccess>
-                    <Sequence>
-                        <Action ID="GetOdometry" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
-                        <Action ID="Error" message="Failed to move to position! Wanted {x}, {y}, {z} but got {cx}, {cy}, {cz}"/>
-                    </Sequence>
-                </ForceSuccess>
-            </Fallback>
+            <IfThenElse name="Ensure Z good">
+                <Condition ID="CompareNums" a="{z}" b="-0.75" name="z above 0.75..." test="&gt;"/>
+                <Sequence>
+                    <Action ID="Info" message="Enforcing minimum depth of 0.75 meters... requested depth was previously {z}."/>
+                    <SetBlackboard name="...too high" output_key="valid_z" value="-0.75"/>
+                </Sequence>
+                <SetBlackboard name="...all good" output_key="valid_z" value="{z}"/>
+            </IfThenElse>
+            <Action ID="Info" message="Translating to XYZ: {x}, {y}, {z} in no more than {timeout} seconds"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout}">
+                <Sequence>
+                    <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="{y}" z="{valid_z}"/>
+                    <Action ID="Wait" seconds="0.25"/>
+                    <Action ID="GetOdometry" name="Get Current XYZ" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
+                    <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="{cx}" y1="{y}" y2="{cy}" z1="{valid_z}" z2="{cz}"/>
+                    <Condition ID="CompareNums" a="{dist}" b="0.25" name="At goal point?" test="&lt;"/>
+                </Sequence>
+            </Decorator>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="RelativeMove">
@@ -138,13 +154,67 @@
                 <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
                 <Condition ID="CompareNums" a="{dist}" b="1.333" test="&gt;"/>
                 <ForceFailure>
-                    <Action ID="Error" message="Could not find {object_name}. Got within 1 meter and couldn't converge the estimate."/>
+                    <Action ID="Error" message="Could not find {object_name} after {timeout_secs} seconds."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="SmartMovePosition">
+        <Fallback>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
+                <Sequence name="Try move to position">
+                    <SetBlackboard output_key="timeout" value="7"/>
+                    <Action ID="Info" message="Attempting to move forward for {timeout} seconds"/>
+                    <Action ID="GetOdometry" op="" or="" oy="" x="old_x" y="old_y" z="old_z"/>
+                    <Fallback>
+                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="timeout" x="x" y="y" z="z"/>
+                        <Sequence name="Evaluate possible obstacle">
+                            <Action ID="GetOdometry" op="" or="" oy="" x="curr_x" y="curr_y" z="curr_z"/>
+                            <Action ID="CalculateDistance" dist="dist_travelled" x1="{old_x}" x2="{curr_x}" y1="{old_y}" y2="{curr_y}" z1="{old_z}" z2="{curr_z}"/>
+                            <IfThenElse name="avoid obstacle if necessary">
+                                <Condition ID="CompareNums" a="{dist_travelled}" b="1" name="expect 1 meter travelled in 5 seconds" test="&lt;"/>
+                                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="60">
+                                    <Sequence name="if dist &lt; 1m, move out the way">
+                                        <SetBlackboard output_key="5" value="5"/>
+                                        <SetBlackboard output_key="60" value="60"/>
+                                        <SetBlackboard output_key="-0.75" value="-0.75"/>
+                                        <SetBlackboard output_key="20" value="20"/>
+                                        <SetBlackboard output_key="15" value="15"/>
+                                        <Action ID="Info" message="Detected an obstacle. Attempting to move out of the way"/>
+                                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="old_x" y="old_y" z="old_z"/>
+                                        <Action ID="Wait" name="Wait to stablize" seconds="3"/>
+                                        <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="" out_x="em_x" out_y="em_y" out_z="em_z" oy="0" to_frame="world" x="-1" y="1" z="0"/>
+                                        <ForceSuccess>
+                                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="curr_z"/>
+                                        </ForceSuccess>
+                                        <ForceSuccess>
+                                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="-0.75"/>
+                                        </ForceSuccess>
+                                        <Action ID="Wait" name="wait for stable orientation" seconds="3"/>
+                                        <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="" out_x="em_x" out_y="em_y" out_z="em_z" oy="0" to_frame="world" x="2" y="0" z="0"/>
+                                        <Fallback name="move past obstacle">
+                                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="15" x="em_x" y="em_y" z="em_z"/>
+                                            <ForceFailure>
+                                                <Action ID="Error" message="Failed to move out of the way!"/>
+                                            </ForceFailure>
+                                        </Fallback>
+                                    </Sequence>
+                                </Decorator>
+                                <Action ID="Info" message="Not there after {timeout} seconds, but made progress"/>
+                            </IfThenElse>
+                            <AlwaysFailure name="try move again"/>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+            <ForceFailure>
+                <Action ID="Error" message="Failed to move to XYZ position {x}, {y}, {z}. Theres something in the way"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
     <BehaviorTree ID="SpinTree">
         <Sequence>
+            <SetBlackboard output_key="15" value="15"/>
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="GetOdometry" op="" or="" oy="orig_y" x="" y="" z=""/>
             <Repeat num_cycles="7">
@@ -161,7 +231,7 @@
                     </Decorator>
                 </Sequence>
             </Repeat>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" y="orig_y"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="orig_y"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
@@ -184,6 +254,12 @@
         </Sequence>
     </BehaviorTree>
     <TreeNodesModel>
+        <SubTree ID="AlignLink">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true">frame to align to</input_port>
+            <input_port name="link_name" required="true">link to align</input_port>
+            <input_port name="proximity" required="true">how far away to be</input_port>
+        </SubTree>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
@@ -291,10 +367,12 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="p" required="true"/>
             <input_port name="r" required="true"/>
+            <input_port default="15" name="timeout" required="true"/>
             <input_port name="y" required="true"/>
         </SubTree>
         <SubTree ID="PrimitiveMovePosition">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="60" name="timeout" required="true"/>
             <input_port name="x" required="true"/>
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
@@ -328,6 +406,12 @@
         <Action ID="SetStatus">
             <input_port name="status" required="true"/>
         </Action>
+        <SubTree ID="SmartMovePosition">
+            <inout_port name="__shared_blackboard" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
+        </SubTree>
         <SubTree ID="SpinTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
