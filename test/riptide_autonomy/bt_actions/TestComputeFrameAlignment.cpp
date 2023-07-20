@@ -86,9 +86,9 @@ BT::NodeStatus testFrameAlign(
 
     auto blackboard = node->config().blackboard;
     outputsSet = true;
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_x", resultPos.x);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_y", resultPos.y);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_z", resultPos.z);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_x", resultPos.x);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_y", resultPos.y);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_z", resultPos.z);
 
     return result;
 }

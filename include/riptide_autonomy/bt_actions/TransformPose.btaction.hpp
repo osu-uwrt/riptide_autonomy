@@ -81,7 +81,7 @@ class TransformPose : public UWRTActionNode {
             
             return BT::NodeStatus::SUCCESS;
         } else {
-            RCLCPP_ERROR(rosnode->get_logger(), "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
+            RCLCPP_ERROR(rosNode()->get_logger(), "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
             return BT::NodeStatus::FAILURE;
         }
     }

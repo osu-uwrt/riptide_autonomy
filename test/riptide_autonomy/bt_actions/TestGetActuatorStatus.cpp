@@ -45,12 +45,12 @@ BT::NodeStatus testGetActuatorStatus(std::shared_ptr<BtTestTool> toolNode, GetAc
     outputsSet = true;
     auto blackboard = node->config().blackboard;
 
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "claw_state", out.clawState);
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "torpedo_state", out.torpedoState);
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "torpedo_available_count", out.torpedoAvailable);
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "dropper_state", out.dropperState);
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(blackboard, "dropper_available_count", out.dropperAvailable);
-    outputsSet = outputsSet && getOutputFromBlackboard<bool>(blackboard, "actuators_busy", out.busy);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "claw_state", out.clawState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "torpedo_state", out.torpedoState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "torpedo_available_count", out.torpedoAvailable);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "dropper_state", out.dropperState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "dropper_available_count", out.dropperAvailable);
+    outputsSet = outputsSet && getOutputFromBlackboard<bool>(toolNode, blackboard, "actuators_busy", out.busy);
 
     return status;
 }

@@ -7,9 +7,9 @@
  * @param n The BehaviorTree node.
  * @return BT::NodeStatus return status.
  */
-BT::NodeStatus printInfo(BT::TreeNode& n) {
+BT::NodeStatus printInfo(UwrtBtNode& n) {
     std::string message = tryGetRequiredInput<std::string>(&n, "message", "");
-    RCLCPP_INFO(log, "%s", stringWithBlackboardEntries(message, n).c_str()); 
+    RCLCPP_INFO(n.rosNode()->get_logger(), "%s", formatStringWithBlackboard(message, &n).c_str()); 
     return BT::NodeStatus::SUCCESS; 
 }
 
@@ -19,9 +19,9 @@ BT::NodeStatus printInfo(BT::TreeNode& n) {
  * @param n The BehaviorTree node.
  * @return BT::NodeStatus return status.
  */
-BT::NodeStatus printError(BT::TreeNode& n) {
+BT::NodeStatus printError(UwrtBtNode& n) {
     std::string message = tryGetRequiredInput<std::string>(&n, "message", "");
-    RCLCPP_ERROR(log, "%s", stringWithBlackboardEntries(message, n).c_str());
+    RCLCPP_ERROR(n.rosNode()->get_logger(), "%s", formatStringWithBlackboard(message, &n).c_str());
     return BT::NodeStatus::SUCCESS;
 }
 
@@ -31,7 +31,7 @@ BT::NodeStatus printError(BT::TreeNode& n) {
  * @param n The BehaviorTree node.
  * @return BT::NodeStatus return status
  */
-BT::NodeStatus calculateDistance(BT::TreeNode& n) {
+BT::NodeStatus calculateDistance(UwrtBtNode& n) {
     geometry_msgs::msg::Vector3 p1, p2;
     p1.x = tryGetRequiredInput<double>(&n, "x1", 0);
     p1.y = tryGetRequiredInput<double>(&n, "y1", 0);
@@ -50,7 +50,7 @@ BT::NodeStatus calculateDistance(BT::TreeNode& n) {
  * @param n The BehaviorTree node.
  * @return BT::NodeStatus return status
  */
-BT::NodeStatus doMath(BT::TreeNode& n) {
+BT::NodeStatus doMath(UwrtBtNode& n) {
     double
         a = tryGetRequiredInput<double>(&n, "a", 0),
         b = tryGetRequiredInput<double>(&n, "b", 0),
@@ -77,9 +77,9 @@ BT::NodeStatus doMath(BT::TreeNode& n) {
  * @param n Tree node
  * @return execution status
  */
-BT::NodeStatus format(BT::TreeNode &n) {
+BT::NodeStatus format(UwrtBtNode &n) {
     std::string formatStr = tryGetRequiredInput<std::string>(&n, "format", "");
-    std::string out = stringWithBlackboardEntries(formatStr, n);
+    std::string out = formatStringWithBlackboard(formatStr, &n);
     postOutput<std::string>(&n, "out", out);
     return BT::NodeStatus::SUCCESS;
 }
@@ -90,7 +90,7 @@ BT::NodeStatus format(BT::TreeNode &n) {
  * @param n The BehaviorTree node.
  * @return BT::NodeStatus return status
  */
-BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
+BT::NodeStatus getHeadingToPoint(UwrtBtNode& n) {
     double
         currX = tryGetRequiredInput<double>(&n, "currX", 0),
         currY = tryGetRequiredInput<double>(&n, "currY", 0),
@@ -107,19 +107,29 @@ BT::NodeStatus getHeadingToPoint(BT::TreeNode& n) {
     return BT::NodeStatus::SUCCESS;
 }
 
+
+void registerSimpleUwrtAction(BT::BehaviorTreeFactory& factory, const std::string& id, const UWRTSimpleActionNode::TickFunctor& tickFunctor, BT::PortsList ports) {
+    BT::NodeBuilder builder = [tickFunctor, id] (const std::string& name, const BT::NodeConfiguration& config) {
+        return std::make_unique<UWRTSimpleActionNode>(name, tickFunctor, config);
+    };
+
+    BT::TreeNodeManifest manifest = {BT::NodeType::ACTION, id, std::move(ports), {}};
+    factory.registerBuilder(manifest, builder);
+}
+
 /**
  * @brief Registers simple actions to be done by the BehaviorTree.
  * 
  * @param factory The factory to register with.
  */
-void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
-    factory.registerSimpleAction("Info", printInfo, { BT::InputPort<std::string>("message") } );
-    factory.registerSimpleAction("Error", printError, { BT::InputPort<std::string>("message") } );
+void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
+    registerSimpleUwrtAction(factory, "Info", printInfo, { BT::InputPort<std::string>("message") } );
+    registerSimpleUwrtAction(factory, "Error", printError, { BT::InputPort<std::string>("message") } );
 
     /**
      * Basic action that calculates the distance between two points.
      */
-    factory.registerSimpleAction("CalculateDistance", calculateDistance,
+    registerSimpleUwrtAction(factory, "CalculateDistance", calculateDistance,
         {
             UwrtInput("x1"),
             UwrtInput("y1"),
@@ -134,7 +144,7 @@ void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
     /**
      * Basic action that does math with two numbers (can add, subtract, multiply, or divide)
      */
-    factory.registerSimpleAction("Math", doMath, 
+    registerSimpleUwrtAction(factory, "Math", doMath, 
         {
             UwrtInput("a"),
             UwrtInput("b"),
@@ -143,14 +153,14 @@ void SimpleActions::bulkRegister(BT::BehaviorTreeFactory &factory) {
         }
     );
 
-    factory.registerSimpleAction("Format", format,
+    registerSimpleUwrtAction(factory, "Format", format,
         {
             UwrtInput("format"),
             UwrtOutput("out")
         }
     );
 
-    factory.registerSimpleAction("HeadingToPoint", getHeadingToPoint,
+    registerSimpleUwrtAction(factory, "HeadingToPoint", getHeadingToPoint,
         {
             UwrtInput("currX"),
             UwrtInput("currY"),

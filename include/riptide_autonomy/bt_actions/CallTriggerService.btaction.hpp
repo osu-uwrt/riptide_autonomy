@@ -40,7 +40,7 @@ class CallTriggerService : public UWRTActionNode {
 
         //wait for client
         if(!client->wait_for_service(1s)) {
-            RCLCPP_ERROR(rosnode->get_logger(), "Trigger Service %s is not available.", srvName.c_str());
+            RCLCPP_ERROR(rosNode()->get_logger(), "Trigger Service %s is not available.", srvName.c_str());
             return BT::NodeStatus::FAILURE;
         }
 
@@ -63,7 +63,7 @@ class CallTriggerService : public UWRTActionNode {
     BT::NodeStatus onRunning() override {
         //check if std::future stored in result is valid
         if(!result.valid()) {
-            RCLCPP_ERROR(rosnode->get_logger(), "Result of Trigger service call to %s is not valid.", srvName.c_str());
+            RCLCPP_ERROR(rosNode()->get_logger(), "Result of Trigger service call to %s is not valid.", srvName.c_str());
             return BT::NodeStatus::FAILURE;
         }
 
@@ -76,7 +76,7 @@ class CallTriggerService : public UWRTActionNode {
 
             //resport the message in the response if there is one
             if(message.length() > 0) {
-                RCLCPP_WARN(rosnode->get_logger(), "Message from %s: %s", srvName.c_str(), message.c_str());
+                RCLCPP_WARN(rosNode()->get_logger(), "Message from %s: %s", srvName.c_str(), message.c_str());
             }
 
             return (success ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
@@ -84,7 +84,7 @@ class CallTriggerService : public UWRTActionNode {
 
         //not ready, check for timeout
         if((rosnode->get_clock()->now() - startTime).seconds() > timeoutSecs) {
-            RCLCPP_ERROR(rosnode->get_logger(), "Service call to %s took too long to respond.", srvName.c_str());
+            RCLCPP_ERROR(rosNode()->get_logger(), "Service call to %s took too long to respond.", srvName.c_str());
             return BT::NodeStatus::FAILURE;
         }
 

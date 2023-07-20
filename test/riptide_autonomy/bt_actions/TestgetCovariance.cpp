@@ -21,7 +21,7 @@ BT::NodeStatus testGetCovariance(std::shared_ptr<BtTestTool> toolNode, const std
     }
 
     //collect results
-    outputSet = getOutputFromBlackboard<double>(node->config().blackboard, "Covariance", covariance);
+    outputSet = getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "Covariance", covariance);
     return status;
 }
 

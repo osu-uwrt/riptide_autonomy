@@ -13,7 +13,7 @@ class UwrtBtNode {
         return rosnode;
     }
 
-    virtual const BT::TreeNode *treeNode() const = 0;
+    virtual BT::TreeNode *treeNode() = 0;
 
     protected:
     virtual void rosInit() = 0;
@@ -28,7 +28,7 @@ class UWRTActionNode : public BT::StatefulActionNode, public UwrtBtNode {
     UWRTActionNode(const std::string& name, const BT::NodeConfiguration& config)
      : StatefulActionNode(name, config) { };
     
-    const BT::TreeNode *treeNode() const override {
+    BT::TreeNode *treeNode() override {
         return this;
     }
 };
@@ -43,7 +43,7 @@ class UWRTConditionNode : public BT::ConditionNode, public UwrtBtNode {
     UWRTConditionNode(const std::string& name, const BT::NodeConfiguration& config)
      : ConditionNode(name, config) { };
 
-    const BT::TreeNode *treeNode() const override {
+    BT::TreeNode *treeNode() override {
         return this;
     }
 };
@@ -57,7 +57,7 @@ class UWRTDecoratorNode : public BT::DecoratorNode, public UwrtBtNode {
     UWRTDecoratorNode(const std::string& name, const BT::NodeConfiguration& config)
      : DecoratorNode(name, config) { };
     
-    const BT::TreeNode *treeNode() const override {
+    BT::TreeNode *treeNode() override {
         return this;
     }
 };

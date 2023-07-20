@@ -15,7 +15,7 @@ std::string getEnvVar(const char *name)
 }
 
 
-void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName) {
+void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string& packageName) {
     std::string amentIndexPath = ament_index_cpp::get_package_prefix(packageName); // TODO Make this work to scan ament index and get to our plugin
     factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
     factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
@@ -53,7 +53,7 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry
  * @param result The transformed pose
  * @return true if the operation succeeded, false otherwise
  */
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {    
+bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, const std::string& fromFrame, const std::string& toFrame, geometry_msgs::msg::Pose& result) {    
     //look up transform with a three second timeout to find one
     rclcpp::Time startTime = rosnode->get_clock()->now();
     
@@ -73,7 +73,7 @@ bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2
 }
 
 
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
+bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, const std::string& fromFrame, const std::string& toFrame, geometry_msgs::msg::Pose& result) {
     std::shared_ptr<tf2_ros::Buffer> buffer = std::make_shared<tf2_ros::Buffer>(rosnode->get_clock());
     tf2_ros::TransformListener listener(*buffer);
 
@@ -133,7 +133,7 @@ double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 
 }
 
 
-std::string stringWithBlackboardEntries(const std::string& str, UwrtBtNode *n) {
+std::string formatStringWithBlackboard(const std::string& str, UwrtBtNode *n) {
     std::string result = "";
     int pos = 0;
     while(str.find_first_of('{', pos) != std::string::npos) {

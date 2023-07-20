@@ -26,7 +26,7 @@ BT::NodeStatus testGetBoolTopic(std::shared_ptr<BtTestTool> toolNode, const std:
     } //if timed out, status will be RUNNING
 
     //node done, get result
-    outputSet = getOutputFromBlackboard<bool>(node->config().blackboard, "value", receivedVal);
+    outputSet = getOutputFromBlackboard<bool>(toolNode, node->config().blackboard, "value", receivedVal);
     return status;
 }
 

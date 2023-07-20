@@ -59,7 +59,7 @@ class CompareNums : public UWRTConditionNode {
             return (a == b ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
         }
 
-        RCLCPP_ERROR(log, "Invalid operator %s! Valid options are \">\", \"<\", and \"==\".", test.c_str());
+        RCLCPP_ERROR(rosNode()->get_logger(), "Invalid operator %s! Valid options are \">\", \"<\", and \"==\".", test.c_str());
         return BT::NodeStatus::FAILURE;
     }
 };
