@@ -37,10 +37,7 @@ class TransformPose : public UWRTActionNode {
      * Anything requiring the ROS node handle to construct should be initialized here. Do not do it in the 
      * constructor or you will be very sad
      */
-    void rosInit() override { 
-        buffer = std::make_shared<tf2_ros::Buffer>(rosnode->get_clock());
-        listener = std::make_shared<tf2_ros::TransformListener>(*buffer);
-    }
+    void rosInit() override { }
 
     /**
      * @brief Called when the node runs for the first time. If it returns RUNNING, node becomes async
@@ -66,7 +63,7 @@ class TransformPose : public UWRTActionNode {
         
 
         geometry_msgs::msg::Pose transformed;
-        if(transformBetweenFrames(rosnode, buffer, original, fromFrame, toFrame, transformed)){
+        if(transformBetweenFrames(rosnode, tfBuffer, original, fromFrame, toFrame, transformed)){
             geometry_msgs::msg::Vector3 transformedRPY = toRPY(transformed.orientation);
 
             //set output ports
@@ -100,8 +97,4 @@ class TransformPose : public UWRTActionNode {
     void onHalted() override {
 
     }
-
-    private:
-    std::shared_ptr<tf2_ros::Buffer> buffer;
-    std::shared_ptr<tf2_ros::TransformListener> listener;
 };

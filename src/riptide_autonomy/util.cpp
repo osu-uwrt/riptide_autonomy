@@ -24,14 +24,17 @@ void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory,
 }
 
 
-void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext) {
+void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosNode) {
+    //initialize static variables of UwrtBtNode
+    UwrtBtNode::staticInit(rosNode);
+
     // give each BT node access to our RCLCPP context
-    for (auto &node : tree.nodes)
+    for (auto &treeNode : tree.nodes)
     {
         // Not a typo: it is "=", not "=="
-        if (auto btNode = dynamic_cast<UwrtBtNode *>(node.get()))
+        if (auto uwrtNode = dynamic_cast<UwrtBtNode *>(treeNode.get()))
         {
-            btNode->init(rosContext);
+            uwrtNode->init(rosNode);
         }
     }
 }
@@ -83,14 +86,6 @@ bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2
     }
     RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
     return false;
-}
-
-
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
-    std::shared_ptr<tf2_ros::Buffer> buffer = std::make_shared<tf2_ros::Buffer>(rosnode->get_clock());
-    tf2_ros::TransformListener listener(*buffer);
-
-    return transformBetweenFrames(rosnode, buffer, relative, fromFrame, toFrame, result);
 }
 
 

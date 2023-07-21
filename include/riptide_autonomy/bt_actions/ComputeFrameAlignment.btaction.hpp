@@ -51,12 +51,12 @@ class ComputeFrameAlignment : public UWRTActionNode {
         finalRes.position.z = tryGetRequiredInput<double>(this, "z", 0);
 
         geometry_msgs::msg::Pose baseFrameOdom;
-        if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), BaseFrame, fromOdom, baseFrameOdom)) {
+        if(!transformBetweenFrames(rosnode, tfBuffer, geometry_msgs::msg::Pose(), BaseFrame, fromOdom, baseFrameOdom)) {
             return BT::NodeStatus::FAILURE;
         }
 
         geometry_msgs::msg::Pose targetFrameOdom;
-        if(!transformBetweenFrames(rosnode, geometry_msgs::msg::Pose(), finalFrame, fromOdom, targetFrameOdom)) {
+        if(!transformBetweenFrames(rosnode, tfBuffer, geometry_msgs::msg::Pose(), finalFrame, fromOdom, targetFrameOdom)) {
             return BT::NodeStatus::FAILURE;
         }
 
@@ -66,7 +66,6 @@ class ComputeFrameAlignment : public UWRTActionNode {
         finalRes.position.z -= targetFrameOdom.position.z - baseFrameOdom.position.z;
 
         //set outputs to the odom coords that get the desired frame to the desired position
-
         postOutput<double>(this, "out_x", finalRes.position.x);
         postOutput<double>(this, "out_y", finalRes.position.y);
         postOutput<double>(this, "out_z", finalRes.position.z);

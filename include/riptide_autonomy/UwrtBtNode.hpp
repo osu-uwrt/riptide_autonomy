@@ -4,15 +4,20 @@
 
 class UwrtBtNode {
     public:
-    void init(rclcpp::Node::SharedPtr node) {
-        this->rosnode = node;
-        rosInit();
-    }
+    static void staticInit(rclcpp::Node::SharedPtr node);
+    static void staticDeinit();
+    void init(rclcpp::Node::SharedPtr node);
 
     protected:
-    virtual void rosInit() = 0;    
+    virtual void rosInit() = 0;
+    static std::shared_ptr<tf2_ros::Buffer> tfBuffer;
     rclcpp::Node::SharedPtr rosnode;
+
+    private:
+    static std::shared_ptr<tf2_ros::TransformListener> tfListener;
 };
+
+
 
 /**
  * @brief UWRT superclass for BT action nodes

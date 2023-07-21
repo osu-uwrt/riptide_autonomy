@@ -96,18 +96,7 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose pose, geometry_msg
  * @param buffer The TF buffer to use.
  * @return std::tuple<geometry_msgs::msg::Pose, bool> The equlivalent pose in a new frame
  */
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result);
-
-/**
- * @brief Looks up necessary transform between two poses then transforms specified coords into coords in the new pose. this overload will create a TF buffer and listener to use.
- * 
- * @param relative The pose in fromFrame to transform to toFrame
- * @param fromFrame The current frame of the relative pose
- * @param toFrame The desired frame of the relative pose
- * @param rosnode The ROS node handle to use.
- * @return std::tuple<geometry_msgs::msg::Pose, bool> The equivalent pose in a new frame
- */
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result);
+bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result);
 
 /**
  * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles in radians.

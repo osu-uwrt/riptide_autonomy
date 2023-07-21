@@ -24,6 +24,8 @@ std::shared_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string n
 
     auto node = factory->instantiateTreeNode("Test", name, inputConfig);
 
+    UwrtBtNode::staticInit(shared_from_this());
+
     //initialize node with ROS context if appropriate (yes, single equal sign, not double)
     if(auto btNode = dynamic_cast<UwrtBtNode *>(node.get())) {
         btNode->init(this->shared_from_this());
