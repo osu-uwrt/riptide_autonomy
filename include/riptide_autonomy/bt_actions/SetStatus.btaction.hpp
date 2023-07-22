@@ -101,7 +101,7 @@ class SetStatus : public UWRTActionNode {
                 break;
             case TreeStatus::SEARCHING:
                 cmd.red = 255;
-                cmd.green = 255;
+                cmd.green = 100;
                 cmd.blue = 0;
                 cmd.mode = LedCmd::MODE_SOLID;
                 cmd.target = LedCmd::TARGET_ALL;
