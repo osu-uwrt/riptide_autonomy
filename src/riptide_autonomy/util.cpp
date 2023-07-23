@@ -6,17 +6,16 @@ using namespace std::chrono_literals;
 std::string getEnvVar(const char *name)
 {
     const char *env = std::getenv(name);
-    if (env == nullptr)
+    if (!env)
     {
-        RCLCPP_INFO(log, "DoTask: %s environment variable not found!", name);
-        return "";
+        throw std::invalid_argument(name);
     }
 
     return std::string(env);
 }
 
 
-void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName) {
+void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string& packageName) {
     std::string amentIndexPath = ament_index_cpp::get_package_prefix(packageName); // TODO Make this work to scan ament index and get to our plugin
     factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
     factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
@@ -138,7 +137,7 @@ double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 
 }
 
 
-std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
+std::string formatStringWithBlackboard(const std::string& str, UwrtBtNode *n) {
     std::string result = "";
     int pos = 0;
     while(str.find_first_of('{', pos) != std::string::npos) {
@@ -154,7 +153,7 @@ std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
                 valueOfEntry;
 
             //get the value of the entry
-            if(getFromBlackboard<std::string>(btNode, nameOfEntry, valueOfEntry)) {
+            if(getFromBlackboard<std::string>(n, nameOfEntry, valueOfEntry)) {
                 //if nameOfEntry exists, valueOfEntry was populated by the call above
                 result += valueOfEntry;
             } else {

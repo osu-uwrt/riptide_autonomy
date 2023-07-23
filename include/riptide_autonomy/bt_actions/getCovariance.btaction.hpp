@@ -55,7 +55,7 @@ class getCovariance : public UWRTActionNode {
         }
 
         if(rosnode->get_clock()->now() - startTime > 5s) {
-            RCLCPP_ERROR(log, "Timed out waiting on topic %s", topicName.c_str());
+            RCLCPP_ERROR(rosNode()->get_logger(), "Timed out waiting on topic %s", topicName.c_str());
             return BT::NodeStatus::FAILURE;
         }
 

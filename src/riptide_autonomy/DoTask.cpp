@@ -160,7 +160,7 @@ namespace do_task
 
             // test if the tree exists
             if(!std::filesystem::exists(goal->tree)) {
-                RCLCPP_ERROR(log, "Rejecting request to run tree %s because the file does not exist.", goal->tree.c_str());
+                RCLCPP_ERROR(get_logger(), "Rejecting request to run tree %s because the file does not exist.", goal->tree.c_str());
                 return rclcpp_action::GoalResponse::REJECT;
             }
 
@@ -209,7 +209,7 @@ namespace do_task
                 std::string FBLFilePath = fblDirPath + "/BTLog_" + buf + ".fbl";
 
                 // add the loggers to the BT context
-                RCLCPP_INFO(log, "DoTask: Loading Monitor");
+                RCLCPP_INFO(get_logger(), "DoTask: Loading Monitor");
                 PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
                 FileLogger fileLogger(tree, FBLFilePath.c_str());
                 UwrtLogger uwrtLogger(tree, this->shared_from_this());
@@ -236,7 +236,7 @@ namespace do_task
                         tree.haltTree();
                         goal_handle->canceled(result);
                         treeRunning = false;
-                        RCLCPP_INFO(log, "DoTask: Cancelled current action goal");
+                        RCLCPP_INFO(get_logger(), "DoTask: Cancelled current action goal");
                         return;
                     }
 
@@ -269,7 +269,7 @@ namespace do_task
                         break;
                 }
 
-                RCLCPP_INFO(log, "Tree ended with status %s", resultStr.c_str());
+                RCLCPP_INFO(get_logger(), "Tree ended with status %s", resultStr.c_str());
                 treeRunning = false;
 
                 //publish led command to indicate finish status
@@ -290,11 +290,11 @@ namespace do_task
             }
             catch (const std::exception &e)
             {
-                RCLCPP_ERROR_STREAM(log, "Error occurred while ticking tree. Aborting tree! Error: " << e.what());
+                RCLCPP_ERROR_STREAM(get_logger(), "Error occurred while ticking tree. Aborting tree! Error: " << e.what());
             }
             catch (...)
             {
-                RCLCPP_ERROR(log, "Unknown error while ticking tree. Aborting tree!");
+                RCLCPP_ERROR(get_logger(), "Unknown error while ticking tree. Aborting tree!");
             }
 
             treeRunning = false;
@@ -385,11 +385,12 @@ int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
 
-    std::string treeDir = AUTONOMY_TREE_DIR;
-    RCLCPP_INFO(log, "Using tree directory at %s", treeDir.c_str());
-
     // create our node context
     auto node = std::make_shared<do_task::BTExecutor>();
+
+    //print tree directory
+    std::string treeDir = AUTONOMY_TREE_DIR;
+    RCLCPP_INFO(node->get_logger(), "Using tree directory at %s", treeDir.c_str());
 
     rclcpp::executors::MultiThreadedExecutor executor;
     executor.add_node(node);

@@ -27,10 +27,10 @@ unsigned int numOccurrances(std::vector<T> vector, T obj) {
 
 
 template<typename T>
-bool getOutputFromBlackboard(BT::Blackboard::Ptr bb, const std::string& key, T& value) {
+bool getOutputFromBlackboard(rclcpp::Node::SharedPtr rosnode, BT::Blackboard::Ptr bb, const std::string& key, T& value) {
     //output from node is a string value, so get it and convert it to the desired type
     std::string valStr;
-    bool gotten = getFromBlackboard(bb, key, valStr);
+    bool gotten = getFromBlackboard(rosnode, bb, key, valStr);
     if(gotten) {
         value = BT::convertFromString<T>(valStr);
         return true;

@@ -36,7 +36,7 @@ def onGenerateRegistrators(args, autonomyRootLoc: str):
             headers += "#include \"riptide_autonomy/{}/{}\"\n".format(nodeDir, os.path.basename(file))
         
         for file in simpleFiles:
-            registrations += "    {0}::bulkRegister(factory);\n".format(fileNameNoExt(file))
+            registrations += "    bulkRegister{0}(factory);\n".format(fileNameNoExt(file))
         
         templatePath = "{}/assistant/templates/plugin_registrator_template".format(autonomySrcLocation(autonomyRootLoc))
         createFileFromTemplate(templatePath, location, [headers, registrations])

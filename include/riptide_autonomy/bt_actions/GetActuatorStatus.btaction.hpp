@@ -62,7 +62,7 @@ class GetActuatorStatus : public UWRTActionNode {
     BT::NodeStatus onRunning() override {
         //have we timed out yet?
         if(rosnode->get_clock()->now() - startTime > 3s) {
-            RCLCPP_ERROR(log, "Timed out waiting for full actuator status. Status received: %d, busy received: %d", statusReceived, busyReceived);
+            RCLCPP_ERROR(rosNode()->get_logger(), "Timed out waiting for full actuator status. Status received: %d, busy received: %d", statusReceived, busyReceived);
             return BT::NodeStatus::FAILURE;
         }
 

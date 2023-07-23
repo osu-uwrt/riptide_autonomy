@@ -45,7 +45,7 @@ std::shared_ptr<BT::TreeNode> BtTestTool::createDecoratorNodeFromConfig(std::str
 
     //its not a decorator!
     std::string msg = "Node with name " + name + " is not a decorator.";
-    RCLCPP_ERROR(log, msg.c_str());
+    RCLCPP_ERROR(get_logger(), msg.c_str());
     throw std::runtime_error(msg);
 }
 

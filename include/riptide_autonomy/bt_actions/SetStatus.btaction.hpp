@@ -62,7 +62,7 @@ class SetStatus : public UWRTActionNode {
         //get ID of requested LED status
         std::string statusName = tryGetRequiredInput<std::string>(this, "status", "undefined");
         if(STATUSES.count(statusName) == 0) {
-            RCLCPP_WARN(log, "No behavior status by the name \"%s\"!", statusName.c_str());
+            RCLCPP_WARN(rosNode()->get_logger(), "No behavior status by the name \"%s\"!", statusName.c_str());
             statusName = "undefined";
         }
 

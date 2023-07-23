@@ -16,7 +16,7 @@ void DummyActionNode::configureExecution(DummyExecutionMode mode, int metric, BT
         finishMetric = metric;
         finishStatus = status;
     } else {
-        RCLCPP_ERROR(log, "Cannot set execution mode of DummyActionNode while it is running! Change was not applied!");
+        RCLCPP_ERROR(rosNode()->get_logger(), "Cannot set execution mode of DummyActionNode while it is running! Change was not applied!");
     }
 }
 

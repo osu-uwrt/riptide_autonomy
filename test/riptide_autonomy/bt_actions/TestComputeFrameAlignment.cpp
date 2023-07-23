@@ -124,15 +124,16 @@ BT::NodeStatus frameAlignTest(
     BT::NodeStatus status = toolNode->tickUntilFinished(node);
 
     //set outputs
+    // UwrtBtNode *uwrtNode = dynamic_cast<UwrtBtNode *>(node.get());
+
     outputsSet = true;
     BT::Blackboard::Ptr blackboard = node->config().blackboard;
-
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_x", result.v1.x);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_y", result.v1.y);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_z", result.v1.z);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_or", result.v2.x);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_op", result.v2.y);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_oy", result.v2.z);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "out_x", result.v1.x);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "out_y", result.v1.y);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "out_z", result.v1.z);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "out_or", result.v2.x);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "out_op", result.v2.y);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "out_oy", result.v2.z);
 
     broadcaster.sendTransform({
         //publish computed base link position

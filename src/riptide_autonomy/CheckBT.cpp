@@ -17,6 +17,8 @@
 #define AUTONOMY_TREES      AUTONOMY_ROOT_DIR + "/trees"
 
 
+#define log rclcpp::get_logger("btchecker")
+
 using namespace tinyxml2;
 using namespace BT;
 
