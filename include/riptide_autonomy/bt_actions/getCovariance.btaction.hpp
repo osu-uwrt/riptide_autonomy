@@ -81,7 +81,6 @@ class getCovariance : public UWRTActionNode {
 
         error = std::sqrt(error);
 
-
         msgReceived = true;
     }
 
