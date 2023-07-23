@@ -86,17 +86,27 @@ void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext);
  */
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose pose, geometry_msgs::msg::TransformStamped transform);
 
-/**
- * @brief Looks up necessary transform between two poses then transforms specified coords into cords in the new pose. Use this overload if you have or can create a TF buffer
- * 
- * @param relative The pose in fromFrame to transform to toFrame.
- * @param fromFrame The current frame of the relative pose
- * @param toFrame The desired frame of the relative pose
- * @param rosnode The ROS node handle to use.
- * @param buffer The TF buffer to use.
- * @return std::tuple<geometry_msgs::msg::Pose, bool> The equlivalent pose in a new frame
- */
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result);
+
+bool lookupTransformNow(
+    rclcpp::Node::SharedPtr node,
+    const std::shared_ptr<const tf2_ros::Buffer> buffer,
+    const std::string& fromFrame,
+    const std::string& toFrame,
+    geometry_msgs::msg::TransformStamped& transform);
+
+
+#define DEF_THROTTLE_TIMER(name) double name = 0
+
+
+bool lookupTransformThrottled(
+    rclcpp::Node::SharedPtr node,
+    const std::shared_ptr<const tf2_ros::Buffer> buffer,
+    const std::string& fromFrame,
+    const std::string& toFrame,
+    double throttleDuration,
+    double& lastLookup,
+    geometry_msgs::msg::TransformStamped& transform);
+
 
 /**
  * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles in radians.

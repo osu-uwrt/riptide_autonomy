@@ -143,6 +143,9 @@ class BtTestTool : public rclcpp::Node {
  * @brief A ROS node for behavior tree testing. Test cases can use this to initialize UwrtBtNodes and create publishers/subscribers
  */
 class BtTest : public ::testing::Test {
+    public:
+    static void initBtTest(int argc, char **argv);
+
     protected:
     void SetUp() override;
     void TearDown() override;
@@ -150,6 +153,10 @@ class BtTest : public ::testing::Test {
 
     rclcpp::Time startTime;
     std::shared_ptr<BtTestTool> toolNode;
+
+    private:
+    static char **argv;
+    static int argc;
 };
 
 // this class serves no purpose except to split up the regular bt test and the test tool test suites.

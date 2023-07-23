@@ -2,12 +2,20 @@
 
 using namespace std::chrono_literals;
 
+int BtTest::argc = 0;
+char **BtTest::argv = nullptr;
+
+void BtTest::initBtTest(int argc, char **argv) {
+    BtTest::argc = argc;
+    BtTest::argv = argv;
+}
+
 /**
  * @brief Setup function called before test cases run
  */
 void BtTest::SetUp() {
     //init ros
-    rclcpp::init(0, nullptr);
+    rclcpp::init(argc, argv);
     toolNode = std::make_shared<BtTestTool>();
     startTime = toolNode->get_clock()->now();
 }

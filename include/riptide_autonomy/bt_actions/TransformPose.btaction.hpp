@@ -45,11 +45,9 @@ class TransformPose : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         // get frame names
-        std::string
-            fromFrame = tryGetRequiredInput<std::string>(this, "from_frame", "world"),
-            toFrame = tryGetRequiredInput<std::string>(this, "to_frame", "world");
+        fromFrame = tryGetRequiredInput<std::string>(this, "from_frame", "world");
+        toFrame = tryGetRequiredInput<std::string>(this, "to_frame", "world");
 
-        geometry_msgs::msg::Pose original;
         original.position.x = tryGetRequiredInput<double>(this, "x", 0);
         original.position.y = tryGetRequiredInput<double>(this, "y", 0);
         original.position.z = tryGetRequiredInput<double>(this, "z", 0);
@@ -60,27 +58,9 @@ class TransformPose : public UWRTActionNode {
         originalRPY.y = tryGetRequiredInput<double>(this, "op", 0);
         originalRPY.z = tryGetRequiredInput<double>(this, "oy", 0);
         original.orientation = toQuat(originalRPY);
-        
 
-        geometry_msgs::msg::Pose transformed;
-        if(transformBetweenFrames(rosnode, tfBuffer, original, fromFrame, toFrame, transformed)){
-            geometry_msgs::msg::Vector3 transformedRPY = toRPY(transformed.orientation);
-
-            //set output ports
-            postOutput<double>(this,"out_x", transformed.position.x);
-            postOutput<double>(this,"out_y", transformed.position.y);
-            postOutput<double>(this,"out_z", transformed.position.z);
-
-            //convert orientation back to RPY and return that
-            postOutput<double>(this, "out_or", transformedRPY.x);
-            postOutput<double>(this, "out_op", transformedRPY.y);
-            postOutput<double>(this, "out_oy", transformedRPY.z);
-            
-            return BT::NodeStatus::SUCCESS;
-        } else {
-            RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
-            return BT::NodeStatus::FAILURE;
-        }
+        startTime = rosnode->get_clock()->now();
+        return BT::NodeStatus::RUNNING;
     }
 
     /**
@@ -88,7 +68,39 @@ class TransformPose : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        return BT::NodeStatus::SUCCESS;
+        std::string 
+            from = tryGetRequiredInput<std::string>(this, "from_frame", ""),
+            to = tryGetRequiredInput<std::string>(this, "to_frame", "");
+
+        bool res = lookupTransformThrottled(rosnode, tfBuffer, from, to, 0.5, lookupTimer, transform);
+        if(res) {
+            //lookup success! apply transform and set outputs
+            geometry_msgs::msg::Pose result = doTransform(original, transform);
+            
+            postOutput<double>(this, "out_x", result.position.x);
+            postOutput<double>(this, "out_y", result.position.y);
+            postOutput<double>(this, "out_z", result.position.z);
+
+            geometry_msgs::msg::Vector3 outRPY = toRPY(result.orientation);
+            postOutput<double>(this, "out_or", outRPY.x);
+            postOutput<double>(this, "out_op", outRPY.y);
+            postOutput<double>(this, "out_oy", outRPY.z);
+
+            RCLCPP_DEBUG(rosnode->get_logger(), "Transform from %s to %s looked up as XYZ %.3f, %.3f, %.3f and RPY %.3f, %.3f, %.3f",
+                from.c_str(),
+                to.c_str(),
+                result.position.x,
+                result.position.y,
+                result.position.z,
+                outRPY.x,
+                outRPY.y,
+                outRPY.z);
+
+            return BT::NodeStatus::SUCCESS;
+        }
+
+        //if we get down here, lookup has not been completed yet
+        return (rosnode->get_clock()->now() - startTime < 3s ? BT::NodeStatus::RUNNING : BT::NodeStatus::FAILURE);
     }
 
     /**
@@ -97,4 +109,14 @@ class TransformPose : public UWRTActionNode {
     void onHalted() override {
 
     }
+
+    private:
+    DEF_THROTTLE_TIMER(lookupTimer);
+    std::string 
+        fromFrame,
+        toFrame;
+    
+    geometry_msgs::msg::Pose original;
+    geometry_msgs::msg::TransformStamped transform;
+    rclcpp::Time startTime;
 };

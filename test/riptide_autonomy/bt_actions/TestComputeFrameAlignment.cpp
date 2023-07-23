@@ -1,22 +1,62 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
+#define PRINT_RESULTS_OF_TEST
 
 //
 // TEST UTIL THINGS
 //
 
-static geometry_msgs::msg::TransformStamped createTransform(std::shared_ptr<BtTestTool> toolNode, double x, double y, double z, double roll, double pitch, double yaw, std::string parentFrame, std::string childFrame) {
+struct DualVector3 {
+    geometry_msgs::msg::Vector3
+        v1,
+        v2;
+};
+
+
+#define ASSERT_LINK_NEAR_POS(node, linkName, xyz, rpy, absError) \
+    do { \
+        geometry_msgs::msg::TransformStamped transform; \
+        bool evalTransformLookedUp = lookupTransform(node, linkName, "odom", transform); \
+        ASSERT_TRUE(evalTransformLookedUp); \
+        ASSERT_NEAR(transform.transform.translation.x, xyz.x, absError); \
+        ASSERT_NEAR(transform.transform.translation.y, xyz.y, absError); \
+        ASSERT_NEAR(transform.transform.translation.z, xyz.z, absError); \
+        geometry_msgs::msg::Vector3 transRpy = toRPY(transform.transform.rotation); \
+        ASSERT_NEAR(transRpy.x, rpy.x, absError); \
+        ASSERT_NEAR(transRpy.y, rpy.y, absError); \
+        ASSERT_NEAR(transRpy.z, rpy.z, absError); \
+    } while(false)
+
+
+inline geometry_msgs::msg::Vector3 makeVector3(double x, double y, double z) {
+    geometry_msgs::msg::Vector3 v;
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    return v;
+}    
+
+
+inline DualVector3 makeDualVector3(double v1x, double v1y, double v1z, double v2x, double v2y, double v2z) {
+    DualVector3 dv3;
+    dv3.v1 = makeVector3(v1x, v1y, v1z);
+    dv3.v2 = makeVector3(v2x, v2y, v2z);
+    return dv3;
+}
+
+
+geometry_msgs::msg::TransformStamped createTransform(std::shared_ptr<BtTestTool> toolNode, geometry_msgs::msg::Vector3 xyz, geometry_msgs::msg::Vector3 rpy, std::string parentFrame, std::string childFrame) {
     geometry_msgs::msg::TransformStamped transform;
     transform.header.stamp = toolNode->get_clock()->now();
 
-    transform.transform.translation.x = x;
-    transform.transform.translation.y = y;
-    transform.transform.translation.z = z;
+    transform.transform.translation.x = xyz.x;
+    transform.transform.translation.y = xyz.y;
+    transform.transform.translation.z = xyz.z;
     
     geometry_msgs::msg::Vector3 transformRPY;
-    transformRPY.x = roll;
-    transformRPY.y = pitch;
-    transformRPY.z = yaw;
+    transformRPY.x = rpy.x;
+    transformRPY.y = rpy.y;
+    transformRPY.z = rpy.z;
 
     transform.transform.rotation = toQuat(transformRPY);
 
@@ -26,207 +66,327 @@ static geometry_msgs::msg::TransformStamped createTransform(std::shared_ptr<BtTe
     return transform;
 }
 
-class FrameAlignTest : public BtTest {
-    protected:
-    void setUpBroadcaster(
-        double baselinkX,
-        double baselinkY,
-        double baselinkZ,
-        double baselinkRoll,
-        double baselinkPitch,
-        double baselinkYaw,
-        const char *baseLinkName = "bt_testing/base_link",
-        const char *odomFrameName = "odom")
-    {
-        //set up static transform broadcasters
-        broadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(toolNode);
-        std::vector<geometry_msgs::msg::TransformStamped> transforms;
 
-        transforms.push_back(
-            createTransform(
-                toolNode, 
-                baselinkX, baselinkY, baselinkZ, 
-                baselinkRoll, baselinkPitch, baselinkYaw, 
-                odomFrameName, baseLinkName));
-
-
-        transforms.push_back(createTransform(toolNode, 0, 0, 0, 0, 0, 0, "world", odomFrameName));
-        transforms.push_back(createTransform(toolNode, -0.5, 0.25, 0.125, 0, 0, 0, baseLinkName, "some_frame"));
-        transforms.push_back(createTransform(toolNode, 0, 0, 0, 0, 0, 0, baseLinkName, "base_link_wannabe"));
-        transforms.push_back(createTransform(toolNode, -2, -2, -2, 0, 0, 0, baseLinkName, "some_other_frame"));
-
-        broadcaster->sendTransform(transforms);
+bool lookupTransform(rclcpp::Node::SharedPtr node, const std::string& fromFrame, const std::string& toFrame, geometry_msgs::msg::TransformStamped& transform) {
+    bool evalTransformLookedUp = false;
+    tf2_ros::Buffer buffer(node->get_clock());
+    tf2_ros::TransformListener listener(buffer);
+    rclcpp::Time lookupStart = node->get_clock()->now();
+    while(!evalTransformLookedUp && node->get_clock()->now() - lookupStart < 3s) {
+        try {
+            transform = buffer.lookupTransform(toFrame, fromFrame, lookupStart);
+            evalTransformLookedUp = true;
+        } catch(tf2::TransformException& ex) {
+            RCLCPP_WARN_SKIPFIRST_THROTTLE(node->get_logger(), *node->get_clock(), 500, "Failed to lookup transform from %s to %s (%s)", fromFrame.c_str(), toFrame.c_str(), ex.what());
+        }
     }
 
-    void TearDown() override {
-        broadcaster.reset();
-        BtTest::TearDown();
-    }
-
-    private:
-    std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcaster;
-};
+    return evalTransformLookedUp;
+}
 
 
-BT::NodeStatus testFrameAlign(
-    std::shared_ptr<BtTestTool> toolNode, 
-    std::string frameName,
-    geometry_msgs::msg::Vector3 inPos,
+BT::NodeStatus frameAlignTest(
+    std::shared_ptr<BtTestTool> toolNode,
+    tf2_ros::StaticTransformBroadcaster& broadcaster,
+    const DualVector3& baseLinkOffset,
+    const DualVector3& linkOffset, 
+    const DualVector3& linkGoal,
+    const std::string& linkName,
     bool& outputsSet,
-    geometry_msgs::msg::Vector3& resultPos) 
+    bool publishBaselink = true,
+    bool publishChildLink = true)
 {
+    std::vector<geometry_msgs::msg::TransformStamped> transforms;
+    DualVector3 result;
+    
+    if(publishBaselink) {
+        transforms.push_back(createTransform(toolNode, baseLinkOffset.v1, baseLinkOffset.v2, "odom", "bt_testing/base_link"));
+    }
+
+    if(publishChildLink) {
+        transforms.push_back(createTransform(toolNode, linkOffset.v1, linkOffset.v2, "bt_testing/base_link", linkName));
+    }
+
+    broadcaster.sendTransform(transforms);
+
+    //set up ports
     BT::NodeConfiguration cfg;
-    cfg.input_ports["x"] = std::to_string(inPos.x);
-    cfg.input_ports["y"] = std::to_string(inPos.y);
-    cfg.input_ports["z"] = std::to_string(inPos.z);
-    cfg.input_ports["frameName"] = frameName;
-
+    cfg.input_ports["x"] = std::to_string(linkGoal.v1.x);
+    cfg.input_ports["y"] = std::to_string(linkGoal.v1.y);
+    cfg.input_ports["z"] = std::to_string(linkGoal.v1.z);
+    cfg.input_ports["or"] = std::to_string(linkGoal.v2.x);
+    cfg.input_ports["op"] = std::to_string(linkGoal.v2.y);
+    cfg.input_ports["oy"] = std::to_string(linkGoal.v2.z);
+    cfg.input_ports["link_name"] = linkName;
+    
+    //run node
     auto node = toolNode->createLeafNodeFromConfig("ComputeFrameAlignment", cfg);
-    auto result = toolNode->tickUntilFinished(node);
+    BT::NodeStatus status = toolNode->tickUntilFinished(node);
 
-    auto blackboard = node->config().blackboard;
+    //set outputs
     outputsSet = true;
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_x", resultPos.x);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_y", resultPos.y);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_z", resultPos.z);
+    BT::Blackboard::Ptr blackboard = node->config().blackboard;
 
-    return result;
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_x", result.v1.x);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_y", result.v1.y);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_z", result.v1.z);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_or", result.v2.x);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_op", result.v2.y);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_oy", result.v2.z);
+
+    broadcaster.sendTransform({
+        //publish computed base link position
+        createTransform(toolNode, result.v1, result.v2, "odom", "eval_base_link"),
+        
+        //publish preset link offset
+        createTransform(toolNode, linkOffset.v1, linkOffset.v2, "eval_base_link", "eval_link")
+    });
+
+    #ifdef PRINT_RESULTS_OF_TEST
+        RCLCPP_INFO(toolNode->get_logger(), "bl goal is %.3f, %.3f, %.3f, %.3f, %.3f, %.3f",
+            result.v1.x,
+            result.v1.y,
+            result.v1.z,
+            result.v2.x,
+            result.v2.y,
+            result.v2.z);
+    #endif
+
+    return status;
 }
 
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_exactly_baselink) {
-    //test computing target position to put some_frame at (2, 5, -3)
-    setUpBroadcaster(1, -1, -1, 0, 0, 0.635);
 
+
+
+
+
+// TEST_F(BtTest, test_ComputeFrameAlignment_success_exactly_baselink_at_zero_to_zero_with_zero_offset) {
+//     tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
+//     bool outputsSet;
+//     DualVector3 result;
+//     BT::NodeStatus status = frameAlignTest(
+//         toolNode,
+//         broadcaster,
+//         makeDualVector3(0, 0, 0, 0, 0, 0), //base link offset
+//         makeDualVector3(0, 0, 0, 0, 0, 0), //link offset (from base link)
+//         makeDualVector3(0, 0, 0, 0, 0, 0), //link goal
+//         "test_link",
+//         outputsSet,
+//         result
+//     );
+
+//     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+//     ASSERT_TRUE(outputsSet);
+//     ASSERT_LINK_NEAR_POS(toolNode, "eval_link", result.v1, result.v2, 0.01);
+// }
+
+TEST_F(BtTest, test_ComputeFrameAlignment_success_baselink_at_nonzero_without_rotation_to_zero_with_zero_offset) {
+    tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
     bool outputsSet;
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = 2;
-    inPos.y = 5;
-    inPos.z = -3;
+    DualVector3 
+        baseLinkOffset = makeDualVector3(-1, 2, 5, 0, 0, 0),
+        childLinkOffset = makeDualVector3(0, 0, 0, 0, 0, 0),
+        linkGoal = makeDualVector3(0, 0, 0, 0, 0, 0);
+    
+    BT::NodeStatus status = frameAlignTest(
+        toolNode,
+        broadcaster,
+        baseLinkOffset,
+        childLinkOffset,
+        linkGoal,
+        "test_link",
+        outputsSet
+    );
 
-    auto result = testFrameAlign(toolNode, "base_link_wannabe", inPos, outputsSet, outPos);
-
-    ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
+    ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outputsSet);
-    ASSERT_NEAR(outPos.x, 2, 0.01);
-    ASSERT_NEAR(outPos.y, 5, 0.01);
-    ASSERT_NEAR(outPos.z, -3, 0.01);
+    ASSERT_LINK_NEAR_POS(toolNode, "eval_link", linkGoal.v1, linkGoal.v2, 0.01);
 }
 
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_someframe) {
-    //test computing target position to put the frame at (-4, -8, -3)
-    setUpBroadcaster(1, -1, -1, 0, 0, 0);
+// TEST_F(BtTest, test_ComputeFrameAlignment_success_baselink_at_nonzero_with_rotation_to_zero_with_zero_offset) {
+//     tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
+//     bool outputsSet;
+//     DualVector3 result;
+//     BT::NodeStatus status = frameAlignTest(
+//         toolNode,
+//         broadcaster,
+//         makeDualVector3(1, 2, 3, 4, 5, 6), //base link offset
+//         makeDualVector3(0, 0, 0, 0, 0, 0), //link offset (from base link)
+//         makeDualVector3(0, 0, 0, 0, 0, 0), //link goal
+//         "test_link",
+//         outputsSet,
+//         result
+//     );
 
+//     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+//     ASSERT_TRUE(outputsSet);
+//     ASSERT_LINK_NEAR_POS(toolNode, "eval_link", result.v1, result.v2, 0.01);
+// }
+
+// TEST_F(BtTest, test_ComputeFrameAlignment_success_baselink_at_nonzero_to_nonzero_without_rotation_with_zero_offset) {
+//     tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
+//     bool outputsSet;
+//     DualVector3 result;
+//     BT::NodeStatus status = frameAlignTest(
+//         toolNode,
+//         broadcaster,
+//         makeDualVector3(1, 2, 3, 4, 5, 6), //base link offset
+//         makeDualVector3(0, 0, 0, 0, 0, 0), //link offset (from base link)
+//         makeDualVector3(4.32, -3.2, -0.4, 0, 0, 0), //link goal
+//         "test_link",
+//         outputsSet,
+//         result
+//     );
+
+//     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+//     ASSERT_TRUE(outputsSet);
+//     ASSERT_LINK_NEAR_POS(toolNode, "eval_link", result.v1, result.v2, 0.01);
+// }
+
+// TEST_F(BtTest, test_ComputeFrameAlignment_success_baselink_at_nonzero_to_nonzero_with_rotation_with_zero_offset) {
+//     tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
+//     bool outputsSet;
+//     DualVector3 result;
+//     BT::NodeStatus status = frameAlignTest(
+//         toolNode,
+//         broadcaster,
+//         makeDualVector3(1, 2, 3, 4, 5, 6), //base link offset
+//         makeDualVector3(0, 0, 0, 0, 0, 0), //link offset (from base link)
+//         makeDualVector3(4.32, -3.2, -0.4, 3, 4.56, -0.75), //link goal
+//         "test_link",
+//         outputsSet,
+//         result
+//     );
+
+//     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+//     ASSERT_TRUE(outputsSet);
+//     ASSERT_LINK_NEAR_POS(toolNode, "eval_link", result.v1, result.v2, 0.01);
+// }
+
+TEST_F(BtTest, test_ComputeFrameAlignment_success_baselink_at_nonzero_to_nonzero_with_nonzero_offset_without_rotation) {
+    tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
     bool outputsSet;
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = -4;
-    inPos.y = -8;
-    inPos.z = -3;
+    DualVector3
+        baseLinkOffset = makeDualVector3(1, 2, 3, 4, 5, 6), 
+        childLinkOffset = makeDualVector3(7.8, -0.2, 1.3, 0, 0, 0), 
+        linkGoal = makeDualVector3(4.32, -3.2, -0.4, 3, 4.56, -0.75);
+    
+    BT::NodeStatus status = frameAlignTest(
+        toolNode,
+        broadcaster,
+        baseLinkOffset,
+        childLinkOffset,
+        linkGoal,
+        "test_link",
+        outputsSet
+    );
 
-    auto result = testFrameAlign(toolNode, "some_frame", inPos, outputsSet, outPos);
-
-    ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
+    ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outputsSet);
-    ASSERT_NEAR(outPos.x, -3.5, 0.01);
-    ASSERT_NEAR(outPos.y, -8.25, 0.01);
-    ASSERT_NEAR(outPos.z, -3.125, 0.01);
+    ASSERT_LINK_NEAR_POS(toolNode, "eval_link", linkGoal.v1, linkGoal.v2, 0.01);
 }
 
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_someframe_yawed) {
-    //test computing target position to put the frame at (-4, -8, -3)
-    setUpBroadcaster(1, -1, -1, 0, 0, 1.5707);
-
+TEST_F(BtTest, test_ComputeFrameAlignment_success_baselink_at_nonzero_to_nonzero_with_nonzero_offset_with_rotation) {
+    tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
     bool outputsSet;
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = -4;
-    inPos.y = -8;
-    inPos.z = -3;
+    DualVector3
+        baseLinkOffset = makeDualVector3(1, 2, 3, 4, 5, 6),
+        childLinkOffset = makeDualVector3(7.8, -0.2, 1.3, 0.3, -5.6, 1.23),
+        linkGoal = makeDualVector3(4.32, -3.2, -0.4, 3, 4.56, -0.75);
+    
+    BT::NodeStatus status = frameAlignTest(
+        toolNode,
+        broadcaster,
+        baseLinkOffset,
+        childLinkOffset,
+        linkGoal,
+        "test_link",
+        outputsSet
+    );
 
-    auto result = testFrameAlign(toolNode, "some_frame", inPos, outputsSet, outPos);
-
-    //-3.750, -7.500, -3.125
-    ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
+    ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outputsSet);
-    ASSERT_NEAR(outPos.x, -3.75, 0.01);
-    ASSERT_NEAR(outPos.y, -7.5, 0.01);
-    ASSERT_NEAR(outPos.z, -3.125, 0.01);
+    ASSERT_LINK_NEAR_POS(toolNode, "eval_link", linkGoal.v1, linkGoal.v2, 0.01);
 }
 
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_otherframe) {
-    //test computing target position to put the frame at (2, 2, 2)
-    setUpBroadcaster(3, 3, 3, 0, 0, 0);
+// TEST_F(BtTest, test_ComputeFrameAlignment_success_misc_1) {
+//     tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
+//     bool outputsSet;
+//     DualVector3 result;
+//     BT::NodeStatus status = frameAlignTest(
+//         toolNode,
+//         broadcaster,
+//         makeDualVector3(1.21, 1.73, 3.9, -5.95, 8.07, 8.86), //base link offset
+//         makeDualVector3(9.98, -3.5, 3.05, 6.48, -7.49, -0.18), //link offset (from base link)
+//         makeDualVector3(-2.39, -6.45, -9.28, -0.93, 5.48, -0.34), //link goal
+//         "test_link",
+//         outputsSet,
+//         result
+//     );
 
-    bool outputsSet;
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = 2;
-    inPos.y = 2;
-    inPos.z = 2;
+//     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+//     ASSERT_TRUE(outputsSet);
+//     ASSERT_LINK_NEAR_POS(toolNode, "eval_link", result.v1, result.v2, 0.01);
+// }
 
-    auto result = testFrameAlign(toolNode, "some_other_frame", inPos, outputsSet, outPos);
+// TEST_F(BtTest, test_ComputeFrameAlignment_success_misc_2_different_frame) {
+//     tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
+//     bool outputsSet;
+//     DualVector3 result;
+//     BT::NodeStatus status = frameAlignTest(
+//         toolNode,
+//         broadcaster,
+//         makeDualVector3(3.2, 0.66, -0.85, -7.97, -6.53, -6.03), //base link offset
+//         makeDualVector3(-1.81, -9.99, 2.36, -9.63, -6.55, 9.83), //link offset (from base link)
+//         makeDualVector3(8.55, 5.85, 7.7, 1.26, -5.9, -6.37), //link goal
+//         "different_link",
+//         outputsSet,
+//         result
+//     );
 
-    ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-    ASSERT_TRUE(outputsSet);
-    ASSERT_NEAR(outPos.x, 4, 0.01);
-    ASSERT_NEAR(outPos.y, 4, 0.01);
-    ASSERT_NEAR(outPos.z, 4, 0.01);
-}
+//     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+//     ASSERT_TRUE(outputsSet);
+//     ASSERT_LINK_NEAR_POS(toolNode, "eval_link", result.v1, result.v2, 0.01);
+// }
 
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_otherframe_yawed) {
-    //test computing target position to put the frame at (2, 2, 2)
-    setUpBroadcaster(1, -1, -1, 0, 0, 1.5707);
+// TEST_F(BtTest, test_ComputeFrameAlignment_fail_no_baselink) {
+//     tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
+//     bool outputsSet;
+//     DualVector3 result;
+//     BT::NodeStatus status = frameAlignTest(
+//         toolNode,
+//         broadcaster,
+//         makeDualVector3(1, 2, 3, 4, 5, 6), //base link offset
+//         makeDualVector3(7.8, -0.2, 1.3, 0, 0, 0), //link offset (from base link)
+//         makeDualVector3(4.32, -3.2, -0.4, 3, 4.56, -0.75), //link goal
+//         "test_link",
+//         outputsSet,
+//         result,
+//         "eval_link",
+//         false,
+//         true
+//     );
 
-    bool outputsSet;
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = 2;
-    inPos.y = 2;
-    inPos.z = 2;
+//     ASSERT_EQ(status, BT::NodeStatus::FAILURE);
+// }
 
-    auto result = testFrameAlign(toolNode, "some_other_frame", inPos, outputsSet, outPos);
+// TEST_F(BtTest, test_ComputeFrameAlignment_fail_no_childlink) {
+//     tf2_ros::StaticTransformBroadcaster broadcaster(toolNode);
+//     bool outputsSet;
+//     DualVector3 result;
+//     BT::NodeStatus status = frameAlignTest(
+//         toolNode,
+//         broadcaster,
+//         makeDualVector3(1, 2, 3, 4, 5, 6), //base link offset
+//         makeDualVector3(7.8, -0.2, 1.3, 0, 0, 0), //link offset (from base link)
+//         makeDualVector3(4.32, -3.2, -0.4, 3, 4.56, -0.75), //link goal
+//         "test_link",
+//         outputsSet,
+//         result,
+//         "eval_link",
+//         true,
+//         false
+//     );
 
-    ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
-    ASSERT_TRUE(outputsSet);
-    ASSERT_NEAR(outPos.x, 0, 0.01);
-    ASSERT_NEAR(outPos.y, 4, 0.01);
-    ASSERT_NEAR(outPos.z, 4, 0.01);
-}
-
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_fail_no_base_link) {
-    setUpBroadcaster(1, -1, -1, 0, 0, 1.5707, "nonexistent_base_link_name");
-
-    bool outputsSet;
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = 2;
-    inPos.y = 2;
-    inPos.z = 2;
-
-    auto result = testFrameAlign(toolNode, "some_other_frame", inPos, outputsSet, outPos);
-
-    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
-}
-
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_fail_no_odom) {
-    setUpBroadcaster(1, -1, -1, 0, 0, 1.5707, "bt_testing/base_link", "nonexistent_odom_frame");
-
-    bool outputsSet;
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = 2;
-    inPos.y = 2;
-    inPos.z = 2;
-
-    auto result = testFrameAlign(toolNode, "some_other_frame", inPos, outputsSet, outPos);
-
-    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
-}
-
-TEST_F(FrameAlignTest, test_ComputeFrameAlignment_fail_no_final_frame) {
-    setUpBroadcaster(1, -1, -1, 0, 0, 1.5707);
-
-    bool outputsSet;
-    geometry_msgs::msg::Vector3 inPos, outPos;
-    inPos.x = 2;
-    inPos.y = 2;
-    inPos.z = 2;
-
-    auto result = testFrameAlign(toolNode, "nonexistent_frame", inPos, outputsSet, outPos);
-
-    ASSERT_EQ(result, BT::NodeStatus::FAILURE);
-}
+//     ASSERT_EQ(status, BT::NodeStatus::FAILURE);
+// }

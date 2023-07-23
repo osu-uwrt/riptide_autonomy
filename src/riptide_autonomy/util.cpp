@@ -46,46 +46,43 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry
     return result;
 }
 
-/**
- * @brief Transforms a relative pose between frames.
- *  
- * @param rosnode A ros node handle
- * @param buffer TF Buffer. THIS MUST BE ATTACHED TO A LISTENER THAT WAS CREATED WITH SPIN_THREAD = TRUE or else the function will not work
- * @param original Pose to tranform
- * @param fromFrame The frame original is currently in
- * @param toFrame The frame to transform original to
- * @param result The transformed pose
- * @return true if the operation succeeded, false otherwise
- */
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {    
-    //look up transform with a three second timeout to find one
-    rclcpp::Time startTime = rosnode->get_clock()->now();
-    RCLCPP_DEBUG(rosnode->get_logger(), "Attempting to look up transform from %s to %s", fromFrame.c_str(), toFrame.c_str());
-    
-    while((rosnode->get_clock()->now() - startTime) < 3s) {
-        try {
-            geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero, 1500ms);
-            result = doTransform(original, transform);
 
-            RCLCPP_DEBUG(rosnode->get_logger(), "Transform from %s to %s looked up as XYZ %.3f %.3f %.3f with XYZW %.3f %.3f %.3f %.3f", 
-                fromFrame.c_str(), 
-                toFrame.c_str(), 
-                transform.transform.translation.x,
-                transform.transform.translation.y,
-                transform.transform.translation.z,
-                transform.transform.rotation.x,
-                transform.transform.rotation.y,
-                transform.transform.rotation.z,
-                transform.transform.rotation.w
-            );
-            return true;
-
-        } catch(tf2::TransformException &ex) {
-            RCLCPP_WARN_SKIPFIRST_THROTTLE(log, *rosnode->get_clock(), 500, "LookupException encountered while looking up transform from %s to %s: %s", fromFrame.c_str(), toFrame.c_str(), ex.what());
-        }
+bool lookupTransformNow(
+    rclcpp::Node::SharedPtr node,
+    const std::shared_ptr<const tf2_ros::Buffer> buffer,
+    const std::string& fromFrame,
+    const std::string& toFrame,
+    geometry_msgs::msg::TransformStamped& transform)
+{
+    try {
+        transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
+        return true;
+    } catch(tf2::TransformException& ex) {
+        RCLCPP_WARN(node->get_logger(), "Failed to look up transform from %s to %s (%s)", fromFrame.c_str(), toFrame.c_str(), ex.what());
     }
-    RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
+    
     return false;
+}
+
+
+bool lookupTransformThrottled(
+    rclcpp::Node::SharedPtr node,
+    const std::shared_ptr<const tf2_ros::Buffer> buffer,
+    const std::string& fromFrame,
+    const std::string& toFrame,
+    double throttleDuration,
+    double& lastLookup,
+    geometry_msgs::msg::TransformStamped& transform)
+{
+    double 
+        currentLookup = node->get_clock()->now().seconds(),
+        elapsedSinceLastLookup = currentLookup - lastLookup;
+    
+    if(elapsedSinceLastLookup >= throttleDuration) {
+        lastLookup = currentLookup;
+        return lookupTransformNow(node, buffer, fromFrame, toFrame, transform);
+    }
+    return false; 
 }
 
 
