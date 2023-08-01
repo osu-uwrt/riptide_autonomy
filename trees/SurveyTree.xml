@@ -1,0 +1,484 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <BehaviorTree ID="AlignLink">
+        <Sequence name="align torpedos">
+            <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
+            <Action ID="ComputeFrameAlignment" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="3.1415" reference_frame="{frame_name}" target_frame="{link_name}" x="proximity" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <SubTree ID="Survey"/>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="Dive">
+        <Sequence>
+            <SetBlackboard output_key="15" value="15"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="10" value="10"/>
+            <SetBlackboard output_key="30" value="30"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="{op}" or="{or}" oy="{oy}" x="{x}" y="{y}" z="{z}"/>
+            <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="depth"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="oy"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="KillController">
+        <Sequence>
+            <Action ID="PublishToController" isOrientation="1" mode="0" x="0" y="0" z="0"/>
+            <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="MiniSearch">
+        <Sequence name="minisearch">
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="Info" message="Refining esimate for object {object_name}"/>
+            <Action ID="SetStatus" status="searching"/>
+            <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
+            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="z"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
+                <Sequence name="shrink cov">
+                    <Action ID="Wait" seconds="1"/>
+                    <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+                    <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                </Sequence>
+            </Decorator>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="Move">
+        <Sequence>
+            <SetBlackboard output_key="15" value="15"/>
+            <Action ID="Info" message="Moving to XYZ {x}, {y}, {z} with RPY {or}, {op}, {oy}"/>
+            <SetBlackboard output_key="30" value="30"/>
+            <SetBlackboard output_key="10" value="10"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
+            <Action ID="CalculateDistance" dist="{dist}" x1="{cx}" x2="{x}" y1="{cy}" y2="{y}" z1="0" z2="0"/>
+            <IfThenElse name="have robot face goal point if far away from it">
+                <Condition ID="CompareNums" a="{dist}" b="1.5" test="&gt;"/>
+                <Sequence name="Get yaw to face towards goal point">
+                    <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="{yaw}" targX="{x}" targY="{y}"/>
+                    <SetBlackboard output_key="goal_yaw" value="{yaw}"/>
+                </Sequence>
+                <Sequence>
+                    <SetBlackboard output_key="goal_yaw" value="{coy}"/>
+                </Sequence>
+            </IfThenElse>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="goal_yaw"/>
+            <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" timeout="15" y="oy"/>
+            <Action ID="Wait" seconds="2"/>
+            <Action ID="Info" message="Move Complete."/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="PrimitiveMoveOrientation">
+        <Sequence>
+            <Action ID="Info" message="Rotating to RPY {r}, {p}, {y}"/>
+            <Fallback>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout}">
+                    <Sequence>
+                        <Action ID="PublishToController" isOrientation="1" mode="3" x="{r}" y="{p}" z="{y}"/>
+                        <Action ID="GetOdometry" name="Get Current RPY" op="{cp}" or="{cr}" oy="{cy}" x="" y="" z=""/>
+                        <Condition ID="ApproxEqualTo" a="{cr}" b="{r}" name="At goal roll?" range="0.25"/>
+                        <Condition ID="ApproxEqualTo" a="{cp}" b="{p}" name="At goal pitch?" range="0.25"/>
+                        <Condition ID="ApproxEqualTo" a="{cy}" b="{y}" name="At goal yaw?" range="0.25"/>
+                    </Sequence>
+                </Decorator>
+                <ForceSuccess>
+                    <Sequence>
+                        <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                    </Sequence>
+                </ForceSuccess>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="PrimitiveMovePosition">
+        <Sequence>
+            <IfThenElse name="Ensure Z good">
+                <Condition ID="CompareNums" a="{z}" b="-0.35" name="z above 0.75..." test="&gt;"/>
+                <Sequence>
+                    <Action ID="Info" message="Enforcing minimum depth of 0.35 meters... requested depth was previously {z}."/>
+                    <SetBlackboard name="...too high" output_key="valid_z" value="-0.35"/>
+                </Sequence>
+                <SetBlackboard name="...all good" output_key="valid_z" value="{z}"/>
+            </IfThenElse>
+            <Action ID="Info" message="Translating to XYZ: {x}, {y}, {z} in no more than {timeout} seconds"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout}">
+                <Sequence>
+                    <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="{y}" z="{valid_z}"/>
+                    <Action ID="Wait" seconds="0.25"/>
+                    <Action ID="GetOdometry" name="Get Current XYZ" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
+                    <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="{cx}" y1="{y}" y2="{cy}" z1="{valid_z}" z2="{cz}"/>
+                    <Condition ID="CompareNums" a="{dist}" b="0.25" name="At goal point?" test="&lt;"/>
+                </Sequence>
+            </Decorator>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="RelativeMove">
+        <Sequence>
+            <Action ID="TransformPose" from_frame="{frame_name}" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="Search">
+        <Sequence name="Search">
+            <Action ID="SetStatus" status="searching"/>
+            <Action ID="Format" format="{object_name}_frame" out="frame"/>
+            <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
+            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="f_op" out_or="f_or" out_oy="f_oy" out_x="f_x" out_y="f_y" out_z="f_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <Action ID="CalculateDistance" dist="dist" x1="{x}" x2="{f_x}" y1="{y}" y2="{f_y}" z1="{z}" z2="{f_z}"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Search_loop" num_seconds="{timeout_secs}">
+                <Sequence>
+                    <Action ID="Math" a="{dist}" b="0.67" operator="*" out="dist"/>
+                    <Action ID="Info" message="Search moving to {dist} meters away from {object_name}"/>
+                    <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" to_frame="world" x="{dist}" y="0" z="0"/>
+                    <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
+                    <Action ID="Info" message="Let mapping gather detections on {object_name}"/>
+                    <Action ID="Wait" seconds="10"/>
+                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                    <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
+                    <Fallback>
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                        <Sequence name="handle bad distance accoringly">
+                            <Condition ID="CompareNums" a="{dist}" b="1.333" test="&lt;"/>
+                            <Action ID="Info" message="Got too close ({dist} meters) without finding object. Backing up"/>
+                            <SetBlackboard output_key="dist" value="4"/>
+                            <AlwaysFailure name="force back to start of loop"/>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+            <Fallback name="check distance">
+                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                <Condition ID="CompareNums" a="{dist}" b="1.333" test="&gt;"/>
+                <ForceFailure>
+                    <Action ID="Error" message="Could not find {object_name} after {timeout_secs} seconds."/>
+                </ForceFailure>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="SmartMovePosition">
+        <Fallback>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
+                <Sequence name="Try move to position">
+                    <SetBlackboard output_key="timeout" value="7"/>
+                    <Action ID="Info" message="Attempting to move forward for {timeout} seconds"/>
+                    <Action ID="GetOdometry" op="" or="" oy="" x="old_x" y="old_y" z="old_z"/>
+                    <Fallback>
+                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="timeout" x="x" y="y" z="z"/>
+                        <Sequence name="Evaluate possible obstacle">
+                            <Action ID="GetOdometry" op="" or="" oy="" x="curr_x" y="curr_y" z="curr_z"/>
+                            <Action ID="CalculateDistance" dist="dist_travelled" x1="{old_x}" x2="{curr_x}" y1="{old_y}" y2="{curr_y}" z1="{old_z}" z2="{curr_z}"/>
+                            <IfThenElse name="avoid obstacle if necessary">
+                                <Condition ID="CompareNums" a="{dist_travelled}" b="1" name="expect 1 meter travelled in 5 seconds" test="&lt;"/>
+                                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="60">
+                                    <Sequence name="if dist &lt; 1m, move out the way">
+                                        <SetBlackboard output_key="5" value="5"/>
+                                        <SetBlackboard output_key="60" value="60"/>
+                                        <SetBlackboard output_key="-0.75" value="-0.75"/>
+                                        <SetBlackboard output_key="20" value="20"/>
+                                        <SetBlackboard output_key="15" value="15"/>
+                                        <Action ID="Info" message="Detected an obstacle. Attempting to move out of the way"/>
+                                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="old_x" y="old_y" z="old_z"/>
+                                        <Action ID="Wait" name="Wait to stablize" seconds="3"/>
+                                        <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="" out_x="em_x" out_y="em_y" out_z="em_z" oy="0" to_frame="world" x="-1" y="1" z="0"/>
+                                        <ForceSuccess>
+                                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="curr_z"/>
+                                        </ForceSuccess>
+                                        <ForceSuccess>
+                                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="em_x" y="em_y" z="-0.75"/>
+                                        </ForceSuccess>
+                                        <Action ID="Wait" name="wait for stable orientation" seconds="3"/>
+                                        <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="" out_x="em_x" out_y="em_y" out_z="em_z" oy="0" to_frame="world" x="2" y="0" z="0"/>
+                                        <Fallback name="move past obstacle">
+                                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="15" x="em_x" y="em_y" z="em_z"/>
+                                            <ForceFailure>
+                                                <Action ID="Error" message="Failed to move out of the way!"/>
+                                            </ForceFailure>
+                                        </Fallback>
+                                    </Sequence>
+                                </Decorator>
+                                <Action ID="Info" message="Not there after {timeout} seconds, but made progress"/>
+                            </IfThenElse>
+                            <AlwaysFailure name="try move again"/>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+            <ForceFailure>
+                <Action ID="Error" message="Failed to move to XYZ position {x}, {y}, {z}. Theres something in the way"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="SpinTree">
+        <Sequence>
+            <SetBlackboard output_key="15" value="15"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="GetOdometry" op="" or="" oy="orig_y" x="" y="" z=""/>
+            <Repeat num_cycles="7">
+                <Sequence name="spin_2pi/3">
+                    <Action ID="Info" message="Spinning once"/>
+                    <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="new_yaw" out_x="" out_y="" out_z="" oy="2.09" to_frame="world" x="0" y="0" z="0"/>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
+                        <Sequence>
+                            <Action ID="PublishToController" isOrientation="1" mode="2" x="0" y="0" z="1.5707"/>
+                            <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
+                            <Condition ID="ApproxEqualTo" a="{curr_yaw}" b="{new_yaw}" range="0.25"/>
+                        </Sequence>
+                    </Decorator>
+                </Sequence>
+            </Repeat>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="orig_y"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="Survey">
+        <Sequence>
+            <SetBlackboard output_key="torpedo_lower_hole_frame" value="torpedo_lower_hole_frame"/>
+            <SetBlackboard output_key="torpedo_upper_hole_frame" value="torpedo_upper_hole_frame"/>
+            <SetBlackboard output_key="torpedo_frame" value="torpedo_frame"/>
+            <SetBlackboard output_key="buoy_glyph_2_frame" value="buoy_glyph_2_frame"/>
+            <SetBlackboard output_key="buoy_glyph_1_frame" value="buoy_glyph_1_frame"/>
+            <SetBlackboard output_key="buoy_frame" value="buoy_frame"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="earth_glyph_frame" value="earth_glyph_frame"/>
+            <SetBlackboard output_key="120" value="120"/>
+            <SetBlackboard output_key="1.25" value="1.25"/>
+            <SetBlackboard output_key="gate_frame" value="gate_frame"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="gate_frame" target_cov="1.25" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="earth_glyph_frame" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="buoy_frame" target_cov="1.25" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="buoy_glyph_1_frame" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="buoy_glyph_2_frame" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="torpedo_frame" target_cov="1.25" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="torpedo_upper_hole_frame" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="torpedo_lower_hole_frame" target_cov="1.25" timeout_secs="60"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="WaitForKillSwitch">
+        <Sequence>
+            <Action ID="SetStatus" status="waiting"/>
+            <Action ID="Info" message="Waiting for kill switch insert..."/>
+            <Action ID="Wait" seconds="5"/>
+            <RetryUntilSuccessful num_attempts="-1">
+                <Sequence>
+                    <Action ID="GetBoolTopic" topic="state/kill" value="{kill_switch_inserted}"/>
+                    <Inverter name="IsFalse">
+                        <Condition ID="IsTrue" value="{kill_switch_inserted}"/>
+                    </Inverter>
+                    <Action ID="Wait" seconds="1"/>
+                    <Action ID="Info" message="KILL SWITCH INSERTED, TREE STARTING IN 5 SECONDS"/>
+                </Sequence>
+            </RetryUntilSuccessful>
+            <Action ID="SetStatus" status="starting"/>
+            <Action ID="Wait" seconds="5"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <SubTree ID="AlignLink">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true">frame to align to</input_port>
+            <input_port name="link_name" required="true">link to align</input_port>
+            <input_port name="proximity" required="true">how far away to be</input_port>
+        </SubTree>
+        <Condition ID="ApproxEqualTo">
+            <input_port name="a" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port name="range" required="true"/>
+        </Condition>
+        <Action ID="CalculateDistance">
+            <output_port name="dist" required="false"/>
+            <input_port name="x1" required="true"/>
+            <input_port name="x2" required="true"/>
+            <input_port name="y1" required="true"/>
+            <input_port name="y2" required="true"/>
+            <input_port name="z1" required="true"/>
+            <input_port name="z2" required="true"/>
+        </Action>
+        <Action ID="CallSetBoolService">
+            <input_port name="data" required="true">boolean value to set the thing to</input_port>
+            <input_port name="srv_name" required="true">Name of the service to call</input_port>
+            <input_port name="time_limit_secs" required="true">time limit for service after the call is made. Another second may be consumed waiting for it to come up</input_port>
+        </Action>
+        <Action ID="CallTriggerService">
+            <input_port name="srv_name" required="true"/>
+            <input_port name="time_limit_secs" required="true"/>
+        </Action>
+        <Condition ID="CompareNums">
+            <input_port name="a" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
+        </Condition>
+        <Action ID="ComputeFrameAlignment">
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <output_port name="out_op" required="true"/>
+            <output_port name="out_or" required="true"/>
+            <output_port name="out_oy" required="true"/>
+            <output_port name="out_x" required="true"/>
+            <output_port name="out_y" required="true"/>
+            <output_port name="out_z" required="true"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="reference_frame" required="true"/>
+            <input_port name="target_frame" required="true"/>
+            <input_port name="x" required="true">target x-pos of frameName in world frame</input_port>
+            <input_port name="y" required="true">target y-pos of frameName in world frame</input_port>
+            <input_port name="z" required="true">target z-pos of frameName in world frame</input_port>
+        </Action>
+        <SubTree ID="Dive">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="depth" required="true">depth to submerge to</input_port>
+        </SubTree>
+        <Action ID="Error">
+            <input_port name="message" required="true">The message to print.</input_port>
+        </Action>
+        <Action ID="Format">
+            <input_port name="format" required="true"/>
+            <output_port name="out" required="false"/>
+        </Action>
+        <Action ID="GetActuatorStatus">
+            <output_port name="actuators_busy" required="false"/>
+            <output_port name="claw_state" required="false"/>
+            <output_port name="dropper_available_count" required="false"/>
+            <output_port name="dropper_state" required="false"/>
+            <output_port name="torpedo_available_count" required="false"/>
+            <output_port name="torpedo_state" required="false"/>
+        </Action>
+        <Action ID="GetBoolTopic">
+            <input_port name="topic" required="true">The topic to subscribe to.</input_port>
+            <output_port name="value" required="false"/>
+        </Action>
+        <Action ID="GetOdometry">
+            <output_port name="op" required="false"/>
+            <output_port name="or" required="false"/>
+            <output_port name="oy" required="false"/>
+            <output_port name="x" required="false"/>
+            <output_port name="y" required="false"/>
+            <output_port name="z" required="false"/>
+        </Action>
+        <Action ID="HeadingToPoint">
+            <input_port name="currX" required="true"/>
+            <input_port name="currY" required="true"/>
+            <output_port name="heading" required="false"/>
+            <input_port name="targX" required="true"/>
+            <input_port name="targY" required="true"/>
+        </Action>
+        <Action ID="Info">
+            <input_port name="message" required="true">The message to print.</input_port>
+        </Action>
+        <Condition ID="IsTrue">
+            <input_port name="value" required="true"/>
+        </Condition>
+        <SubTree ID="KillController"/>
+        <Action ID="Math">
+            <input_port name="a" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <output_port name="out" required="false"/>
+        </Action>
+        <SubTree ID="MiniSearch">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_name" required="true"/>
+            <input_port default="1.25" name="target_cov" required="true"/>
+            <input_port default="60" name="timeout_secs" required="true"/>
+        </SubTree>
+        <SubTree ID="Move">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
+        </SubTree>
+        <SubTree ID="PrimitiveMoveOrientation">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="p" required="true"/>
+            <input_port name="r" required="true"/>
+            <input_port default="15" name="timeout" required="true"/>
+            <input_port name="y" required="true"/>
+        </SubTree>
+        <SubTree ID="PrimitiveMovePosition">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="60" name="timeout" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
+        </SubTree>
+        <Action ID="PublishToController">
+            <input_port name="isOrientation" required="true"/>
+            <input_port name="mode" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
+        </Action>
+        <SubTree ID="RelativeMove">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true">the frame to move relative to</input_port>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
+        </SubTree>
+        <Decorator ID="RetryUntilSuccessfulOrTimeout">
+            <input_port name="num_seconds" required="true">number of seconds until abandonment.</input_port>
+        </Decorator>
+        <SubTree ID="Search">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_name" required="true">Frame to search for</input_port>
+            <input_port default="1.25" name="target_cov" required="true">Target covariance to end search</input_port>
+            <input_port default="120" name="timeout_secs" required="true">Timeout for search</input_port>
+        </SubTree>
+        <Action ID="SetStatus">
+            <input_port name="status" required="true"/>
+        </Action>
+        <SubTree ID="SmartMovePosition">
+            <inout_port name="__shared_blackboard" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
+        </SubTree>
+        <SubTree ID="SpinTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+        </SubTree>
+        <SubTree ID="Survey"/>
+        <Action ID="TransformPose">
+            <input_port name="from_frame" required="true"/>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <output_port name="out_op" required="false"/>
+            <output_port name="out_or" required="false"/>
+            <output_port name="out_oy" required="false"/>
+            <output_port name="out_x" required="false"/>
+            <output_port name="out_y" required="false"/>
+            <output_port name="out_z" required="false"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="to_frame" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
+        </Action>
+        <Action ID="Wait">
+            <input_port name="seconds" required="true">number of seconds to wait.</input_port>
+        </Action>
+        <SubTree ID="WaitForKillSwitch"/>
+        <Action ID="getCovariance">
+            <output_port name="Covariance" required="false">Covariance of frame</output_port>
+            <input_port name="Target" required="true">Frame to get covariance of</input_port>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
