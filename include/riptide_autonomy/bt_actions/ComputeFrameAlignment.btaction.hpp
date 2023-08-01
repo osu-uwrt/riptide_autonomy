@@ -2,6 +2,33 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
+
+inline void printTransform(rclcpp::Node::SharedPtr node, const std::string& msg, const geometry_msgs::msg::TransformStamped& transform) {
+    geometry_msgs::msg::Vector3 rotationRpy = toRPY(transform.transform.rotation);
+    RCLCPP_INFO(node->get_logger(), 
+        "%s: %f %f %f %f %f %f",
+        msg.c_str(),
+        transform.transform.translation.x,
+        transform.transform.translation.y,
+        transform.transform.translation.z,
+        rotationRpy.x,
+        rotationRpy.y,
+        rotationRpy.z);
+}
+
+inline void printPose(rclcpp::Node::SharedPtr node, const std::string& msg, const geometry_msgs::msg::Pose& pose) {
+    geometry_msgs::msg::Vector3 rotationRpy = toRPY(pose.orientation);
+    RCLCPP_INFO(node->get_logger(),
+        "%s: %f %f %f %f %f %f",
+        msg.c_str(),
+        pose.position.x,
+        pose.position.y,
+        pose.position.z,
+        rotationRpy.x,
+        rotationRpy.y,
+        rotationRpy.z);
+}
+
 class ComputeFrameAlignment : public UWRTActionNode {
     public:
     ComputeFrameAlignment(const std::string& name, const BT::NodeConfiguration& config)
@@ -19,7 +46,8 @@ class ComputeFrameAlignment : public UWRTActionNode {
             UwrtInput("or"),
             UwrtInput("op"),
             UwrtInput("oy"),
-            UwrtInput("link_name"),
+            UwrtInput("reference_frame"), //the frame to align relative to
+            UwrtInput("target_frame"),    //the frame to align
             UwrtOutput("out_x"),
             UwrtOutput("out_y"),
             UwrtOutput("out_z"),
@@ -56,9 +84,15 @@ class ComputeFrameAlignment : public UWRTActionNode {
         rpy.y = tryGetRequiredInput<double>(this, "op", 0);
         rpy.z = tryGetRequiredInput<double>(this, "oy", 0);
 
-        poseIn.orientation = toQuat(rpy);
-        linkName = tryGetRequiredInput<std::string>(this, "link_name", "");
-        startTime = rosnode->get_clock()->now();
+        poseIn.orientation  = toQuat(rpy);
+        referenceFrameName  = tryGetRequiredInput<std::string>(this, "reference_frame", "");
+        targetFrameName     = tryGetRequiredInput<std::string>(this, "target_frame", "");
+        startTime           = rosnode->get_clock()->now();
+
+        haveReferenceToWorld = false;
+        haveBaselinkToTarget = false;
+        haveTargetFrametoWorld = false;
+
         return BT::NodeStatus::RUNNING;
     }
 
@@ -67,24 +101,54 @@ class ComputeFrameAlignment : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        //here, look up transform between base_link and the link to align. Apply 
-        //that transform to the inPose to get the output pose
-        if(lookupTransformThrottled(rosnode, tfBuffer, baseLinkName, linkName, 0.5, lookupTimer, transform)) {
+        // here, look up TWO transforms:
+        // - transform from base link to the target frame
+        // - transform from reference link to world
+        //
+        // after the transforms are looked up:
+        // - apply the base link to target frame transform to poseIn
+        // - apply reference link to world transform to the result of the previous application.
+
+        if(!haveReferenceToWorld) {
+            haveReferenceToWorld = lookupTransformThrottled(rosNode(), tfBuffer, referenceFrameName, "world", 0.5, referenceToWorldTimer, referenceToWorldTransform);
+        }
+
+        if(!haveBaselinkToTarget) {
+            haveBaselinkToTarget = lookupTransformThrottled(rosNode(), tfBuffer, baseLinkName, targetFrameName, 0.5, baseLinkToTargetTimer, baselinkToTargetTransform);
+        }
+
+        if(!haveTargetFrametoWorld) {
+            haveTargetFrametoWorld = lookupTransformThrottled(rosNode(), tfBuffer, targetFrameName, "world", 0.5, targetFrameToWorldTimer, targetFrameToWorldTransform);
+        }
+
+        if(haveReferenceToWorld && haveBaselinkToTarget) {
             //rotate the translation vector so that the pose is transformed relative to its rotation
-            tf2::Quaternion inRotationTf;
-            tf2::Vector3 translationTf;
-            tf2::fromMsg(poseIn.orientation, inRotationTf);
-            tf2::fromMsg(transform.transform.translation, translationTf);
-            tf2::Vector3 rotatedTranslation = tf2::quatRotate(inRotationTf, translationTf);
-            transform.transform.translation = tf2::toMsg(rotatedTranslation);
+            // tf2::Quaternion inRotationTf;
+            // tf2::Vector3 translationTf;
+            // tf2::fromMsg(poseIn.orientation, inRotationTf);
+            // tf2::fromMsg(baselinkToTargetTransform.transform.translation, translationTf);
+            // tf2::Vector3 rotatedTranslation = tf2::quatRotate(inRotationTf, translationTf);
+            // baselinkToTargetTransform.transform.translation = tf2::toMsg(rotatedTranslation);
+            
+            geometry_msgs::msg::Pose 
+                goalPose = doTransform(poseIn, referenceToWorldTransform),
+                targetFrameBaselinkPose = doTransform(geometry_msgs::msg::Pose(), baselinkToTargetTransform),
+                targetDisplacementWorld = doTransform(targetFrameBaselinkPose, targetFrameToWorldTransform),
+                outputPose;
 
-            geometry_msgs::msg::Pose outPose = doTransform(poseIn, transform);
 
-            postOutput<double>(this, "out_x", outPose.position.x);
-            postOutput<double>(this, "out_y", outPose.position.y);
-            postOutput<double>(this, "out_z", outPose.position.z);
-
-            geometry_msgs::msg::Vector3 outRpy = toRPY(outPose.orientation);
+            // geometry_msgs::msg::Pose 
+            //     targetFramePose = doTransform(poseIn, referenceToWorldTransform),
+            //     outputPose      = doTransform(targetFramePose, baselinkToTargetTransform);
+            
+            // printTransform(rosNode(), "base link to transform", baselinkToTargetTransform);
+            // printTransform(rosNode(), )
+            
+            postOutput<double>(this, "out_x", outputPose.position.x);
+            postOutput<double>(this, "out_y", outputPose.position.y);
+            postOutput<double>(this, "out_z", outputPose.position.z);
+            
+            geometry_msgs::msg::Vector3 outRpy = toRPY(outputPose.orientation);
             postOutput<double>(this, "out_or", outRpy.x);
             postOutput<double>(this, "out_op", outRpy.y);
             postOutput<double>(this, "out_oy", outRpy.z);
@@ -102,11 +166,22 @@ class ComputeFrameAlignment : public UWRTActionNode {
     }
 
     private:
-    DEF_THROTTLE_TIMER(lookupTimer);
+    DEF_THROTTLE_TIMER(referenceToWorldTimer);
+    DEF_THROTTLE_TIMER(baseLinkToTargetTimer);
+    DEF_THROTTLE_TIMER(targetFrameToWorldTimer);
+
     geometry_msgs::msg::Pose poseIn;
-    geometry_msgs::msg::TransformStamped transform;
     rclcpp::Time startTime;
     std::string 
-        linkName,
+        referenceFrameName,
+        targetFrameName,
         baseLinkName;
+    bool
+        haveReferenceToWorld,
+        haveBaselinkToTarget,
+        haveTargetFrametoWorld;
+    geometry_msgs::msg::TransformStamped
+        referenceToWorldTransform,
+        baselinkToTargetTransform,
+        targetFrameToWorldTransform;
 };
