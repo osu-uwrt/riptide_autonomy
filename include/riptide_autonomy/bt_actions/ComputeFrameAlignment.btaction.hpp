@@ -2,7 +2,6 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-
 inline void printTransform(rclcpp::Node::SharedPtr node, const std::string& msg, const geometry_msgs::msg::TransformStamped& transform) {
     geometry_msgs::msg::Vector3 rotationRpy = toRPY(transform.transform.rotation);
     RCLCPP_INFO(node->get_logger(), 
@@ -68,6 +67,7 @@ class ComputeFrameAlignment : public UWRTActionNode {
             robotName = ns.substr(1, ns.find('/', 1));
         
         baseLinkName = robotName + "/base_link";
+        goalPoseFrameName = robotName + "/computeframealign_" + std::to_string(this->UID()) + "_goalpose";
     }
 
     /**
@@ -75,24 +75,34 @@ class ComputeFrameAlignment : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        poseIn.position.x = tryGetRequiredInput<double>(this, "x", 0);
-        poseIn.position.y = tryGetRequiredInput<double>(this, "y", 0);
-        poseIn.position.z = tryGetRequiredInput<double>(this, "z", 0);
+        //configure member vars
+        referenceFrameName      = tryGetRequiredInput<std::string>(this, "reference_frame", "");
+        targetFrameName         = tryGetRequiredInput<std::string>(this, "target_frame", "");
+        startTime               = rosnode->get_clock()->now();
+        haveBaselinkToTarget    = false;
+
+        //configure goal transform
+        geometry_msgs::msg::TransformStamped goalTransform;
+        goalTransform.transform.translation.x = tryGetRequiredInput<double>(this, "x", 0);
+        goalTransform.transform.translation.y = tryGetRequiredInput<double>(this, "y", 0);
+        goalTransform.transform.translation.z = tryGetRequiredInput<double>(this, "z", 0);
 
         geometry_msgs::msg::Vector3 rpy;
         rpy.x = tryGetRequiredInput<double>(this, "or", 0);
         rpy.y = tryGetRequiredInput<double>(this, "op", 0);
         rpy.z = tryGetRequiredInput<double>(this, "oy", 0);
 
-        poseIn.orientation  = toQuat(rpy);
-        referenceFrameName  = tryGetRequiredInput<std::string>(this, "reference_frame", "");
-        targetFrameName     = tryGetRequiredInput<std::string>(this, "target_frame", "");
-        startTime           = rosnode->get_clock()->now();
+        goalTransform.transform.rotation    = toQuat(rpy);
+        goalTransform.header.frame_id       = referenceFrameName;
+        goalTransform.child_frame_id        = goalPoseFrameName;
 
-        haveReferenceToWorld = false;
-        haveBaselinkToTarget = false;
-        haveTargetFrametoWorld = false;
+        //configure static broadcaster
+        goalPoseBroadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(rosNode());
+        std::vector<geometry_msgs::msg::TransformStamped> transforms = {
+            goalTransform
+        };
 
+        goalPoseBroadcaster->sendTransform(goalTransform);
         return BT::NodeStatus::RUNNING;
     }
 
@@ -109,53 +119,39 @@ class ComputeFrameAlignment : public UWRTActionNode {
         // - apply the base link to target frame transform to poseIn
         // - apply reference link to world transform to the result of the previous application.
 
-        if(!haveReferenceToWorld) {
-            haveReferenceToWorld = lookupTransformThrottled(rosNode(), tfBuffer, referenceFrameName, "world", 0.5, referenceToWorldTimer, referenceToWorldTransform);
-        }
-
         if(!haveBaselinkToTarget) {
-            haveBaselinkToTarget = lookupTransformThrottled(rosNode(), tfBuffer, baseLinkName, targetFrameName, 0.5, baseLinkToTargetTimer, baselinkToTargetTransform);
+            haveBaselinkToTarget = lookupTransformThrottled(rosNode(), tfBuffer, baseLinkName, targetFrameName, 0.5, baselinkToTargetTimer, baselinkToTargetTransform);
         }
 
-        if(!haveTargetFrametoWorld) {
-            haveTargetFrametoWorld = lookupTransformThrottled(rosNode(), tfBuffer, targetFrameName, "world", 0.5, targetFrameToWorldTimer, targetFrameToWorldTransform);
+        if(!haveGoalPoseFrameToWorld) {
+            haveGoalPoseFrameToWorld = lookupTransformThrottled(rosNode(), tfBuffer, goalPoseFrameName, "world", 0.5, goalPoseToWorldTimer, goalPoseToWorldTransform);
         }
 
-        if(haveReferenceToWorld && haveBaselinkToTarget) {
-            //rotate the translation vector so that the pose is transformed relative to its rotation
-            // tf2::Quaternion inRotationTf;
-            // tf2::Vector3 translationTf;
-            // tf2::fromMsg(poseIn.orientation, inRotationTf);
-            // tf2::fromMsg(baselinkToTargetTransform.transform.translation, translationTf);
-            // tf2::Vector3 rotatedTranslation = tf2::quatRotate(inRotationTf, translationTf);
-            // baselinkToTargetTransform.transform.translation = tf2::toMsg(rotatedTranslation);
-            
-            geometry_msgs::msg::Pose 
-                goalPose = doTransform(poseIn, referenceToWorldTransform),
-                targetFrameBaselinkPose = doTransform(geometry_msgs::msg::Pose(), baselinkToTargetTransform),
-                targetDisplacementWorld = doTransform(targetFrameBaselinkPose, targetFrameToWorldTransform),
-                outputPose;
+        if(haveBaselinkToTarget && haveGoalPoseFrameToWorld) {
+            //apply transform
+            geometry_msgs::msg::Pose relativeTargetFramePose;
+            relativeTargetFramePose.position = vector3ToPoint(baselinkToTargetTransform.transform.translation);
+            relativeTargetFramePose.orientation = baselinkToTargetTransform.transform.rotation;
 
+            geometry_msgs::msg::Pose baseLinkPose = doTransform(relativeTargetFramePose, goalPoseToWorldTransform);
 
-            // geometry_msgs::msg::Pose 
-            //     targetFramePose = doTransform(poseIn, referenceToWorldTransform),
-            //     outputPose      = doTransform(targetFramePose, baselinkToTargetTransform);
-            
-            // printTransform(rosNode(), "base link to transform", baselinkToTargetTransform);
-            // printTransform(rosNode(), )
-            
-            postOutput<double>(this, "out_x", outputPose.position.x);
-            postOutput<double>(this, "out_y", outputPose.position.y);
-            postOutput<double>(this, "out_z", outputPose.position.z);
-            
-            geometry_msgs::msg::Vector3 outRpy = toRPY(outputPose.orientation);
-            postOutput<double>(this, "out_or", outRpy.x);
-            postOutput<double>(this, "out_op", outRpy.y);
-            postOutput<double>(this, "out_oy", outRpy.z);
+            //post results
+            postOutput<double>(this, "out_x", baseLinkPose.position.x);
+            postOutput<double>(this, "out_y", baseLinkPose.position.y);
+            postOutput<double>(this, "out_z", baseLinkPose.position.z);
+
+            geometry_msgs::msg::Vector3 baselinkRpy = toRPY(baseLinkPose.orientation);
+            postOutput<double>(this, "out_or", baselinkRpy.x);
+            postOutput<double>(this, "out_op", baselinkRpy.y);
+            postOutput<double>(this, "out_oy", baselinkRpy.z);
+
+            goalPoseBroadcaster.reset();
             return BT::NodeStatus::SUCCESS;
         }
 
-        return (rosnode->get_clock()->now() - startTime < 3s ? BT::NodeStatus::RUNNING : BT::NodeStatus::FAILURE);
+
+        goalPoseBroadcaster.reset();
+        return (rosNode()->get_clock()->now() - startTime > 3s ? BT::NodeStatus::FAILURE : BT::NodeStatus::RUNNING);
     }
 
     /**
@@ -166,22 +162,23 @@ class ComputeFrameAlignment : public UWRTActionNode {
     }
 
     private:
-    DEF_THROTTLE_TIMER(referenceToWorldTimer);
-    DEF_THROTTLE_TIMER(baseLinkToTargetTimer);
-    DEF_THROTTLE_TIMER(targetFrameToWorldTimer);
+    DEF_THROTTLE_TIMER(baselinkToTargetTimer);
+    DEF_THROTTLE_TIMER(goalPoseToWorldTimer);
 
-    geometry_msgs::msg::Pose poseIn;
-    rclcpp::Time startTime;
-    std::string 
-        referenceFrameName,
-        targetFrameName,
-        baseLinkName;
-    bool
-        haveReferenceToWorld,
-        haveBaselinkToTarget,
-        haveTargetFrametoWorld;
-    geometry_msgs::msg::TransformStamped
-        referenceToWorldTransform,
+    geometry_msgs::msg::TransformStamped 
         baselinkToTargetTransform,
-        targetFrameToWorldTransform;
+        goalPoseToWorldTransform;
+
+    std::string
+        baseLinkName,
+        goalPoseFrameName,
+        referenceFrameName,
+        targetFrameName;
+    
+    bool
+        haveBaselinkToTarget,
+        haveGoalPoseFrameToWorld;
+    
+    rclcpp::Time startTime;
+    std::shared_ptr<tf2_ros::StaticTransformBroadcaster> goalPoseBroadcaster;
 };
