@@ -68,6 +68,7 @@ class ComputeFrameAlignment : public UWRTActionNode {
         
         baseLinkName = robotName + "/base_link";
         goalPoseFrameName = robotName + "/computeframealign_" + std::to_string(this->UID()) + "_goalpose";
+        goalPoseBroadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(rosNode());
     }
 
     /**
@@ -80,6 +81,7 @@ class ComputeFrameAlignment : public UWRTActionNode {
         targetFrameName         = tryGetRequiredInput<std::string>(this, "target_frame", "");
         startTime               = rosnode->get_clock()->now();
         haveBaselinkToTarget    = false;
+        haveGoalPoseFrameToWorld = false;
 
         //configure goal transform
         geometry_msgs::msg::TransformStamped goalTransform;
@@ -95,14 +97,16 @@ class ComputeFrameAlignment : public UWRTActionNode {
         goalTransform.transform.rotation    = toQuat(rpy);
         goalTransform.header.frame_id       = referenceFrameName;
         goalTransform.child_frame_id        = goalPoseFrameName;
+        goalTransform.header.stamp          = rosNode()->get_clock()->now();
+
+        goalPoseToWorldTransform.transform.translation.x = 0.123456;
 
         //configure static broadcaster
-        goalPoseBroadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(rosNode());
         std::vector<geometry_msgs::msg::TransformStamped> transforms = {
             goalTransform
         };
 
-        goalPoseBroadcaster->sendTransform(goalTransform);
+        goalPoseBroadcaster->sendTransform(transforms);
         return BT::NodeStatus::RUNNING;
     }
 
@@ -111,6 +115,10 @@ class ComputeFrameAlignment : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
+        if(rosNode()->get_clock()->now() - startTime < 500ms) {
+            return BT::NodeStatus::RUNNING;
+        }
+
         // here, look up TWO transforms:
         // - transform from base link to the target frame
         // - transform from reference link to world
@@ -124,7 +132,7 @@ class ComputeFrameAlignment : public UWRTActionNode {
         }
 
         if(!haveGoalPoseFrameToWorld) {
-            haveGoalPoseFrameToWorld = lookupTransformThrottled(rosNode(), tfBuffer, goalPoseFrameName, "world", 0.5, goalPoseToWorldTimer, goalPoseToWorldTransform);
+            haveGoalPoseFrameToWorld = lookupTransformThrottled(rosNode(), tfBuffer, goalPoseFrameName, "world", 0.5, goalPoseToWorldTimer, goalPoseToWorldTransform, true);
         }
 
         if(haveBaselinkToTarget && haveGoalPoseFrameToWorld) {
@@ -145,12 +153,12 @@ class ComputeFrameAlignment : public UWRTActionNode {
             postOutput<double>(this, "out_op", baselinkRpy.y);
             postOutput<double>(this, "out_oy", baselinkRpy.z);
 
-            goalPoseBroadcaster.reset();
+            // goalPoseBroadcaster.reset();
             return BT::NodeStatus::SUCCESS;
         }
 
 
-        goalPoseBroadcaster.reset();
+        // goalPoseBroadcaster.reset();
         return (rosNode()->get_clock()->now() - startTime > 3s ? BT::NodeStatus::FAILURE : BT::NodeStatus::RUNNING);
     }
 

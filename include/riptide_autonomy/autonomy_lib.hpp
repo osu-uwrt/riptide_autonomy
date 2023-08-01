@@ -92,7 +92,8 @@ bool lookupTransformNow(
     const std::shared_ptr<const tf2_ros::Buffer> buffer,
     const std::string& fromFrame,
     const std::string& toFrame,
-    geometry_msgs::msg::TransformStamped& transform);
+    geometry_msgs::msg::TransformStamped& transform,
+    bool lookupNext = false);
 
 
 #define DEF_THROTTLE_TIMER(name) double name = 0
@@ -105,7 +106,8 @@ bool lookupTransformThrottled(
     const std::string& toFrame,
     double throttleDuration,
     double& lastLookup,
-    geometry_msgs::msg::TransformStamped& transform);
+    geometry_msgs::msg::TransformStamped& transform,
+    bool lookupNext = false);
 
 
 /**

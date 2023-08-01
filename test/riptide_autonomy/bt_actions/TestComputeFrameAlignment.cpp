@@ -10,7 +10,7 @@ struct DualVector3 {
     geometry_msgs::msg::Vector3
         v1,
         v2;
-};
+};    
 
 
 #define ASSERT_LINK_NEAR_POS(node, linkName, pose, absError) \
@@ -21,10 +21,12 @@ struct DualVector3 {
         ASSERT_NEAR(transform.transform.translation.x, pose.v1.x, absError); \
         ASSERT_NEAR(transform.transform.translation.y, pose.v1.y, absError); \
         ASSERT_NEAR(transform.transform.translation.z, pose.v1.z, absError); \
-        geometry_msgs::msg::Vector3 transRpy = toRPY(transform.transform.rotation); \
-        ASSERT_NEAR(transRpy.x, pose.v2.x, absError); \
-        ASSERT_NEAR(transRpy.y, pose.v2.y, absError); \
-        ASSERT_NEAR(transRpy.z, pose.v2.z, absError); \
+        tf2::Quaternion \
+            tf2TransformQuat, \
+            tf2PoseQuat; \
+        tf2::fromMsg(transform.transform.rotation, tf2TransformQuat); \
+        tf2::fromMsg(toQuat(pose.v2), tf2PoseQuat); \
+        ASSERT_EQ(tf2TransformQuat, tf2PoseQuat); \
     } while(false)
 
 
@@ -67,7 +69,7 @@ bool lookupTransform(rclcpp::Node::SharedPtr node, const std::string& fromFrame,
     tf2_ros::TransformListener listener(*buffer);
     DEF_THROTTLE_TIMER(throtTimer);
     while(!evalTransformLookedUp) {
-        evalTransformLookedUp = lookupTransformThrottled(node, buffer, fromFrame, toFrame, 0.5, throtTimer, transform);
+        evalTransformLookedUp = lookupTransformThrottled(node, buffer, fromFrame, toFrame, 0.5, throtTimer, transform, true);
     }
 
     return evalTransformLookedUp;
@@ -514,7 +516,7 @@ TEST_F(BtTest, test_ComputeFrameAlignment_offset_child_with_rotation_to_zero) {
 
     DualVector3
         baseLinkPose    = makeDualVector3(0, 0, 0, 0, 0, 0),
-        childLinkPose   = makeDualVector3(1, 2, 3, 0, 0, 3.1415),
+        childLinkPose   = makeDualVector3(1, 2, 3, 0, 0, 3.1415), //TODO make weirder
         childLinkGoal   = makeDualVector3(0, 0, 0, 0, 0, 0),
         goalFramePose   = makeDualVector3(0, 0, 0, 0, 0, 0);
     
