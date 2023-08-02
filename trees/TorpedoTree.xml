@@ -193,11 +193,11 @@
             <SetBlackboard output_key="0.25" value="0.25"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="0.5" value="0.5"/>
+            <SetBlackboard output_key="target_cov" value="1"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" target_cov="0.5" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="talos/torpedo_link" proximity="1"/>
