@@ -99,7 +99,7 @@ class ComputeFrameAlignment : public UWRTActionNode {
         goalTransform.child_frame_id        = goalPoseFrameName;
         goalTransform.header.stamp          = rosNode()->get_clock()->now();
 
-        goalPoseToWorldTransform.transform.translation.x = 0.123456;
+        goalPoseToWorldTransform.transform.translation.x = 0.123456; //TODO: REMOVE
 
         //configure static broadcaster
         std::vector<geometry_msgs::msg::TransformStamped> transforms = {

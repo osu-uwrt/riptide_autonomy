@@ -3,7 +3,7 @@
     <BehaviorTree ID="AlignLink">
         <Sequence name="align torpedos">
             <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
-            <Action ID="ComputeFrameAlignment" frameName="{link_name}" out_x="x" out_y="y" out_z="z" x="{obj_x}" y="{obj_y}" z="{obj_z}"/>
+            <Action ID="ComputeFrameAlignment" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="3.1415" reference_frame="{frame_name}" target_frame="{link_name}" x="proximity" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
         </Sequence>
     </BehaviorTree>
@@ -96,7 +96,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -105,10 +105,10 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <IfThenElse name="Ensure Z good">
-                <Condition ID="CompareNums" a="{z}" b="-0.75" name="z above 0.75..." test="&gt;"/>
+                <Condition ID="CompareNums" a="{z}" b="-0.35" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
-                    <Action ID="Info" message="Enforcing minimum depth of 0.75 meters... requested depth was previously {z}."/>
-                    <SetBlackboard name="...too high" output_key="valid_z" value="-0.75"/>
+                    <Action ID="Info" message="Enforcing minimum depth of 0.35 meters... requested depth was previously {z}."/>
+                    <SetBlackboard name="...too high" output_key="valid_z" value="-0.35"/>
                 </Sequence>
                 <SetBlackboard name="...all good" output_key="valid_z" value="{z}"/>
             </IfThenElse>
@@ -233,7 +233,6 @@
                         <Sequence>
                             <Action ID="PublishToController" isOrientation="1" mode="2" x="0" y="0" z="1.5707"/>
                             <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
-                            <Action ID="Info" message="curr: {curr_yaw}, new: {new_yaw}"/>
                             <Condition ID="ApproxEqualTo" a="{curr_yaw}" b="{new_yaw}" range="0.25"/>
                         </Sequence>
                     </Decorator>
@@ -311,13 +310,20 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
-            <input_port name="frameName" required="true"/>
-            <output_port name="out_x" required="false"/>
-            <output_port name="out_y" required="false"/>
-            <output_port name="out_z" required="false"/>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <output_port name="out_op" required="true"/>
+            <output_port name="out_or" required="true"/>
+            <output_port name="out_oy" required="true"/>
+            <output_port name="out_x" required="true"/>
+            <output_port name="out_y" required="true"/>
+            <output_port name="out_z" required="true"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="reference_frame" required="true"/>
+            <input_port name="target_frame" required="true"/>
             <input_port name="x" required="true">target x-pos of frameName in world frame</input_port>
             <input_port name="y" required="true">target y-pos of frameName in world frame</input_port>
             <input_port name="z" required="true">target z-pos of frameName in world frame</input_port>
@@ -370,7 +376,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -468,4 +474,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
