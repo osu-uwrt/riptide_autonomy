@@ -51,10 +51,12 @@ bool lookupTransformNow(
     const std::shared_ptr<const tf2_ros::Buffer> buffer,
     const std::string& fromFrame,
     const std::string& toFrame,
-    geometry_msgs::msg::TransformStamped& transform)
+    geometry_msgs::msg::TransformStamped& transform,
+    bool lookupNext)
 {
     try {
-        transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
+        tf2::TimePoint tp = (lookupNext ? tf2_ros::fromRclcpp(node->get_clock()->now()) : tf2::TimePointZero);
+        transform = buffer->lookupTransform(toFrame, fromFrame, tp);
         return true;
     } catch(tf2::TransformException& ex) {
         RCLCPP_WARN(node->get_logger(), "Failed to look up transform from %s to %s (%s)", fromFrame.c_str(), toFrame.c_str(), ex.what());
@@ -71,7 +73,8 @@ bool lookupTransformThrottled(
     const std::string& toFrame,
     double throttleDuration,
     double& lastLookup,
-    geometry_msgs::msg::TransformStamped& transform)
+    geometry_msgs::msg::TransformStamped& transform,
+    bool lookupNext)
 {
     double 
         currentLookup = node->get_clock()->now().seconds(),
@@ -79,7 +82,7 @@ bool lookupTransformThrottled(
     
     if(elapsedSinceLastLookup >= throttleDuration) {
         lastLookup = currentLookup;
-        return lookupTransformNow(node, buffer, fromFrame, toFrame, transform);
+        return lookupTransformNow(node, buffer, fromFrame, toFrame, transform, lookupNext);
     }
     return false; 
 }
