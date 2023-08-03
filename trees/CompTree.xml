@@ -8,13 +8,22 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
-        <Sequence>
-            <SetBlackboard output_key="-1" value="-1"/>
+        <Sequence name="COMP">
+            <SetBlackboard output_key="-0.5" value="-0.5"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
-            <SubTree ID="TorpedoTree"/>
-            <SubTree ID="KillController"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-0.5"/>
+            <ForceSuccess>
+                <SubTree ID="GateTree"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="BuoyTree"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="TorpedoTree"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SurfaceTree"/>
+            </ForceSuccess>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BumpObject">
@@ -373,6 +382,39 @@
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="orig_y"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="SurfaceTree">
+        <Sequence>
+            <SetBlackboard output_key="5" value="5"/>
+            <SetBlackboard name="boolean for if surface should be epic" output_key="cool_surface" value="1"/>
+            <SetBlackboard output_key="depth" value="-0.5"/>
+            <SetBlackboard name="set target pitch" output_key="target_pitch" value="-1.1"/>
+            <SetBlackboard output_key="-1.5707" value="-1.5707"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="180" value="180"/>
+            <SetBlackboard output_key="table_frame" value="table_frame"/>
+            <SetBlackboard output_key="target_cov" value="1"/>
+            <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="table_x" y="table_y" z="depth"/>
+            <ForceSuccess>
+                <IfThenElse name="conditional surface">
+                    <Condition ID="CompareNums" a="{cool_surface}" b="1" name="is surface cool?" test="=="/>
+                    <Sequence name="cool surface">
+                        <SetBlackboard output_key="15" value="15"/>
+                        <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="target_pitch" r="0" timeout="15" y="0"/>
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="1.5">
+                            <Sequence>
+                                <Action ID="PublishToController" isOrientation="0" mode="2" name="go as fast as possible" x="100" y="0" z="0"/>
+                                <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="curr_z"/>
+                                <Condition ID="CompareNums" a="{curr_z}" b="0" test="&gt;"/>
+                            </Sequence>
+                        </Decorator>
+                    </Sequence>
+                    <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="table_x" y="table_y" z="0"/>
+                </IfThenElse>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="TorpedoTree">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
@@ -618,6 +660,7 @@
         <SubTree ID="SpinTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
+        <SubTree ID="SurfaceTree"/>
         <SubTree ID="TorpedoTree"/>
         <Action ID="TransformPose">
             <input_port name="from_frame" required="true"/>
@@ -643,40 +686,6 @@
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
-        <SubTree ID="SurfaceTree"/>
     </TreeNodesModel>
     <!-- ////////// -->
-    <BehaviorTree ID="SurfaceTree">
-        <Sequence>
-            <SetBlackboard output_key="5" value="5"/>
-            <SetBlackboard name="boolean for if surface should be epic" output_key="cool_surface" value="1"/>
-            <SetBlackboard output_key="depth" value="-0.5"/>
-            <SetBlackboard name="set target pitch" output_key="target_pitch" value="-1.1"/>
-            <SetBlackboard output_key="-1.5707" value="-1.5707"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="180" value="180"/>
-            <SetBlackboard output_key="table_frame" value="table_frame"/>
-            <SetBlackboard output_key="target_cov" value="1"/>
-            <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="table_x" y="table_y" z="depth"/>
-            <ForceSuccess>
-                <IfThenElse name="conditional surface">
-                    <Condition ID="CompareNums" a="{cool_surface}" b="1" name="is surface cool?" test="=="/>
-                    <Sequence name="cool surface">
-                        <SetBlackboard output_key="15" value="15"/>
-                        <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="target_pitch" r="0" timeout="15" y="0"/>
-                        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="1.5">
-                            <Sequence>
-                                <Action ID="PublishToController" isOrientation="0" mode="2" name="go as fast as possible" x="100" y="0" z="0"/>
-                                <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="curr_z"/>
-                                <Condition ID="CompareNums" a="{curr_z}" b="0" test="&gt;"/>
-                            </Sequence>
-                        </Decorator>
-                    </Sequence>
-                    <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="table_x" y="table_y" z="0"/>
-                </IfThenElse>
-            </ForceSuccess>
-            <SubTree ID="KillController"/>
-        </Sequence>
-    </BehaviorTree>
 </root>
