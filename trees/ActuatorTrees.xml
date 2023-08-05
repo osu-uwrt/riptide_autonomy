@@ -136,7 +136,7 @@
             <Action ID="Info" message="Attempting to fire torpedo..."/>
             <SetBlackboard output_key="torpedo_srv" value="command/torpedo"/>
             <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
-            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="torpedos_available" torpedo_state=""/>
+            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="torpedoes_available" torpedo_state=""/>
             <Action ID="Info" message="{torpedoes_available} torpedos available."/>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{torpedoes_available}" b="0" name="are torpedos available?" test="&gt;"/>
