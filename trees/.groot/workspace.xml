@@ -266,6 +266,7 @@
         <Sequence>
             <Action ID="Info" message="Setting &quot;Actuators&quot; armed state to {armed}"/>
             <Action ID="Wait" seconds="1"/>
+            <Action ID="CallSetBoolService" data="{armed}" srv_name="command/actuator/arm" time_limit_secs="1"/>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{armed}" b="1" test="=="/>
                 <Action ID="Info" message="&quot;ACTUATORS&quot; ARMED"/>
@@ -674,4 +675,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-

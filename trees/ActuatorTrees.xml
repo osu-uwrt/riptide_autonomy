@@ -134,21 +134,23 @@
         <Sequence>
             <SetBlackboard output_key="10" value="10"/>
             <Action ID="Info" message="Attempting to fire torpedo..."/>
-            <SetBlackboard output_key="torpedo_srv" value="command/torpedo"/>
+            <SetBlackboard output_key="torpedo_srv" value="command/actuator/torpedo"/>
+            <SubTree ID="CheckActuatorStates" __shared_blackboard="false"/>
             <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
-            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="torpedoes_available" torpedo_state=""/>
-            <Action ID="Info" message="{torpedoes_available} torpedos available."/>
+            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="torpedoes" torpedo_state=""/>
+            <Action ID="Info" message="{torpedoes} droppers available."/>
+            <Action ID="Format" format="{torpedoes}.0" out="torpedoesstr"/>
             <IfThenElse>
-                <Condition ID="CompareNums" a="{torpedoes_available}" b="0" name="are torpedos available?" test="&gt;"/>
-                <Sequence name="If torpedos available">
-                    <Action ID="Info" message="Calling trigger service {torpedo_srv}..."/>
+                <Condition ID="CompareNums" a="{torpedoesstr}" b="0" name="droppers available?" test="&gt;"/>
+                <Sequence name="fire torpedo">
+                    <Action ID="Info" message="Calling trigger service {torpedo_srv}"/>
                     <Action ID="CallTriggerService" srv_name="{torpedo_srv}" time_limit_secs="1"/>
                     <Action ID="Wait" seconds="1"/>
                     <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
-                    <Action ID="Info" message="Torpedo fired."/>
+                    <Action ID="Info" message="Torpedo fired!"/>
                 </Sequence>
                 <ForceFailure>
-                    <Action ID="Error" message="No torpedos available! Not firing!"/>
+                    <Action ID="Error" message="No torpedoes available!"/>
                 </ForceFailure>
             </IfThenElse>
         </Sequence>
@@ -248,7 +250,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -339,6 +341,7 @@
         <Sequence>
             <Action ID="Info" message="Setting &quot;Actuators&quot; armed state to {armed}"/>
             <Action ID="Wait" seconds="1"/>
+            <Action ID="CallSetBoolService" data="{armed}" srv_name="command/actuator/arm" time_limit_secs="1"/>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{armed}" b="1" test="=="/>
                 <Action ID="Info" message="&quot;ACTUATORS&quot; ARMED"/>
@@ -594,7 +597,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="op" required="true"/>
@@ -663,7 +666,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
