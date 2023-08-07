@@ -17,12 +17,12 @@ BT::NodeStatus testGetOdometry(
     //collect results
     auto blackboard = odometryNode->config().blackboard;
     outputsSet = true;
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "x", positionOut.x);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "y", positionOut.y);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "z", positionOut.z);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "or", orientationOut.x);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "op", orientationOut.y);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "oy", orientationOut.z);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "x", positionOut.x);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "y", positionOut.y);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "z", positionOut.z);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "or", orientationOut.x);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "op", orientationOut.y);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "oy", orientationOut.z);
 
     return result;
 }

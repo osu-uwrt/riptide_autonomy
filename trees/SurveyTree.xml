@@ -9,13 +9,10 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="talos/torpedo_link" value="talos/torpedo_link"/>
-            <SetBlackboard output_key="test_frame" value="test_frame"/>
             <SetBlackboard output_key="-1" value="-1"/>
+            <SubTree ID="WaitForKillSwitch"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="test_frame" link_name="talos/torpedo_link" proximity="1"/>
-            <Action ID="Wait" seconds="10"/>
+            <SubTree ID="Survey"/>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
@@ -269,6 +266,29 @@
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="orig_y"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="Survey">
+        <Sequence>
+            <SetBlackboard output_key="torpedo_lower_hole_frame" value="torpedo_lower_hole_frame"/>
+            <SetBlackboard output_key="torpedo_upper_hole_frame" value="torpedo_upper_hole_frame"/>
+            <SetBlackboard output_key="torpedo_frame" value="torpedo_frame"/>
+            <SetBlackboard output_key="buoy_glyph_2_frame" value="buoy_glyph_2_frame"/>
+            <SetBlackboard output_key="buoy_glyph_1_frame" value="buoy_glyph_1_frame"/>
+            <SetBlackboard output_key="buoy_frame" value="buoy_frame"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="earth_glyph_frame" value="earth_glyph_frame"/>
+            <SetBlackboard output_key="120" value="120"/>
+            <SetBlackboard output_key="1.25" value="1.25"/>
+            <SetBlackboard output_key="gate_frame" value="gate_frame"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="gate_frame" target_cov="1.25" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="earth_glyph_frame" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="buoy_frame" target_cov="1.25" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="buoy_glyph_1_frame" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="buoy_glyph_2_frame" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="Search" __shared_blackboard="false" object_name="torpedo_frame" target_cov="1.25" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="torpedo_upper_hole_frame" target_cov="1.25" timeout_secs="60"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="torpedo_lower_hole_frame" target_cov="1.25" timeout_secs="60"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
         <Sequence>
             <Action ID="SetStatus" status="waiting"/>
@@ -458,6 +478,7 @@
         <SubTree ID="SpinTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
+        <SubTree ID="Survey"/>
         <Action ID="TransformPose">
             <input_port name="from_frame" required="true"/>
             <input_port name="op" required="true"/>

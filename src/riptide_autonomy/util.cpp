@@ -6,17 +6,16 @@ using namespace std::chrono_literals;
 std::string getEnvVar(const char *name)
 {
     const char *env = std::getenv(name);
-    if (env == nullptr)
+    if (!env)
     {
-        RCLCPP_INFO(log, "DoTask: %s environment variable not found!", name);
-        return "";
+        throw std::invalid_argument(name);
     }
 
     return std::string(env);
 }
 
 
-void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName) {
+void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string& packageName) {
     std::string amentIndexPath = ament_index_cpp::get_package_prefix(packageName); // TODO Make this work to scan ament index and get to our plugin
     factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
     factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
@@ -24,14 +23,17 @@ void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory,
 }
 
 
-void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext) {
+void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosNode) {
+    //initialize static variables of UwrtBtNode
+    UwrtBtNode::staticInit(rosNode);
+
     // give each BT node access to our RCLCPP context
-    for (auto &node : tree.nodes)
+    for (auto &treeNode : tree.nodes)
     {
         // Not a typo: it is "=", not "=="
-        if (auto btNode = dynamic_cast<UwrtBtNode *>(node.get()))
+        if (auto uwrtNode = dynamic_cast<UwrtBtNode *>(treeNode.get()))
         {
-            btNode->init(rosContext);
+            uwrtNode->init(rosNode);
         }
     }
 }
@@ -43,54 +45,46 @@ geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry
     return result;
 }
 
-/**
- * @brief Transforms a relative pose between frames.
- *  
- * @param rosnode A ros node handle
- * @param buffer TF Buffer. THIS MUST BE ATTACHED TO A LISTENER THAT WAS CREATED WITH SPIN_THREAD = TRUE or else the function will not work
- * @param original Pose to tranform
- * @param fromFrame The frame original is currently in
- * @param toFrame The frame to transform original to
- * @param result The transformed pose
- * @return true if the operation succeeded, false otherwise
- */
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {    
-    //look up transform with a three second timeout to find one
-    rclcpp::Time startTime = rosnode->get_clock()->now();
-    RCLCPP_DEBUG(rosnode->get_logger(), "Attempting to look up transform from %s to %s", fromFrame.c_str(), toFrame.c_str());
-    
-    while((rosnode->get_clock()->now() - startTime) < 3s) {
-        try {
-            geometry_msgs::msg::TransformStamped transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero, 1500ms);
-            result = doTransform(original, transform);
 
-            RCLCPP_DEBUG(rosnode->get_logger(), "Transform from %s to %s looked up as XYZ %.3f %.3f %.3f with XYZW %.3f %.3f %.3f %.3f", 
-                fromFrame.c_str(), 
-                toFrame.c_str(), 
-                transform.transform.translation.x,
-                transform.transform.translation.y,
-                transform.transform.translation.z,
-                transform.transform.rotation.x,
-                transform.transform.rotation.y,
-                transform.transform.rotation.z,
-                transform.transform.rotation.w
-            );
-            return true;
-
-        } catch(tf2::TransformException &ex) {
-            RCLCPP_WARN_SKIPFIRST_THROTTLE(log, *rosnode->get_clock(), 500, "LookupException encountered while looking up transform from %s to %s: %s", fromFrame.c_str(), toFrame.c_str(), ex.what());
-        }
+bool lookupTransformNow(
+    rclcpp::Node::SharedPtr node,
+    const std::shared_ptr<const tf2_ros::Buffer> buffer,
+    const std::string& fromFrame,
+    const std::string& toFrame,
+    geometry_msgs::msg::TransformStamped& transform,
+    bool lookupNext)
+{
+    try {
+        tf2::TimePoint tp = (lookupNext ? tf2_ros::fromRclcpp(node->get_clock()->now()) : tf2::TimePointZero);
+        transform = buffer->lookupTransform(toFrame, fromFrame, tp);
+        return true;
+    } catch(tf2::TransformException& ex) {
+        RCLCPP_WARN(node->get_logger(), "Failed to look up transform from %s to %s (%s)", fromFrame.c_str(), toFrame.c_str(), ex.what());
     }
-    RCLCPP_ERROR(log, "Failed to look up transform from %s to %s!", fromFrame.c_str(), toFrame.c_str());
+    
     return false;
 }
 
 
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result) {
-    std::shared_ptr<tf2_ros::Buffer> buffer = std::make_shared<tf2_ros::Buffer>(rosnode->get_clock());
-    tf2_ros::TransformListener listener(*buffer);
-
-    return transformBetweenFrames(rosnode, buffer, relative, fromFrame, toFrame, result);
+bool lookupTransformThrottled(
+    rclcpp::Node::SharedPtr node,
+    const std::shared_ptr<const tf2_ros::Buffer> buffer,
+    const std::string& fromFrame,
+    const std::string& toFrame,
+    double throttleDuration,
+    double& lastLookup,
+    geometry_msgs::msg::TransformStamped& transform,
+    bool lookupNext)
+{
+    double 
+        currentLookup = node->get_clock()->now().seconds(),
+        elapsedSinceLastLookup = currentLookup - lastLookup;
+    
+    if(elapsedSinceLastLookup >= throttleDuration) {
+        lastLookup = currentLookup;
+        return lookupTransformNow(node, buffer, fromFrame, toFrame, transform, lookupNext);
+    }
+    return false; 
 }
 
 
@@ -146,7 +140,7 @@ double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 
 }
 
 
-std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
+std::string formatStringWithBlackboard(const std::string& str, UwrtBtNode *n) {
     std::string result = "";
     int pos = 0;
     while(str.find_first_of('{', pos) != std::string::npos) {
@@ -162,7 +156,7 @@ std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& btNode) {
                 valueOfEntry;
 
             //get the value of the entry
-            if(getFromBlackboard<std::string>(btNode, nameOfEntry, valueOfEntry)) {
+            if(getFromBlackboard<std::string>(n, nameOfEntry, valueOfEntry)) {
                 //if nameOfEntry exists, valueOfEntry was populated by the call above
                 result += valueOfEntry;
             } else {

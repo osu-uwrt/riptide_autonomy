@@ -65,7 +65,7 @@ std::string getEnvVar(const char *name);
  * 
  * @param factory The factory to register the plugins with.
  */
-void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string packageName);
+void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string& packageName);
 
 /**
  * @brief Gives the passed ros context to each node in the behavior tree that needs it.
@@ -86,28 +86,29 @@ void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext);
  */
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose pose, geometry_msgs::msg::TransformStamped transform);
 
-/**
- * @brief Looks up necessary transform between two poses then transforms specified coords into cords in the new pose. Use this overload if you have or can create a TF buffer
- * 
- * @param relative The pose in fromFrame to transform to toFrame.
- * @param fromFrame The current frame of the relative pose
- * @param toFrame The desired frame of the relative pose
- * @param rosnode The ROS node handle to use.
- * @param buffer The TF buffer to use.
- * @return std::tuple<geometry_msgs::msg::Pose, bool> The equlivalent pose in a new frame
- */
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, std::shared_ptr<tf2_ros::Buffer> buffer, geometry_msgs::msg::Pose original, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result);
 
-/**
- * @brief Looks up necessary transform between two poses then transforms specified coords into coords in the new pose. this overload will create a TF buffer and listener to use.
- * 
- * @param relative The pose in fromFrame to transform to toFrame
- * @param fromFrame The current frame of the relative pose
- * @param toFrame The desired frame of the relative pose
- * @param rosnode The ROS node handle to use.
- * @return std::tuple<geometry_msgs::msg::Pose, bool> The equivalent pose in a new frame
- */
-bool transformBetweenFrames(rclcpp::Node::SharedPtr rosnode, geometry_msgs::msg::Pose relative, std::string fromFrame, std::string toFrame, geometry_msgs::msg::Pose& result);
+bool lookupTransformNow(
+    rclcpp::Node::SharedPtr node,
+    const std::shared_ptr<const tf2_ros::Buffer> buffer,
+    const std::string& fromFrame,
+    const std::string& toFrame,
+    geometry_msgs::msg::TransformStamped& transform,
+    bool lookupNext = false);
+
+
+#define DEF_THROTTLE_TIMER(name) double name = 0
+
+
+bool lookupTransformThrottled(
+    rclcpp::Node::SharedPtr node,
+    const std::shared_ptr<const tf2_ros::Buffer> buffer,
+    const std::string& fromFrame,
+    const std::string& toFrame,
+    double throttleDuration,
+    double& lastLookup,
+    geometry_msgs::msg::TransformStamped& transform,
+    bool lookupNext = false);
+
 
 /**
  * @brief Converts a quaternion to Euler (roll-pitch-yaw) angles in radians.
@@ -153,51 +154,52 @@ double vector3Length(geometry_msgs::msg::Vector3 vec3);
  * @brief Get a thing from a BT blackboard.
  * 
  * @tparam T The type of the pointer to grab.
- * @param blackboard The blackboard to grab from.
+ * @param n The UwrtBtNode to get the bb value from
  * @param key The name of the value to grab.
  * @param value The variable to be populated with the desired blackboard entry.
  * @return true If the operation succeeds
  * @return false If the operation fails
  */
 template<typename T>
-bool getFromBlackboard(BT::Blackboard::Ptr blackboard, std::string key, T& value) {
+bool getFromBlackboard(rclcpp::Node::SharedPtr rosnode, BT::Blackboard::Ptr bb, const std::string& key, T& value) {
     try {
-        if(blackboard->get<T>(key, value)) {
+        if(bb->get<T>(key, value)) {
             return true;
         }
     } catch (std::runtime_error& ex) {
-        RCLCPP_ERROR(log, "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
+        RCLCPP_ERROR(rosnode->get_logger(), "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
     }
 
     return false;
 }
 
 /**
- * @brief Get a thing from the BT blackboard.
- *
+ * @brief Get a thing from a BT blackboard.
+ * 
  * @tparam T The type of the pointer to grab.
- * @param treeNode The behaviortree node to grab the blackboard value from.
- * @param name The name of the blackboard value to get.
- * @param value Will be populated with the value grabbed from the blackboard.
- * @return true if the operation succeeded, false otherwise.
+ * @param n The UwrtBtNode to get the bb value from
+ * @param key The name of the value to grab.
+ * @param value The variable to be populated with the desired blackboard entry.
+ * @return true If the operation succeeds
+ * @return false If the operation fails
  */
 template<typename T>
-bool getFromBlackboard(BT::TreeNode& n, std::string key, T& value) {
-    if(!n.config().blackboard) {
-        RCLCPP_ERROR(log, "Cannot get from blackboard! The passed TreeNode does not have one!");
+bool getFromBlackboard(UwrtBtNode *n, const std::string& key, T& value) {
+    if(!n->treeNode()->config().blackboard) {
+        RCLCPP_ERROR(n->rosNode()->get_logger(), "Cannot get from blackboard! The passed TreeNode does not have one!");
         return false;
     }
 
-    return getFromBlackboard(n.config().blackboard, key, value);
+    return getFromBlackboard<T>(n->rosNode(), n->treeNode()->config().blackboard, key, value);
 }
 
 
 template<typename T>
-void postOutput(BT::TreeNode *n, const std::string& key, T value) {
+void postOutput(UwrtBtNode *n, const std::string& key, T value) {
     std::ostringstream stream;
     stream << value;
 
-    n->setOutput(key, stream.str());
+    n->treeNode()->setOutput(key, stream.str());
 }
 
 /**
@@ -211,12 +213,12 @@ void postOutput(BT::TreeNode *n, const std::string& key, T value) {
  * @return T The value of the port or the default if there is none.
  */
 template<typename T> 
-T tryGetInput(const BT::TreeNode *n, const std::string& key, const T defaultValue, bool warnIfUndefined) {
-    auto op = n->getInput<std::string>(key);
+T tryGetInput(UwrtBtNode *n, const std::string& key, const T defaultValue, bool warnIfUndefined) {
+    auto op = n->treeNode()->getInput<std::string>(key);
     if(op.has_value()) {
         return BT::convertFromString<T>(op.value());
     } else if(warnIfUndefined) {
-        RCLCPP_WARN(log, "Node %s does not have a value for required port with name %s!", n->name().c_str(), key.c_str());
+        RCLCPP_WARN(n->rosNode()->get_logger(), "Node %s does not have a value for required port with name %s!", n->treeNode()->name().c_str(), key.c_str());
     }
 
     return defaultValue;
@@ -232,7 +234,7 @@ T tryGetInput(const BT::TreeNode *n, const std::string& key, const T defaultValu
  * @return T The value of the port, or the default value if there is no such value.
  */
 template<typename T>
-T tryGetRequiredInput(const BT::TreeNode *n, const std::string& key, const T defaultValue) {
+T tryGetRequiredInput(UwrtBtNode *n, const std::string& key, const T defaultValue) {
     return tryGetInput<T>(n, key, defaultValue, true);
 }
 
@@ -246,7 +248,7 @@ T tryGetRequiredInput(const BT::TreeNode *n, const std::string& key, const T def
  * @return T The value of the port, or the default value if there is no such value.
  */
 template<typename T>
-T tryGetOptionalInput(const BT::TreeNode *n, const std::string& key, const T defaultValue) {
+T tryGetOptionalInput(UwrtBtNode *n, const std::string& key, const T defaultValue) {
     return tryGetInput<T>(n, key, defaultValue, false);
 }
 
@@ -260,7 +262,7 @@ T tryGetOptionalInput(const BT::TreeNode *n, const std::string& key, const T def
  * @return T The value of the blackboard entry, or the default value if it cannot be retrieved.
  */
 template<typename T>
-T getFromBlackboardWithDefault(BT::Blackboard::Ptr blackboard, std::string key, const T defaultValue) {
+T getFromBlackboardWithDefault(BT::Blackboard::Ptr blackboard, const std::string& key, const T defaultValue) {
     T retval = defaultValue;
     getFromBlackboard(blackboard, key, retval);
     return retval;
@@ -276,7 +278,7 @@ T getFromBlackboardWithDefault(BT::Blackboard::Ptr blackboard, std::string key, 
  * @return T The value of the blackboard entry, or the default value if it cannot be retrieved.
  */
 template<typename T>
-T getFromBlackboardWithDefault(BT::TreeNode& n, std::string key, T& defaultValue) {
+T getFromBlackboardWithDefault(UwrtBtNode& n, const std::string& key, T& defaultValue) {
     T retval = defaultValue;
     getFromBlackboard(n, key, retval);
     return retval;
@@ -289,7 +291,7 @@ T getFromBlackboardWithDefault(BT::TreeNode& n, std::string key, T& defaultValue
  * @param treeNode The behaviortree node to grab the blackboard values from.
  * @return std::string The string with the blackboard entries inserted
  */
-std::string stringWithBlackboardEntries(std::string str, BT::TreeNode& treeNode);
+std::string formatStringWithBlackboard(const std::string& str, UwrtBtNode *treeNode);
 
 /**
  * @brief Calculates the distance between two given points.

@@ -90,12 +90,12 @@ BT::NodeStatus testTransform(std::shared_ptr<BtTestTool> toolNode, double x, dou
     auto blackboard = node->config().blackboard;
 
     outputsSet = true;
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_x", results[0]);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_y", results[1]);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_z", results[2]);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_or", results[3]);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_op", results[4]);
-    outputsSet = outputsSet && getOutputFromBlackboard<double>(blackboard, "out_oy", results[5]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_x", results[0]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_y", results[1]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_z", results[2]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_or", results[3]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_op", results[4]);
+    outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_oy", results[5]);
 
     return result;
 }
