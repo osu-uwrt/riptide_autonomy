@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+
 import time
 import math
 import rclpy
@@ -6,6 +7,7 @@ from rclpy.node import Node
 from rclpy.time import Time 
 from nortek_dvl_msgs.msg import DvlStatus
 from nav_msgs.msg import Odometry
+from rclpy.action import ActionClient
 #import topic type 
 from std_msgs.msg._bool import Bool
 from functools import partial
@@ -14,10 +16,15 @@ from chameleon_tf_msgs.action._model_frame import ModelFrame
 from riptide_msgs2.action._execute_tree import ExecuteTree
 #immport service type, add dependency maybe
 
-#start nav
-#first get good DVL status message, 
-#then listen to all following DVL messages for ~5 seconds
-#this ensures nav doesn't start due to wrong DVL status
+#To run this program VVVVV
+#ros2 run riptide_autonomy2 StateMachine.py
+
+#CODE IS DONE
+#JUST CHECK IF IT DOES WHAT IT NEEDS TO DO
+#ros2 topic pub -r8 /dvl/status nortek_dvl_msgs/msg/DvlStatus
+#ros2 topic pub -r8 /odometry/filtered nav_msgs/msg/Odometry
+#ros2 topic pub -r8 /state/aux std_msgs.msg/_bool/Bool
+#Run these 3 in order. Get DvlStatus which will run Odometry checks if good, then start tag cal then start behavior tree.
 
 #If roll or pitch pass this limit, output an error
 rollLimit = 45 #degrees
@@ -63,26 +70,24 @@ class StateMachine(Node):
             self.aux_callback,
             10)
         
-        self._action_clientTag = StateMachine(
+        self._action_clientTag = ActionClient(
             self,
             ModelFrame, #Action type needed
             'model_frame') #Action name needed
         
-        self._action_clientRiptide = StateMachine(
+        self._action_clientRiptide = ActionClient(
             self, 
             ExecuteTree,
-            'riptide_msgs2.action._execute_tree')
+            'autonomy/run_tree')
         
         
-        #riptide_messages2.action.executetree
-        #autonomy/run_tree
-        self.subscription  # prevent unuseinearJerkX and linearJerkY and linearJerkZ < d variable warning
+      
     
 
     def atLeastThreeTrue(self, arr):
         count = 0
-        for i in range(len(arr)):
-            if i == True:
+        for value in arr:
+            if value:
                 count+=1
         if count >= 3:
             return True
@@ -143,9 +148,8 @@ class StateMachine(Node):
         except Exception as e:
             self.get_logger().error("Service call failed: %r" % (e,))                             
        
-    #ros2 topic pub -r8 /dvl/status nortek_dvl_msgs/msg/DvlStatus
-    #ros2 topic pub -r8 /odometry/filtered nav_msgs/msg/Odometry
-    #ros2 topic pub -r8 /state/aux std_msgs.msg/_bool/Bool
+    
+            
     ##FORMAT --> ros2 topic pub <topic_name> <msg_type>
     #typehinting msg:DvlStatus makes sure msg is of type DvlStats
     def dvl_callback(self, msg:DvlStatus):
@@ -214,11 +218,11 @@ class StateMachine(Node):
         #ONLY THEN DO I CALL aux_callback to start tag_cal
 
 
-    def send_goal_riptide(self):
+    def send_goal_riptide(self,order):
         goal_msg = ExecuteTree.Goal()
         #Set this to an absolute path whatever
         goal_msg.tree = "/riptide_autonomy/trees/CompTree.xml"
-        self._action_client.wait_for_server()
+        self._action_clientRiptide.wait_for_server()
         self._send_goal_future = self._action_client.send_goal_async(goal_msg)
         self._send_goal_future.add_done_callback(self.goal_response_callback_riptide)
     
@@ -238,7 +242,7 @@ class StateMachine(Node):
 
 
 
-    def send_goal_tag(self):
+    def send_goal_tag(self,order):
         goal_msg = ModelFrame.Goal()
         goal_msg.monitor_child = "estimated_origin_frame"
         goal_msg.monitor_parent = "world"
@@ -247,7 +251,7 @@ class StateMachine(Node):
         #monitor_child is always estimated_origin_frame
         #montior_parent is always world
         #samples is always 10
-        self._action_client.wait_for_server()
+        self._action_clientTag.wait_for_server()
 
         self._send_goal_future = self._action_client.send_goal_async(goal_msg)
         self._send_goal_future.add_done_callback(self.goal_response_callback_tag)
@@ -284,8 +288,10 @@ def main(args=None):
     
     state_machine = StateMachine()
 
+    futureTag = state_machine.send_goal_tag(10)
+    futureRiptide = state_machine.send_goal_riptide(10)
 
-    rclpy.spin(state_machine)
+    rclpy.spin(state_machine,futureTag,futureRiptide)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
