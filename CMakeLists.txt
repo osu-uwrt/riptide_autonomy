@@ -213,6 +213,10 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(PROGRAMS
+  src/riptide_autonomy/StateMachine.py
+  DESTINATION lib/${PROJECT_NAME})
+
 #install bt assistant "actions" directory
 install(DIRECTORY src/riptide_autonomy/assistant/actions
   DESTINATION lib/${PROJECT_NAME})
