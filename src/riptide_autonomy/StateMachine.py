@@ -26,6 +26,12 @@ from riptide_msgs2.action._execute_tree import ExecuteTree
 #ros2 topic pub -r8 /state/aux std_msgs.msg/_bool/Bool
 #Run these 3 in order. Get DvlStatus which will run Odometry checks if good, then start tag cal then start behavior tree.
 
+#Project description
+#The first thing this code does is subscribe to a topic that gets DvlStatus data.
+#The code checks if the data from DvlStatus is good; if it is, will then start a subscriber node to Odometry.
+#The subscription to Odometry is to check if the robot's movement is jittery or flying off to infinity.
+#Once odometry data is good, start a tag cal and finally the behavior tree.
+
 #If roll or pitch pass this limit, output an error
 rollLimit = 45 #degrees
 pitchLimit = 45 #degrees
