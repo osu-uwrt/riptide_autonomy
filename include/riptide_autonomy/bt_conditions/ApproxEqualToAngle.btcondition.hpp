@@ -2,10 +2,10 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-class <1> : public <2> {
+class ApproxEqualToAngle : public UWRTConditionNode {
     public:
-    <1>(const std::string& name, const BT::NodeConfiguration& config)
-    : <2>(name, config) {
+    ApproxEqualToAngle(const std::string& name, const BT::NodeConfiguration& config)
+    : UWRTConditionNode(name, config) {
         
     }
 
@@ -15,7 +15,9 @@ class <1> : public <2> {
      */
     static BT::PortsList providedPorts() {
         return {
-
+            UwrtInput("a"),
+            UwrtInput("b"),
+            UwrtInput("range")
         };
     }
 
@@ -25,7 +27,6 @@ class <1> : public <2> {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-
     }
 
     /**
@@ -38,8 +39,23 @@ class <1> : public <2> {
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     BT::NodeStatus tick() override {
-        RCLCPP_INFO(rosnode->get_logger(), "Hello world from <2> <1>!");
-        return BT::NodeStatus::SUCCESS;
+        double
+            b = tryGetRequiredInput<double>(this, "b", 0),
+            a = tryGetRequiredInput<double>(this, "a", 0),
+            range = tryGetRequiredInput<double>(this, "range", 0);
+        
+        double diff = a - b;
+
+        //ensure diff between -M_PI and M_PI
+        int rotationsFromZero = diff / (2 * M_PI);
+        diff -= rotationsFromZero * 2 * M_PI;
+
+        if(diff > M_PI)
+        {
+            diff -= 2 * M_PI;
+        }
+
+        return (abs(diff) < range ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
     }
 };
 

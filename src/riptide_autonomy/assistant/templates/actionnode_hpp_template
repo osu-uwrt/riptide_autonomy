@@ -33,7 +33,7 @@ class <1> : public <2> {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        RCLCPP_INFO(log, "First Hello World from <2> <1>!");
+        RCLCPP_INFO(rosnode->get_logger(), "First Hello World from <2> <1>!");
         return BT::NodeStatus::RUNNING;
     }
 
@@ -42,7 +42,7 @@ class <1> : public <2> {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        RCLCPP_INFO(log, "Last Hello World from <2> <1>!");
+        RCLCPP_INFO(rosnode->get_logger(), "Last Hello World from <2> <1>!");
         return BT::NodeStatus::SUCCESS;
     }
 
