@@ -24,7 +24,11 @@ from riptide_msgs2.action._execute_tree import ExecuteTree
 #ros2 topic pub -r8 /dvl/status nortek_dvl_msgs/msg/DvlStatus
 #ros2 topic pub -r8 /odometry/filtered nav_msgs/msg/Odometry
 #ros2 topic pub -r8 /state/aux std_msgs.msg/_bool/Bool
-#ros2 topuc pub 
+#ros2 run remote_launch launcher, go to localhost:8080 then .yaml
+#run mapping and autonomy
+#ros2 launch riptide_autonomy2 autonomy.launch.py
+#ros2 launch riptide_mapping2 mapping.launch.py
+
 #Run these 3 in order. Get DvlStatus which will run Odometry checks if good, then start tag cal then start behavior tree.
 
 #Project description
@@ -148,29 +152,20 @@ class StateMachine(Node):
         
     def odometry_callback(self,msg:Odometry):
         
-
         timeInitial = self.get_clock().now()
+        linearVelocityX = msg.twist.twist.linear.x
+        linearVelocityY = msg.twist.twist.linear.y
+        linearVelocityZ = msg.twist.twist.linear.z
         time.sleep(0.001)
         timeFinal = self.get_clock().now()
 
         timeDifference = timeFinal-timeInitial
         
-        #100% can partition this into diff methods 
-        linearVelocityX = msg.twist.twist.linear.x
-        linearVelocityY = msg.twist.twist.linear.y
-        linearVelocityZ = msg.twist.twist.linear.z
-        self.linearVelocityX.append(linearVelocityX)
-        self.linearVelocityY.append(linearVelocityY)
-        self.linearVelocityZ.append(linearVelocityZ)
-        print(linearVelocityX)
-        if(len(self.linearVelocityX)>2):
-            linearAccelerationX = (self.linearVelocityX.index(len(self.linearVelocityX)-1)-self.linearVelocityX.index(len(self.linearVelocityX)-2))/timeDifference
-            linearAccelerationY = (self.linearVelocityY.index(len(self.linearVelocityY)-1)-self.linearVelocityY.index(len(self.linearVelocityY)-2))/timeDifference
-            linearAccelerationZ = (self.linearVelocityZ.index(len(self.linearVelocityZ)-1)-self.linearVelocityZ.index(len(self.linearVelocityZ)-2))/timeDifference
-            
-            acceleration = math.sqrt(linearAccelerationX**2+linearAccelerationY**2+linearAccelerationZ**2)
-            if(acceleration<1.5):
-                self.aux_callback()
+        
+           
+        acceleration = math.sqrt()
+        if(acceleration<1.5):
+            self.aux_callback()
         
         
 
