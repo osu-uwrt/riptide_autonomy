@@ -3,6 +3,7 @@
 import time
 import math
 import rclpy
+from datetime import datetime, timedelta
 from rclpy.node import Node
 from rclpy.time import Time 
 from nortek_dvl_msgs.msg import DvlStatus
@@ -40,17 +41,9 @@ from riptide_msgs2.action._execute_tree import ExecuteTree
 #If roll or pitch pass this limit, output an error
 rollLimit = 45 #degrees
 pitchLimit = 45 #degrees
-odometryIsGood = False #Only changes to true once odometry positions aren't going bad, then aux callback runs
 class StateMachine(Node):
 
     #Member variables, keeps their values throughout the class
-    linearVelocityX = []
-    linearVelocityY = []
-    linearVelocityZ = []
-
-    linearAccelerationX = []
-    linearAccelerationY = []
-    linearAccelerationZ = []
 
     def __init__(self):
         super().__init__('state_machine')
@@ -131,7 +124,7 @@ class StateMachine(Node):
 
     
             
-    ##FORMAT --> ros2 topic pub <topic_name> <msg_type>
+    ##FORMAT --> ros2 topic pub -r8 <topic_name> <msg_type>
     #typehinting msg:DvlStatus makes sure msg is of type DvlStats
     def dvl_callback(self, msg:DvlStatus):
         statusMessages = [msg.b1_vel_valid, msg.b2_vel_valid, msg.b3_vel_valid, msg.b4_vel_valid]
@@ -152,20 +145,26 @@ class StateMachine(Node):
         
     def odometry_callback(self,msg:Odometry):
         
-        timeInitial = self.get_clock().now()
-        linearVelocityX = msg.twist.twist.linear.x
-        linearVelocityY = msg.twist.twist.linear.y
-        linearVelocityZ = msg.twist.twist.linear.z
-        time.sleep(0.001)
-        timeFinal = self.get_clock().now()
-
+        timeInitial = datetime.now()
+        linearVelocityX1 = msg.twist.twist.linear.x
+        linearVelocityY1 = msg.twist.twist.linear.y
+        linearVelocityZ1 = msg.twist.twist.linear.z
+        time.sleep(1)
+        timeFinal = datetime.now()
+        linearVelocityX2 = msg.twist.twist.linear.x
+        linearVelocityY2 = msg.twist.twist.linear.y
+        linearVelocityZ2 = msg.twist.twist.linear.z
         timeDifference = timeFinal-timeInitial
         
+        linearAccelerationX = (linearVelocityX2-linearVelocityX1)/float(timeDifference.seconds)
+        linearAccelerationY = (linearVelocityY2-linearVelocityY1)/float(timeDifference.seconds)
+        linearAccelerationZ = (linearVelocityZ2-linearVelocityZ1)/float(timeDifference.seconds)
+
+        acceleration = math.sqrt(linearAccelerationX**2+linearAccelerationY**2+linearAccelerationZ**2)
         
-           
-        acceleration = math.sqrt()
         if(acceleration<1.5):
-            self.aux_callback()
+            self.aux_callback(True)
+            
         
         
 
@@ -249,10 +248,9 @@ class StateMachine(Node):
     
 
     def aux_callback(self, msg:Bool):
-        if(odometryIsGood):
-            auxTrigger = msg.data
-            if(auxTrigger):
-                self.send_goal_tag()
+        auxTrigger = msg
+        if(auxTrigger):
+            self.send_goal_tag()
             
 
         
