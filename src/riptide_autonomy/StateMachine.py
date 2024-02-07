@@ -16,7 +16,7 @@ from chameleon_tf_msgs.action._model_frame import ModelFrame
 from riptide_msgs2.action._execute_tree import ExecuteTree
 #immport service type, add dependency maybe
 
-#To run this program VVVVV
+#To run this program:
 #ros2 run riptide_autonomy2 StateMachine.py
 
 #CODE IS DONE
@@ -24,6 +24,7 @@ from riptide_msgs2.action._execute_tree import ExecuteTree
 #ros2 topic pub -r8 /dvl/status nortek_dvl_msgs/msg/DvlStatus
 #ros2 topic pub -r8 /odometry/filtered nav_msgs/msg/Odometry
 #ros2 topic pub -r8 /state/aux std_msgs.msg/_bool/Bool
+#ros2 topuc pub 
 #Run these 3 in order. Get DvlStatus which will run Odometry checks if good, then start tag cal then start behavior tree.
 
 #Project description
@@ -124,36 +125,6 @@ class StateMachine(Node):
 
 
 
-    #parameters need to be parameteres inside the imported service type
-    def call_set_pen_service(self):
-        #add service type in client()
-        # client(service type, service name)
-        client = self.create_client(Empty, "/enable")
-
-        #wait for the service, checks if server is up and running
-        while not client.wait_for_service(1.0):
-            #warn() prints in yellow collor
-            self.get_logger().warn("Waiting for service...")
-        
-        #trigger to tell go
-        request = Empty.Request()
-        
-        #async makes the call return immediately 
-        #future is something thats done in the future
-        #can do stuff with future like add callback so when u get response from service then future calls callback
-        future = client.call_async(request)
-
-        #code below calls the callback_set_pen when response is given
-        future.add_done_callback(partial(self.callback_set_pen))
-
-
-    def callback_set_pen(self, future):
-        #callback for when service replies 
-        try:
-            response = future.result()
-        except Exception as e:
-            self.get_logger().error("Service call failed: %r" % (e,))                             
-       
     
             
     ##FORMAT --> ros2 topic pub <topic_name> <msg_type>
@@ -169,13 +140,11 @@ class StateMachine(Node):
                 
         if all(listOfStatusMessages):
             self.get_logger().info("GOOD STATUS MESSAGES")
+            self.odometry_callback()
         else:
             self.get_logger().info("BAD STATUS MESSAGES")
 
-        #add the new function for client service here to do stuff
-        if not all(listOfStatusMessages):
-            self.get_logger().info("NOT GOOD TO GO")
-            self.call_set_pen_service()
+       
         
     def odometry_callback(self,msg:Odometry):
         
@@ -193,13 +162,17 @@ class StateMachine(Node):
         self.linearVelocityX.append(linearVelocityX)
         self.linearVelocityY.append(linearVelocityY)
         self.linearVelocityZ.append(linearVelocityZ)
-
-        if(len(self.linearVelocityX)>=2):
+        print(linearVelocityX)
+        if(len(self.linearVelocityX)>2):
             linearAccelerationX = (self.linearVelocityX.index(len(self.linearVelocityX)-1)-self.linearVelocityX.index(len(self.linearVelocityX)-2))/timeDifference
             linearAccelerationY = (self.linearVelocityY.index(len(self.linearVelocityY)-1)-self.linearVelocityY.index(len(self.linearVelocityY)-2))/timeDifference
             linearAccelerationZ = (self.linearVelocityZ.index(len(self.linearVelocityZ)-1)-self.linearVelocityZ.index(len(self.linearVelocityZ)-2))/timeDifference
+            
+            acceleration = math.sqrt(linearAccelerationX**2+linearAccelerationY**2+linearAccelerationZ**2)
+            if(acceleration<1.5):
+                self.aux_callback()
         
-        acceleration = math.sqrt(linearAccelerationX**2+linearAccelerationY**2+linearAccelerationZ**2)
+        
 
 
         roll,pitch,yaw = self.euler_from_quaternion(msg.pose.pose.orientation.x
@@ -207,8 +180,7 @@ class StateMachine(Node):
                                            ,msg.pose.pose.orientation.z
                                            ,msg.pose.pose.orientation.w)
         
-        if(acceleration<1.5):
-            self.aux_callback()
+       
 
 
 
@@ -228,8 +200,8 @@ class StateMachine(Node):
         goal_msg = ExecuteTree.Goal()
         #Set this to an absolute path whatever
         goal_msg.tree = "/riptide_autonomy/trees/CompTree.xml"
-        self._action_clientRiptide.wait_for_server()
-        self._send_goal_future = self._action_client.send_goal_async(goal_msg)
+        #self._action_clientRiptide.wait_for_server()
+        self._send_goal_future = self._action_clientRiptide.send_goal_async(goal_msg)
         self._send_goal_future.add_done_callback(self.goal_response_callback_riptide)
     
     def goal_response_callback_riptide(self, future):
@@ -257,9 +229,9 @@ class StateMachine(Node):
         #monitor_child is always estimated_origin_frame
         #montior_parent is always world
         #samples is always 10
-        self._action_clientTag.wait_for_server()
+        #self._action_clientTag.wait_for_server()
 
-        self._send_goal_future = self._action_client.send_goal_async(goal_msg)
+        self._send_goal_future = self._action_clientTag.send_goal_async(goal_msg)
         self._send_goal_future.add_done_callback(self.goal_response_callback_tag)
 
     
@@ -297,7 +269,7 @@ def main(args=None):
     futureTag = state_machine.send_goal_tag(10)
     futureRiptide = state_machine.send_goal_riptide(10)
 
-    rclpy.spin(state_machine,futureTag,futureRiptide)
+    rclpy.spin(state_machine)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
