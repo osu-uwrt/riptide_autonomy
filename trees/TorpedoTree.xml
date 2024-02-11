@@ -21,38 +21,38 @@
         <Sequence>
             <SetBlackboard output_key="60" value="60"/>
             <Action ID="GetOdometry" op="" or="" oy="" x="orig_x" y="orig_y" z="orig_z"/>
+            <Sequence name="bump setup and alignment">
+                <SetBlackboard output_key="0.5" value="0.5"/>
+                <SetBlackboard output_key="5" value="5"/>
+                <SetBlackboard output_key="-0.25" value="-0.25"/>
+                <SetBlackboard output_key="poker_link" value="talos/poker_link"/>
+                <SetBlackboard output_key="1" value="1"/>
+                <SetBlackboard output_key="talos/poker_link" value="talos/poker_link"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <Action ID="SetStatus" status="aligning"/>
+                <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="poker_link" proximity="0.5"/>
+                <Action ID="Wait" seconds="5"/>
+                <Action ID="SetStatus" status="performing"/>
+                <SetBlackboard output_key="proximity" value="0.5"/>
+            </Sequence>
             <ForceSuccess>
-                <Sequence name="align and bump">
-                    <SetBlackboard output_key="0.5" value="0.5"/>
-                    <SetBlackboard output_key="5" value="5"/>
-                    <SetBlackboard output_key="-0.25" value="-0.25"/>
-                    <SetBlackboard output_key="poker_link" value="talos/poker_link"/>
-                    <SetBlackboard output_key="1" value="1"/>
-                    <SetBlackboard output_key="talos/poker_link" value="talos/poker_link"/>
-                    <SetBlackboard output_key="0" value="0"/>
-                    <Action ID="SetStatus" status="aligning"/>
-                    <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="poker_link" proximity="0.5"/>
-                    <Action ID="Wait" seconds="5"/>
-                    <Action ID="SetStatus" status="performing"/>
-                    <SetBlackboard output_key="proximity" value="0.5"/>
-                    <Repeat num_cycles="6">
-                        <Sequence>
-                            <Action ID="Info" message="ALIGNING WITH PROX {proximity}"/>
-                            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="foy" out_x="fx" out_y="fy" out_z="fz" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
-                            <Action ID="ComputeFrameAlignment" op="0" or="0" out_op="" out_or="" out_oy="" out_x="gx" out_y="gy" out_z="gz" oy="0" reference_frame="world" target_frame="{poker_link}" x="{fx}" y="{fy}" z="{fz}"/>
-                            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="gx" y="gy" z="gz"/>
-                            <Action ID="Math" a="{proximity}" b="0.25" operator="-" out="proximity"/>
-                            <Action ID="Info" message="PROX NOW {proximity}"/>
-                        </Sequence>
-                    </Repeat>
-                </Sequence>
+                <Repeat name="align and bump" num_cycles="6">
+                    <Sequence>
+                        <Action ID="Info" message="ALIGNING WITH PROX {proximity}"/>
+                        <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="fop" out_or="for" out_oy="foy" out_x="fx" out_y="fy" out_z="fz" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
+                        <Action ID="ComputeFrameAlignment" op="{fop}" or="{for}" out_op="" out_or="" out_oy="" out_x="bx" out_y="by" out_z="bz" oy="{foy}" reference_frame="world" target_frame="{poker_link}" x="{fx}" y="{fy}" z="{fz}"/>
+                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="bx" y="by" z="bz"/>
+                        <Action ID="Math" a="{proximity}" b="0.25" operator="-" out="proximity"/>
+                        <Action ID="Info" message="PROX NOW {proximity}"/>
+                    </Sequence>
+                </Repeat>
             </ForceSuccess>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="orig_x" y="orig_y" z="orig_z"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
         <Sequence name="buoy">
-            <SetBlackboard output_key="target_cov" value="1.125"/>
+            <SetBlackboard output_key="target_cov" value="3"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="search_time" value="180"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -65,14 +65,71 @@
                 <SubTree ID="Search" __shared_blackboard="false" object_name="prop" target_cov="target_cov" timeout_secs="search_time"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_1" target_cov="target_cov" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_1" parent_object="prop" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <SubTree ID="BumpObject" __shared_blackboard="false" object_frame="subprop_1_frame"/>
             <Action ID="Wait" seconds="15"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_2" target_cov="target_cov" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_2" parent_object="prop" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <SubTree ID="BumpObject" __shared_blackboard="false" object_frame="subprop_2_frame"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="CheckActuatorStates">
+        <Sequence>
+            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="clawstate" dropper_available_count="" dropper_state="dropperstate" torpedo_available_count="" torpedo_state="torpedostate"/>
+            <Fallback>
+                <Sequence name="Check states">
+                    <Inverter name="dropperstate not error">
+                        <Condition ID="CompareNums" a="{dropperstate}" b="0" test="=="/>
+                    </Inverter>
+                    <Inverter name="torpedostate not error">
+                        <Condition ID="CompareNums" a="{torpedostate}" b="0" test="=="/>
+                    </Inverter>
+                </Sequence>
+                <ForceFailure>
+                    <Action ID="Error" message="Check Actuators! States are problematic; dropper: {dropperstate}, torpedo: {torpedostate}"/>
+                </ForceFailure>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="CollectDetsAtAngle">
+        <Sequence name="check detections and report">
+            <Action Covariance="{cov_at_start}" ID="getCovariance" Target="{target}"/>
+            <ForceSuccess>
+                <Sequence>
+                    <Action ID="Info" message="collecting dets at angle offset {rel_yaw}"/>
+                    <SetBlackboard output_key="15" value="15"/>
+                    <SetBlackboard output_key="0" value="0"/>
+                    <Action ID="Math" a="{rel_yaw}" b="3.1415" operator="+" out="{frame_yaw}"/>
+                    <Condition ID="CompareNums" a="{cov_at_start}" b="{target_error}" name="break early if we found it" test="&lt;"/>
+                    <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{frame_yaw}" to_frame="world" x="0" y="0" z="0"/>
+                    <Action Covariance="{curr_error}" ID="getCovariance" Target="{target}"/>
+                    <Inverter name="Is target error already there?">
+                        <Condition ID="CompareNums" a="{curr_error}" b="{target_error}" test="&lt;"/>
+                    </Inverter>
+                    <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="goy"/>
+                    <Repeat name="Wait and eval dets" num_cycles="5">
+                        <Sequence name="Grab detections">
+                            <Action Covariance="cov_before" ID="getCovariance" Target="{target}"/>
+                            <Action ID="Wait" seconds="2"/>
+                            <Action Covariance="cov" ID="getCovariance" Target="{target}"/>
+                            <Action ID="Info" message="Object {target} has covariance {cov}, previously {cov_before}"/>
+                            <Inverter name="did cov not change?">
+                                <Condition ID="CompareNums" a="{cov}" b="{cov_before}" name="Did cov change?" test="=="/>
+                            </Inverter>
+                        </Sequence>
+                    </Repeat>
+                </Sequence>
+            </ForceSuccess>
+            <Action Covariance="{cov}" ID="getCovariance" Target="{target}"/>
+            <Action ID="Info" message="Current error at {cov}, target is {target_error}"/>
+            <Fallback name="or">
+                <Inverter name="did we get detections?">
+                    <Condition ID="CompareNums" a="{cov}" b="{cov_at_start}" test="=="/>
+                </Inverter>
+                <Condition ID="CompareNums" a="{cov_at_start}" b="{target_error}" test="&lt;"/>
+            </Fallback>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="Dive">
@@ -116,8 +173,8 @@
     <BehaviorTree ID="GateTree">
         <Sequence>
             <SetBlackboard output_key="2" value="2"/>
-            <SetBlackboard output_key="target_cov" value="1"/>
-            <SetBlackboard output_key="undergate_depth" value="-0.2"/>
+            <SetBlackboard output_key="target_cov" value="3"/>
+            <SetBlackboard output_key="undergate_depth" value="-0.5"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="gate_frame" value="gate_frame"/>
             <SetBlackboard output_key="60" value="60"/>
@@ -131,7 +188,7 @@
             <SetBlackboard output_key="1.25" value="1.25"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="2" y="0" z="0"/>
             <SubTree ID="Search" __shared_blackboard="false" object_name="prop" target_cov="target_cov" timeout_secs="120"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" target_cov="target_cov" timeout_secs="60"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" target_cov="target_cov" timeout_secs="60"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
@@ -155,8 +212,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="Info" message="Refining esimate for object {object_name}"/>
             <Action ID="SetStatus" status="searching"/>
-            <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
-            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
+            <Action ID="TransformPose" from_frame="{parent_object}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="1" y="0" z="0"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="z"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
                 <Sequence name="shrink cov">
@@ -202,15 +258,15 @@
                     <Sequence>
                         <Action ID="PublishToController" isOrientation="1" mode="3" x="{r}" y="{p}" z="{y}"/>
                         <Action ID="GetOdometry" name="Get Current RPY" op="{cp}" or="{cr}" oy="{cy}" x="" y="" z=""/>
-                        <Condition ID="ApproxEqualTo" a="{cr}" b="{r}" name="At goal roll?" range="0.25"/>
-                        <Condition ID="ApproxEqualTo" a="{cp}" b="{p}" name="At goal pitch?" range="0.25"/>
-                        <Condition ID="ApproxEqualTo" a="{cy}" b="{y}" name="At goal yaw?" range="0.25"/>
+                        <Condition ID="ApproxEqualToAngle" a="{cr}" b="{r}" name="at goal roll?" range="0.25"/>
+                        <Condition ID="ApproxEqualToAngle" a="{cp}" b="{p}" name="at goal pitch?" range="0.25"/>
+                        <Condition ID="ApproxEqualToAngle" a="{cy}" b="{y}" name="at goal yaw?" range="0.25"/>
                     </Sequence>
                 </Decorator>
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -218,11 +274,12 @@
     </BehaviorTree>
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
+            <SetBlackboard output_key="min_depth" value="-0.75"/>
             <IfThenElse name="Ensure Z good">
-                <Condition ID="CompareNums" a="{z}" b="-0.5" name="z above 0.75..." test="&gt;"/>
+                <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
-                    <Action ID="Info" message="Enforcing minimum depth of -0.5 meters... requested depth was previously {z}."/>
-                    <SetBlackboard name="...too high" output_key="valid_z" value="-0.35"/>
+                    <Action ID="Info" message="Enforcing minimum depth of {min_depth} meters... requested depth was previously {z}."/>
+                    <SetBlackboard name="...too high" output_key="valid_z" value="{min_depth}"/>
                 </Sequence>
                 <SetBlackboard name="...all good" output_key="valid_z" value="{z}"/>
             </IfThenElse>
@@ -270,10 +327,10 @@
                         <ForceSuccess>
                             <RetryUntilSuccessful num_attempts="3">
                                 <Fallback>
-                                    <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="angle" target="object_name"/>
+                                    <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="angle" target="object_name" target_error="target_cov"/>
                                     <Sequence>
                                         <Action ID="Math" a="{angle}" b="-1" operator="*" out="neg_angle"/>
-                                        <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="neg_angle" target="object_name"/>
+                                        <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="neg_angle" target="object_name" target_error="target_cov"/>
                                     </Sequence>
                                     <ForceFailure>
                                         <Action ID="Math" a="{angle}" b="{piover6}" operator="+" out="angle"/>
@@ -318,6 +375,7 @@
     </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
+            <SetBlackboard output_key="torpedo_frame" value="torpedo_frame"/>
             <SetBlackboard output_key="talos/torpedo_link" value="talos/torpedo_link"/>
             <SetBlackboard output_key="0.25" value="0.25"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -326,7 +384,7 @@
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" target_cov="target_cov" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_frame" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="talos/torpedo_link" proximity="1"/>
@@ -341,7 +399,7 @@
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
                 <Sequence name="Try move to position">
-                    <SetBlackboard output_key="timeout" value="7"/>
+                    <SetBlackboard output_key="timeout" value="11"/>
                     <Action ID="Info" message="Attempting to move forward for {timeout} seconds"/>
                     <Action ID="GetOdometry" op="" or="" oy="" x="old_x" y="old_y" z="old_z"/>
                     <Fallback>
@@ -395,20 +453,58 @@
             <SetBlackboard output_key="15" value="15"/>
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="GetOdometry" op="" or="" oy="orig_y" x="" y="" z=""/>
-            <Repeat num_cycles="7">
-                <Sequence name="spin_2pi/3">
+            <Repeat num_cycles="12">
+                <Sequence name="spin_pi/3">
                     <Action ID="Info" message="Spinning once"/>
                     <Action ID="TransformPose" from_frame="talos/base_link" op="0" or="0" out_op="" out_or="" out_oy="new_yaw" out_x="" out_y="" out_z="" oy="2.09" to_frame="world" x="0" y="0" z="0"/>
-                    <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
-                        <Sequence>
-                            <Action ID="PublishToController" isOrientation="1" mode="2" x="0" y="0" z="1.5707"/>
-                            <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
-                            <Condition ID="ApproxEqualTo" a="{curr_yaw}" b="{new_yaw}" range="0.25"/>
-                        </Sequence>
-                    </Decorator>
+                    <Fallback>
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
+                            <Sequence>
+                                <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{new_yaw}"/>
+                                <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
+                                <Condition ID="ApproxEqualToAngle" a="{curr_yaw}" b="{new_yaw}" range="1.04"/>
+                            </Sequence>
+                        </Decorator>
+                        <ForceFailure>
+                            <Action ID="Error" message="Failed to spin: current yaw is {curr_yaw}, but desired is {new_yaw}"/>
+                        </ForceFailure>
+                    </Fallback>
                 </Sequence>
             </Repeat>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="orig_y"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="SurfaceTree">
+        <Sequence>
+            <SetBlackboard output_key="5" value="5"/>
+            <SetBlackboard name="boolean for if surface should be epic" output_key="cool_surface" value="0"/>
+            <SetBlackboard output_key="depth" value="-0.5"/>
+            <SetBlackboard name="set target pitch" output_key="target_pitch" value="-1.1"/>
+            <SetBlackboard output_key="-1.5707" value="-1.5707"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="180" value="180"/>
+            <SetBlackboard output_key="table_frame" value="table_frame"/>
+            <SetBlackboard output_key="target_cov" value="1"/>
+            <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="table_x" y="table_y" z="depth"/>
+            <ForceSuccess>
+                <IfThenElse name="conditional surface">
+                    <Condition ID="CompareNums" a="{cool_surface}" b="1" name="is surface cool?" test="=="/>
+                    <Sequence name="cool surface">
+                        <SetBlackboard output_key="15" value="15"/>
+                        <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="target_pitch" r="0" timeout="15" y="0"/>
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="1.5">
+                            <Sequence>
+                                <Action ID="PublishToController" isOrientation="0" mode="2" name="go as fast as possible" x="100" y="0" z="0"/>
+                                <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="curr_z"/>
+                                <Condition ID="CompareNums" a="{curr_z}" b="0" test="&gt;"/>
+                            </Sequence>
+                        </Decorator>
+                    </Sequence>
+                    <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="table_x" y="table_y" z="0"/>
+                </IfThenElse>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="TorpedoTree">
@@ -452,6 +548,24 @@
             </Sequence>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="WaitForActuators">
+        <Fallback name="wait for not busy">
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
+                <Sequence>
+                    <Action ID="Info" message="Waiting for actuators..."/>
+                    <Action ID="Wait" seconds="0.25"/>
+                    <Action ID="GetActuatorStatus" actuators_busy="busy" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="" torpedo_state=""/>
+                    <Inverter>
+                        <Condition ID="IsTrue" value="{busy}"/>
+                    </Inverter>
+                    <Action ID="Info" message="Actuators free"/>
+                </Sequence>
+            </Decorator>
+            <ForceFailure>
+                <Action ID="Error" message="Actuators busy!"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
         <Sequence>
             <Action ID="SetStatus" status="waiting"/>
@@ -484,6 +598,11 @@
             <input_port name="b" required="true"/>
             <input_port name="range" required="true"/>
         </Condition>
+        <Condition ID="ApproxEqualToAngle">
+            <input_port name="a" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port name="range" required="true"/>
+        </Condition>
         <SubTree ID="BumpObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_frame" required="true"/>
@@ -507,10 +626,20 @@
             <input_port name="srv_name" required="true"/>
             <input_port name="time_limit_secs" required="true"/>
         </Action>
+        <SubTree ID="CheckActuatorStates">
+            <inout_port name="__shared_blackboard" required="true"/>
+        </SubTree>
+        <SubTree ID="CollectDetsAtAngle">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="true"/>
+            <input_port name="rel_yaw" required="true"/>
+            <input_port name="target" required="true"/>
+            <input_port name="target_error" required="true"/>
+        </SubTree>
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
+            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="op" required="true"/>
@@ -578,12 +707,13 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_name" required="true"/>
+            <input_port name="parent_object" required="true"/>
             <input_port default="1.25" name="target_cov" required="true"/>
             <input_port default="60" name="timeout_secs" required="true"/>
         </SubTree>
@@ -656,6 +786,7 @@
         <SubTree ID="SpinTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
+        <SubTree ID="SurfaceTree"/>
         <SubTree ID="TorpedoTree"/>
         <Action ID="TransformPose">
             <input_port name="from_frame" required="true"/>
@@ -676,115 +807,16 @@
         <Action ID="Wait">
             <input_port name="seconds" required="true">number of seconds to wait.</input_port>
         </Action>
+        <SubTree ID="WaitForActuators">
+            <inout_port name="__shared_blackboard" required="true"/>
+            <inout_port name="timeout_secs" required="true"/>
+        </SubTree>
         <SubTree ID="WaitForKillSwitch"/>
         <Action ID="getCovariance">
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
-        <SubTree ID="SurfaceTree"/>
-        <SubTree ID="CheckActuatorStates">
-            <inout_port name="__shared_blackboard" required="true"/>
-        </SubTree>
-        <SubTree ID="CollectDetsAtAngle">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="frame" required="true"/>
-            <input_port name="rel_yaw" required="true"/>
-            <input_port name="target" required="false"/>
-        </SubTree>
-        <SubTree ID="WaitForActuators">
-            <inout_port name="__shared_blackboard" required="true"/>
-            <inout_port name="timeout_secs" required="true"/>
-        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
-    <BehaviorTree ID="SurfaceTree">
-        <Sequence>
-            <SetBlackboard output_key="5" value="5"/>
-            <SetBlackboard name="boolean for if surface should be epic" output_key="cool_surface" value="0"/>
-            <SetBlackboard output_key="depth" value="-0.5"/>
-            <SetBlackboard name="set target pitch" output_key="target_pitch" value="-1.1"/>
-            <SetBlackboard output_key="-1.5707" value="-1.5707"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="180" value="180"/>
-            <SetBlackboard output_key="table_frame" value="table_frame"/>
-            <SetBlackboard output_key="target_cov" value="1"/>
-            <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="table_x" y="table_y" z="depth"/>
-            <ForceSuccess>
-                <IfThenElse name="conditional surface">
-                    <Condition ID="CompareNums" a="{cool_surface}" b="1" name="is surface cool?" test="=="/>
-                    <Sequence name="cool surface">
-                        <SetBlackboard output_key="15" value="15"/>
-                        <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="target_pitch" r="0" timeout="15" y="0"/>
-                        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="1.5">
-                            <Sequence>
-                                <Action ID="PublishToController" isOrientation="0" mode="2" name="go as fast as possible" x="100" y="0" z="0"/>
-                                <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="curr_z"/>
-                                <Condition ID="CompareNums" a="{curr_z}" b="0" test="&gt;"/>
-                            </Sequence>
-                        </Decorator>
-                    </Sequence>
-                    <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="table_x" y="table_y" z="0"/>
-                </IfThenElse>
-            </ForceSuccess>
-            <SubTree ID="KillController"/>
-        </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="WaitForActuators">
-        <Fallback name="wait for not busy">
-            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
-                <Sequence>
-                    <Action ID="Info" message="Waiting for actuators..."/>
-                    <Action ID="Wait" seconds="0.25"/>
-                    <Action ID="GetActuatorStatus" actuators_busy="busy" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="" torpedo_state=""/>
-                    <Inverter>
-                        <Condition ID="IsTrue" value="{busy}"/>
-                    </Inverter>
-                    <Action ID="Info" message="Actuators free"/>
-                </Sequence>
-            </Decorator>
-            <ForceFailure>
-                <Action ID="Error" message="Actuators busy!"/>
-            </ForceFailure>
-        </Fallback>
-    </BehaviorTree>
-    <BehaviorTree ID="CheckActuatorStates">
-        <Sequence>
-            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="clawstate" dropper_available_count="" dropper_state="dropperstate" torpedo_available_count="" torpedo_state="torpedostate"/>
-            <Fallback>
-                <Sequence name="Check states">
-                    <Inverter name="dropperstate not error">
-                        <Condition ID="CompareNums" a="{dropperstate}" b="0" test="=="/>
-                    </Inverter>
-                    <Inverter name="torpedostate not error">
-                        <Condition ID="CompareNums" a="{torpedostate}" b="0" test="=="/>
-                    </Inverter>
-                </Sequence>
-                <ForceFailure>
-                    <Action ID="Error" message="Check Actuators! States are problematic; dropper: {dropperstate}, torpedo: {torpedostate}"/>
-                </ForceFailure>
-            </Fallback>
-        </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="CollectDetsAtAngle">
-        <Sequence>
-            <Action ID="Info" message="collecting dets at angle offset {rel_yaw}"/>
-            <SetBlackboard output_key="15" value="15"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <Action ID="Math" a="{rel_yaw}" b="3.1415" operator="+" out="{frame_yaw}"/>
-            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{frame_yaw}" to_frame="world" x="0" y="0" z="0"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="goy"/>
-            <Repeat name="Wait and eval dets" num_cycles="5">
-                <Sequence name="Grab detections">
-                    <Action Covariance="cov_before" ID="getCovariance" Target="{target}"/>
-                    <Action ID="Wait" seconds="2"/>
-                    <Action Covariance="cov" ID="getCovariance" Target="{target}"/>
-                    <Action ID="Info" message="Object {target} has covariance {cov}, previously {cov_before}"/>
-                    <Inverter name="did cov not change?">
-                        <Condition ID="CompareNums" a="{cov}" b="{cov_before}" name="Did cov change?" test="=="/>
-                    </Inverter>
-                </Sequence>
-            </Repeat>
-        </Sequence>
-    </BehaviorTree>
 </root>
+
