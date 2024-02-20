@@ -26,13 +26,13 @@
                 <SetBlackboard output_key="proximity" value="0.5"/>
             </Sequence>
             <ForceSuccess>
-                <Repeat name="align and bump" num_cycles="6">
+                <Repeat name="align and bump" num_cycles="12">
                     <Sequence>
                         <Action ID="Info" message="ALIGNING WITH PROX {proximity}"/>
                         <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="fop" out_or="for" out_oy="foy" out_x="fx" out_y="fy" out_z="fz" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
                         <Action ID="ComputeFrameAlignment" op="{fop}" or="{for}" out_op="" out_or="" out_oy="" out_x="bx" out_y="by" out_z="bz" oy="{foy}" reference_frame="world" target_frame="{poker_link}" x="{fx}" y="{fy}" z="{fz}"/>
                         <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="bx" y="by" z="bz"/>
-                        <Action ID="Math" a="{proximity}" b="0.25" operator="-" out="proximity"/>
+                        <Action ID="Math" a="{proximity}" b="0.125" operator="-" out="proximity"/>
                         <Action ID="Info" message="PROX NOW {proximity}"/>
                     </Sequence>
                 </Repeat>
