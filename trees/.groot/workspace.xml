@@ -42,7 +42,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
         <Sequence name="buoy">
-            <SetBlackboard output_key="target_cov" value="3"/>
+            <SetBlackboard output_key="target_cov" value="5"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="search_time" value="180"/>
             <SetBlackboard output_key="1" value="1"/>

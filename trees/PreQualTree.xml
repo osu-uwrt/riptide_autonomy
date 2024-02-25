@@ -46,7 +46,7 @@
             <Sequence name="GATE TIME 2">
                 <Action ID="SetStatus" status="moving"/>
                 <Action ID="Info" message="GATE TIME 2 ELECTRIC BOOGALOO"/>
-                <Action ID="TransformPose" from_frame="gate_frame" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="0" to_frame="world" x="-1" y="0" z="0"/>
+                <Action ID="TransformPose" from_frame="{gate_frame}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="0" to_frame="world" x="-1" y="0" z="0"/>
                 <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="oy" x="x" y="y" z="pole_depth"/>
                 <Action ID="SetStatus" status="aligning"/>
                 <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="0" x="-1" y="0" z="0"/>
@@ -91,7 +91,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
         <Sequence name="buoy">
-            <SetBlackboard output_key="target_cov" value="3"/>
+            <SetBlackboard output_key="target_cov" value="5"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="search_time" value="180"/>
             <SetBlackboard output_key="1" value="1"/>
