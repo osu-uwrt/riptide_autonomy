@@ -53,7 +53,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BuoyTree">
         <Sequence name="buoy">
-            <SetBlackboard output_key="target_cov" value="3"/>
+            <SetBlackboard output_key="target_cov" value="5"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="search_time" value="180"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -147,29 +147,31 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="FireTorpedo">
-        <Sequence>
-            <SetBlackboard output_key="10" value="10"/>
-            <Action ID="Info" message="Attempting to fire torpedo..."/>
-            <SetBlackboard output_key="torpedo_srv" value="command/actuator/torpedo"/>
-            <SubTree ID="CheckActuatorStates" __shared_blackboard="false"/>
-            <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
-            <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="torpedoes" torpedo_state=""/>
-            <Action ID="Info" message="{torpedoes} droppers available."/>
-            <Action ID="Format" format="{torpedoes}.0" out="torpedoesstr"/>
-            <IfThenElse>
-                <Condition ID="CompareNums" a="{torpedoesstr}" b="0" name="droppers available?" test="&gt;"/>
-                <Sequence name="fire torpedo">
-                    <Action ID="Info" message="Calling trigger service {torpedo_srv}"/>
-                    <Action ID="CallTriggerService" srv_name="{torpedo_srv}" time_limit_secs="1"/>
-                    <Action ID="Wait" seconds="1"/>
-                    <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
-                    <Action ID="Info" message="Torpedo fired!"/>
-                </Sequence>
-                <ForceFailure>
-                    <Action ID="Error" message="No torpedoes available!"/>
-                </ForceFailure>
-            </IfThenElse>
-        </Sequence>
+        <ForceSuccess name="REMOVE ME">
+            <Sequence>
+                <SetBlackboard output_key="10" value="10"/>
+                <Action ID="Info" message="Attempting to fire torpedo..."/>
+                <SetBlackboard output_key="torpedo_srv" value="command/actuator/torpedo"/>
+                <SubTree ID="CheckActuatorStates" __shared_blackboard="false"/>
+                <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
+                <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="torpedoes" torpedo_state=""/>
+                <Action ID="Info" message="{torpedoes} droppers available."/>
+                <Action ID="Format" format="{torpedoes}.0" out="torpedoesstr"/>
+                <IfThenElse>
+                    <Condition ID="CompareNums" a="{torpedoesstr}" b="0" name="droppers available?" test="&gt;"/>
+                    <Sequence name="fire torpedo">
+                        <Action ID="Info" message="Calling trigger service {torpedo_srv}"/>
+                        <Action ID="CallTriggerService" srv_name="{torpedo_srv}" time_limit_secs="1"/>
+                        <Action ID="Wait" seconds="1"/>
+                        <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
+                        <Action ID="Info" message="Torpedo fired!"/>
+                    </Sequence>
+                    <ForceFailure>
+                        <Action ID="Error" message="No torpedoes available!"/>
+                    </ForceFailure>
+                </IfThenElse>
+            </Sequence>
+        </ForceSuccess>
     </BehaviorTree>
     <BehaviorTree ID="GateTree">
         <Sequence>
@@ -305,12 +307,15 @@
     <BehaviorTree ID="Search">
         <Sequence name="Search">
             <Action ID="Info" message="Searching for {object_name} with target covariance {target_cov}"/>
-            <SetBlackboard output_key="min_dist" value="1.75"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="f_op" out_or="f_or" out_oy="f_oy" out_x="f_x" out_y="f_y" out_z="f_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <Action ID="CalculateDistance" dist="dist" x1="{x}" x2="{f_x}" y1="{y}" y2="{f_y}" z1="{z}" z2="{f_z}"/>
+            <Fallback>
+                <Condition ID="CompareNums" a="{dist}" b="{max_dist}" test="&gt;"/>
+                <SetBlackboard output_key="{dist}" value="{max_dist}"/>
+            </Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Search_loop" num_seconds="{timeout_secs}">
                 <Sequence>
                     <SetBlackboard output_key="0" value="0"/>
@@ -328,10 +333,10 @@
                         <ForceSuccess>
                             <RetryUntilSuccessful num_attempts="3">
                                 <Fallback>
-                                    <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="angle" target="object_name" target_error="target_cov"/>
+                                    <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="angle" target="object_name"/>
                                     <Sequence>
                                         <Action ID="Math" a="{angle}" b="-1" operator="*" out="neg_angle"/>
-                                        <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="neg_angle" target="object_name" target_error="target_cov"/>
+                                        <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="neg_angle" target="object_name"/>
                                     </Sequence>
                                     <ForceFailure>
                                         <Action ID="Math" a="{angle}" b="{piover6}" operator="+" out="angle"/>
@@ -363,16 +368,18 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SetActuatorsArmed">
-        <Sequence>
-            <Action ID="Info" message="Setting &quot;Actuators&quot; armed state to {armed}"/>
-            <Action ID="Wait" seconds="1"/>
-            <Action ID="CallSetBoolService" data="{armed}" srv_name="command/actuator/arm" time_limit_secs="1"/>
-            <IfThenElse>
-                <Condition ID="CompareNums" a="{armed}" b="1" test="=="/>
-                <Action ID="Info" message="&quot;ACTUATORS&quot; ARMED"/>
-                <Action ID="Info" message="&quot;ACTUATORS&quot; DISARMED"/>
-            </IfThenElse>
-        </Sequence>
+        <ForceSuccess name="REMOVE ME">
+            <Sequence>
+                <Action ID="Info" message="Setting &quot;Actuators&quot; armed state to {armed}"/>
+                <Action ID="Wait" seconds="1"/>
+                <Action ID="CallSetBoolService" data="{armed}" srv_name="command/actuator/arm" time_limit_secs="1"/>
+                <IfThenElse>
+                    <Condition ID="CompareNums" a="{armed}" b="1" test="=="/>
+                    <Action ID="Info" message="&quot;ACTUATORS&quot; ARMED"/>
+                    <Action ID="Info" message="&quot;ACTUATORS&quot; DISARMED"/>
+                </IfThenElse>
+            </Sequence>
+        </ForceSuccess>
     </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
@@ -381,7 +388,7 @@
             <SetBlackboard output_key="0.25" value="0.25"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="target_cov" value="1"/>
+            <SetBlackboard output_key="target_cov" value="0.2"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <ForceSuccess>
@@ -509,18 +516,19 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="TorpedoTree">
-        <Sequence>
+        <Sequence name="TORPEDO">
             <SetBlackboard output_key="0" value="0"/>
-            <Fallback>
+            <Fallback name="Try run while armed">
                 <Sequence name="torpedo">
+                    <SetBlackboard output_key="1" value="1"/>
                     <SetBlackboard output_key="180" value="180"/>
                     <SetBlackboard output_key="0.5" value="0.5"/>
                     <SetBlackboard output_key="torpedo" value="torpedo"/>
-                    <SetBlackboard output_key="1" value="1"/>
+                    <SetBlackboard output_key="target_cov" value="0.2"/>
                     <SetBlackboard output_key="shoot_upper_first" value="1"/>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
                     <ForceSuccess>
-                        <SubTree ID="Search" __shared_blackboard="false" object_name="torpedo" target_cov="1" timeout_secs="180"/>
+                        <SubTree ID="Search" __shared_blackboard="false" object_name="torpedo" target_cov="target_cov" timeout_secs="180"/>
                     </ForceSuccess>
                     <IfThenElse>
                         <Condition ID="CompareNums" a="{shoot_upper_first}" b="1" test="=="/>
