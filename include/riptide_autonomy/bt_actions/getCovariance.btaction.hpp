@@ -79,7 +79,7 @@ class getCovariance : public UWRTActionNode {
             error += std::pow(msg.get()->pose.covariance.at((6*i) + i), 2);
         }
         for(int i = 3; i < 6; i++){
-            error += std::pow(msg.get()->pose.covariance.at((6*i) + i), 2)/360.0;
+            error += std::pow(msg.get()->pose.covariance.at((6*i) + i), 2) / (2 * M_PI);
         }
 
         error = std::sqrt(error);

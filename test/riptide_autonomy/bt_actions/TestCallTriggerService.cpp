@@ -16,14 +16,7 @@ BT::NodeStatus testCallTriggerService(std::shared_ptr<BtTestTool> toolNode, cons
     auto node = toolNode->createLeafNodeFromConfig("CallTriggerService", cfg);
 
     //run the node
-    BT::NodeStatus status = BT::NodeStatus::IDLE;
-    rclcpp::Time startTime = toolNode->get_clock()->now();
-    while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE && toolNode->get_clock()->now() - startTime < TESTCALLTRIGGERSRV_TIMEOUT) {
-        status = node->executeTick();
-        rclcpp::spin_some(toolNode);
-    }
-
-    return status; //will return RUNNING if the while timed out
+    return toolNode->tickUntilFinished(node, TESTCALLTRIGGERSRV_TIMEOUT); //will return RUNNING if the while timed out
 }
 
 TEST_F(TriggerTest, test_CallTriggerService_success) {

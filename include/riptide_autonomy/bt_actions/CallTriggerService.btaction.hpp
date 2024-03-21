@@ -83,7 +83,7 @@ class CallTriggerService : public UWRTActionNode {
         }
 
         //not ready, check for timeout
-        if((rosnode->get_clock()->now() - startTime).seconds() > timeoutSecs) {
+        if((rosNode()->get_clock()->now() - startTime).seconds() > timeoutSecs) {
             RCLCPP_ERROR(rosNode()->get_logger(), "Service call to %s took too long to respond.", srvName.c_str());
             return BT::NodeStatus::FAILURE;
         }

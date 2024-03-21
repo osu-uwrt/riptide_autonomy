@@ -29,3 +29,5 @@
 
 #include <std_srvs/srv/set_bool.hpp>
 #include <std_srvs/srv/trigger.hpp>
+
+#include <riptide_msgs2/srv/mapping_target.hpp>

@@ -14,7 +14,7 @@ static std::tuple<BT::NodeStatus, int> WaitTest(std::shared_ptr<BtTestTool> tool
 
     //wait and see how long we actually waited
     rclcpp::Time startTime = toolNode->get_clock()->now();
-    BT::NodeStatus status = toolNode->tickUntilFinished(node);
+    BT::NodeStatus status = toolNode->tickUntilFinished(node, 5s);
     rclcpp::Time finishTime = toolNode->get_clock()->now();
 
     int millisecondsWaited = (finishTime - startTime).seconds() * 1000;

@@ -132,7 +132,7 @@ class BtTestTool : public rclcpp::Node {
     std::shared_ptr<BT::TreeNode> createLeafNodeFromConfig(std::string name, BT::NodeConfiguration config);
     std::shared_ptr<BT::TreeNode> createDecoratorNodeFromConfig(std::string name, BT::NodeConfiguration config, BT::TreeNode::Ptr child);
     std::shared_ptr<DummyActionNode> createDummyActionNode();
-    BT::NodeStatus tickUntilFinished(std::shared_ptr<BT::TreeNode> node);
+    BT::NodeStatus tickUntilFinished(std::shared_ptr<BT::TreeNode> node, const std::chrono::duration<double> &timeout = 1s);
     void spinForTime(std::chrono::duration<double> time);
 
     private:

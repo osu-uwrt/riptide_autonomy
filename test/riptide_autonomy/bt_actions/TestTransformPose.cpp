@@ -85,7 +85,7 @@ BT::NodeStatus testTransform(std::shared_ptr<BtTestTool> toolNode, double x, dou
     cfg.input_ports["oy"] = std::to_string(yaw);
     
     auto node = toolNode->createLeafNodeFromConfig("TransformPose", cfg);
-    auto result = toolNode->tickUntilFinished(node);
+    auto result = toolNode->tickUntilFinished(node, 4s);
 
     auto blackboard = node->config().blackboard;
 

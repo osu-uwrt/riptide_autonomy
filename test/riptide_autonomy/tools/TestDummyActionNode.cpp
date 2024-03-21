@@ -4,7 +4,7 @@ TEST_F(TestToolTest, test_DummyActionNode_alwaysSuccess) { //also a test for suc
     auto dummyAction = toolNode->createDummyActionNode();
     dummyAction->configureAlwaysReturnStatus(BT::NodeStatus::SUCCESS);
 
-    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction, 5s);
     
     ASSERT_EQ(dummyAction->getNumTicks(), 1);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
@@ -65,7 +65,7 @@ TEST_F(TestToolTest, test_DummyActionNode_successAfterNonzeroTime) {
     dummyAction->configureExecution(DummyExecutionMode::FINISH_AFTER_TIME, 2500, BT::NodeStatus::SUCCESS);
 
     rclcpp::Time startTime = toolNode->get_clock()->now();
-    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction);
+    BT::NodeStatus result = toolNode->tickUntilFinished(dummyAction, 4s);
     rclcpp::Time finishTime = toolNode->get_clock()->now();
     double secondsElapsed = (finishTime - startTime).seconds();
 

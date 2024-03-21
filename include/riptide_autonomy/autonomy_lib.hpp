@@ -28,7 +28,8 @@ const std::string
 const std::string 
     CLAW_SERVER_NAME = "command/actuator/claw",
     DROPPER_SERVER_NAME = "command/actuator/dropper",
-    TORPEDO_SERVER_NAME = "command/actuator/torpedo";
+    TORPEDO_SERVER_NAME = "command/actuator/torpedo",
+    MAPPING_SERVER_NAME = "mapping_target";
 
 
 /**

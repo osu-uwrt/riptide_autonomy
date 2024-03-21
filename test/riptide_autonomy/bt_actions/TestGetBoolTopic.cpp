@@ -18,12 +18,7 @@ BT::NodeStatus testGetBoolTopic(std::shared_ptr<BtTestTool> toolNode, const std:
     TimedPublisher<std_msgs::msg::Bool> timedPub(toolNode, topic, boolMsg, 10, pubPeriodMs);
 
     //run node
-    BT::NodeStatus status = BT::NodeStatus::IDLE;    
-    rclcpp::Time startTime = toolNode->get_clock()->now();
-    while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE && toolNode->get_clock()->now() - startTime < TESTBOOL_TIMEOUT) {
-        status = node->executeTick();
-        rclcpp::spin_some(toolNode);
-    } //if timed out, status will be RUNNING
+    BT::NodeStatus status = toolNode->tickUntilFinished(node, TESTBOOL_TIMEOUT);
 
     //node done, get result
     outputSet = getOutputFromBlackboard<bool>(toolNode, node->config().blackboard, "value", receivedVal);
