@@ -13,6 +13,7 @@ find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(vision_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -57,6 +58,7 @@ set(deps
   std_msgs
   nav_msgs
   sensor_msgs
+  vision_msgs
   riptide_msgs2
   std_srvs
   behaviortree_cpp_v3

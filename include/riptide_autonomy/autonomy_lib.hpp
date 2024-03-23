@@ -22,7 +22,8 @@ const std::string
     ACTUATOR_STATUS_TOPIC = "state/actuator/status",
     ROBOT_KILLED_TOPIC = "state/kill",
     ROBOT_AUX_TOPIC = "state/aux",
-    LED_COMMAND_TOPIC = "command/led";
+    LED_COMMAND_TOPIC = "command/led",
+    DETECTIONS_TOPIC = "detected_objects";
 
 //service names for autonomy
 const std::string 

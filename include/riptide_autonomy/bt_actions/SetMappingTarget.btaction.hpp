@@ -47,8 +47,10 @@ class SetMappingTarget : public UWRTActionNode {
         }
 
         //get node arguments
-        std::string target = tryGetRequiredInput<std::string>(this, "target_object", "");
+        std::string target = tryGetOptionalInput<std::string>(this, "target_object", "");
         bool lock = tryGetRequiredInput<bool>(this, "lock_map", false);
+
+        RCLCPP_INFO(rosNode()->get_logger(), "Setting mapping to target %s and %s locking map", target.c_str(), (lock ? "" : "not"));
 
         //make request
         auto request = std::make_shared<MappingTarget::Request>();
