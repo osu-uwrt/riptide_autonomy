@@ -193,6 +193,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="Info" message="Refining esimate for object {object_name}"/>
             <Action ID="Format" format="{parent_object}_frame" out="parent_frame"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="TransformPose" from_frame="{parent_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="z"/>
@@ -291,7 +292,7 @@
             <Action ID="Info" message="Searching for {object_name} with target covariance {target_cov}"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
-            <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="1"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
             <Action ID="GetOdometry" op="op" or="or" oy="oy" x="x" y="y" z="z"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="f_op" out_or="f_or" out_oy="f_oy" out_x="f_x" out_y="f_y" out_z="f_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SetBlackboard output_key="dist" value="{max_dist}"/>
@@ -369,18 +370,19 @@
     </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
+            <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="talos/torpedo_link" value="talos/torpedo_link"/>
             <SetBlackboard output_key="0.25" value="0.25"/>
-            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="ms_prox" value="2.5"/>
             <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="target_cov" value="0.2"/>
+            <SetBlackboard output_key="target_cov" value="0.0003"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <Action ID="Format" format="{object_name}_hole" out="hole_name"/>
             <Action ID="Format" format="{hole_name}_frame" out="hole_frame"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="hole_name" parent_object="object_name" proximity="1" target_cov="target_cov" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="hole_name" parent_object="object_name" proximity="ms_prox" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
-            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="1"/>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="talos/torpedo_link" proximity="1"/>
             <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="talos/torpedo_link" proximity="0.25"/>
@@ -507,29 +509,29 @@
             <Fallback name="Try run while armed">
                 <Sequence name="torpedo">
                     <SetBlackboard output_key="0" value="0"/>
-                    <SetBlackboard output_key="4.0" value="4.0"/>
-                    <SetBlackboard output_key="1.75" value="1.75"/>
+                    <SetBlackboard output_key="max_dist" value="2.5"/>
+                    <SetBlackboard output_key="min_dist" value="1.4"/>
                     <SetBlackboard output_key="1" value="1"/>
                     <SetBlackboard output_key="60" value="60"/>
                     <SetBlackboard output_key="180" value="180"/>
                     <SetBlackboard output_key="0.5" value="0.5"/>
                     <SetBlackboard output_key="torpedo_open" value="torpedo_open"/>
                     <SetBlackboard output_key="torpedo_closed" value="torpedo_closed"/>
-                    <SetBlackboard output_key="target_cov" value="0.2"/>
+                    <SetBlackboard output_key="target_cov" value="0.01"/>
                     <SetBlackboard output_key="shoot_open_first" value="1"/>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
                     <IfThenElse>
                         <Condition ID="CompareNums" a="{shoot_open_first}" b="1" test="=="/>
                         <Sequence name="shoot open then closed">
-                            <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="torpedo_open" target_cov="target_cov" timeout_secs="180"/>
+                            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_open" target_cov="target_cov" timeout_secs="180"/>
                             <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_open"/>
-                            <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="torpedo_closed" target_cov="target_cov" timeout_secs="60"/>
+                            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_closed" target_cov="target_cov" timeout_secs="60"/>
                             <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_closed"/>
                         </Sequence>
                         <Sequence name="shoot closed then open">
-                            <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="torpedo_closed" target_cov="target_cov" timeout_secs="180"/>
+                            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_closed" target_cov="target_cov" timeout_secs="180"/>
                             <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_closed"/>
-                            <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="torpedo_open" target_cov="target_cov" timeout_secs="60"/>
+                            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_open" target_cov="target_cov" timeout_secs="60"/>
                             <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_open"/>
                         </Sequence>
                     </IfThenElse>
