@@ -8,15 +8,7 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
-        <Sequence>
-            <Action ID="Info" message="bruh"/>
-            <SetBlackboard output_key="depth" value="-0.5"/>
-            <SubTree ID="WaitForKillSwitch"/>
-            <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <SubTree ID="BuoyTree"/>
-            <SubTree ID="KillController"/>
-        </Sequence>
+        <AlwaysSuccess/>
     </BehaviorTree>
     <BehaviorTree ID="BumpObject">
         <Sequence>

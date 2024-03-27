@@ -9,13 +9,11 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <Action ID="Info" message="bruh"/>
-            <SetBlackboard output_key="depth" value="-0.5"/>
-            <SubTree ID="WaitForKillSwitch"/>
-            <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <SubTree ID="BuoyTree"/>
-            <SubTree ID="KillController"/>
+            <SetBlackboard output_key="object_name" value="bin"/>
+            <SetBlackboard output_key="target_cov" value=".1"/>
+            <SetBlackboard output_key="timeout_sec" value="120"/>
+            <SetBlackboard output_key="min_dist" value="1"/>
+            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_sec="timeout_sec"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BumpObject">
@@ -126,6 +124,66 @@
             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="depth"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="oy"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="DownwardMove">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action Covariance="Icov" ID="getCovariance" Target="{object_name}"/>
+            <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" test="&lt;"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="gx" y="gy" z="gz"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="g2x" y="g2y" z="gz"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="DownwardSearch">
+        <Sequence>
+            <Action ID="Info" message="Searching for {object_name} with target covarience {target_cov}"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="min_dist" value="-0.5"/>
+            <Action ID="SetStatus" status="searching"/>
+            <Action ID="Format" format="{object_name}_frame" out="frame"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="0" y="0" z="min_dist"/>
+            <SetBlackboard output_key="dist" value=".9"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
+                <Sequence>
+                    <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
+                    <Action ID="Math" a="{dist}" b="0.5" operator="*" out="{dist}"/>
+                    <SetBlackboard output_key="xdist" value="{dist}"/>
+                    <SetBlackboard output_key="ydist" value="{dist}"/>
+                    <Action ID="Math" a="{xdist}" b="-1" operator="*" out="{nxdist}"/>
+                    <Action ID="Math" a="{ydist}" b="-1" operator="*" out="{nydist}"/>
+                    <Action ID="Math" a="{xdist}" b="2" operator="*" out="{x2dist}"/>
+                    <Action ID="Math" a="{ydist}" b="2" operator="*" out="{y2dist}"/>
+                    <Action ID="Math" a="{nxdist}" b="2" operator="*" out="{nx2dist}"/>
+                    <Action ID="Math" a="{nydist}" b="2" operator="*" out="{2nydist}"/>
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" dist="dist" frame="frame" g2x="nx2dist" g2y="y2dist" gx="nxdist" gy="ydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                    <Action ID="Math" a="{ydist}" b="-1.2" operator="*" out="{ydist}"/>
+                    <Action ID="Math" a="{xdist}" b="-1.2" operator="*" out="{xdist}"/>
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" dist="dist" frame="frame" g2x="x2dist" g2y="y2dist" gx="xdist" gy="ydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                    <Action ID="Math" a="{xdist}" b="-1" operator="*" out="{xdist}"/>
+                    <Action ID="Math" a="{ydist}" b="-1" operator="*" out="{ydist}"/>
+                    <Action ID="Math" a="{dist}" b="2" operator="*" out="{dist}"/>
+                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                    <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
+                    <Fallback>
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                        <Sequence name="if the robot gets to far away">
+                            <Condition ID="CompareNums" a="{dist}" b="{max_dist}" test="&gt;"/>
+                            <Action ID="Info" message="got to far ({dist} meters) without finding the object."/>
+                            <Action ID="Math" a="{dist}" b="1.3" operator="*" out="dist"/>
+                            <AlwaysFailure/>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+            <Fallback>
+                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&gt;"/>
+                <ForceFailure>
+                    <Action ID="Error" message="could not find {object_name} after {timeout_secs} seconds"/>
+                </ForceFailure>
+            </Fallback>
+            <Action ID="Info" message="{object_name} found"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="FireTorpedo">
@@ -631,6 +689,25 @@
         <SubTree ID="Dive">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="depth" required="true">depth to submerge to</input_port>
+        </SubTree>
+        <SubTree ID="DownwardMove">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="dist" required="true"/>
+            <input_port name="frame" required="true"/>
+            <input_port name="g2x" required="true"/>
+            <input_port name="g2y" required="true"/>
+            <input_port name="gx" required="false"/>
+            <input_port name="gy" required="false"/>
+            <input_port name="gz" required="true"/>
+            <input_port name="object_name" required="true"/>
+            <input_port name="target_Cov" required="true"/>
+        </SubTree>
+        <SubTree ID="DownwardSearch">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="min_dist" required="false"/>
+            <input_port name="object_name" required="false"/>
+            <input_port name="target_cov" required="true"/>
+            <input_port name="timeout_sec" required="false"/>
         </SubTree>
         <Action ID="Error">
             <input_port name="message" required="true">The message to print.</input_port>
