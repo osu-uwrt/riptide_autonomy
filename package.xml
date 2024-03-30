@@ -16,6 +16,7 @@
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>vision_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>riptide_msgs2</depend>
   <depend>std_srvs</depend>

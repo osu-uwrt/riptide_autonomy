@@ -13,12 +13,7 @@ BT::NodeStatus testGetCovariance(std::shared_ptr<BtTestTool> toolNode, const std
     TimedPublisher<geometry_msgs::msg::PoseWithCovarianceStamped> pub(toolNode, "mapping/" + target, msg, rclcpp::SensorDataQoS(), publishIntMs);
 
     //tick node until finished
-    BT::NodeStatus status = BT::NodeStatus::IDLE;
-    rclcpp::Time startTime = toolNode->get_clock()->now();
-    while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE && toolNode->get_clock()->now() - startTime < 7s) {
-        status = node->executeTick();
-        rclcpp::spin_some(toolNode);
-    }
+    BT::NodeStatus status = toolNode->tickUntilFinished(node, 7s);
 
     //collect results
     outputSet = getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "Covariance", covariance);
@@ -42,7 +37,7 @@ TEST_F(BtTest, test_getCovariance_success_1) {
     BT::NodeStatus status = testGetCovariance(toolNode, "gman", cov, 100, result, outputSet);
 
     //eval
-    const double expectedCov = sqrt(1 + 64 + 225 + 484 + 841 + 1296);
+    const double expectedCov = sqrt(1 + 64 + 225 + (484 + 841 + 1296) / (2 * M_PI));
     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outputSet);
     ASSERT_NEAR(result, expectedCov, 0.01);
@@ -65,7 +60,7 @@ TEST_F(BtTest, test_getCovariance_success_2) {
     BT::NodeStatus status = testGetCovariance(toolNode, "something", cov, 500, result, outputSet);
 
     //eval
-    const double expectedCov = sqrt(.01 + .16 + 1 + .81 + 4 + .81);
+    const double expectedCov = sqrt(.01 + .16 + 1 + (.81 + 4 + .81) / (2 * M_PI));
     ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outputSet);
     ASSERT_NEAR(result, expectedCov, 0.01);

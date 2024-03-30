@@ -40,9 +40,9 @@ class ApproxEqualTo : public UWRTConditionNode {
      */
     BT::NodeStatus tick() override {
         double
-        b = tryGetRequiredInput<double>(this, "b", 0),
-        a = tryGetRequiredInput<double>(this, "a", 0),
-        range = tryGetRequiredInput<double>(this, "range", 0);
+            b = tryGetRequiredInput<double>(this, "b", 0),
+            a = tryGetRequiredInput<double>(this, "a", 0),
+            range = tryGetRequiredInput<double>(this, "range", 0);
 
         return (abs(a - b) < range ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
     }

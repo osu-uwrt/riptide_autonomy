@@ -13,7 +13,7 @@ BT::NodeStatus testRUSOT(std::shared_ptr<BtTestTool> toolNode, int milliseconds,
 
     //execute the node and keep track of the time
     auto startTime = toolNode->get_clock()->now();
-    auto result = toolNode->tickUntilFinished(retryNode);
+    auto result = toolNode->tickUntilFinished(retryNode, 2s);
     double secondsElapsed = (toolNode->get_clock()->now() - startTime).seconds();
 
     //set result parameters and return
