@@ -54,8 +54,8 @@ class SetMappingTarget : public UWRTActionNode {
 
         //make request
         auto request = std::make_shared<MappingTarget::Request>();
-        request->target_object = target;
-        request->lock_map = lock;
+        request->target_info.target_object = target;
+        request->target_info.lock_map = lock;
 
         //make call
         result = client->async_send_request(request);

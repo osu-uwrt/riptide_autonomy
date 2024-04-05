@@ -260,7 +260,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -405,7 +405,7 @@
         <Sequence name="shootobject">
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="talos/torpedo_link" value="talos/torpedo_link"/>
-            <SetBlackboard output_key="0.25" value="0.25"/>
+            <SetBlackboard output_key="shoot_prox" value="0.6"/>
             <SetBlackboard output_key="ms_prox" value="2.5"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.0003"/>
@@ -417,8 +417,7 @@
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="talos/torpedo_link" proximity="1"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="talos/torpedo_link" proximity="0.25"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="talos/torpedo_link" proximity="shoot_prox"/>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="2">
                 <SubTree ID="FireTorpedo"/>
@@ -429,7 +428,7 @@
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
                 <Sequence name="Try move to position">
-                    <SetBlackboard output_key="timeout" value="11"/>
+                    <SetBlackboard output_key="timeout" value="15"/>
                     <Action ID="Info" message="Attempting to move forward for {timeout} seconds"/>
                     <Action ID="GetOdometry" op="" or="" oy="" x="old_x" y="old_y" z="old_z"/>
                     <Fallback>
@@ -438,7 +437,7 @@
                             <Action ID="GetOdometry" op="" or="" oy="" x="curr_x" y="curr_y" z="curr_z"/>
                             <Action ID="CalculateDistance" dist="dist_travelled" x1="{old_x}" x2="{curr_x}" y1="{old_y}" y2="{curr_y}" z1="{old_z}" z2="{curr_z}"/>
                             <IfThenElse name="avoid obstacle if necessary">
-                                <Condition ID="CompareNums" a="{dist_travelled}" b="1" name="expect 1 meter travelled in 5 seconds" test="&lt;"/>
+                                <Condition ID="CompareNums" a="{dist_travelled}" b="0.5" name="expect 1 meter travelled in 11 seconds" test="&lt;"/>
                                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="60">
                                     <Sequence name="if dist &lt; 1m, move out the way">
                                         <SetBlackboard output_key="5" value="5"/>
@@ -673,7 +672,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="op" required="true"/>
@@ -741,7 +740,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -869,4 +868,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
