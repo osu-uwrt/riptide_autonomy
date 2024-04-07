@@ -23,6 +23,10 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(tinyxml2_vendor REQUIRED)
 
+#sm specific depends
+find_package(chameleon_tf_msgs REQUIRED)
+find_package(nortek_dvl_msgs REQUIRED)
+
 
 #create directory for auto-generated code which will include headers for custom nodes as well as source code that registers custom nodes
 make_directory(${PROJECT_BINARY_DIR}/autonomy_generator)

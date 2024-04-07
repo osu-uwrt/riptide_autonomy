@@ -27,8 +27,13 @@ The action server should appear as ```<robot name>/autonomy/run_tree``` and inge
 ### Running using RViz
 Behavior trees can also be run from UWRTs MissionPanel RViz plugin (see riptide_rviz in UWRTs [riptide_gui](https://github.com/osu-uwrt/riptide_gui) repo for more information). So long as the action server is running, the MissionPanel can be used to select behavior trees found in the *trees* directory and run them with the press of a button.
 
+### Using the headless interface
+TODO
+
 ### LED Status Patterns
 UWRT's AUV has strips of LEDs in both cages to indicate robot status to swimmers and operators on the surface. riptide_autonomy commands these LEDs to display colors and patterns to indicate what the behavior is commanding the robot to do. States are set using the SetStatus action. The following table matches status names (which go into the "name" port on the SetStatus node) to their LED behaviors and descriptions.
+
+**BehaviorTree status patterns**
 | Status     | LED behavior      | Description                 |
 |---------   |------------------ |-----------------------------|
 | undefined  | Solid white       | Invalid status received.    |
@@ -41,6 +46,15 @@ UWRT's AUV has strips of LEDs in both cages to indicate robot status to swimmers
 | success    | Pulsing green     | Tree ended with SUCCESS     |
 | failure    | Pulsing red       | Tree ended with FAILURE     |
 | panic      | Fast blink red    | Tree crashed                |
+
+**Headless interface status patterns**
+| LED behavior      | Description                       |
+|------------------ |------------------------------     |
+| Slow blink white  | Waiting for good DVL reading      |
+| Slow blink red    | Bad odometry                      |
+| Pulsing blue      | Waiting for aux switch            |
+| Fast blink white  | Performing tag cal                |
+| Fast blink green  | Tag cal success; tree starting    |
 
 ## Editing BehaviorTrees
 Use UWRTs fork of [Groot](https://github.com/osu-uwrt/Groot) to edit behavior trees used by the system.
