@@ -740,6 +740,10 @@
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
         </SubTree>
+        <Action ID="PublishInt8">
+            <input_port name="data" required="true"/>
+            <input_port name="topic" required="true"/>
+        </Action>
         <Action ID="PublishToController">
             <input_port name="isOrientation" required="true"/>
             <input_port name="mode" required="true"/>
@@ -772,6 +776,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="armed" required="true"/>
         </SubTree>
+        <Action ID="SetControllerSafeMode">
+            <input_port name="safe" required="true"/>
+            <input_port name="timeout_secs" required="true"/>
+        </Action>
         <Action ID="SetMappingTarget">
             <input_port name="lock_map" required="true"/>
             <input_port name="target_object" required="false"/>
