@@ -220,7 +220,7 @@ install(PROGRAMS
 )
 
 install(PROGRAMS
-  src/riptide_autonomy/StateMachine.py
+  src/riptide_autonomy/HeadlessInterface.py
   DESTINATION lib/${PROJECT_NAME})
 
 #install bt assistant "actions" directory

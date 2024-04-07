@@ -37,20 +37,20 @@ from enum import Enum
 #Once odometry data is good, start a tag cal and finally the behavior tree.
 
 class RobotStateId(Enum):
+    NO_STATE = -1
     WAITING_FOR_KILL = 0
     WAITING_FOR_DVL = 1
     WAITING_FOR_GOOD_ODOM = 2
-    WAITING_FOR_AUX = 3
-    PERFORMING_TAG_CAL = 4
-    TAG_CAL_SUCCESS = 5
+    WAITING_FOR_AUX = 4
+    PERFORMING_TAG_CAL = 5
+    WAITING_FOR_TREE = 6
+    TREE_STARTED = 7
 
 class RobotState:
-    def __init__(self, id: RobotStateId, led_cmd: LedCommand, entrance_function = None, 
-                 led_recessive: bool = False):
+    def __init__(self, id: RobotStateId, led_cmd: LedCommand, entrance_function = None):
         self.id = id
         self.led_cmd = led_cmd
         self.entrance_function = entrance_function
-        self.led_recessive = led_recessive
         
         # if True, the machine will move on to the next state
         self.passed = False 
@@ -114,15 +114,17 @@ class StateMachine(Node):
             'autonomy/run_tree')
         
         # register states here
-        self.register_state(RobotStateId.WAITING_FOR_KILL, 255, 0, 0, LedCommand.MODE_SLOW_FLASH)
-        self.register_state(RobotStateId.WAITING_FOR_DVL, 255, 255, 255, LedCommand.MODE_BREATH)
-        self.register_state(RobotStateId.WAITING_FOR_GOOD_ODOM, 255, 0, 0, LedCommand.MODE_FAST_FLASH)
+        self.register_state(RobotStateId.WAITING_FOR_KILL, 255, 0, 0, LedCommand.MODE_SLOW_FLASH, entrance_function=self.invalidate_tag_cal)
+        self.register_state(RobotStateId.WAITING_FOR_DVL, 255, 255, 255, LedCommand.MODE_BREATH, entrance_function=self.invalidate_tag_cal)
+        self.register_state(RobotStateId.WAITING_FOR_GOOD_ODOM, 255, 0, 0, LedCommand.MODE_FAST_FLASH, entrance_function=self.invalidate_tag_cal)
+        # self.register_state(RobotStateId.WAITING_FOR_TAG, 255, 0, 0, LedCommand.MODE_BREATH)
         self.register_state(RobotStateId.WAITING_FOR_AUX, 0, 0, 255, LedCommand.MODE_BREATH)
         self.register_state(RobotStateId.PERFORMING_TAG_CAL, 255, 255, 255, LedCommand.MODE_FAST_FLASH, entrance_function=self.send_goal_tag)
-        self.register_state(RobotStateId.TAG_CAL_SUCCESS, 0, 255, 0, LedCommand.MODE_FAST_FLASH, entrance_function=self.send_goal_tree, led_recessive=True)
+        self.register_state(RobotStateId.WAITING_FOR_TREE, 255, 100, 0, LedCommand.MODE_FAST_FLASH)
+        self.register_state(RobotStateId.TREE_STARTED, 0, 255, 0, LedCommand.MODE_FAST_FLASH)
         
         # initial state
-        self.current_state = RobotStateId.WAITING_FOR_KILL
+        self.current_state = RobotStateId.NO_STATE
         
         # keeping track of odometry
         self.last_odom = Odometry()
@@ -133,14 +135,14 @@ class StateMachine(Node):
         
 
     def register_state(self, id: RobotStateId, led_r: int, led_g: int, led_b: int, 
-                       led_mode: int, entrance_function = None, led_recessive: bool = False):
+                       led_mode: int, entrance_function = None):
         led_cmd = LedCommand()
         led_cmd.red = led_r
         led_cmd.green = led_g
         led_cmd.blue = led_b
         led_cmd.mode = led_mode
         
-        new_state = RobotState(id, led_cmd, entrance_function, led_recessive)
+        new_state = RobotState(id, led_cmd, entrance_function)
         self.states[id] = new_state
     
 
@@ -153,12 +155,11 @@ class StateMachine(Node):
         return count >= 3
     
     
-    def publish_led_status(self, status: RobotState, entering_state: bool):
-        if entering_state or not status.led_recessive:
-            msg = LedCommand()
-            msg.target = LedCommand.TARGET_ALL
-            
-            self.ledPub.publish(status.led_cmd)
+    def publish_led_status(self, status: RobotState):
+        msg = self.states[status].led_cmd
+        msg.target = LedCommand.TARGET_ALL
+        
+        self.ledPub.publish(msg)
         
     
     def update_state(self):
@@ -167,21 +168,27 @@ class StateMachine(Node):
         #find next state that hasnt passed
         for state_id in RobotStateId:
             new_current_state_id = state_id
-            if not self.states[new_current_state_id].passed:
+            if new_current_state_id in self.states and not self.states[new_current_state_id].passed:
                 break
         
         entering_state = new_current_state_id != self.current_state
         self.current_state = new_current_state_id
-        self.publish_led_status(self.states[self.current_state], entering_state)
         
         if entering_state:
-            # just entered this state, so call enter function
+            # just entered this state, so call enter function and update leds
+            self.publish_led_status(new_current_state_id)
             self.states[new_current_state_id].enter(self)
-            
+    
 
     def go_to_state(self, new_state: RobotStateId):
         self.states[new_state].passed = False
         self.update_state()
+    
+    
+    def invalidate_tag_cal(self):
+        self.states[RobotStateId.WAITING_FOR_AUX].passed = False
+        self.states[RobotStateId.PERFORMING_TAG_CAL].passed = False
+        self.states[RobotStateId.WAITING_FOR_TREE].passed = False
             
 
     #FORMAT --> ros2 topic pub -r8 <topic_name> <msg_type>
@@ -220,8 +227,14 @@ class StateMachine(Node):
         roll, pitch, _ = quat2euler((msg.pose.pose.orientation.w, msg.pose.pose.orientation.x,
                                      msg.pose.pose.orientation.y, msg.pose.pose.orientation.z))
         
+        roll = roll * 180 / math.pi
+        pitch = pitch * 180 / math.pi
+        
         odom_good = acceleration < ACCEL_LIMIT and roll < ROLL_LIMIT and pitch < PITCH_LIMIT
         self.states[RobotStateId.WAITING_FOR_GOOD_ODOM].passed = odom_good
+        
+        if not odom_good:
+            self.get_logger().error(f"Got bad odom with acceleration {acceleration}, roll {roll}, and pitch {pitch}", throttle_duration_sec=1)
         
         self.last_odom = msg
 
@@ -244,11 +257,12 @@ class StateMachine(Node):
         self.get_logger().info('Goal accepted :)')
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback_tree)
+        
+        self.states[RobotStateId.WAITING_FOR_TREE].passed = True
 
 
     def get_result_callback_tree(self, future):
-        result = future.result().result
-        self.get_logger().info('Result: {0}'.format(result.sequence))
+        self.go_to_state(RobotStateId.WAITING_FOR_AUX)
         
 
     def send_goal_tag(self):
@@ -298,6 +312,9 @@ class StateMachine(Node):
     def aux_callback(self, msg: Bool):
         if not msg.data:
             self.states[RobotStateId.WAITING_FOR_AUX].passed = True
+            
+            if self.current_state == RobotStateId.WAITING_FOR_TREE:
+                self.send_goal_tree()
             
 
 def main(args=None):

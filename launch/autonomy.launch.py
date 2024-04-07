@@ -37,13 +37,13 @@ def generate_launch_description():
                 
                 Node(
                     package='riptide_autonomy2',
-                    executable='StateMachine.py',
-                    name='state_machine',
+                    executable='HeadlessInterface.py',
+                    name='headless_interface',
                     output='screen',
                     parameters=[
                         {
                             # behaviortree file specified relative to the "trees" directory in install
-                            'behaviortree_to_run': "CompTree.xml"
+                            'behaviortree_to_run': "TorpedoTree.xml"
                         }
                     ]
                 )
