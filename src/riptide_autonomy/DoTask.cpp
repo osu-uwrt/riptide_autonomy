@@ -70,10 +70,12 @@ namespace do_task
         BTExecutor() : Node("autonomy_dotask")
         {
             // create publishers
-            linearPub = this->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_LINEAR_TOPIC, 10);
-            angularPub = this->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_ANGULAR_TOPIC, 10);
+            linearPub = create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_LINEAR_TOPIC, 10);
+            angularPub = create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_ANGULAR_TOPIC, 10);
             statusPub = create_publisher<LedCmd>(LED_COMMAND_TOPIC, 10);
 
+            killSub = create_subscription<std_msgs::msg::Bool>(ROBOT_KILLED_TOPIC, 10,
+                        std::bind(&BTExecutor::killCb, this, _1));
 
             std::string bagTriggerTopic = "/" + get_hostname() + "/autonomy/bag_trigger";
             bagTriggerPub = this->create_publisher<std_msgs::msg::Bool>(bagTriggerTopic, 10);
@@ -230,7 +232,7 @@ namespace do_task
                     tickStatus = tree.tickRoot();
 
                     // check for a cancel
-                    if (goal_handle->is_canceling())
+                    if (goal_handle->is_canceling() || robotKilled)
                     {
                         result->returncode = 0;
                         tree.haltTree();
@@ -282,7 +284,7 @@ namespace do_task
                 statusPub->publish(ledCmd);
 
                 // wrap this party up and finish execution
-                result->returncode = (int)tickStatus;
+                result->returncode = (int) tickStatus;
                 goal_handle->succeed(result);
 
                 // bail early, all other code is error checking
@@ -348,16 +350,25 @@ namespace do_task
             bagTriggerPub->publish(triggerMsg);
         }
 
+        void killCb(const std_msgs::msg::Bool::SharedPtr msg) {
+            robotKilled = msg->data;
+        }
+
     private:
         // ros publishers
         rclcpp::Publisher<LedCmd>::SharedPtr statusPub;
         rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr 
             linearPub,
             angularPub;
-        
+
         rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr bagTriggerPub;
         rclcpp::TimerBase::SharedPtr bagTriggerTimer;
-        bool treeRunning;
+
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr killSub;
+        
+        bool 
+            treeRunning,
+            robotKilled;
 
         // ros action and service servers
         rclcpp_action::Server<ExecuteTree>::SharedPtr actionServer;

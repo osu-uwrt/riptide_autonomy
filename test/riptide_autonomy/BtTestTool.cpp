@@ -56,10 +56,10 @@ std::shared_ptr<DummyActionNode> BtTestTool::createDummyActionNode() {
     return ptr;
 }
 
-
-BT::NodeStatus BtTestTool::tickUntilFinished(std::shared_ptr<BT::TreeNode> node) {
+BT::NodeStatus BtTestTool::tickUntilFinished(std::shared_ptr<BT::TreeNode> node, const std::chrono::duration<double> &timeout) {
+    rclcpp::Time startTime = this->get_clock()->now();
     BT::NodeStatus status = BT::NodeStatus::IDLE;
-    while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE) {
+    while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE && this->get_clock()->now() - startTime < timeout) {
         rclcpp::spin_some(shared_from_this()); //spin should come before executing tick for things like action servers that need to go online
         status = node->executeTick();
     }

@@ -29,11 +29,21 @@ def generate_launch_description():
                     output='screen',
                     parameters=[
                         {
-                            # 'ext_plugin_list': [
-                                
-                            # ],
                             'enable_zmq': False,
                             'enable_cout': False
+                        }
+                    ]
+                ),
+                
+                Node(
+                    package='riptide_autonomy2',
+                    executable='HeadlessInterface.py',
+                    name='headless_interface',
+                    output='screen',
+                    parameters=[
+                        {
+                            # behaviortree file specified relative to the "trees" directory in install
+                            'behaviortree_to_run': "TorpedoTree.xml"
                         }
                     ]
                 )

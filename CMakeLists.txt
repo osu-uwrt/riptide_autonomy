@@ -13,6 +13,7 @@ find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(vision_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -22,6 +23,10 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(tinyxml2_vendor REQUIRED)
+
+#sm specific depends
+find_package(chameleon_tf_msgs REQUIRED)
+find_package(nortek_dvl_msgs REQUIRED)
 
 
 #create directory for auto-generated code which will include headers for custom nodes as well as source code that registers custom nodes
@@ -57,6 +62,7 @@ set(deps
   std_msgs
   nav_msgs
   sensor_msgs
+  vision_msgs
   riptide_msgs2
   std_srvs
   behaviortree_cpp_v3
@@ -212,6 +218,10 @@ install(PROGRAMS
   ${assistant_py_files}
   DESTINATION lib/${PROJECT_NAME}
 )
+
+install(PROGRAMS
+  src/riptide_autonomy/HeadlessInterface.py
+  DESTINATION lib/${PROJECT_NAME})
 
 #install bt assistant "actions" directory
 install(DIRECTORY src/riptide_autonomy/assistant/actions

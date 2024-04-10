@@ -12,7 +12,7 @@ BT::NodeStatus testGetOdometry(
     TimedPublisher<nav_msgs::msg::Odometry> timedPub(toolNode, "odometry/filtered", in);
 
     //run the node
-    BT::NodeStatus result = toolNode->tickUntilFinished(odometryNode);
+    BT::NodeStatus result = toolNode->tickUntilFinished(odometryNode, 4s);
 
     //collect results
     auto blackboard = odometryNode->config().blackboard;
@@ -87,7 +87,7 @@ TEST_F(BtTest, test_GetOdometry_success_nonzero) {
 
 TEST_F(BtTest, test_GetOdometry_failure_timeout) {
     auto odometryNode = toolNode->createLeafNodeFromConfig("GetOdometry", BT::NodeConfiguration());
-    auto result = toolNode->tickUntilFinished(odometryNode);
+    auto result = toolNode->tickUntilFinished(odometryNode, 4s);
 
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
 }

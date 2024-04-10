@@ -35,12 +35,7 @@ BT::NodeStatus testGetActuatorStatus(std::shared_ptr<BtTestTool> toolNode, GetAc
     TimedPublisher<std_msgs::msg::Bool> busyPub(toolNode, ACTUATOR_BUSY_TOPIC, busy, 10, info.busyIntervalMs);
 
     //tick until completed
-    BT::NodeStatus status = BT::NodeStatus::IDLE;
-    rclcpp::Time startTime = toolNode->get_clock()->now();
-    while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE && toolNode->get_clock()->now() - startTime < 5s) {
-        status = node->executeTick();
-        rclcpp::spin_some(toolNode);
-    }
+    BT::NodeStatus status = toolNode->tickUntilFinished(node, 5s);
     
     outputsSet = true;
     auto blackboard = node->config().blackboard;

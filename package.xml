@@ -16,6 +16,7 @@
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>vision_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>riptide_msgs2</depend>
   <depend>std_srvs</depend>
@@ -25,6 +26,8 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>ament_index_cpp</depend>
   <depend>tinyxml2</depend>
+  <depend>chameleon_tf_msgs</depend>
+  <depend>nortek_dvl_msgs</depend>
 
   <exec_depend>ros2launch</exec_depend>
 

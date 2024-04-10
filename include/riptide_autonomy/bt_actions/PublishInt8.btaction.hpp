@@ -2,10 +2,10 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-class <1> : public <2> {
+class PublishInt8 : public UWRTActionNode {
     public:
-    <1>(const std::string& name, const BT::NodeConfiguration& config)
-    : <2>(name, config) {
+    PublishInt8(const std::string& name, const BT::NodeConfiguration& config)
+    : UWRTActionNode(name, config) {
         
     }
 
@@ -15,7 +15,8 @@ class <1> : public <2> {
      */
     static BT::PortsList providedPorts() {
         return {
-
+            UwrtInput("topic"),
+            UwrtInput("data")
         };
     }
 
@@ -33,8 +34,19 @@ class <1> : public <2> {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        RCLCPP_INFO(rosnode->get_logger(), "First Hello World from <2> <1>!");
-        return BT::NodeStatus::RUNNING;
+        std::string topic = tryGetRequiredInput<std::string>(this, "topic", "");
+        if(topic == "") {
+            return BT::NodeStatus::FAILURE;
+        }
+
+        int data = tryGetRequiredInput<int>(this, "data", 0);
+
+        pub = rosnode->create_publisher<std_msgs::msg::Int8>(topic, 10);
+        std_msgs::msg::Int8 msg;
+        msg.data = data;
+        pub->publish(msg);
+
+        return BT::NodeStatus::SUCCESS;
     }
 
     /**
@@ -42,7 +54,6 @@ class <1> : public <2> {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        RCLCPP_INFO(rosnode->get_logger(), "Last Hello World from <2> <1>!");
         return BT::NodeStatus::SUCCESS;
     }
 
@@ -52,4 +63,7 @@ class <1> : public <2> {
     void onHalted() override {
 
     }
+
+    private:
+    rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr pub;
 };

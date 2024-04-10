@@ -17,11 +17,13 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/int8.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <vision_msgs/msg/detection3_d_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <riptide_msgs2/msg/actuator_status.hpp>
 #include <riptide_msgs2/msg/controller_command.hpp>
@@ -29,3 +31,5 @@
 
 #include <std_srvs/srv/set_bool.hpp>
 #include <std_srvs/srv/trigger.hpp>
+
+#include <riptide_msgs2/srv/mapping_target.hpp>

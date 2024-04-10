@@ -21,14 +21,7 @@ BT::NodeStatus testCallSetBoolSrv(
 
     auto node = toolNode->createLeafNodeFromConfig("CallSetBoolService", cfg);
 
-    BT::NodeStatus status = BT::NodeStatus::IDLE;
-    rclcpp::Time startTime = toolNode->get_clock()->now();
-    while(status != BT::NodeStatus::SUCCESS && status != BT::NodeStatus::FAILURE && toolNode->get_clock()->now() - startTime < TESTSETBOOLSRV_TIMEOUT) {
-        status = node->executeTick();
-        rclcpp::spin_some(toolNode);
-    }
-
-    return status; //if timed out, will return RUNNING
+    return toolNode->tickUntilFinished(node, TESTSETBOOLSRV_TIMEOUT); //if timed out, will return RUNNING
 }
 
 
