@@ -10,9 +10,9 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
             <SetBlackboard output_key="object_name" value="bin"/>
-            <SetBlackboard output_key="target_cov" value=".1"/>
-            <SetBlackboard output_key="timeout_sec" value="120"/>
-            <SetBlackboard output_key="min_dist" value="1"/>
+            <SetBlackboard output_key="target_cov" value=".01"/>
+            <SetBlackboard output_key="timeout_sec" value="480"/>
+            <SetBlackboard output_key="min_dist" value="1.5"/>
             <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_sec="timeout_sec"/>
         </Sequence>
     </BehaviorTree>
@@ -130,59 +130,44 @@
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
             <Action Covariance="Icov" ID="getCovariance" Target="{object_name}"/>
-            <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" test="&lt;"/>
+            <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" test="&gt;"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="gx" y="gy" z="gz"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="g2x" y="g2y" z="gz"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="DownwardSearch">
         <Sequence>
             <Action ID="Info" message="Searching for {object_name} with target covarience {target_cov}"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="min_dist" value="-0.5"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="0" y="0" z="min_dist"/>
-            <SetBlackboard output_key="dist" value=".9"/>
+            <SetBlackboard name="half the distance you want" output_key="dist" value=".25"/>
+            <SetBlackboard output_key="xdist" value="{dist}"/>
+            <SetBlackboard output_key="ydist" value="{dist}"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
-                <Sequence>
-                    <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
-                    <Action ID="Math" a="{dist}" b="0.5" operator="*" out="{dist}"/>
-                    <SetBlackboard output_key="xdist" value="{dist}"/>
-                    <SetBlackboard output_key="ydist" value="{dist}"/>
-                    <Action ID="Math" a="{xdist}" b="-1" operator="*" out="{nxdist}"/>
-                    <Action ID="Math" a="{ydist}" b="-1" operator="*" out="{nydist}"/>
-                    <Action ID="Math" a="{xdist}" b="2" operator="*" out="{x2dist}"/>
-                    <Action ID="Math" a="{ydist}" b="2" operator="*" out="{y2dist}"/>
-                    <Action ID="Math" a="{nxdist}" b="2" operator="*" out="{nx2dist}"/>
-                    <Action ID="Math" a="{nydist}" b="2" operator="*" out="{2nydist}"/>
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" dist="dist" frame="frame" g2x="nx2dist" g2y="y2dist" gx="nxdist" gy="ydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                    <Action ID="Math" a="{ydist}" b="-1.2" operator="*" out="{ydist}"/>
-                    <Action ID="Math" a="{xdist}" b="-1.2" operator="*" out="{xdist}"/>
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" dist="dist" frame="frame" g2x="x2dist" g2y="y2dist" gx="xdist" gy="ydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                    <Action ID="Math" a="{xdist}" b="-1" operator="*" out="{xdist}"/>
-                    <Action ID="Math" a="{ydist}" b="-1" operator="*" out="{ydist}"/>
-                    <Action ID="Math" a="{dist}" b="2" operator="*" out="{dist}"/>
-                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
-                    <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
-                    <Fallback>
+                <Fallback>
+                    <Sequence>
+                        <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
+                        <Action ID="Math" a="{xdist}" b="-1" operator="*" out="{nxdist}"/>
+                        <Action ID="Math" a="{ydist}" b="-1" operator="*" out="{nydist}"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="xdist" gy="nydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="nxdist" gy="nydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                        <Action ID="Math" a="{ydist}" b=".25" operator="+" out="{ydist}"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="nxdist" gy="ydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="xdist" gy="ydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                        <Action ID="Math" a="{xdist}" b=".25" operator="+" out="{xdist}"/>
+                        <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
                         <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
-                        <Sequence name="if the robot gets to far away">
-                            <Condition ID="CompareNums" a="{dist}" b="{max_dist}" test="&gt;"/>
-                            <Action ID="Info" message="got to far ({dist} meters) without finding the object."/>
-                            <Action ID="Math" a="{dist}" b="1.3" operator="*" out="dist"/>
-                            <AlwaysFailure/>
-                        </Sequence>
-                    </Fallback>
-                </Sequence>
+                        <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
+                    </Sequence>
+                    <Sequence>
+                        <Action Covariance="final_cov" ID="getCovariance" Target="{object_name}"/>
+                        <Action ID="Info" message="{object_name} error is {final_cov}"/>
+                        <Condition ID="CompareNums" a="{final_cov}" b="{target_cov}" test="&lt;"/>
+                        <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&gt;"/>
+                    </Sequence>
+                </Fallback>
             </Decorator>
-            <Fallback>
-                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
-                <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&gt;"/>
-                <ForceFailure>
-                    <Action ID="Error" message="could not find {object_name} after {timeout_secs} seconds"/>
-                </ForceFailure>
-            </Fallback>
             <Action ID="Info" message="{object_name} found"/>
         </Sequence>
     </BehaviorTree>
@@ -275,17 +260,6 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
             <Action ID="CalculateDistance" dist="{dist}" x1="{cx}" x2="{x}" y1="{cy}" y2="{y}" z1="0" z2="0"/>
-            <IfThenElse name="have robot face goal point if far away from it">
-                <Condition ID="CompareNums" a="{dist}" b="1.5" test="&gt;"/>
-                <Sequence name="Get yaw to face towards goal point">
-                    <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="{yaw}" targX="{x}" targY="{y}"/>
-                    <SetBlackboard output_key="goal_yaw" value="{yaw}"/>
-                </Sequence>
-                <Sequence>
-                    <SetBlackboard output_key="goal_yaw" value="{coy}"/>
-                </Sequence>
-            </IfThenElse>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="goal_yaw"/>
             <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" timeout="15" y="oy"/>
             <Action ID="Wait" seconds="2"/>
@@ -439,7 +413,7 @@
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
                 <Sequence name="Try move to position">
-                    <SetBlackboard output_key="timeout" value="7"/>
+                    <SetBlackboard output_key="timeout" value="11"/>
                     <Action ID="Info" message="Attempting to move forward for {timeout} seconds"/>
                     <Action ID="GetOdometry" op="" or="" oy="" x="old_x" y="old_y" z="old_z"/>
                     <Fallback>
@@ -692,10 +666,7 @@
         </SubTree>
         <SubTree ID="DownwardMove">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="dist" required="true"/>
             <input_port name="frame" required="true"/>
-            <input_port name="g2x" required="true"/>
-            <input_port name="g2y" required="true"/>
             <input_port name="gx" required="false"/>
             <input_port name="gy" required="false"/>
             <input_port name="gz" required="true"/>

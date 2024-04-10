@@ -206,17 +206,6 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="GetOdometry" op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
             <Action ID="CalculateDistance" dist="{dist}" x1="{cx}" x2="{x}" y1="{cy}" y2="{y}" z1="0" z2="0"/>
-            <IfThenElse name="have robot face goal point if far away from it">
-                <Condition ID="CompareNums" a="{dist}" b="1.5" test="&gt;"/>
-                <Sequence name="Get yaw to face towards goal point">
-                    <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="{yaw}" targX="{x}" targY="{y}"/>
-                    <SetBlackboard output_key="goal_yaw" value="{yaw}"/>
-                </Sequence>
-                <Sequence>
-                    <SetBlackboard output_key="goal_yaw" value="{coy}"/>
-                </Sequence>
-            </IfThenElse>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="goal_yaw"/>
             <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" timeout="15" y="oy"/>
             <Action ID="Wait" seconds="2"/>
@@ -370,7 +359,7 @@
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
                 <Sequence name="Try move to position">
-                    <SetBlackboard output_key="timeout" value="7"/>
+                    <SetBlackboard output_key="timeout" value="11"/>
                     <Action ID="Info" message="Attempting to move forward for {timeout} seconds"/>
                     <Action ID="GetOdometry" op="" or="" oy="" x="old_x" y="old_y" z="old_z"/>
                     <Fallback>
