@@ -372,10 +372,10 @@
         <Sequence name="shootobject">
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="talos/torpedo_link" value="talos/torpedo_link"/>
-            <SetBlackboard output_key="shoot_prox" value="0.6"/>
+            <SetBlackboard output_key="shoot_prox" value="0.25"/>
             <SetBlackboard output_key="ms_prox" value="2.5"/>
             <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="target_cov" value="0.0003"/>
+            <SetBlackboard output_key="target_cov" value="0.0004"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <Action ID="Format" format="{object_name}_hole" out="hole_name"/>
             <Action ID="Format" format="{hole_name}_frame" out="hole_frame"/>
@@ -385,6 +385,7 @@
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="talos/torpedo_link" proximity="shoot_prox"/>
+            <Action ID="Wait" seconds="10"/>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="2">
                 <SubTree ID="FireTorpedo"/>

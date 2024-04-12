@@ -13,6 +13,7 @@ from chameleon_tf_msgs.action import ModelFrame
 from riptide_msgs2.action import ExecuteTree
 from riptide_msgs2.msg import LedCommand
 from transforms3d.euler import quat2euler
+from rclpy.qos import qos_profile_sensor_data
 from enum import Enum
 
 #To run this program:
@@ -38,13 +39,13 @@ from enum import Enum
 
 class RobotStateId(Enum):
     NO_STATE = -1
-    WAITING_FOR_KILL = 0
-    WAITING_FOR_DVL = 1
-    WAITING_FOR_GOOD_ODOM = 2
-    WAITING_FOR_AUX = 4
-    PERFORMING_TAG_CAL = 5
-    WAITING_FOR_TREE = 6
-    TREE_STARTED = 7
+    WAITING_FOR_DVL = 0
+    WAITING_FOR_GOOD_ODOM = 1
+    WAITING_FOR_KILL = 2
+    WAITING_FOR_AUX = 3
+    PERFORMING_TAG_CAL = 4
+    WAITING_FOR_TREE = 5
+    TREE_STARTED = 6
 
 class RobotState:
     def __init__(self, id: RobotStateId, led_cmd: LedCommand, entrance_function = None):
@@ -83,7 +84,7 @@ class StateMachine(Node):
             DvlStatus,
             'dvl/status',
             self.dvl_callback,
-            10)
+            qos_profile_sensor_data)
 
         self.subscription_odom = self.create_subscription(
             Odometry, #Class
@@ -114,9 +115,9 @@ class StateMachine(Node):
             'autonomy/run_tree')
         
         # register states here
-        self.register_state(RobotStateId.WAITING_FOR_KILL, 255, 0, 0, LedCommand.MODE_SLOW_FLASH, entrance_function=self.invalidate_tag_cal)
         self.register_state(RobotStateId.WAITING_FOR_DVL, 255, 255, 255, LedCommand.MODE_BREATH, entrance_function=self.invalidate_tag_cal)
         self.register_state(RobotStateId.WAITING_FOR_GOOD_ODOM, 255, 0, 0, LedCommand.MODE_FAST_FLASH, entrance_function=self.invalidate_tag_cal)
+        self.register_state(RobotStateId.WAITING_FOR_KILL, 255, 0, 0, LedCommand.MODE_SLOW_FLASH, entrance_function=self.invalidate_tag_cal)
         # self.register_state(RobotStateId.WAITING_FOR_TAG, 255, 0, 0, LedCommand.MODE_BREATH)
         self.register_state(RobotStateId.WAITING_FOR_AUX, 0, 0, 255, LedCommand.MODE_BREATH)
         self.register_state(RobotStateId.PERFORMING_TAG_CAL, 255, 255, 255, LedCommand.MODE_FAST_FLASH, entrance_function=self.send_goal_tag)
@@ -180,9 +181,10 @@ class StateMachine(Node):
             self.states[new_current_state_id].enter(self)
     
 
-    def go_to_state(self, new_state: RobotStateId):
-        self.states[new_state].passed = False
-        self.update_state()
+    def go_to_state(self, new_state: RobotStateId, override_tree: bool = False):
+        if self.current_state != RobotStateId.TREE_STARTED or override_tree:
+            self.states[new_state].passed = False
+            self.update_state()
     
     
     def invalidate_tag_cal(self):
@@ -207,7 +209,10 @@ class StateMachine(Node):
                 dvl_good = False
                 break
         
-        self.states[RobotStateId.WAITING_FOR_DVL].passed = dvl_good
+        if dvl_good:
+            self.states[RobotStateId.WAITING_FOR_DVL].passed = True
+        else:
+            self.go_to_state(RobotStateId.WAITING_FOR_DVL)
 
        
     def odometry_callback(self, msg: Odometry):
@@ -231,7 +236,11 @@ class StateMachine(Node):
         pitch = pitch * 180 / math.pi
         
         odom_good = acceleration < ACCEL_LIMIT and roll < ROLL_LIMIT and pitch < PITCH_LIMIT
-        self.states[RobotStateId.WAITING_FOR_GOOD_ODOM].passed = odom_good
+        
+        if odom_good:
+            self.states[RobotStateId.WAITING_FOR_GOOD_ODOM].passed = True
+        else:
+            self.go_to_state(RobotStateId.WAITING_FOR_GOOD_ODOM)
         
         if not odom_good:
             self.get_logger().error(f"Got bad odom with acceleration {acceleration}, roll {roll}, and pitch {pitch}", throttle_duration_sec=1)
@@ -315,6 +324,9 @@ class StateMachine(Node):
             
             if self.current_state == RobotStateId.WAITING_FOR_TREE:
                 self.send_goal_tree()
+                
+            if self.current_state == RobotStateId.TREE_STARTED:
+                self.go_to_state(RobotStateId.WAITING_FOR_AUX, True)
             
 
 def main(args=None):
