@@ -3,6 +3,7 @@
     <BehaviorTree ID="AlignLink">
         <Sequence name="align torpedos">
             <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
+            <Action ID="Info" message="Looked up {frame_name} at position {obj_x}, {obj_y}, {obj_z} in the world frame"/>
             <Action ID="ComputeFrameAlignment" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" reference_frame="world" target_frame="{link_name}" x="{obj_x}" y="{obj_y}" z="{obj_z}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
@@ -269,7 +270,7 @@
     </BehaviorTree>
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
-            <SetBlackboard output_key="min_depth" value="-0.75"/>
+            <SetBlackboard output_key="min_depth" value="-0.25"/>
             <IfThenElse name="Ensure Z good">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>

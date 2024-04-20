@@ -236,10 +236,9 @@ namespace do_task
                     {
                         result->returncode = 0;
                         tree.haltTree();
-                        goal_handle->canceled(result);
                         treeRunning = false;
-                        RCLCPP_INFO(get_logger(), "DoTask: Cancelled current action goal");
-                        return;
+                        RCLCPP_INFO(get_logger(), "DoTask: Canceled current action goal");
+                        break;
                     }
 
                     // sleep a bit while we wait
@@ -285,7 +284,23 @@ namespace do_task
 
                 // wrap this party up and finish execution
                 result->returncode = (int) tickStatus;
-                goal_handle->succeed(result);
+                if(tickStatus == BT::NodeStatus::SUCCESS || tickStatus == BT::NodeStatus::FAILURE)
+                {
+                    //tree finished on its own
+                    goal_handle->succeed(result);
+                } else
+                {
+                    //tree canceled
+                    if(goal_handle->is_canceling())
+                    {
+                        result->error = "Tree canceled";
+                        goal_handle->canceled(result);
+                    } else
+                    {
+                        result->error = "Robot killed";
+                        goal_handle->abort(result);
+                    }
+                }
 
                 // bail early, all other code is error checking
                 return;
