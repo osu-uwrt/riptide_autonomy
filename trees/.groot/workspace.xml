@@ -194,6 +194,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="Info" message="Refining esimate for object {object_name}"/>
             <Action ID="Format" format="{parent_object}_frame" out="parent_frame"/>
+            <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="TransformPose" from_frame="{parent_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
@@ -202,6 +203,14 @@
                 <Sequence name="shrink cov">
                     <Action ID="Wait" seconds="1"/>
                     <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+                    <IfThenElse name="move in front of sub object if confident">
+                        <Condition ID="CompareNums" a="{cov}" b="0.1" name="if error good enough" test="&lt;"/>
+                        <Sequence name="move in front of object">
+                            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="new_x" out_y="new_y" out_z="new_z" oy="0" to_frame="world" x="{proximity}" y="0" z="0"/>
+                            <Action ID="PublishToController" isOrientation="0" mode="3" x="{new_x}" y="{new_y}" z="{new_z}"/>
+                        </Sequence>
+                        <AlwaysSuccess name="move in front of parent"/>
+                    </IfThenElse>
                     <Action ID="Info" message="Object {object_name} has covariance {cov}"/>
                     <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
                 </Sequence>
@@ -251,7 +260,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -372,7 +381,6 @@
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="talos/torpedo_link" value="talos/torpedo_link"/>
             <SetBlackboard output_key="shoot_prox" value="0.25"/>
             <SetBlackboard output_key="ms_prox" value="2.5"/>
             <SetBlackboard output_key="60" value="60"/>
@@ -385,7 +393,7 @@
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="talos/torpedo_link" proximity="shoot_prox"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="torpedo_link_name" proximity="shoot_prox"/>
             <Action ID="Wait" seconds="10"/>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="2">
@@ -509,36 +517,25 @@
         <Sequence name="TORPEDO">
             <Fallback name="Try run while armed">
                 <Sequence name="torpedo">
-                    <SetBlackboard output_key="0" value="0"/>
+                    <SetBlackboard output_key="1" value="1"/>
+                    <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
+                    <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
                     <SetBlackboard output_key="max_dist" value="2.5"/>
                     <SetBlackboard output_key="min_dist" value="1.4"/>
-                    <SetBlackboard output_key="1" value="1"/>
                     <SetBlackboard output_key="60" value="60"/>
                     <SetBlackboard output_key="180" value="180"/>
-                    <SetBlackboard output_key="0.5" value="0.5"/>
                     <SetBlackboard output_key="torpedo_open" value="torpedo_open"/>
                     <SetBlackboard output_key="torpedo_closed" value="torpedo_closed"/>
                     <SetBlackboard output_key="target_cov" value="0.01"/>
-                    <SetBlackboard output_key="shoot_open_first" value="1"/>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-                    <IfThenElse>
-                        <Condition ID="CompareNums" a="{shoot_open_first}" b="1" test="=="/>
-                        <Sequence name="shoot open then closed">
-                            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_open" target_cov="target_cov" timeout_secs="180"/>
-                            <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_open"/>
-                            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_closed" target_cov="target_cov" timeout_secs="60"/>
-                            <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_closed"/>
-                        </Sequence>
-                        <Sequence name="shoot closed then open">
-                            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_closed" target_cov="target_cov" timeout_secs="180"/>
-                            <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_closed"/>
-                            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_open" target_cov="target_cov" timeout_secs="60"/>
-                            <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_open"/>
-                        </Sequence>
-                    </IfThenElse>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_open" target_cov="target_cov" timeout_secs="180"/>
+                    <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_open" torpedo_link_name="talos/torpedo_0_link"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo_closed" target_cov="target_cov" timeout_secs="60"/>
+                    <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_closed" torpedo_link_name="talos/torpedo_1_link"/>
                 </Sequence>
                 <ForceFailure>
                     <Sequence name="handle fail">
+                        <SetBlackboard output_key="0" value="0"/>
                         <Action ID="Error" message="Torpedo tree failed, disarming actuators"/>
                         <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
                     </Sequence>
@@ -640,7 +637,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="op" required="true"/>
@@ -708,7 +705,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -793,6 +790,7 @@
         <SubTree ID="ShootObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_name" required="true"/>
+            <input_port default="talos/torpedo_link" name="torpedo_link_name" required="true"/>
         </SubTree>
         <SubTree ID="SmartMovePosition">
             <inout_port name="__shared_blackboard" required="true"/>
@@ -840,4 +838,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
