@@ -2,18 +2,53 @@
 <root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="AlignLink">
         <Sequence name="align torpedos">
-            <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
+            <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{prox_x}" y="0" z="{prox_z}"/>
             <Action ID="ComputeFrameAlignment" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" reference_frame="world" target_frame="{link_name}" x="{obj_x}" y="{obj_y}" z="{obj_z}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="object_name" value="bin"/>
-            <SetBlackboard output_key="target_cov" value=".01"/>
-            <SetBlackboard output_key="timeout_sec" value="480"/>
-            <SetBlackboard output_key="min_dist" value="1.5"/>
-            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_sec="timeout_sec"/>
+            <Fallback>
+                <SequenceStar>
+                    <SetBlackboard output_key="bin" value="bin"/>
+                    <SetBlackboard output_key="timeout" value="180"/>
+                    <SetBlackboard output_key="target_side" value="blue"/>
+                    <SetBlackboard output_key="0" value="0"/>
+                    <SetBlackboard output_key="dropper_dist" value="1"/>
+                    <SetBlackboard output_key="min_dist" value="1.5"/>
+                    <SetBlackboard output_key="1" value="1"/>
+                    <SetBlackboard output_key="time" value="60"/>
+                    <SetBlackboard output_key="proximity" value="0.5"/>
+                    <SetBlackboard output_key="0.5" value="0.5"/>
+                    <SetBlackboard output_key="mini_cov" value="10"/>
+                    <SetBlackboard output_key="open" value="dropper_open"/>
+                    <SetBlackboard output_key="closed " value="dropper_closed"/>
+                    <SetBlackboard output_key="link" value="talos/dropper_link"/>
+                    <SetBlackboard output_key="frame" value="{target_side}_frame"/>
+                    <SetBlackboard output_key="target_cov" value="0.01"/>
+                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="min_dist" object_name="bin" target_cov="target_cov" timeout_sec="timeout"/>
+                    <Sequence>
+                        <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="target_side" parent_object="bin" prox_x="0" prox_z="dropper_dist" proximity="proximity" target_cov="mini_cov" timeout_secs="time"/>
+                        <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="frame" link_name="link" prox_x="0" prox_z="proximity"/>
+                        <Repeat num_cycles="2">
+                            <SubTree ID="FireDropper"/>
+                        </Repeat>
+                    </Sequence>
+                    <Action ID="Info" message="search complete bin found"/>
+                </SequenceStar>
+                <ForceFailure>
+                    <Sequence>
+                        <Action ID="Error" message="Dropper tree fialed, disarming actuator"/>
+                        <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+                    </Sequence>
+                </ForceFailure>
+            </Fallback>
+            <Sequence>
+                <Action ID="Info" message="Dropper tree succeeded, Disarming dropper"/>
+                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BumpObject">
@@ -29,7 +64,7 @@
                 <SetBlackboard output_key="talos/poker_link" value="talos/poker_link"/>
                 <SetBlackboard output_key="0" value="0"/>
                 <Action ID="SetStatus" status="aligning"/>
-                <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="poker_link" proximity="0.5"/>
+                <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="object_frame" link_name="poker_link" prox_x="1" prox_z="0"/>
                 <Action ID="Wait" seconds="5"/>
                 <Action ID="SetStatus" status="performing"/>
                 <SetBlackboard output_key="proximity" value="0.5"/>
@@ -64,12 +99,12 @@
             <Action ID="Format" format="{subprop_2}_frame" out="subprop_2_frame"/>
             <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="prop" target_cov="target_cov" timeout_secs="search_time"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_1" parent_object="prop" proximity="1" target_cov="target_cov" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_1" parent_object="prop" prox_x="1" prox_z="0" proximity="1" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <SubTree ID="BumpObject" __shared_blackboard="false" object_frame="subprop_1_frame"/>
             <Action ID="Wait" seconds="15"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_2" parent_object="prop" proximity="1" target_cov="target_cov" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop_2" parent_object="prop" prox_x="1" prox_z="0" proximity="1" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <SubTree ID="BumpObject" __shared_blackboard="false" object_frame="subprop_2_frame"/>
         </Sequence>
@@ -148,6 +183,7 @@
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="0" y="0" z="min_dist"/>
             <SetBlackboard name="half the distance you want" output_key="dist" value=".25"/>
+            <SetBlackboard output_key="link" value="talos/dropper_link"/>
             <SetBlackboard output_key="xdist" value="{dist}"/>
             <SetBlackboard output_key="ydist" value="{dist}"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
@@ -173,10 +209,6 @@
                     </Sequence>
                 </Fallback>
             </Decorator>
-            <SetBlackboard output_key="link" value="{talos/dropper_link}"/>
-            <SetBlackboard output_key="proximity" value="{0.5}"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame" link_name="link " proximity="proximity"/>
-            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <Action ID="Info" message="{object_name} found"/>
         </Sequence>
     </BehaviorTree>
@@ -254,7 +286,7 @@
             <SetBlackboard output_key="1.25" value="1.25"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="2" y="0" z="0"/>
             <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="prop" target_cov="target_cov" timeout_secs="120"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" proximity="1" target_cov="target_cov" timeout_secs="60"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="1" prox_z="0" proximity="1" target_cov="target_cov" timeout_secs="60"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
@@ -280,7 +312,7 @@
             <Action ID="Format" format="{parent_object}_frame" out="parent_frame"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
             <Action ID="SetStatus" status="searching"/>
-            <Action ID="TransformPose" from_frame="{parent_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
+            <Action ID="TransformPose" from_frame="{parent_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="{prox_x}" y="0" z="{prox_z}"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="z"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
                 <Sequence name="shrink cov">
@@ -454,11 +486,11 @@
             <Action ID="Format" format="{object_name}_hole" out="hole_name"/>
             <Action ID="Format" format="{hole_name}_frame" out="hole_frame"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="hole_name" parent_object="object_name" proximity="ms_prox" target_cov="target_cov" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="hole_name" parent_object="object_name" prox_x="1" prox_z="0" proximity="ms_prox" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="hole_frame" link_name="talos/torpedo_link" proximity="shoot_prox"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="hole_frame" link_name="talos/torpedo_link" prox_x="1" prox_z="0"/>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="2">
                 <SubTree ID="FireTorpedo"/>
@@ -663,9 +695,11 @@
     <TreeNodesModel>
         <SubTree ID="AlignLink">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="1" name="allignment" required="true">in front or above</input_port>
             <input_port name="frame_name" required="true">frame to align to</input_port>
             <input_port name="link_name" required="true">link to align</input_port>
-            <input_port name="proximity" required="true">how far away to be</input_port>
+            <input_port default="1" name="prox_x" required="true">default x promity</input_port>
+            <input_port default="0" name="prox_z" required="true">default z proximity</input_port>
         </SubTree>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="true"/>
@@ -805,6 +839,8 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_name" required="true"/>
             <input_port name="parent_object" required="true"/>
+            <input_port default="1" name="prox_x" required="true"/>
+            <input_port default="0" name="prox_z" required="true"/>
             <input_port default="1" name="proximity" required="true"/>
             <input_port default="1.25" name="target_cov" required="true"/>
             <input_port default="60" name="timeout_secs" required="true"/>
