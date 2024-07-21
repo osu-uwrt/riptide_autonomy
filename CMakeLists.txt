@@ -16,6 +16,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
+find_package(robot_localization REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(tf2 REQUIRED)
@@ -64,6 +65,7 @@ set(deps
   sensor_msgs
   vision_msgs
   riptide_msgs2
+  robot_localization
   std_srvs
   behaviortree_cpp_v3
   tf2

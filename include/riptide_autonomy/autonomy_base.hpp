@@ -32,5 +32,6 @@
 
 #include <std_srvs/srv/set_bool.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <robot_localization/srv/set_pose.hpp>
 
 #include <riptide_msgs2/srv/mapping_target.hpp>
