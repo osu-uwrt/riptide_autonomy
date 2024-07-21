@@ -40,9 +40,11 @@ class SetControllerSafeMode : public UWRTActionNode {
             }
         }
 
-        //controllerNodeName.erase(0,1);
-        asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, controllerNodeName);
-        
+        if(controllerNodeName != ""){
+            asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, controllerNodeName);
+        }else{
+            asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, "complete_controller");
+        }
     }
 
     /**

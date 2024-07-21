@@ -10,10 +10,10 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="-1.0" value="-1.0"/>
+            <SetBlackboard output_key="-1.5" value="-1.5"/>
             <SubTree ID="WaitForKillSwitch"/>
             <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1.0"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1.5"/>
             <Action ID="SetStatus" status="aligning"/>
             <Action ID="Wait" seconds="2"/>
             <Action ID="SetStatus" status="performing"/>
@@ -24,10 +24,10 @@
                 <Action ID="PublishInt8" data="1" topic="/talos/controller/stunt_state"/>
                 <Action ID="Wait" seconds="1"/>
                 <Action ID="PublishInt8" data="0" topic="/talos/controller/stunt_state"/>
-                <Action ID="Wait" seconds="5"/>
+                <Action ID="Wait" seconds="6"/>
                 <Action ID="PublishEKFPose" pitch="0" roll="0" setOrientation="false" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="0" z="0"/>
             </Sequence>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1.0"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1.5"/>
             <Action ID="Wait" seconds="3"/>
             <SubTree ID="KillController"/>
         </Sequence>
