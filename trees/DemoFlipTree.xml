@@ -18,15 +18,7 @@
             <Action ID="Wait" seconds="2"/>
             <Action ID="SetStatus" status="performing"/>
             <Action ID="Wait" seconds="2"/>
-            <Sequence>
-                <Action ID="SetControllerSafeMode" safe="false" timeout_secs="10.0"/>
-                <Action ID="GetOdometry" op="" or="" oy="" x="{pre_flip_x}" y="{pre_flip_y}" z=""/>
-                <Action ID="PublishInt8" data="1" topic="/talos/controller/stunt_state"/>
-                <Action ID="Wait" seconds="1"/>
-                <Action ID="PublishInt8" data="0" topic="/talos/controller/stunt_state"/>
-                <Action ID="Wait" seconds="6"/>
-                <Action ID="PublishEKFPose" pitch="0" roll="0" setOrientation="false" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="0" z="0"/>
-            </Sequence>
+            <SubTree ID="FlipTree"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="-1.5"/>
             <Action ID="Wait" seconds="3"/>
             <SubTree ID="KillController"/>
@@ -173,6 +165,17 @@
                 </IfThenElse>
             </Sequence>
         </ForceSuccess>
+    </BehaviorTree>
+    <BehaviorTree ID="FlipTree">
+        <Sequence>
+            <Action ID="SetControllerSafeMode" safe="false" timeout_secs="10.0"/>
+            <Action ID="GetOdometry" op="" or="" oy="" x="{pre_flip_x}" y="{pre_flip_y}" z=""/>
+            <Action ID="PublishInt8" data="1" topic="/talos/controller/stunt_state"/>
+            <Action ID="Wait" seconds="1"/>
+            <Action ID="PublishInt8" data="0" topic="/talos/controller/stunt_state"/>
+            <Action ID="Wait" seconds="6"/>
+            <Action ID="PublishEKFPose" pitch="0" roll="0" setOrientation="false" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="0" z="0"/>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GateTree">
         <Sequence>
@@ -689,6 +692,7 @@
             <input_port name="message" required="true">The message to print.</input_port>
         </Action>
         <SubTree ID="FireTorpedo"/>
+        <SubTree ID="FlipTree"/>
         <Action ID="Format">
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
