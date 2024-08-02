@@ -142,30 +142,47 @@
     <BehaviorTree ID="DownwardSearch">
         <Sequence>
             <Action ID="Info" message="Searching for {object_name} with target covarience {target_cov}"/>
-            <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
             <SetBlackboard output_key="0" value="0"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+            <SetBlackboard output_key="radius_step" value="2"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="0" y="0" z="min_dist"/>
-            <SetBlackboard name="half the distance you want" output_key="dist" value=".25"/>
+            <SetBlackboard name="half the distance you want" output_key="dist" value="{radius_step}"/>
             <SetBlackboard output_key="link" value="talos/dropper_link"/>
-            <SetBlackboard output_key="xdist" value="{dist}"/>
-            <SetBlackboard output_key="ydist" value="{dist}"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
                 <Fallback>
                     <Sequence>
+                        <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="before_x" out_y="before_y" out_z="before_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
                         <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
-                        <Action ID="Math" a="{xdist}" b="-1" operator="*" out="{nxdist}"/>
-                        <Action ID="Math" a="{ydist}" b="-1" operator="*" out="{nydist}"/>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="xdist" gy="nydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="nxdist" gy="nydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                        <Action ID="Math" a="{ydist}" b=".25" operator="+" out="{ydist}"/>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="nxdist" gy="ydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="xdist" gy="ydist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                        <Action ID="Math" a="{xdist}" b=".25" operator="+" out="{xdist}"/>
+                        <Action ID="Math" a="{dist}" b="-1" operator="*" out="{ndist}"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
+                        <Action ID="Math" a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
                         <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
-                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
                         <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
+                        <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                        <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
+                        <Action ID="Info" message="Estimate moved {amount_adjusted} meters during last loop"/>
+                        <IfThenElse name="should we reset dist">
+                            <Condition ID="CompareNums" a="{amount_adjusted}" b="0.15" test="&gt;"/>
+                            <Sequence name="reset dist">
+                                <Action ID="Info" message="Detected object enough to sufficiently move. Resetting search"/>
+                                <SetBlackboard output_key="dist" value="0"/>
+                            </Sequence>
+                            <AlwaysSuccess/>
+                        </IfThenElse>
+                        <IfThenElse>
+                            <Condition ID="CompareNums" a="{dist}" b="3" test="&gt;"/>
+                            <Sequence>
+                                <Action ID="Info" message="Got too far away from object estimate. Resetting search"/>
+                                <SetBlackboard output_key="dist" value="0"/>
+                            </Sequence>
+                            <AlwaysSuccess/>
+                        </IfThenElse>
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
                     </Sequence>
                     <Sequence>
                         <Action Covariance="final_cov" ID="getCovariance" Target="{object_name}"/>
@@ -337,7 +354,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -461,12 +478,12 @@
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.45"/>
             <SetBlackboard output_key="ms_prox" value="2.5"/>
+            <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.0004"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <ForceSuccess>
-                <SetBlackboard output_key="0" value="0"/>
                 <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo" prox_x="1" prox_z="0" proximity="ms_prox" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
@@ -716,7 +733,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
+            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="op" required="true"/>
@@ -802,7 +819,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -949,3 +966,4 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
+
