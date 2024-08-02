@@ -31,7 +31,7 @@ class SetControllerSafeMode : public UWRTActionNode {
         std::vector<std::string> nodeNames = rosnode->get_node_names();
         std::string controllerNodeName = "";
 
-        for(int i = 0; i < nodeNames.size(); i++){
+        for(size_t i = 0; i < nodeNames.size(); i++){
 
             std::string controllerSeedString = "/complete_controller";
             if(nodeNames.at(i).substr(0,7) == controllerSeedString.substr(0,7)){

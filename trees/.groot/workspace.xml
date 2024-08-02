@@ -337,7 +337,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -466,11 +466,12 @@
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo" proximity="ms_prox" target_cov="target_cov" timeout_secs="60"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo" prox_x="1" prox_z="0" proximity="ms_prox" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="torpedo_link_name" proximity="shoot_prox"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="object_frame" link_name="torpedo_link_name" prox_x="1" prox_z="0"/>
             <Action ID="Wait" seconds="10"/>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="2">
@@ -715,7 +716,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="op" required="true"/>
@@ -801,7 +802,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -948,4 +949,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-

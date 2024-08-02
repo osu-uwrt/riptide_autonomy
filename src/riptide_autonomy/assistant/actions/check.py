@@ -18,7 +18,7 @@ def checkFiles(args, autonomyRootLoc: str):
     
     #analyzes files and their tests to figure out if something is missing. The goal is for every file to have its own test.
     #returns true if changes were made to the workspace that need to be built. (false otherwise)
-    def analyzeFiles(files: 'list[str]', tests: 'list[str]', nodeType: BtNodeType):
+    def analyzeFiles(files: 'list[str]', tests: 'list[str]', nodeType: BtNodeType, root: str):
         nonlocal skipAllPrompts
         
         #check bt node type
@@ -55,7 +55,7 @@ def checkFiles(args, autonomyRootLoc: str):
             )
             
             if response == 0: #create test file
-                createTestFile(args, file, nodeType)
+                createTestFile(args, file, nodeType, root)
                 madeChanges = True
             elif response == 1: #delete file
                 if askConfirmation(args, "Do you really want to delete {}?".format(file)):
@@ -104,13 +104,13 @@ def checkFiles(args, autonomyRootLoc: str):
     actionTests, conditionTests, decoratorTests = categorizedGlob(autonomyTestLocation(autonomyRootLoc), "*.cpp")
         
     info(args, "BT Actions")
-    actionsHadChanges = analyzeFiles(actionFiles, actionTests, BtNodeType.ACTION)
+    actionsHadChanges = analyzeFiles(actionFiles, actionTests, BtNodeType.ACTION, autonomyRootLoc)
     
     info(args, "BT Conditions")
-    conditionsHadChanges = analyzeFiles(conditionFiles, conditionTests, BtNodeType.CONDITION)
+    conditionsHadChanges = analyzeFiles(conditionFiles, conditionTests, BtNodeType.CONDITION, autonomyRootLoc)
     
     info(args, "BT Decorators")
-    decoratorsHadChanges = analyzeFiles(decoratorFiles, decoratorTests, BtNodeType.DECORATOR)
+    decoratorsHadChanges = analyzeFiles(decoratorFiles, decoratorTests, BtNodeType.DECORATOR, autonomyRootLoc)
     
     #if changes were made, ask the user to rebuild them
     if actionsHadChanges or conditionsHadChanges or decoratorsHadChanges:

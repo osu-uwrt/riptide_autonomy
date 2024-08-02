@@ -53,7 +53,7 @@ class PublishEKFPose : public UWRTActionNode {
 
         //wait for client to become available
         if(!poseClient->wait_for_service(1s)) {
-            RCLCPP_ERROR(rosNode()->get_logger(), "Set Pose Service: %s is not available.", SET_POSE_SERVER_NAME);
+            RCLCPP_ERROR(rosNode()->get_logger(), "Set Pose Service: %s is not available.", SET_POSE_SERVER_NAME.c_str());
             return BT::NodeStatus::FAILURE;
         }
 
