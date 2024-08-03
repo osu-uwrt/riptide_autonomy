@@ -7,6 +7,30 @@
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="BinTree">
+        <Sequence name="BINS">
+            <SetBlackboard output_key="0.25" value="0.25"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="object" value="bin"/>
+            <Action ID="Format" format="{object}_frame" out="object_frame"/>
+            <SetBlackboard output_key="target_err" value="0.01"/>
+            <SetBlackboard output_key="search_timeout" value="180"/>
+            <Action ID="Info" message="BIN TIME"/>
+            <ForceSuccess>
+                <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="1" object_name="object" target_cov="target_err" timeout_sec="search_timeout"/>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="object_frame" op="0" or="0" oy="0" x="0" y="0" z="1"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="object_frame" op="0" or="0" oy="0" x="0" y="0" z="0.25"/>
+            <Action ID="SetStatus" status="performing"/>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+            <Repeat num_cycles="2">
+                <SubTree ID="FireDropper"/>
+            </Repeat>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="BumpObject">
         <Sequence>
             <SetBlackboard output_key="60" value="60"/>
@@ -610,6 +634,8 @@
     </BehaviorTree>
     <BehaviorTree ID="TorpedoTree">
         <Sequence name="TORPEDO">
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.01"/>
             <SetBlackboard output_key="min_dist" value="1.4"/>
@@ -618,7 +644,6 @@
             <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="60"/>
             <Fallback name="Try run while armed">
                 <Sequence name="torpedo">
-                    <SetBlackboard output_key="1" value="1"/>
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
                     <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
                     <SetBlackboard output_key="torpedo_first" value="torpedo_large_hole"/>
@@ -629,7 +654,6 @@
                 </Sequence>
                 <ForceFailure>
                     <Sequence name="handle fail">
-                        <SetBlackboard output_key="0" value="0"/>
                         <Action ID="Error" message="Torpedo tree failed, disarming actuators"/>
                         <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
                     </Sequence>
@@ -697,6 +721,7 @@
             <input_port name="b" required="true"/>
             <input_port name="range" required="true"/>
         </Condition>
+        <SubTree ID="BinTree"/>
         <SubTree ID="BumpObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_frame" required="true"/>

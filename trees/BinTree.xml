@@ -8,13 +8,36 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
-        <Sequence name="TORPEDO">
-            <SetBlackboard output_key="-1" value="-1"/>
+        <Sequence name="Bins">
+            <SetBlackboard output_key="depth" value="-1"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
-            <SubTree ID="TorpedoTree"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            <SubTree ID="BinTree"/>
             <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="BinTree">
+        <Sequence name="BINS">
+            <SetBlackboard output_key="0.25" value="0.25"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="object" value="bin"/>
+            <Action ID="Format" format="{object}_frame" out="object_frame"/>
+            <SetBlackboard output_key="target_err" value="0.01"/>
+            <SetBlackboard output_key="search_timeout" value="180"/>
+            <Action ID="Info" message="BIN TIME"/>
+            <ForceSuccess>
+                <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="1" object_name="object" target_cov="target_err" timeout_sec="search_timeout"/>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="object_frame" op="0" or="0" oy="0" x="0" y="0" z="1"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="object_frame" op="0" or="0" oy="0" x="0" y="0" z="0.25"/>
+            <Action ID="SetStatus" status="performing"/>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+            <Repeat num_cycles="2">
+                <SubTree ID="FireDropper"/>
+            </Repeat>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BumpObject">
@@ -482,29 +505,6 @@
             </Sequence>
         </ForceSuccess>
     </BehaviorTree>
-    <BehaviorTree ID="ShootAtStargate">
-        <Sequence name="ShootAtStargate">
-            <SetBlackboard output_key="talos/torpedo_link" value="talos/torpedo_link"/>
-            <SetBlackboard output_key="0.25" value="0.25"/>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="target_cov" value="0.2"/>
-            <Action ID="Info" message="Attempting to shoot object {object_name}"/>
-            <Action ID="Format" format="{object_name}_hole" out="hole_name"/>
-            <Action ID="Format" format="{hole_name}_frame" out="hole_frame"/>
-            <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="hole_name" parent_object="object_name" prox_x="1" prox_z="0" proximity="1" target_cov="target_cov" timeout_secs="60"/>
-            </ForceSuccess>
-            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="1"/>
-            <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="hole_frame" link_name="talos/torpedo_link" prox_x="1" prox_z="0"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="hole_frame" link_name="talos/torpedo_link" prox_x="1" prox_z="0"/>
-            <Action ID="SetStatus" status="performing"/>
-            <RetryUntilSuccessful num_attempts="2">
-                <SubTree ID="FireTorpedo"/>
-            </RetryUntilSuccessful>
-        </Sequence>
-    </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="torpedo" value="torpedo"/>
@@ -731,6 +731,7 @@
             <input_port name="b" required="true"/>
             <input_port name="range" required="true"/>
         </Condition>
+        <SubTree ID="BinTree"/>
         <SubTree ID="BumpObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_frame" required="true"/>
@@ -949,10 +950,6 @@
         <Action ID="SetStatus">
             <input_port name="status" required="true"/>
         </Action>
-        <SubTree ID="ShootAtStargate">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="object_name" required="true"/>
-        </SubTree>
         <SubTree ID="ShootObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_name" required="true"/>
