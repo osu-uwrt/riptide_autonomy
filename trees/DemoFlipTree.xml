@@ -9,16 +9,16 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="-1.0" value="-1.0"/>
+            <SetBlackboard output_key="depth" value="-0.55"/>
             <SubTree ID="WaitForKillSwitch"/>
             <Action ID="SetStatus" status="moving"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1.0"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <Action ID="SetStatus" status="aligning"/>
             <Action ID="Wait" seconds="2"/>
             <Action ID="SetStatus" status="performing"/>
             <Action ID="Wait" seconds="2"/>
             <SubTree ID="FlipTree"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="-1.0"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <Action ID="Wait" seconds="10"/>
             <SubTree ID="KillController"/>
         </Sequence>
@@ -290,15 +290,22 @@
     </BehaviorTree>
     <BehaviorTree ID="FlipTree">
         <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
             <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
             <Action ID="SetControllerSafeMode" safe="false" timeout_secs="10.0"/>
-            <Action ID="GetOdometry" op="" or="" oy="{pre_flip_yaw}" x="{pre_flip_x}" y="{pre_flip_y}" z=""/>
+            <Action ID="GetOdometry" op="" or="" oy="{pre_flip_yaw}" x="{pre_flip_x}" y="{pre_flip_y}" z="{pre_flip_z}"/>
+            <Action ID="GetImuOrientation" op="" or="" oy="pre_imu_y" topic="vectornav/imu"/>
+            <Action ID="Info" message="Pre yaw: {pre_imu_y}"/>
             <Action ID="PublishInt8" data="1" topic="controller/stunt_state"/>
             <Action ID="Wait" seconds="1"/>
             <Action ID="PublishInt8" data="0" topic="controller/stunt_state"/>
             <Action ID="Wait" seconds="12"/>
-            <Action ID="PublishEKFPose" pitch="0" roll="0" setOrientation="false" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{pre_flip_yaw}" z="0"/>
+            <Action ID="GetImuOrientation" op="" or="" oy="final_imu_y" topic="vectornav/imu"/>
+            <Action ID="Info" message="Post imu: {final_imu_y}"/>
+            <Action ID="Math" a="{final_imu_y}" b="{pre_imu_y}" operator="-" out="imu_delta"/>
+            <Action ID="PublishEKFPose" pitch="0" roll="0" setOrientation="true" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{final_imu_y}" z="0"/>
             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{pre_flip_yaw}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="pre_flip_z"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GateTree">
@@ -832,6 +839,12 @@
         <Action ID="GetBoolTopic">
             <input_port name="topic" required="true">The topic to subscribe to.</input_port>
             <output_port name="value" required="false"/>
+        </Action>
+        <Action ID="GetImuOrientation">
+            <output_port name="op" required="false"/>
+            <output_port name="or" required="false"/>
+            <output_port name="oy" required="false"/>
+            <input_port name="topic" required="true"/>
         </Action>
         <Action ID="GetOdometry">
             <output_port name="op" required="false"/>
