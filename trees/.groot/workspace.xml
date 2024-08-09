@@ -70,7 +70,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1.75" value="1.75"/>
             <SetBlackboard output_key="4.0" value="4.0"/>
-            <SetBlackboard output_key="circ_radius" value="3"/>
+            <SetBlackboard output_key="circ_radius" value="1"/>
             <SetBlackboard output_key="iscw" value="1"/>
             <SetBlackboard output_key="target_cov" value="3"/>
             <SetBlackboard output_key="search_time" value="180"/>
