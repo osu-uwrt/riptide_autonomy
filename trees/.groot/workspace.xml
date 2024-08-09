@@ -68,8 +68,8 @@
         <Sequence name="buoy">
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="min_dist" value="1"/>
-            <SetBlackboard output_key="max_dist" value="2.5"/>
+            <SetBlackboard output_key="1.75" value="1.75"/>
+            <SetBlackboard output_key="4.0" value="4.0"/>
             <SetBlackboard output_key="circ_radius" value="1"/>
             <SetBlackboard output_key="iscw" value="1"/>
             <SetBlackboard output_key="target_cov" value="0.5"/>
