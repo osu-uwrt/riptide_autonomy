@@ -35,18 +35,18 @@ def generate_launch_description():
                     ]
                 ),
                 
-                Node(
-                    package='riptide_autonomy2',
-                    executable='HeadlessInterface.py',
-                    name='headless_interface',
-                    output='screen',
-                    parameters=[
-                        {
-                            # behaviortree file specified relative to the "trees" directory in install
-                            'behaviortree_to_run': "TorpedoTree.xml"
-                        }
-                    ]
-                )
+                # Node(
+                #     package='riptide_autonomy2',
+                #     executable='HeadlessInterface.py',
+                #     name='headless_interface',
+                #     output='screen',
+                #     parameters=[
+                #         {
+                #             # behaviortree file specified relative to the "trees" directory in install
+                #             'behaviortree_to_run': "TorpedoTree.xml"
+                #         }
+                #     ]
+                # )
             ], scoped=True
         )
     ])

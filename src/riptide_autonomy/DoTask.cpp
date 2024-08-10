@@ -232,7 +232,7 @@ namespace do_task
                     tickStatus = tree.tickRoot();
 
                     // check for a cancel
-                    if (goal_handle->is_canceling() || robotKilled)
+                    if (goal_handle->is_canceling() ) // || robotKilled
                     {
                         result->returncode = 0;
                         tree.haltTree();

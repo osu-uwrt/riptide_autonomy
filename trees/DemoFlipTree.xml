@@ -9,7 +9,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="depth" value="-0.55"/>
+            <SetBlackboard output_key="depth" value="-0.85"/>
             <SubTree ID="WaitForKillSwitch"/>
             <Action ID="SetStatus" status="moving"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
