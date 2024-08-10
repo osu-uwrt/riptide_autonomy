@@ -84,15 +84,15 @@
         <Sequence name="buoy">
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="min_dist" value="1"/>
-            <SetBlackboard output_key="max_dist" value="2.5"/>
+            <SetBlackboard output_key="1.75" value="1.75"/>
+            <SetBlackboard output_key="4.0" value="4.0"/>
             <SetBlackboard output_key="circ_radius" value="1"/>
             <SetBlackboard output_key="iscw" value="1"/>
-            <SetBlackboard output_key="target_cov" value="0.5"/>
+            <SetBlackboard output_key="target_cov" value="3"/>
             <SetBlackboard output_key="search_time" value="180"/>
             <SetBlackboard output_key="prop" value="buoy"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
-            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="1.75" object_name="prop" target_cov="target_cov" timeout_secs="search_time"/>
+            <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="prop" target_cov="target_cov" timeout_secs="search_time"/>
             <Action ID="Info" message="BUOY TIME"/>
             <Action ID="SetStatus" name="set status to aligning" status="aligning"/>
             <IfThenElse name="which way we goin">
@@ -296,7 +296,7 @@
             <Action ID="GetOdometry" op="" or="" oy="{pre_flip_yaw}" x="{pre_flip_x}" y="{pre_flip_y}" z="{pre_flip_z}"/>
             <Action ID="GetImuOrientation" op="" or="" oy="pre_imu_y" topic="vectornav/imu"/>
             <Action ID="Info" message="Pre yaw: {pre_imu_y}"/>
-            <Action ID="PublishInt8" data="1" topic="controller/stunt_state"/>
+            <Action ID="TriggerControllerStunt" targetStuntState="1"/>
             <Action ID="Wait" seconds="1"/>
             <Action ID="PublishInt8" data="0" topic="controller/stunt_state"/>
             <Action ID="Wait" seconds="12"/>
@@ -311,19 +311,24 @@
     <BehaviorTree ID="GateTree">
         <Sequence>
             <SetBlackboard output_key="-1" value="-1"/>
+            <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="search_timeout" value="120"/>
-            <SetBlackboard output_key="ms_prox" value="2"/>
+            <SetBlackboard output_key="120" value="120"/>
+            <SetBlackboard output_key="1.75" value="1.75"/>
+            <SetBlackboard output_key="4.0" value="4.0"/>
+            <SetBlackboard output_key="2" value="2"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="target_cov" value="0.1"/>
+            <SetBlackboard output_key="target_cov" value="3"/>
             <SetBlackboard output_key="undergate_depth" value="-0.5"/>
             <SetBlackboard output_key="prop" value="gate"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <SetBlackboard output_key="subprop" value="gate_hot"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Info" message="GATE TIME"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="ms_prox" prox_z="0" target_cov="target_cov" timeout_secs="search_timeout"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" op="0" or="0" oy="3.1415" x="2" y="0" z="0"/>
+            <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="prop" target_cov="target_cov" timeout_secs="120"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="1" prox_z="0" proximity="1" target_cov="target_cov" timeout_secs="60"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
@@ -528,11 +533,11 @@
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo" prox_x="ms_prox" prox_z="0" target_cov="target_cov" timeout_secs="60"/>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo" prox_x="1" prox_z="0" proximity="ms_prox" target_cov="target_cov" timeout_secs="60"/>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="object_frame" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="object_frame" link_name="torpedo_link_name" prox_x="1" prox_z="0"/>
             <Action ID="Wait" seconds="10"/>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="3">
@@ -656,12 +661,12 @@
         <Sequence name="TORPEDO">
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="search_timeout" value="180"/>
+            <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.01"/>
-            <SetBlackboard output_key="min_dist" value="1"/>
-            <SetBlackboard output_key="max_dist" value="1.75"/>
+            <SetBlackboard output_key="min_dist" value="1.4"/>
+            <SetBlackboard output_key="max_dist" value="2.5"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
-            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="search_timeout"/>
+            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="60"/>
             <Fallback name="Try run while armed">
                 <Sequence name="torpedo">
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
@@ -880,6 +885,7 @@
             <input_port name="parent_object" required="true"/>
             <input_port default="1" name="prox_x" required="true"/>
             <input_port default="0" name="prox_z" required="true"/>
+            <input_port default="1" name="proximity" required="true"/>
             <input_port default="1.25" name="target_cov" required="true"/>
             <input_port default="60" name="timeout_secs" required="true"/>
         </SubTree>
@@ -997,6 +1003,9 @@
             <input_port name="x" required="true"/>
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
+        </Action>
+        <Action ID="TriggerControllerStunt">
+            <input_port name="targetStuntState" required="true"/>
         </Action>
         <Action ID="Wait">
             <input_port name="seconds" required="true">number of seconds to wait.</input_port>

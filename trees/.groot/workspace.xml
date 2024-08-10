@@ -277,7 +277,7 @@
             <Action ID="GetOdometry" op="" or="" oy="{pre_flip_yaw}" x="{pre_flip_x}" y="{pre_flip_y}" z="{pre_flip_z}"/>
             <Action ID="GetImuOrientation" op="" or="" oy="pre_imu_y" topic="vectornav/imu"/>
             <Action ID="Info" message="Pre yaw: {pre_imu_y}"/>
-            <Action ID="PublishInt8" data="1" topic="controller/stunt_state"/>
+            <Action ID="TriggerControllerStunt" targetStuntState="1"/>
             <Action ID="Wait" seconds="1"/>
             <Action ID="PublishInt8" data="0" topic="controller/stunt_state"/>
             <Action ID="Wait" seconds="7"/>
@@ -984,6 +984,9 @@
             <input_port name="x" required="true"/>
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
+        </Action>
+        <Action ID="TriggerControllerStunt">
+            <input_port name="targetStuntState" required="true"/>
         </Action>
         <Action ID="Wait">
             <input_port name="seconds" required="true">number of seconds to wait.</input_port>
