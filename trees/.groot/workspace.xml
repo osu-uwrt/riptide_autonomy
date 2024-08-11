@@ -70,7 +70,7 @@
             <SetBlackboard output_key="circ_radius" value="1.25"/>
             <SetBlackboard output_key="iscw" value="1"/>
             <SetBlackboard output_key="target_cov" value="0.1"/>
-            <SetBlackboard output_key="search_time" value="90"/>
+            <SetBlackboard output_key="search_time" value="45"/>
             <SetBlackboard output_key="prop" value="buoy"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <ForceSuccess>
@@ -296,7 +296,7 @@
         <Sequence>
             <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="search_timeout" value="45"/>
+            <SetBlackboard output_key="search_timeout" value="10"/>
             <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="search_prox_z" value="-0.5"/>
             <SetBlackboard output_key="min_dist" value="1.5"/>
@@ -365,6 +365,8 @@
         <Sequence>
             <SetBlackboard output_key="15" value="15"/>
             <Action ID="Info" message="Moving to XYZ {x}, {y}, {z} with RPY {or}, {op}, {oy}"/>
+            <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z=""/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="15" x="cx" y="cy" z="z"/>
             <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" timeout="15" y="oy"/>
             <Action ID="Wait" seconds="2"/>
@@ -413,9 +415,9 @@
                     <Action ID="Info" message="Enforcing maximum depth of {max_depth} meters... requested depth was previously {z}."/>
                     <SetBlackboard name="...too low" output_key="valid_z" value="{max_depth}"/>
                 </Sequence>
-                <SetBlackboard name="...all good" output_key="valid_z" value="{z}"/>
+                <AlwaysSuccess name="dont overwrite valid_z"/>
             </IfThenElse>
-            <Action ID="Info" message="Translating to XYZ: {x}, {y}, {z} in no more than {timeout} seconds"/>
+            <Action ID="Info" message="Translating to XYZ: {x}, {y}, {valid_z} in no more than {timeout} seconds"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout}">
                 <Sequence>
                     <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="{y}" z="{valid_z}"/>
@@ -517,19 +519,25 @@
     </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
-            <SetBlackboard output_key="torpedo" value="torpedo"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.33"/>
             <SetBlackboard output_key="ms_prox" value="1.35"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="ms_timeout" value="45"/>
-            <SetBlackboard output_key="target_cov" value="0.05"/>
+            <SetBlackboard output_key="ms_timeout" value="15"/>
+            <SetBlackboard output_key="target_cov" value="0.01"/>
+            <Action ID="Format" format="{torpedo_name}_frame" out="torpedo_frame"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo" prox_x="ms_prox" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
+            <Fallback>
+                <Sequence>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
+                    <SetBlackboard output_key="frame_to_shoot" value="{object_frame}"/>
+                </Sequence>
+                <SetBlackboard output_key="frame_to_shoot" value="{torpedo_frame}"/>
+            </Fallback>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="object_frame" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
             <Action ID="Wait" seconds="10"/>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="3">
@@ -651,9 +659,10 @@
     </BehaviorTree>
     <BehaviorTree ID="TorpedoTree">
         <Sequence name="TORPEDO">
+            <SetBlackboard output_key="torpedo" value="torpedo"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="search_timeout" value="90"/>
+            <SetBlackboard output_key="search_timeout" value="75"/>
             <SetBlackboard output_key="target_cov" value="0.01"/>
             <SetBlackboard output_key="min_dist" value="1"/>
             <SetBlackboard output_key="max_dist" value="2"/>
@@ -668,8 +677,8 @@
                     <SetBlackboard output_key="torpedo_first" value="torpedo_small_hole"/>
                     <SetBlackboard output_key="torpedo_second" value="torpedo_large_hole"/>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-                    <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_first" torpedo_link_name="talos/torpedo_0_link"/>
-                    <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_second" torpedo_link_name="talos/torpedo_1_link"/>
+                    <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_first" torpedo_link_name="talos/torpedo_0_link" torpedo_name="torpedo"/>
+                    <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_second" torpedo_link_name="talos/torpedo_1_link" torpedo_name="torpedo"/>
                 </Sequence>
                 <ForceFailure>
                     <Sequence name="handle fail">
@@ -968,6 +977,7 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_name" required="true"/>
             <input_port default="talos/torpedo_link" name="torpedo_link_name" required="true"/>
+            <input_port default="torpedo" name="torpedo_name" required="true"/>
         </SubTree>
         <SubTree ID="SmartMovePosition">
             <inout_port name="__shared_blackboard" required="true"/>
