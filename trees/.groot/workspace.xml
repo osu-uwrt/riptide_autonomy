@@ -523,12 +523,10 @@
             <SetBlackboard output_key="ms_prox" value="1.35"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="45"/>
-            <SetBlackboard output_key="target_cov" value="0.005"/>
+            <SetBlackboard output_key="target_cov" value="0.05"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
-            <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo" prox_x="ms_prox" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
-            </ForceSuccess>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo" prox_x="ms_prox" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="object_frame" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
