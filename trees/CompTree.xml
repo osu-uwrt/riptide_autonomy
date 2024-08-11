@@ -555,13 +555,7 @@
             <Action ID="Format" format="{torpedo_name}_frame" out="torpedo_frame"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
-            <Fallback>
-                <Sequence>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
-                    <SetBlackboard output_key="frame_to_shoot" value="{object_frame}"/>
-                </Sequence>
-                <SetBlackboard output_key="frame_to_shoot" value="{torpedo_frame}"/>
-            </Fallback>
+            <SetBlackboard output_key="frame_to_shoot" value="{torpedo_frame}"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
@@ -694,9 +688,7 @@
             <SetBlackboard output_key="min_dist" value="1"/>
             <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
-            <ForceSuccess>
-                <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="search_timeout"/>
-            </ForceSuccess>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Fallback name="Try run while armed">
                 <Sequence name="torpedo">
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
