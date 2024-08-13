@@ -41,8 +41,8 @@ class PublishInt8 : public UWRTActionNode {
 
         int data = tryGetRequiredInput<int>(this, "data", 0);
 
-        pub = rosnode->create_publisher<std_msgs::msg::Int8>(topic, 10);
-        std_msgs::msg::Int8 msg;
+        pub = rosnode->create_publisher<std_msgs::msg::UInt16>(topic, 10);
+        std_msgs::msg::UInt16 msg;
         msg.data = data;
         pub->publish(msg);
 
@@ -65,5 +65,5 @@ class PublishInt8 : public UWRTActionNode {
     }
 
     private:
-    rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr pub;
+    rclcpp::Publisher<std_msgs::msg::UInt16>::SharedPtr pub;
 };

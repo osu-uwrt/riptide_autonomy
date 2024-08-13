@@ -26,7 +26,25 @@ class SetControllerSafeMode : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, "complete_controller");
+
+        //get the name of the complete controller
+        std::vector<std::string> nodeNames = rosnode->get_node_names();
+        std::string controllerNodeName = "";
+
+        for(size_t i = 0; i < nodeNames.size(); i++){
+
+            std::string controllerSeedString = "/complete_controller";
+            if(nodeNames.at(i).substr(0,7) == controllerSeedString.substr(0,7)){
+                RCLCPP_INFO(rosnode->get_logger(), "Found Controller to disable safe mode lol");
+                controllerNodeName = nodeNames.at(i);
+            }
+        }
+
+        if(controllerNodeName != ""){
+            asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, controllerNodeName);
+        }else{
+            asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, "complete_controller");
+        }
     }
 
     /**
