@@ -400,7 +400,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.55"/>
-            <SetBlackboard output_key="max_depth" value="-2"/>
+            <SetBlackboard output_key="max_depth" value="-4"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
@@ -522,7 +522,7 @@
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.66"/>
+            <SetBlackboard output_key="shoot_prox" value="0.4"/>
             <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="15"/>
