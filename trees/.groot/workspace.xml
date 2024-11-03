@@ -664,8 +664,8 @@
             <SetBlackboard output_key="torpedo" value="torpedo"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="search_timeout" value="30"/>
-            <SetBlackboard output_key="target_cov" value="0.005"/>
+            <SetBlackboard output_key="search_timeout" value="60"/>
+            <SetBlackboard output_key="target_cov" value="0.0025"/>
             <SetBlackboard output_key="min_dist" value="1"/>
             <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
