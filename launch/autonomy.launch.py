@@ -43,7 +43,8 @@ def generate_launch_description():
                     parameters=[
                         {
                             # behaviortree file specified relative to the "trees" directory in install
-                            'behaviortree_to_run': "TorpedoTree.xml"
+                            'behaviortree_to_run': "TorpedoTree.xml",
+                            'tag_cal_frame': "talos/base_link"
                         }
                     ]
                 )

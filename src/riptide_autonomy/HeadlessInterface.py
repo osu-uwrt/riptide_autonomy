@@ -73,6 +73,7 @@ class StateMachine(Node):
         
         # behavior tree file to run
         self.declare_parameter("behaviortree_to_run", "")
+        self.declare_parameter("tag_cal_frame", "estimated_origin_frame")
         
         # dict of possible states, keys are state ids
         self.states: dict[RobotStateId, RobotState] = {}
@@ -131,8 +132,12 @@ class StateMachine(Node):
         self.last_odom = Odometry()
         
         #circular buffer of dvl status messages
-        self.prev_dvl_statuses = [[False, False, False, False]] * 8
+        self.prev_dvl_statuses = [[False, False, False, False]] * 40
         self.oldest_dvl_status = 0
+        
+        #circular buffer of odom goodness
+        self.prev_odom_statuses = [False] * 20
+        self.oldest_odom_status = 0
         
 
     def register_state(self, id: RobotStateId, led_r: int, led_g: int, led_b: int, 
@@ -147,13 +152,13 @@ class StateMachine(Node):
         self.states[id] = new_state
     
 
-    def at_least_three_true(self, arr):
+    def at_least_x_true(self, arr, x):
         count = 0
         for value in arr:
             if value:
                 count += 1
         
-        return count >= 3
+        return count >= x
     
     
     def publish_led_status(self, status: RobotState):
@@ -203,13 +208,12 @@ class StateMachine(Node):
         if self.oldest_dvl_status >= len(self.prev_dvl_statuses):
             self.oldest_dvl_status = 0
         
-        dvl_good = True
+        dvl_good_history = 0
         for i in range(0, len(self.prev_dvl_statuses)):
-            if not self.at_least_three_true(self.prev_dvl_statuses[i]):
-                dvl_good = False
-                break
+            if self.at_least_x_true(self.prev_dvl_statuses[i], 3):
+                dvl_good_history += 1
         
-        if dvl_good:
+        if dvl_good_history >= 30:
             self.states[RobotStateId.WAITING_FOR_DVL].passed = True
         else:
             self.go_to_state(RobotStateId.WAITING_FOR_DVL)
@@ -236,14 +240,17 @@ class StateMachine(Node):
         pitch = pitch * 180 / math.pi
         
         odom_good = acceleration < ACCEL_LIMIT and roll < ROLL_LIMIT and pitch < PITCH_LIMIT
+        self.prev_odom_statuses[self.oldest_odom_status] = odom_good
+        self.oldest_odom_status += 1
+        if self.oldest_odom_status > len(self.prev_odom_statuses):
+            self.oldest_odom_status = 0
         
-        if odom_good:
+        odom_passed = self.at_least_x_true(self.prev_odom_statuses, 12)
+        if odom_passed:
             self.states[RobotStateId.WAITING_FOR_GOOD_ODOM].passed = True
         else:
-            self.go_to_state(RobotStateId.WAITING_FOR_GOOD_ODOM)
-        
-        if not odom_good:
             self.get_logger().error(f"Got bad odom with acceleration {acceleration}, roll {roll}, and pitch {pitch}", throttle_duration_sec=1)
+            self.go_to_state(RobotStateId.WAITING_FOR_GOOD_ODOM)
         
         self.last_odom = msg
 
@@ -260,7 +267,7 @@ class StateMachine(Node):
     def goal_response_callback_tree(self, future):
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().info('Goal rejected :(')
+            self.get_logger().error('Goal rejected :(')
             return
         
         self.get_logger().info('Goal accepted :)')
@@ -276,7 +283,7 @@ class StateMachine(Node):
 
     def send_goal_tag(self):
         goal_msg = ModelFrame.Goal()
-        goal_msg.monitor_child = "estimated_origin_frame"
+        goal_msg.monitor_child = self.get_parameter("tag_cal_frame")
         goal_msg.monitor_parent = "world"
         goal_msg.samples = 10
 
