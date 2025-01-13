@@ -13,7 +13,7 @@
             <SetBlackboard output_key="3" value="3"/>
             <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
             <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="depth" value="-1"/>
+            <SetBlackboard output_key="depth" value="-0.56"/>
             <SubTree ID="WaitForKillSwitch"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <ForceSuccess>
@@ -538,7 +538,7 @@
         <Sequence name="shootobject">
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.5"/>
-            <SetBlackboard output_key="ms_prox" value="2"/>
+            <SetBlackboard output_key="ms_prox" value="0.75"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="15"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
@@ -681,7 +681,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="search_timeout" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.0025"/>
-            <SetBlackboard output_key="min_dist" value="1"/>
+            <SetBlackboard output_key="min_dist" value="0.5"/>
             <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
             <ForceSuccess>

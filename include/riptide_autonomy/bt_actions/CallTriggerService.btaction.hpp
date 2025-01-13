@@ -75,7 +75,7 @@ class CallTriggerService : public UWRTActionNode {
             bool success = resp->success;
 
             //resport the message in the response if there is one
-            if(message.length() > 0) {
+            if(message.length() > 0 && !success) {
                 RCLCPP_WARN(rosNode()->get_logger(), "Message from %s: %s", srvName.c_str(), message.c_str());
             }
 

@@ -9,6 +9,11 @@
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
         <Sequence name="BINS">
+            <SetBlackboard output_key="talos/dropper_link" value="talos/dropper_link"/>
+            <SetBlackboard output_key="bin_target_frame" value="bin_target_frame"/>
+            <SetBlackboard output_key="bin_target" value="bin_target"/>
+            <SetBlackboard output_key="0.5" value="0.5"/>
+            <SetBlackboard output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="overbin" value="0.35"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -17,8 +22,9 @@
             <SetBlackboard output_key="target_err" value="0.01"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <Action ID="Info" message="BIN TIME"/>
+            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="0.5" object_name="bin_target" target_cov="target_err" timeout_sec="search_timeout"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="object_frame" op="0" or="0" oy="0" x="0" y="0" z="overbin"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="bin_target_frame" link_name="talos/dropper_link" prox_x="0" prox_z="overbin"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <Repeat num_cycles="2">
@@ -166,7 +172,7 @@
             <Action ID="Info" message="Searching for {object_name} with target covarience {target_cov}"/>
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
-            <SetBlackboard output_key="radius_step" value="2"/>
+            <SetBlackboard output_key="radius_step" value="0.5"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="0" y="0" z="min_dist"/>
@@ -523,7 +529,7 @@
         <Sequence name="shootobject">
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.5"/>
-            <SetBlackboard output_key="ms_prox" value="2"/>
+            <SetBlackboard output_key="ms_prox" value="0.75"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="15"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
@@ -666,7 +672,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="search_timeout" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.0025"/>
-            <SetBlackboard output_key="min_dist" value="1"/>
+            <SetBlackboard output_key="min_dist" value="0.5"/>
             <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
             <ForceSuccess>
