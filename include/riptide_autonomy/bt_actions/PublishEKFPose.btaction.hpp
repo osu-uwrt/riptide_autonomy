@@ -123,7 +123,7 @@ class PublishEKFPose : public UWRTActionNode {
 
         request->pose.pose.covariance = {0.0};
 
-        //sned out, and recieve result
+        //send out, and recieve result
         auto result = poseClient->async_send_request(request);
 
         RCLCPP_INFO(rosNode()->get_logger(), "Updating Pose");

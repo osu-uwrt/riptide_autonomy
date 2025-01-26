@@ -18,7 +18,7 @@ find_package(nav_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
 find_package(robot_localization REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(behaviortree_cpp_v3 REQUIRED)
+find_package(behaviortree_cpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -67,7 +67,7 @@ set(deps
   riptide_msgs2
   robot_localization
   std_srvs
-  behaviortree_cpp_v3
+  behaviortree_cpp
   tf2
   tf2_ros
   tf2_geometry_msgs
@@ -157,7 +157,7 @@ target_compile_definitions(doTask PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 ament_target_dependencies(doTask
   ament_index_cpp
   rclcpp
-  behaviortree_cpp_v3
+  behaviortree_cpp
   rclcpp_action
   riptide_msgs2
 )
@@ -193,7 +193,7 @@ else()
   target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
   ament_target_dependencies(checkBT
-    behaviortree_cpp_v3
+    behaviortree_cpp
   )
   install(TARGETS checkBT
     DESTINATION lib/${PROJECT_NAME}

@@ -37,6 +37,11 @@ from enum import Enum
 #The subscription to Odometry is to check if the robot's movement is jittery or flying off to infinity.
 #Once odometry data is good, start a tag cal and finally the behavior tree.
 
+dvl_states = [False] * 10
+next_dvl_state = 0
+odom_states = [False] * 70
+next_odom_state = 0
+
 class RobotStateId(Enum):
     NO_STATE = -1
     WAITING_FOR_DVL = 0
@@ -64,9 +69,10 @@ class RobotState:
             self.entrance_function()
 
 #If roll or pitch pass this limit, output an error
-ROLL_LIMIT = 30 #degrees
-PITCH_LIMIT = 30 #degrees
+ROLL_LIMIT = 50 #degrees
+PITCH_LIMIT = 50 #degrees
 ACCEL_LIMIT = 1
+
 class StateMachine(Node):
     def __init__(self):
         super().__init__('state_machine')
@@ -118,7 +124,6 @@ class StateMachine(Node):
         self.register_state(RobotStateId.WAITING_FOR_DVL, 255, 255, 255, LedCommand.MODE_BREATH, entrance_function=self.invalidate_tag_cal)
         self.register_state(RobotStateId.WAITING_FOR_GOOD_ODOM, 255, 0, 0, LedCommand.MODE_FAST_FLASH, entrance_function=self.invalidate_tag_cal)
         self.register_state(RobotStateId.WAITING_FOR_KILL, 255, 0, 0, LedCommand.MODE_SLOW_FLASH, entrance_function=self.invalidate_tag_cal)
-        # self.register_state(RobotStateId.WAITING_FOR_TAG, 255, 0, 0, LedCommand.MODE_BREATH)
         self.register_state(RobotStateId.WAITING_FOR_AUX, 0, 0, 255, LedCommand.MODE_BREATH)
         self.register_state(RobotStateId.PERFORMING_TAG_CAL, 255, 255, 255, LedCommand.MODE_FAST_FLASH, entrance_function=self.send_goal_tag)
         self.register_state(RobotStateId.WAITING_FOR_TREE, 255, 100, 0, LedCommand.MODE_FAST_FLASH)
@@ -147,13 +152,13 @@ class StateMachine(Node):
         self.states[id] = new_state
     
 
-    def at_least_three_true(self, arr):
+    def at_least_x_true(self, arr, x):
         count = 0
         for value in arr:
             if value:
                 count += 1
         
-        return count >= 3
+        return count >= x
     
     
     def publish_led_status(self, status: RobotState):
@@ -205,11 +210,16 @@ class StateMachine(Node):
         
         dvl_good = True
         for i in range(0, len(self.prev_dvl_statuses)):
-            if not self.at_least_three_true(self.prev_dvl_statuses[i]):
+            if not self.at_least_x_true(self.prev_dvl_statuses[i], 3):
                 dvl_good = False
                 break
         
-        if dvl_good:
+        dvl_states[next_dvl_state] = dvl_good
+        next_dvl_state += 1
+        if next_dvl_state > len(dvl_states):
+            next_dvl_state = 0
+        
+        if self.at_least_x_true(dvl_states, 8):
             self.states[RobotStateId.WAITING_FOR_DVL].passed = True
         else:
             self.go_to_state(RobotStateId.WAITING_FOR_DVL)
@@ -237,7 +247,12 @@ class StateMachine(Node):
         
         odom_good = acceleration < ACCEL_LIMIT and roll < ROLL_LIMIT and pitch < PITCH_LIMIT
         
-        if odom_good:
+        odom_states[next_odom_state] = odom_good
+        next_odom_state += 1
+        if next_odom_state > len(odom_states):
+            next_odom_state = 0
+        
+        if self.at_least_x_true(odom_states, 60):
             self.states[RobotStateId.WAITING_FOR_GOOD_ODOM].passed = True
         else:
             self.go_to_state(RobotStateId.WAITING_FOR_GOOD_ODOM)
@@ -260,10 +275,10 @@ class StateMachine(Node):
     def goal_response_callback_tree(self, future):
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().info('Goal rejected :(')
+            self.get_logger().info('Tree Goal rejected :(')
             return
         
-        self.get_logger().info('Goal accepted :)')
+        self.get_logger().info('Tree Goal accepted :)')
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback_tree)
         

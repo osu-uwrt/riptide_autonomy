@@ -1,6 +1,6 @@
-#include <behaviortree_cpp_v3/loggers/bt_zmq_publisher.h>
-#include <behaviortree_cpp_v3/loggers/bt_cout_logger.h>
-#include <behaviortree_cpp_v3/loggers/bt_file_logger.h>
+#include <behaviortree_cpp/loggers/bt_zmq_publisher.h>
+#include <behaviortree_cpp/loggers/bt_cout_logger.h>
+#include <behaviortree_cpp/loggers/bt_file_logger.h>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/executors/multi_threaded_executor.hpp>
