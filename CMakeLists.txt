@@ -79,7 +79,7 @@ set(deps
 #
 add_library(autonomy_utils SHARED
   src/riptide_autonomy/util.cpp
-  src/riptide_autonomy/UwrtBtNode.cpp
+  src/riptide_autonomy/ROSEnabledNode.cpp
 )
 
 target_include_directories(autonomy_utils PUBLIC

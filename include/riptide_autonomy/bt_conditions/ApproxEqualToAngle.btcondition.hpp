@@ -40,9 +40,9 @@ class ApproxEqualToAngle : public UWRTConditionNode {
      */
     BT::NodeStatus tick() override {
         double
-            b = tryGetRequiredInput<double>(this, "b", 0),
-            a = tryGetRequiredInput<double>(this, "a", 0),
-            range = tryGetRequiredInput<double>(this, "range", 0);
+            b = tryGetRequiredInput<double>("b", 0),
+            a = tryGetRequiredInput<double>("a", 0),
+            range = tryGetRequiredInput<double>("range", 0);
         
         double diff = a - b;
 

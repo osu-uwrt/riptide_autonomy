@@ -51,7 +51,7 @@ class SetStatus : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        pub = rosnode->create_publisher<riptide_msgs2::msg::LedCommand>(LED_COMMAND_TOPIC, 10);
+        pub = rosNode()->create_publisher<riptide_msgs2::msg::LedCommand>(LED_COMMAND_TOPIC, 10);
     }
 
     /**
@@ -60,7 +60,7 @@ class SetStatus : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         //get ID of requested LED status
-        std::string statusName = tryGetRequiredInput<std::string>(this, "status", "undefined");
+        std::string statusName = tryGetRequiredInput<std::string>("status", "undefined");
         if(STATUSES.count(statusName) == 0) {
             RCLCPP_WARN(rosNode()->get_logger(), "No behavior status by the name \"%s\"!", statusName.c_str());
             statusName = "undefined";

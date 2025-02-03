@@ -38,7 +38,7 @@ class SetMappingTarget : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        timeoutSecs = tryGetRequiredInput<double>(this, "time_limit_secs", 0);
+        timeoutSecs = tryGetRequiredInput<double>("time_limit_secs", 0);
 
         //is client available?
         if(!client->wait_for_service(1s)) {
@@ -47,8 +47,8 @@ class SetMappingTarget : public UWRTActionNode {
         }
 
         //get node arguments
-        std::string target = tryGetOptionalInput<std::string>(this, "target_object", "");
-        bool lock = tryGetRequiredInput<bool>(this, "lock_map", false);
+        std::string target = tryGetOptionalInput<std::string>("target_object", "");
+        bool lock = tryGetRequiredInput<bool>("lock_map", false);
 
         RCLCPP_INFO(rosNode()->get_logger(), "Setting mapping to target %s and %s locking map", target.c_str(), (lock ? "" : "not"));
 

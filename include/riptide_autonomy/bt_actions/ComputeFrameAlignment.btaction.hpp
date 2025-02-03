@@ -63,11 +63,11 @@ class ComputeFrameAlignment : public UWRTActionNode {
      */
     void rosInit() override {
         std::string
-            ns = rosnode->get_namespace(),
+            ns = rosNode()->get_namespace(),
             robotName = ns.substr(1, ns.find('/', 1));
         
         baseLinkName = robotName + "/base_link";
-        goalPoseFrameName = robotName + "/computeframealign_" + std::to_string(this->UID()) + "_goalpose";
+        goalPoseFrameName = robotName + "/computeframealign_" + std::to_string(UID()) + "_goalpose";
         goalPoseBroadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(rosNode());
     }
 
@@ -77,22 +77,22 @@ class ComputeFrameAlignment : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         //configure member vars
-        referenceFrameName      = tryGetRequiredInput<std::string>(this, "reference_frame", "");
-        targetFrameName         = tryGetRequiredInput<std::string>(this, "target_frame", "");
-        startTime               = rosnode->get_clock()->now();
+        referenceFrameName      = tryGetRequiredInput<std::string>("reference_frame", "");
+        targetFrameName         = tryGetRequiredInput<std::string>("target_frame", "");
+        startTime               = rosNode()->get_clock()->now();
         haveBaselinkToTarget    = false;
         haveGoalPoseFrameToWorld = false;
 
         //configure goal transform
         geometry_msgs::msg::TransformStamped goalTransform;
-        goalTransform.transform.translation.x = tryGetRequiredInput<double>(this, "x", 0);
-        goalTransform.transform.translation.y = tryGetRequiredInput<double>(this, "y", 0);
-        goalTransform.transform.translation.z = tryGetRequiredInput<double>(this, "z", 0);
+        goalTransform.transform.translation.x = tryGetRequiredInput<double>("x", 0);
+        goalTransform.transform.translation.y = tryGetRequiredInput<double>("y", 0);
+        goalTransform.transform.translation.z = tryGetRequiredInput<double>("z", 0);
 
         geometry_msgs::msg::Vector3 rpy;
-        rpy.x = tryGetRequiredInput<double>(this, "or", 0);
-        rpy.y = tryGetRequiredInput<double>(this, "op", 0);
-        rpy.z = tryGetRequiredInput<double>(this, "oy", 0);
+        rpy.x = tryGetRequiredInput<double>("or", 0);
+        rpy.y = tryGetRequiredInput<double>("op", 0);
+        rpy.z = tryGetRequiredInput<double>("oy", 0);
 
         goalTransform.transform.rotation    = toQuat(rpy);
         goalTransform.header.frame_id       = referenceFrameName;
@@ -144,14 +144,14 @@ class ComputeFrameAlignment : public UWRTActionNode {
             geometry_msgs::msg::Pose baseLinkPose = doTransform(relativeTargetFramePose, goalPoseToWorldTransform);
 
             //post results
-            postOutput<double>(this, "out_x", baseLinkPose.position.x);
-            postOutput<double>(this, "out_y", baseLinkPose.position.y);
-            postOutput<double>(this, "out_z", baseLinkPose.position.z);
+            postOutput<double>("out_x", baseLinkPose.position.x);
+            postOutput<double>("out_y", baseLinkPose.position.y);
+            postOutput<double>("out_z", baseLinkPose.position.z);
 
             geometry_msgs::msg::Vector3 baselinkRpy = toRPY(baseLinkPose.orientation);
-            postOutput<double>(this, "out_or", baselinkRpy.x);
-            postOutput<double>(this, "out_op", baselinkRpy.y);
-            postOutput<double>(this, "out_oy", baselinkRpy.z);
+            postOutput<double>("out_or", baselinkRpy.x);
+            postOutput<double>("out_op", baselinkRpy.y);
+            postOutput<double>("out_oy", baselinkRpy.z);
 
             // goalPoseBroadcaster.reset();
             return BT::NodeStatus::SUCCESS;

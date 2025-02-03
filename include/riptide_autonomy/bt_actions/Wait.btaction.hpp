@@ -32,8 +32,8 @@ class Wait : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        startTime = rosnode->get_clock()->now();
-        goalTime = tryGetRequiredInput<double>(this, "seconds", 0);
+        startTime = rosNode()->get_clock()->now();
+        goalTime = tryGetRequiredInput<double>("seconds", 0);
         return BT::NodeStatus::RUNNING;
     }
 
@@ -42,7 +42,7 @@ class Wait : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        auto timeElapsed = rosnode->get_clock()->now() - startTime;
+        auto timeElapsed = rosNode()->get_clock()->now() - startTime;
         return (timeElapsed.seconds() >= goalTime ? BT::NodeStatus::SUCCESS : BT::NodeStatus::RUNNING);
     }
 

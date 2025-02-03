@@ -43,8 +43,8 @@ class TriggerControllerStunt : public UWRTActionNode {
         //     }
         // }
 
-        stuntStateSub = rosnode->create_subscription<std_msgs::msg::UInt16>(STUNT_STATE_STATUS_TOPIC, 10, std::bind(&TriggerControllerStunt::running_stunt_state_cb, this, _1));
-        stuntStatePub = rosnode->create_publisher<std_msgs::msg::UInt16>(STUNT_STATE_TRIGGER_TOPIC, 10);
+        stuntStateSub = rosNode()->create_subscription<std_msgs::msg::UInt16>(STUNT_STATE_STATUS_TOPIC, 10, std::bind(&TriggerControllerStunt::running_stunt_state_cb, this, _1));
+        stuntStatePub = rosNode()->create_publisher<std_msgs::msg::UInt16>(STUNT_STATE_TRIGGER_TOPIC, 10);
 
 
     }
@@ -55,10 +55,10 @@ class TriggerControllerStunt : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
 
-        startTime = rosnode->get_clock()->now();
+        startTime = rosNode()->get_clock()->now();
 
         std_msgs::msg::UInt16 msg;
-        msg.data = tryGetRequiredInput<int>(this, "targetStuntState", 0);
+        msg.data = tryGetRequiredInput<int>("targetStuntState", 0);
         stuntStatePub->publish(msg);
 
         return BT::NodeStatus::SUCCESS;
@@ -69,13 +69,13 @@ class TriggerControllerStunt : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        if(stunt_state == tryGetRequiredInput<int>(this, "targetStuntState", 0)){
+        if(stunt_state == tryGetRequiredInput<int>("targetStuntState", 0)){
             return BT::NodeStatus::SUCCESS;
         }
 
-        if(rosnode->get_clock()->now().seconds() > startTime.seconds() + retry_count + RETRY_INTERVAL){
+        if(rosNode()->get_clock()->now().seconds() > startTime.seconds() + retry_count + RETRY_INTERVAL){
             std_msgs::msg::UInt16 msg;
-            msg.data = tryGetRequiredInput<int>(this, "targetStuntState", 0);
+            msg.data = tryGetRequiredInput<int>("targetStuntState", 0);
             stuntStatePub->publish(msg);
 
             retry_count++;

@@ -45,21 +45,21 @@ class TransformPose : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         // get frame names
-        fromFrame = tryGetRequiredInput<std::string>(this, "from_frame", "world");
-        toFrame = tryGetRequiredInput<std::string>(this, "to_frame", "world");
+        fromFrame = tryGetRequiredInput<std::string>("from_frame", "world");
+        toFrame = tryGetRequiredInput<std::string>("to_frame", "world");
 
-        original.position.x = tryGetRequiredInput<double>(this, "x", 0);
-        original.position.y = tryGetRequiredInput<double>(this, "y", 0);
-        original.position.z = tryGetRequiredInput<double>(this, "z", 0);
+        original.position.x = tryGetRequiredInput<double>("x", 0);
+        original.position.y = tryGetRequiredInput<double>("y", 0);
+        original.position.z = tryGetRequiredInput<double>("z", 0);
         
         //convert original rpy to quaternion and set that
         geometry_msgs::msg::Vector3 originalRPY;
-        originalRPY.x = tryGetRequiredInput<double>(this, "or", 0);
-        originalRPY.y = tryGetRequiredInput<double>(this, "op", 0);
-        originalRPY.z = tryGetRequiredInput<double>(this, "oy", 0);
+        originalRPY.x = tryGetRequiredInput<double>("or", 0);
+        originalRPY.y = tryGetRequiredInput<double>("op", 0);
+        originalRPY.z = tryGetRequiredInput<double>("oy", 0);
         original.orientation = toQuat(originalRPY);
 
-        startTime = rosnode->get_clock()->now();
+        startTime = rosNode()->get_clock()->now();
         return BT::NodeStatus::RUNNING;
     }
 
@@ -69,24 +69,24 @@ class TransformPose : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         std::string 
-            from = tryGetRequiredInput<std::string>(this, "from_frame", ""),
-            to = tryGetRequiredInput<std::string>(this, "to_frame", "");
+            from = tryGetRequiredInput<std::string>("from_frame", ""),
+            to = tryGetRequiredInput<std::string>("to_frame", "");
 
-        bool res = lookupTransformThrottled(rosnode, tfBuffer, from, to, 0.5, lookupTimer, transform);
+        bool res = lookupTransformThrottled(rosNode(), tfBuffer, from, to, 0.5, lookupTimer, transform);
         if(res) {
             //lookup success! apply transform and set outputs
             geometry_msgs::msg::Pose result = doTransform(original, transform);
             
-            postOutput<double>(this, "out_x", result.position.x);
-            postOutput<double>(this, "out_y", result.position.y);
-            postOutput<double>(this, "out_z", result.position.z);
+            postOutput<double>("out_x", result.position.x);
+            postOutput<double>("out_y", result.position.y);
+            postOutput<double>("out_z", result.position.z);
 
             geometry_msgs::msg::Vector3 outRPY = toRPY(result.orientation);
-            postOutput<double>(this, "out_or", outRPY.x);
-            postOutput<double>(this, "out_op", outRPY.y);
-            postOutput<double>(this, "out_oy", outRPY.z);
+            postOutput<double>("out_or", outRPY.x);
+            postOutput<double>("out_op", outRPY.y);
+            postOutput<double>("out_oy", outRPY.z);
 
-            RCLCPP_DEBUG(rosnode->get_logger(), "Transform from %s to %s looked up as XYZ %.3f, %.3f, %.3f and RPY %.3f, %.3f, %.3f",
+            RCLCPP_DEBUG(rosNode()->get_logger(), "Transform from %s to %s looked up as XYZ %.3f, %.3f, %.3f and RPY %.3f, %.3f, %.3f",
                 from.c_str(),
                 to.c_str(),
                 result.position.x,
@@ -100,7 +100,7 @@ class TransformPose : public UWRTActionNode {
         }
 
         //if we get down here, lookup has not been completed yet
-        return (rosnode->get_clock()->now() - startTime < 3s ? BT::NodeStatus::RUNNING : BT::NodeStatus::FAILURE);
+        return (rosNode()->get_clock()->now() - startTime < 3s ? BT::NodeStatus::RUNNING : BT::NodeStatus::FAILURE);
     }
 
     /**

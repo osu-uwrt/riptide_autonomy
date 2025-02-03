@@ -28,22 +28,22 @@ class SetControllerSafeMode : public UWRTActionNode {
     void rosInit() override { 
 
         //get the name of the complete controller
-        std::vector<std::string> nodeNames = rosnode->get_node_names();
+        std::vector<std::string> nodeNames = rosNode()->get_node_names();
         std::string controllerNodeName = "";
 
         for(size_t i = 0; i < nodeNames.size(); i++){
 
             std::string controllerSeedString = "/complete_controller";
             if(nodeNames.at(i).substr(0,7) == controllerSeedString.substr(0,7)){
-                RCLCPP_INFO(rosnode->get_logger(), "Found Controller to disable safe mode lol");
+                RCLCPP_INFO(rosNode()->get_logger(), "Found Controller to disable safe mode");
                 controllerNodeName = nodeNames.at(i);
             }
         }
 
         if(controllerNodeName != ""){
-            asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, controllerNodeName);
+            asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosNode(), controllerNodeName);
         }else{
-            asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, "complete_controller");
+            asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosNode(), "complete_controller");
         }
     }
 
@@ -52,15 +52,15 @@ class SetControllerSafeMode : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        bool safe = tryGetRequiredInput<bool>(this, "safe", true);
-        timeout = tryGetRequiredInput<double>(this, "timeout_secs", 0);
+        bool safe = tryGetRequiredInput<bool>("safe", true);
+        timeout = tryGetRequiredInput<double>("timeout_secs", 0);
         setcomplete = false;
         std::vector<rclcpp::Parameter> params;
         rclcpp::ParameterValue paramvalue(safe);
         rclcpp::Parameter safeparam("controller__stunt__safe_mode", paramvalue);
         params.push_back(safeparam);
         asyncclient->set_parameters(params, std::bind(&SetControllerSafeMode::setParamDoneCb, this, _1));
-        starttime = rosnode->get_clock()->now();
+        starttime = rosNode()->get_clock()->now();
         return BT::NodeStatus::RUNNING;
     }
 
@@ -74,8 +74,8 @@ class SetControllerSafeMode : public UWRTActionNode {
         }
 
         //not complete, check if timed out
-        if((rosnode->get_clock()->now() - starttime).seconds() > timeout) {
-            RCLCPP_ERROR(rosnode->get_logger(), "Attempt to set safe mode timed out.");
+        if((rosNode()->get_clock()->now() - starttime).seconds() > timeout) {
+            RCLCPP_ERROR(rosNode()->get_logger(), "Attempt to set safe mode timed out.");
             return BT::NodeStatus::FAILURE;
         }
 
@@ -94,14 +94,14 @@ class SetControllerSafeMode : public UWRTActionNode {
         
         //only set 1 parameter so should only check that
         if(results.size() != 1) {
-            RCLCPP_ERROR(rosnode->get_logger(), "Received a result from the set parameters client with an incorrect size");
+            RCLCPP_ERROR(rosNode()->get_logger(), "Received a result from the set parameters client with an incorrect size");
         }
 
         rcl_interfaces::msg::SetParametersResult result = results[0];
         if(result.successful) {
             setcomplete = true;
         } else {
-            RCLCPP_ERROR(rosnode->get_logger(), "Failed to set parameter for reason: %s", result.reason.c_str());
+            RCLCPP_ERROR(rosNode()->get_logger(), "Failed to set parameter for reason: %s", result.reason.c_str());
         }
     }
 

@@ -34,14 +34,14 @@ class PublishInt8 : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        std::string topic = tryGetRequiredInput<std::string>(this, "topic", "");
+        std::string topic = tryGetRequiredInput<std::string>("topic", "");
         if(topic == "") {
             return BT::NodeStatus::FAILURE;
         }
 
-        int data = tryGetRequiredInput<int>(this, "data", 0);
+        int data = tryGetRequiredInput<int>("data", 0);
 
-        pub = rosnode->create_publisher<std_msgs::msg::UInt16>(topic, 10);
+        pub = rosNode()->create_publisher<std_msgs::msg::UInt16>(topic, 10);
         std_msgs::msg::UInt16 msg;
         msg.data = data;
         pub->publish(msg);

@@ -39,11 +39,11 @@ class RetryUntilSuccessfulOrTimeout : public UWRTDecoratorNode {
      */
     BT::NodeStatus tick() override {
         if(status() == BT::NodeStatus::IDLE) {
-            startTime = rosnode->get_clock()->now();
-            duration = tryGetRequiredInput<double>(this, "num_seconds", 0);
+            startTime = rosNode()->get_clock()->now();
+            duration = tryGetRequiredInput<double>("num_seconds", 0);
         }
         
-        double timeElapsed = (rosnode->get_clock()->now() - startTime).seconds();
+        double timeElapsed = (rosNode()->get_clock()->now() - startTime).seconds();
         if(timeElapsed < duration) {
             //have not run duration yet. either succeed or retry
             BT::NodeStatus result = child()->executeTick();

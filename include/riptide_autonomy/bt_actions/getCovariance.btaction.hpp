@@ -36,11 +36,11 @@ class getCovariance : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        topicName = "mapping/" + tryGetRequiredInput<std::string>(this, "Target", "ERROR_VALUE");
-        subscriber = rosnode->create_subscription<Cov>(topicName,  rclcpp::SensorDataQoS(), std::bind(&getCovariance::topic_callback, this, _1));
+        topicName = "mapping/" + tryGetRequiredInput<std::string>("Target", "ERROR_VALUE");
+        subscriber = rosNode()->create_subscription<Cov>(topicName,  rclcpp::SensorDataQoS(), std::bind(&getCovariance::topic_callback, this, _1));
         
         msgReceived = false;
-        startTime = rosnode->get_clock()->now();
+        startTime = rosNode()->get_clock()->now();
         return BT::NodeStatus::RUNNING;
     }
 
@@ -50,11 +50,11 @@ class getCovariance : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         if(msgReceived) {
-            postOutput<double>(this, "Covariance", error);
+            postOutput<double>("Covariance", error);
             return BT::NodeStatus::SUCCESS;
         }
 
-        if(rosnode->get_clock()->now() - startTime > 5s) {
+        if(rosNode()->get_clock()->now() - startTime > 5s) {
             RCLCPP_ERROR(rosNode()->get_logger(), "Timed out waiting on topic %s", topicName.c_str());
             return BT::NodeStatus::FAILURE;
         }

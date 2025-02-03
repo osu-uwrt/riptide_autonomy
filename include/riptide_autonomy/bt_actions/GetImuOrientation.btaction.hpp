@@ -36,7 +36,7 @@ class GetImuOrientation : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        std::string topic = tryGetRequiredInput<std::string>(this, "topic", "");
+        std::string topic = tryGetRequiredInput<std::string>("topic", "");
         if(topic == "")
         {
             RCLCPP_ERROR(rosNode()->get_logger(), "No topic provided");
@@ -73,9 +73,9 @@ class GetImuOrientation : public UWRTActionNode {
         }
 
         //got msg! pack and succeed
-        postOutput<double>(this, "or", lastRpy.x);
-        postOutput<double>(this, "op", lastRpy.y);
-        postOutput<double>(this, "oy", lastRpy.z);
+        postOutput<double>("or", lastRpy.x);
+        postOutput<double>("op", lastRpy.y);
+        postOutput<double>("oy", lastRpy.z);
         return BT::NodeStatus::SUCCESS;
     }
 

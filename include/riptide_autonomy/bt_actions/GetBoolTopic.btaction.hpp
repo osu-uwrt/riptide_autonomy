@@ -35,15 +35,15 @@ class GetBoolTopic : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        topic = tryGetRequiredInput<std::string>(this, "topic", "/some_bool");
-        sub = rosnode->create_subscription<std_msgs::msg::Bool>(
+        topic = tryGetRequiredInput<std::string>("topic", "/some_bool");
+        sub = rosNode()->create_subscription<std_msgs::msg::Bool>(
             topic,
             10,
             std::bind(&GetBoolTopic::boolCb, this, _1)
         );
 
         dataReceived = false;
-        startTime = rosnode->get_clock()->now();
+        startTime = rosNode()->get_clock()->now();
         return BT::NodeStatus::RUNNING;
     }
 
@@ -53,13 +53,13 @@ class GetBoolTopic : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         if(dataReceived) {
-            postOutput<bool>(this, "value", data);
+            postOutput<bool>("value", data);
             return BT::NodeStatus::SUCCESS;
         }
 
-        if(rosnode->get_clock()->now() - startTime > 3s) {
+        if(rosNode()->get_clock()->now() - startTime > 3s) {
             RCLCPP_ERROR(rosNode()->get_logger(), "Timed out waiting for bool on topic %s!", topic.c_str());
-            postOutput<bool>(this, "value", false); // set a value on the blackboard so the rest of the tree doesnt crash if access is attempted
+            postOutput<bool>("value", false); // set a value on the blackboard so the rest of the tree doesnt crash if access is attempted
             return BT::NodeStatus::FAILURE;
         }
 

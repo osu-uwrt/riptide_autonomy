@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include <behaviortree_cpp/behavior_tree.h>
+#include <behaviortree_cpp/tree_node.h>
 #include <behaviortree_cpp/bt_factory.h>
 
 #include <rclcpp/rclcpp.hpp>

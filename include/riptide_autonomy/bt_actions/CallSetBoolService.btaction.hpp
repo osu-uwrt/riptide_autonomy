@@ -34,8 +34,8 @@ class CallSetBoolService : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        srvName = tryGetRequiredInput<std::string>(this, "srv_name", "/some_srv");
-        client = rosnode->create_client<SetBool>(srvName);
+        srvName = tryGetRequiredInput<std::string>("srv_name", "/some_srv");
+        client = rosNode()->create_client<SetBool>(srvName);
         
         //wait for client
         if(!client->wait_for_service(1s)) {
@@ -45,15 +45,15 @@ class CallSetBoolService : public UWRTActionNode {
 
         //assemble request
         auto request = std::make_shared<SetBool::Request>();
-        bool data = tryGetRequiredInput<bool>(this, "data", false);
+        bool data = tryGetRequiredInput<bool>("data", false);
         request->data = data;
 
         //send and mark send time
         result = client->async_send_request(request);
-        startTime = rosnode->get_clock()->now();
+        startTime = rosNode()->get_clock()->now();
 
         //store timeout
-        timeoutSecs = tryGetRequiredInput<double>(this, "time_limit_secs", 1);
+        timeoutSecs = tryGetRequiredInput<double>("time_limit_secs", 1);
         return BT::NodeStatus::RUNNING;
     }
 
@@ -84,7 +84,7 @@ class CallSetBoolService : public UWRTActionNode {
         }
 
         //...okay its not ready. have we timed out yet?
-        if((rosnode->get_clock()->now() - startTime).seconds() > timeoutSecs) {
+        if((rosNode()->get_clock()->now() - startTime).seconds() > timeoutSecs) {
             RCLCPP_ERROR(rosNode()->get_logger(), "Service call to %s took to long to respond.", srvName.c_str());
             return BT::NodeStatus::FAILURE;
         }

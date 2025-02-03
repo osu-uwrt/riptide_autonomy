@@ -35,8 +35,8 @@ class CallTriggerService : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        srvName = tryGetRequiredInput<std::string>(this, "srv_name", "/some_srv");
-        client = rosnode->create_client<Trigger>(srvName);
+        srvName = tryGetRequiredInput<std::string>("srv_name", "/some_srv");
+        client = rosNode()->create_client<Trigger>(srvName);
 
         //wait for client
         if(!client->wait_for_service(1s)) {
@@ -49,10 +49,10 @@ class CallTriggerService : public UWRTActionNode {
 
         //send and mark time
         result = client->async_send_request(request);
-        startTime = rosnode->get_clock()->now();
+        startTime = rosNode()->get_clock()->now();
 
         //store timeout
-        timeoutSecs = tryGetRequiredInput<double>(this, "time_limit_secs", 1);
+        timeoutSecs = tryGetRequiredInput<double>("time_limit_secs", 1);
         return BT::NodeStatus::RUNNING;
     }
 

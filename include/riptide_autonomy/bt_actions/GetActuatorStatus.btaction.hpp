@@ -30,13 +30,13 @@ class GetActuatorStatus : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        statusSub = rosnode->create_subscription<riptide_msgs2::msg::ActuatorStatus>(
+        statusSub = rosNode()->create_subscription<riptide_msgs2::msg::ActuatorStatus>(
             ACTUATOR_STATUS_TOPIC,
             rclcpp::SensorDataQoS(),
             std::bind(&GetActuatorStatus::statusCb, this, _1)
         );
 
-        busySub = rosnode->create_subscription<std_msgs::msg::Bool>(
+        busySub = rosNode()->create_subscription<std_msgs::msg::Bool>(
             ACTUATOR_BUSY_TOPIC,
             rclcpp::SensorDataQoS(),
             std::bind(&GetActuatorStatus::busyCb, this, _1)
@@ -50,7 +50,7 @@ class GetActuatorStatus : public UWRTActionNode {
     BT::NodeStatus onStart() override {
         statusReceived = false;
         busyReceived = false;
-        startTime = rosnode->get_clock()->now();
+        startTime = rosNode()->get_clock()->now();
 
         return BT::NodeStatus::RUNNING;
     }
@@ -61,19 +61,19 @@ class GetActuatorStatus : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         //have we timed out yet?
-        if(rosnode->get_clock()->now() - startTime > 3s) {
+        if(rosNode()->get_clock()->now() - startTime > 3s) {
             RCLCPP_ERROR(rosNode()->get_logger(), "Timed out waiting for full actuator status. Status received: %d, busy received: %d", statusReceived, busyReceived);
             return BT::NodeStatus::FAILURE;
         }
 
         //have we gotten the messages we need?
         if(statusReceived && busyReceived) {
-            postOutput<int>(this, "claw_state", latestStatus.claw_state);
-            postOutput<int>(this, "torpedo_state", latestStatus.torpedo_state);
-            postOutput<int>(this, "torpedo_available_count", latestStatus.torpedo_available_count);
-            postOutput<int>(this, "dropper_state", latestStatus.dropper_state);
-            postOutput<int>(this, "dropper_available_count", latestStatus.dropper_available_count);
-            postOutput<bool>(this, "actuators_busy", latestBusy.data);
+            postOutput<int>("claw_state", latestStatus.claw_state);
+            postOutput<int>("torpedo_state", latestStatus.torpedo_state);
+            postOutput<int>("torpedo_available_count", latestStatus.torpedo_available_count);
+            postOutput<int>("dropper_state", latestStatus.dropper_state);
+            postOutput<int>("dropper_available_count", latestStatus.dropper_available_count);
+            postOutput<bool>("actuators_busy", latestBusy.data);
             return BT::NodeStatus::SUCCESS;
         }
 

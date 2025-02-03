@@ -29,8 +29,8 @@ class PublishToController : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        positionPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_LINEAR_TOPIC, 10);
-        orientationPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_ANGULAR_TOPIC, 10);
+        positionPub = rosNode()->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_LINEAR_TOPIC, 10);
+        orientationPub = rosNode()->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_ANGULAR_TOPIC, 10);
     }
 
     /**
@@ -39,14 +39,14 @@ class PublishToController : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         //which metric are we publishing?
-        bool isOrientation = tryGetOptionalInput<bool>(this, "isOrientation", false);
+        bool isOrientation = tryGetOptionalInput<bool>("isOrientation", false);
 
         //create message to publish
         riptide_msgs2::msg::ControllerCommand cmd;
-        cmd.mode = tryGetRequiredInput<int>(this, "mode", 3);
-        cmd.setpoint_vect.x = tryGetRequiredInput<double>(this, "x", 0);
-        cmd.setpoint_vect.y = tryGetRequiredInput<double>(this, "y", 0);
-        cmd.setpoint_vect.z = tryGetRequiredInput<double>(this, "z", 0);
+        cmd.mode = tryGetRequiredInput<int>("mode", 3);
+        cmd.setpoint_vect.x = tryGetRequiredInput<double>("x", 0);
+        cmd.setpoint_vect.y = tryGetRequiredInput<double>("y", 0);
+        cmd.setpoint_vect.z = tryGetRequiredInput<double>("z", 0);
         
         //if in orientation position mode, must fill out quat. vect will not be considered
         if(isOrientation && cmd.mode == riptide_msgs2::msg::ControllerCommand::POSITION) {

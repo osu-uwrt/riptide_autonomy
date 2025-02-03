@@ -38,7 +38,7 @@ class IsTrue : public UWRTConditionNode {
      * @return NodeStatus The result of the execution; SUCCESS or FAILURE.
      */
     BT::NodeStatus tick() override {
-        bool value = tryGetRequiredInput<bool>(this, "value", 0);
+        bool value = tryGetRequiredInput<bool>("value", 0);
         return (value ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE);
     }
 };

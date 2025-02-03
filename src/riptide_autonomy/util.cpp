@@ -25,17 +25,19 @@ void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory,
 
 void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosNode) {
     //initialize static variables of UwrtBtNode
-    UwrtBtNode::staticInit(rosNode);
+    ROSEnabledNode::staticInit(rosNode);
 
-    // give each BT node access to our RCLCPP context
-    for (auto &treeNode : tree.nodes)
+    // give each BT node access to our ROS context
+
+    auto visitor = [&rosNode] (BT::TreeNode *node)
     {
-        // Not a typo: it is "=", not "=="
-        if (auto uwrtNode = dynamic_cast<UwrtBtNode *>(treeNode.get()))
+        if (auto uwrtNode = dynamic_cast<ROSEnabledNode *>(node))
         {
             uwrtNode->init(rosNode);
         }
-    }
+    };
+
+    tree.applyVisitor(visitor);
 }
 
 
@@ -137,38 +139,4 @@ double distance(geometry_msgs::msg::Point point1, geometry_msgs::msg::Point poin
 
 double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 point2) {
     return distance(vector3ToPoint(point1), vector3ToPoint(point2));
-}
-
-
-std::string formatStringWithBlackboard(const std::string& str, UwrtBtNode *n) {
-    std::string result = "";
-    int pos = 0;
-    while(str.find_first_of('{', pos) != std::string::npos) {
-        int lbpos = str.find_first_of("{", pos);
-        result += str.substr(pos, lbpos - pos); //add everything from pos up until the "{" to result
-
-        if(str.find_first_of("}", lbpos) != std::string::npos) {
-            int rbpos = str.find_first_of("}", lbpos);
-
-            std::string 
-                tokenWithBrackets = str.substr(lbpos, rbpos - lbpos + 1),
-                nameOfEntry = tokenWithBrackets.substr(1, tokenWithBrackets.length() - 2),
-                valueOfEntry;
-
-            //get the value of the entry
-            if(getFromBlackboard<std::string>(n, nameOfEntry, valueOfEntry)) {
-                //if nameOfEntry exists, valueOfEntry was populated by the call above
-                result += valueOfEntry;
-            } else {
-                result += tokenWithBrackets; //put whole token in because it didn't lead anywhere
-            }
-
-            pos = rbpos + 1; //set position to after '}'
-        } else {
-            pos = lbpos + 1; //set position to after '{ (there is no '}')
-        }
-    }
-
-    result += str.substr(pos);
-    return result;
 }

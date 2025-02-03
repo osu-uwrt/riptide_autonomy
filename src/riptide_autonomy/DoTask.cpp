@@ -1,6 +1,6 @@
-#include <behaviortree_cpp/loggers/bt_zmq_publisher.h>
-#include <behaviortree_cpp/loggers/bt_cout_logger.h>
-#include <behaviortree_cpp/loggers/bt_file_logger.h>
+// #include <behaviortree_cpp/loggers/bt_zmq_publisher.h>
+// #include <behaviortree_cpp/loggers/bt_cout_logger.h>
+// #include <behaviortree_cpp/loggers/bt_file_logger.h>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/executors/multi_threaded_executor.hpp>
@@ -212,13 +212,15 @@ namespace do_task
 
                 // add the loggers to the BT context
                 RCLCPP_INFO(get_logger(), "DoTask: Loading Monitor");
-                PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
-                FileLogger fileLogger(tree, FBLFilePath.c_str());
-                UwrtLogger uwrtLogger(tree, this->shared_from_this());
+
+                //TODO FIX LOGGERS
+                // PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
+                // FileLogger fileLogger(tree, FBLFilePath.c_str());
+                // UwrtLogger uwrtLogger(tree, this->shared_from_this());
 
                 // configure our loggers
-                zmq.setEnabled(enableZMQ);
-                uwrtLogger.setEnabled(true);
+                // zmq.setEnabled(enableZMQ);
+                // uwrtLogger.setEnabled(true);
 
                 // set up idle sleep rate
                 rclcpp::Rate loop_rate(10ms);
@@ -226,13 +228,13 @@ namespace do_task
                 // start ticking the tree with feedback
                 // keep executing tick until it returns either SUCCESS or FAILURE
                 auto tickStatus = NodeStatus::RUNNING;
-                while (tickStatus == NodeStatus::RUNNING)
+                while (BT::isStatusCompleted(tickStatus))
                 {
                     // always gets ticked once
-                    tickStatus = tree.tickRoot();
+                    tickStatus = tree.tickOnce();
 
                     // check for a cancel
-                    if (goal_handle->is_canceling() ) // || robotKilled
+                    if (goal_handle->is_canceling())
                     {
                         result->returncode = 0;
                         tree.haltTree();
@@ -252,7 +254,7 @@ namespace do_task
                 angularPub->publish(disable);
 
                 // other post tree things
-                fileLogger.flush();
+                // fileLogger.flush();
 
                 std::string resultStr = "SUCCESS";
                 switch(tickStatus) {

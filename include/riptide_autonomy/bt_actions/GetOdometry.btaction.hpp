@@ -28,7 +28,7 @@ class GetOdometry : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        sub = rosnode->create_subscription<nav_msgs::msg::Odometry>(
+        sub = rosNode()->create_subscription<nav_msgs::msg::Odometry>(
             ODOMETRY_TOPIC, 
             10, 
             std::bind(&GetOdometry::odomCallback, this, _1)
@@ -41,7 +41,7 @@ class GetOdometry : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         msgReceived = false; //force node to collect another message
-        startTime = rosnode->get_clock()->now();
+        startTime = rosNode()->get_clock()->now();
 
         return BT::NodeStatus::RUNNING;
     }
@@ -51,20 +51,20 @@ class GetOdometry : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        if(!msgReceived && (rosnode->get_clock()->now() - startTime).seconds() > 3) {
+        if(!msgReceived && (rosNode()->get_clock()->now() - startTime).seconds() > 3) {
             RCLCPP_ERROR(rosNode()->get_logger(), "Timed out waiting for odometry.");
             return BT::NodeStatus::FAILURE;
         } else if(msgReceived) {
             //set linear position outputs
-            postOutput<double>(this, "x", odom.pose.pose.position.x);
-            postOutput<double>(this, "y", odom.pose.pose.position.y);
-            postOutput<double>(this, "z", odom.pose.pose.position.z);
+            postOutput<double>("x", odom.pose.pose.position.x);
+            postOutput<double>("y", odom.pose.pose.position.y);
+            postOutput<double>("z", odom.pose.pose.position.z);
 
             //convert quaternion to rpy and set outputs
             geometry_msgs::msg::Vector3 rpy = toRPY(odom.pose.pose.orientation);
-            postOutput<double>(this, "or", rpy.x);
-            postOutput<double>(this, "op", rpy.y);
-            postOutput<double>(this, "oy", rpy.z);
+            postOutput<double>("or", rpy.x);
+            postOutput<double>("op", rpy.y);
+            postOutput<double>("oy", rpy.z);
 
             return BT::NodeStatus::SUCCESS;
         }

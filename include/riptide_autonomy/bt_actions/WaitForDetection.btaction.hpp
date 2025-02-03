@@ -37,8 +37,8 @@ class WaitForDetection : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        targetObjectId = tryGetRequiredInput<std::string>(this, "object_name", "");
-        timeout = tryGetRequiredInput<double>(this, "timeout_secs", 0);
+        targetObjectId = tryGetRequiredInput<std::string>("object_name", "");
+        timeout = tryGetRequiredInput<double>("timeout_secs", 0);
         foundObject = false;
         startTime = rosNode()->get_clock()->now();
         return BT::NodeStatus::RUNNING;

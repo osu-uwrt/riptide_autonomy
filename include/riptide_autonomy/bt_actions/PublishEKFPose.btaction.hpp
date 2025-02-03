@@ -38,8 +38,8 @@ class PublishEKFPose : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override {
-        poseClient = rosnode->create_client<SetPose>(SET_POSE_SERVER_NAME);
-        odomSub = rosnode->create_subscription<Odometry>(ODOMETRY_TOPIC, 10,std::bind(&PublishEKFPose::recieveOdom, this, _1));
+        poseClient = rosNode()->create_client<SetPose>(SET_POSE_SERVER_NAME);
+        odomSub = rosNode()->create_subscription<Odometry>(ODOMETRY_TOPIC, 10,std::bind(&PublishEKFPose::recieveOdom, this, _1));
                
     }
 
@@ -76,16 +76,16 @@ class PublishEKFPose : public UWRTActionNode {
         auto request = std::make_shared<SetPose::Request>();
 
         //fillout header
-        request->pose.header.stamp = rosnode->get_clock()->now();
+        request->pose.header.stamp = rosNode()->get_clock()->now();
         request->pose.header.frame_id = "odom";
 
         //fill out orientation
-        if(tryGetRequiredInput<bool>(this, "setOrientation", false)){
+        if(tryGetRequiredInput<bool>("setOrientation", false)){
             //convert rpy to quat
             geometry_msgs::msg::Vector3 rpy_msg;
-            rpy_msg.x = tryGetOptionalInput<double>(this, "roll", 0);
-            rpy_msg.y = tryGetOptionalInput<double>(this, "pitch", 0);
-            rpy_msg.z = tryGetOptionalInput<double>(this, "yaw", 0);
+            rpy_msg.x = tryGetOptionalInput<double>("roll", 0);
+            rpy_msg.y = tryGetOptionalInput<double>("pitch", 0);
+            rpy_msg.z = tryGetOptionalInput<double>("yaw", 0);
             geometry_msgs::msg::Quaternion quat_msg = toQuat(rpy_msg);
 
             request->pose.pose.pose.orientation.w = quat_msg.w;
@@ -100,22 +100,22 @@ class PublishEKFPose : public UWRTActionNode {
         }
         
         //fill out x
-        if(tryGetRequiredInput<bool>(this, "setX", false)){
-            request->pose.pose.pose.position.x = tryGetOptionalInput<double>(this, "x", 0);
+        if(tryGetRequiredInput<bool>("setX", false)){
+            request->pose.pose.pose.position.x = tryGetOptionalInput<double>("x", 0);
         }else{
             request->pose.pose.pose.position.x = odom_msg.pose.pose.position.x;
         }
 
         //fill out y
-        if(tryGetRequiredInput<bool>(this, "setY", false)){
-            request->pose.pose.pose.position.y = tryGetOptionalInput<double>(this, "y", 0);
+        if(tryGetRequiredInput<bool>("setY", false)){
+            request->pose.pose.pose.position.y = tryGetOptionalInput<double>("y", 0);
         }else{
             request->pose.pose.pose.position.y = odom_msg.pose.pose.position.y;
         }
 
         //fill out z
-        if(tryGetRequiredInput<bool>(this, "setZ", false)){
-            request->pose.pose.pose.position.z = tryGetOptionalInput<double>(this, "z", 0);
+        if(tryGetRequiredInput<bool>("setZ", false)){
+            request->pose.pose.pose.position.z = tryGetOptionalInput<double>("z", 0);
         }else{            
             request->pose.pose.pose.position.z = odom_msg.pose.pose.position.z;
         }

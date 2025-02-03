@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-#include <behaviortree_cpp_v3/loggers/abstract_logger.h>
+#include <behaviortree_cpp/loggers/abstract_logger.h>
 #include <rclcpp/rclcpp.hpp>
 
 #include <riptide_msgs2/msg/tree_stack.hpp>
