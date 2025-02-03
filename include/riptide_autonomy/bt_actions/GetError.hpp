@@ -2,11 +2,11 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-class getCovariance : public UWRTActionNode {
+class GetError : public UWRTActionNode {
     using Cov = geometry_msgs::msg::PoseWithCovarianceStamped;
     
     public:
-    getCovariance(const std::string& name, const BT::NodeConfiguration& config)
+    GetError(const std::string& name, const BT::NodeConfiguration& config)
     : UWRTActionNode(name, config) {
         
     }
@@ -37,7 +37,7 @@ class getCovariance : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         topicName = "mapping/" + tryGetRequiredInput<std::string>("Target", "ERROR_VALUE");
-        subscriber = rosNode()->create_subscription<Cov>(topicName,  rclcpp::SensorDataQoS(), std::bind(&getCovariance::topic_callback, this, _1));
+        subscriber = rosNode()->create_subscription<Cov>(topicName,  rclcpp::SensorDataQoS(), std::bind(&GetError::topic_callback, this, _1));
         
         msgReceived = false;
         startTime = rosNode()->get_clock()->now();

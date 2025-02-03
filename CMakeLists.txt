@@ -145,16 +145,16 @@ target_link_libraries(autonomy_decorators autonomy_utils)
 #
 # Tree execution executable
 #
-add_executable(doTask src/riptide_autonomy/DoTask.cpp)
+add_executable(autonomy src/riptide_autonomy/autonomy.cpp)
 
-target_include_directories(doTask PUBLIC
+target_include_directories(autonomy PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(doTask autonomy_utils)
-target_compile_definitions(doTask PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
+target_link_libraries(autonomy autonomy_utils)
+target_compile_definitions(autonomy PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
-ament_target_dependencies(doTask
+ament_target_dependencies(autonomy
   ament_index_cpp
   rclcpp
   behaviortree_cpp
@@ -182,26 +182,26 @@ string(COMPARE EQUAL ${OS_VERSION} "20.04\n" OS_VERSION_20_04)
 if((OS_NAME_UBUNTU AND OS_VERSION_20_04) OR BUILD_DEPLOY)
   message("Skipping BT Health checker for deploy build or OS version incompatibility")
 else()
-  add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
+  add_executable(check_bt src/riptide_autonomy/check_bt.cpp)
 
-  target_include_directories(checkBT PUBLIC
+  target_include_directories(check_bt PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
       $<INSTALL_INTERFACE:include>)
 
-  target_link_libraries(checkBT autonomy_utils)
-  target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
+  target_link_libraries(check_bt autonomy_utils)
+  target_compile_definitions(check_bt PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
-  ament_target_dependencies(checkBT
+  ament_target_dependencies(check_bt
     behaviortree_cpp
   )
-  install(TARGETS checkBT
+  install(TARGETS check_bt
     DESTINATION lib/${PROJECT_NAME}
   )
 endif()
 
 #install executable
-install(TARGETS doTask
+install(TARGETS autonomy
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -222,7 +222,7 @@ install(PROGRAMS
 )
 
 install(PROGRAMS
-  src/riptide_autonomy/HeadlessInterface.py
+  src/riptide_autonomy/headless_interface.py
   DESTINATION lib/${PROJECT_NAME})
 
 #install bt assistant "actions" directory

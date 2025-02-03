@@ -106,7 +106,7 @@ def createNodeFile(args, nodeName: str, nodeType: BtNodeType, rootLoc: str):
     template = "actionnode_hpp_template" if nodeType == BtNodeType.ACTION else "nonactionnode_hpp_template"
         
     templatePath = "{}/assistant/templates/{}".format(autonomySrcLocation(rootLoc), template)    
-    newFileName = "{0}/bt_{1}s/{2}.bt{1}.hpp".format(autonomyIncludeLocation(rootLoc), nodeType.name.lower(), nodeName)
+    newFileName = "{}/bt_{}s/{}.hpp".format(autonomyIncludeLocation(rootLoc), nodeType.name.lower(), nodeName)
     
     if os.path.exists(newFileName):
         if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):
@@ -124,7 +124,7 @@ def createTestFile(args, nodeName: str, nodeType: BtNodeType, rootLoc: str):
         raise TypeError("Parameter nodeType must be a member of the BtNodeType enum.")
     
     templatePath = "{}/assistant/templates/test_template".format(autonomySrcLocation(rootLoc))
-    newFileName = "{0}/bt_{1}s/Test{2}.cpp".format(autonomyTestLocation(rootLoc), nodeType.name.lower(), nodeName)
+    newFileName = "{}/bt_{}s/Test{}.cpp".format(autonomyTestLocation(rootLoc), nodeType.name.lower(), nodeName)
 
     if os.path.exists(newFileName):
         if not askConfirmation(args, "File with name {} already exists. Overwrite it?".format(newFileName)):
