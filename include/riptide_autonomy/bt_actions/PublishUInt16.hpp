@@ -2,9 +2,9 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-class PublishInt8 : public UWRTActionNode {
+class PublishUInt16 : public UWRTActionNode {
     public:
-    PublishInt8(const std::string& name, const BT::NodeConfiguration& config)
+    PublishUInt16(const std::string& name, const BT::NodeConfiguration& config)
     : UWRTActionNode(name, config) {
         
     }

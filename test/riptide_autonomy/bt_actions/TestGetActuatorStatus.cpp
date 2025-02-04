@@ -19,6 +19,7 @@ struct GetActuatorStatusInfo {
 BT::NodeStatus testGetActuatorStatus(std::shared_ptr<BtTestTool> toolNode, GetActuatorStatusInfo info, GetActuatorStatusInfo& out, bool& outputsSet) {
     //configure node
     BT::NodeConfiguration cfg;
+    cfg.blackboard = BT::Blackboard::create(); //need to explicitly create blackboard so we can use it later
     auto node = toolNode->createLeafNodeFromConfig("GetActuatorStatus", cfg);
 
     //configure publishers
@@ -38,14 +39,12 @@ BT::NodeStatus testGetActuatorStatus(std::shared_ptr<BtTestTool> toolNode, GetAc
     BT::NodeStatus status = toolNode->tickUntilFinished(node, 5s);
     
     outputsSet = true;
-    auto blackboard = node->config().blackboard;
-
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "claw_state", out.clawState);
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "torpedo_state", out.torpedoState);
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "torpedo_available_count", out.torpedoAvailable);
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "dropper_state", out.dropperState);
-    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "dropper_available_count", out.dropperAvailable);
-    outputsSet = outputsSet && getOutputFromBlackboard<bool>(toolNode, blackboard, "actuators_busy", out.busy);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, cfg.blackboard, "claw_state", out.clawState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, cfg.blackboard, "torpedo_state", out.torpedoState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, cfg.blackboard, "torpedo_available_count", out.torpedoAvailable);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, cfg.blackboard, "dropper_state", out.dropperState);
+    outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, cfg.blackboard, "dropper_available_count", out.dropperAvailable);
+    outputsSet = outputsSet && getOutputFromBlackboard<bool>(toolNode, cfg.blackboard, "actuators_busy", out.busy);
 
     return status;
 }

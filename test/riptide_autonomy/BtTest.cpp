@@ -26,7 +26,7 @@ void BtTest::SetUp() {
 void BtTest::TearDown() {
     toolNode.reset();
     rclcpp::shutdown();
-    UwrtBtNode::staticDeinit(); //needed to not thrash tf nodes by bringing up and down the ros context
+    ROSEnabledNode::staticDeinit(); //needed to not thrash tf nodes by bringing up and down the ros context
 }
 
 

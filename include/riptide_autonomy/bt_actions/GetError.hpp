@@ -17,8 +17,8 @@ class GetError : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("Target"),
-            UwrtOutput("Covariance")
+            UwrtInput("target"),
+            UwrtOutput("error")
         };
     }
 
@@ -36,7 +36,7 @@ class GetError : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
-        topicName = "mapping/" + tryGetRequiredInput<std::string>("Target", "ERROR_VALUE");
+        topicName = "mapping/" + tryGetRequiredInput<std::string>("target", "ERROR_VALUE");
         subscriber = rosNode()->create_subscription<Cov>(topicName,  rclcpp::SensorDataQoS(), std::bind(&GetError::topic_callback, this, _1));
         
         msgReceived = false;
@@ -50,7 +50,7 @@ class GetError : public UWRTActionNode {
      */
     BT::NodeStatus onRunning() override {
         if(msgReceived) {
-            postOutput<double>("Covariance", error);
+            postOutput<double>("error", error);
             return BT::NodeStatus::SUCCESS;
         }
 

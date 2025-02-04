@@ -101,6 +101,7 @@ BT::NodeStatus testLinkAlign(
     tfBroadcaster.sendTransform(transforms);
 
     BT::NodeConfiguration cfg;
+    cfg.blackboard = BT::Blackboard::create(); //need to explicitly create blackboard so we can use it later
     cfg.input_ports["x"] = std::to_string(linkGoalPose.v1.x);
     cfg.input_ports["y"] = std::to_string(linkGoalPose.v1.y);
     cfg.input_ports["z"] = std::to_string(linkGoalPose.v1.z);
@@ -114,7 +115,7 @@ BT::NodeStatus testLinkAlign(
     BT::NodeStatus status = toolNode->tickUntilFinished(node);
 
     outputsSet = true;
-    BT::Blackboard::Ptr bb = node->config().blackboard;
+    BT::Blackboard::Ptr bb = cfg.blackboard;
     DualVector3 baseLinkGoal;
     outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, bb, "out_x", baseLinkGoal.v1.x);
     outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, bb, "out_y", baseLinkGoal.v1.y);

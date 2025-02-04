@@ -2,10 +2,21 @@
 <root BTCPP_format="4"
       main_tree_to_execute="tree">
   <BehaviorTree ID="tree">
-    <AlwaysSuccess/>
+    <Sequence>
+      <SetBlackboard value="72"
+                     output_key="something"/>
+      <PublishInt16 topic="/data"
+                    data="{something}"/>
+    </Sequence>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
-  <TreeNodesModel/>
+  <TreeNodesModel>
+    <Action ID="PublishInt16"
+            editable="true">
+      <input_port name="topic"/>
+      <input_port name="data"/>
+    </Action>
+  </TreeNodesModel>
 
 </root>

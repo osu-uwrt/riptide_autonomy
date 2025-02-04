@@ -45,7 +45,7 @@ int DummyActionNode::getNumTicks() {
 BT::NodeStatus DummyActionNode::onStart() {
     //set up node execution
     numTicks = 0;
-    startTime = rosnode->get_clock()->now();
+    startTime = rosNode()->get_clock()->now();
 
     return onRunning();
 }
@@ -60,7 +60,7 @@ BT::NodeStatus DummyActionNode::onRunning() {
     switch(executionMode) {
         //return 
         case FINISH_AFTER_TIME: {
-            if((rosnode->get_clock()->now() - startTime).seconds() * 1000 >= finishMetric) {
+            if((rosNode()->get_clock()->now() - startTime).seconds() * 1000 >= finishMetric) {
                 return finishStatus;
             }
             break;

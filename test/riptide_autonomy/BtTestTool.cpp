@@ -18,16 +18,16 @@ std::shared_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string n
     //configure output ports to map to blackboard entries of same name
     for(auto pair : factory->manifests().at(name).ports) {
         if(pair.second.direction() == BT::PortDirection::OUTPUT) {
-            inputConfig.output_ports[pair.first] = pair.first; //maps a blackboard entry to output port. both have same name.
+            inputConfig.output_ports[pair.first] = "{" + pair.first + "}"; //maps a blackboard entry to output port. both have same name.
         }
     }
 
     auto node = factory->instantiateTreeNode("Test", name, inputConfig);
 
-    UwrtBtNode::staticInit(shared_from_this());
+    ROSEnabledNode::staticInit(shared_from_this());
 
     //initialize node with ROS context if appropriate (yes, single equal sign, not double)
-    if(auto btNode = dynamic_cast<UwrtBtNode *>(node.get())) {
+    if(auto btNode = dynamic_cast<ROSEnabledNode *>(node.get())) {
         btNode->init(this->shared_from_this());
     }
 

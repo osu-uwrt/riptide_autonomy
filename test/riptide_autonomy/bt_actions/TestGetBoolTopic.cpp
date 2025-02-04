@@ -8,6 +8,7 @@ const std::chrono::duration<double> TESTBOOL_TIMEOUT = 5s;
 BT::NodeStatus testGetBoolTopic(std::shared_ptr<BtTestTool> toolNode, const std::string& topic, const bool valToPub, bool& outputSet, bool& receivedVal, const int pubPeriodMs = 125) {
     //set up node
     BT::NodeConfiguration cfg;
+    cfg.blackboard = BT::Blackboard::create();
     cfg.input_ports["topic"] = topic;
     
     auto node = toolNode->createLeafNodeFromConfig("GetBoolTopic", cfg);
@@ -21,7 +22,7 @@ BT::NodeStatus testGetBoolTopic(std::shared_ptr<BtTestTool> toolNode, const std:
     BT::NodeStatus status = toolNode->tickUntilFinished(node, TESTBOOL_TIMEOUT);
 
     //node done, get result
-    outputSet = getOutputFromBlackboard<bool>(toolNode, node->config().blackboard, "value", receivedVal);
+    outputSet = getOutputFromBlackboard<bool>(toolNode, cfg.blackboard, "value", receivedVal);
     return status;
 }
 

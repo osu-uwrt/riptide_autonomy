@@ -1,11 +1,12 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
-BT::NodeStatus testGetCovariance(std::shared_ptr<BtTestTool> toolNode, const std::string& target, std::array<double, 36UL> arr, int publishIntMs, double& covariance, bool& outputSet) {
+BT::NodeStatus testGetError(std::shared_ptr<BtTestTool> toolNode, const std::string& target, std::array<double, 36UL> arr, int publishIntMs, double& error, bool& outputSet) {
     //configure node
     BT::NodeConfiguration cfg;
-    cfg.input_ports["Target"] = target;
-    auto node = toolNode->createLeafNodeFromConfig("getCovariance", cfg);
+    cfg.blackboard = BT::Blackboard::create();
+    cfg.input_ports["target"] = target;
+    auto node = toolNode->createLeafNodeFromConfig("GetError", cfg);
 
     //configure publisher
     geometry_msgs::msg::PoseWithCovarianceStamped msg;
@@ -16,11 +17,11 @@ BT::NodeStatus testGetCovariance(std::shared_ptr<BtTestTool> toolNode, const std
     BT::NodeStatus status = toolNode->tickUntilFinished(node, 7s);
 
     //collect results
-    outputSet = getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "Covariance", covariance);
+    outputSet = getOutputFromBlackboard<double>(toolNode, cfg.blackboard, "error", error);
     return status;
 }
 
-TEST_F(BtTest, test_getCovariance_success_1) {
+TEST_F(BtTest, test_GetError_success_1) {
     //setup
     std::array<double, 36UL> cov = {
         1,  2,  3,  4,  5,  6,
@@ -34,7 +35,7 @@ TEST_F(BtTest, test_getCovariance_success_1) {
     //test
     double result;
     bool outputSet;
-    BT::NodeStatus status = testGetCovariance(toolNode, "gman", cov, 100, result, outputSet);
+    BT::NodeStatus status = testGetError(toolNode, "gman", cov, 100, result, outputSet);
 
     //eval
     const double expectedCov = sqrt(1 + 64 + 225 + (484 + 841 + 1296) / (2 * M_PI));
@@ -43,7 +44,7 @@ TEST_F(BtTest, test_getCovariance_success_1) {
     ASSERT_NEAR(result, expectedCov, 0.01);
 }
 
-TEST_F(BtTest, test_getCovariance_success_2) {
+TEST_F(BtTest, test_GetError_success_2) {
     //setup
     std::array<double, 36UL> cov = {
         .1, .5, .9, .6, .8, .2,
@@ -57,7 +58,7 @@ TEST_F(BtTest, test_getCovariance_success_2) {
     //test
     double result;
     bool outputSet;
-    BT::NodeStatus status = testGetCovariance(toolNode, "something", cov, 500, result, outputSet);
+    BT::NodeStatus status = testGetError(toolNode, "something", cov, 500, result, outputSet);
 
     //eval
     const double expectedCov = sqrt(.01 + .16 + 1 + (.81 + 4 + .81) / (2 * M_PI));
@@ -66,7 +67,7 @@ TEST_F(BtTest, test_getCovariance_success_2) {
     ASSERT_NEAR(result, expectedCov, 0.01);
 }
 
-TEST_F(BtTest, test_getCovariance_fail_timed_out) {
+TEST_F(BtTest, test_GetError_fail_timed_out) {
     //setup
     std::array<double, 36UL> cov = {
         1,  2,  3,  4,  5,  6,
@@ -80,7 +81,7 @@ TEST_F(BtTest, test_getCovariance_fail_timed_out) {
     //test
     double result;
     bool outputSet;
-    BT::NodeStatus status = testGetCovariance(toolNode, "gman", cov, 6000, result, outputSet);
+    BT::NodeStatus status = testGetError(toolNode, "gman", cov, 6000, result, outputSet);
 
     //eval
     ASSERT_EQ(status, BT::NodeStatus::FAILURE);

@@ -228,7 +228,7 @@ namespace do_task
                 // start ticking the tree with feedback
                 // keep executing tick until it returns either SUCCESS or FAILURE
                 auto tickStatus = NodeStatus::RUNNING;
-                while (BT::isStatusCompleted(tickStatus))
+                while (!BT::isStatusCompleted(tickStatus))
                 {
                     // always gets ticked once
                     tickStatus = tree.tickOnce();

@@ -2,6 +2,32 @@
 
 #include "riptide_autonomy/autonomy_base.hpp"
 
+
+/**
+ * @brief Get a thing from a BT blackboard.
+ * 
+ * @tparam T The type of the pointer to grab.
+ * @param n The UwrtBtNode to get the bb value from
+ * @param key The name of the value to grab.
+ * @param value The variable to be populated with the desired blackboard entry.
+ * @return true If the operation succeeds
+ * @return false If the operation fails
+ */
+template<typename T>
+bool getFromBlackboard(rclcpp::Node::SharedPtr rosnode, BT::Blackboard::Ptr bb, const std::string& key, T& value) {
+    try {
+        if(bb->get<T>(key, value)) {
+            return true;
+        }
+    } catch (std::runtime_error& ex) {
+        RCLCPP_ERROR(rosnode->get_logger(), "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
+    }
+
+    RCLCPP_ERROR(rosnode->get_logger(), "No blackboard value named \"%s\"", key.c_str());
+    return false;
+}
+
+
 class ROSEnabledNode {
     public:
 
@@ -42,29 +68,6 @@ class UwrtBtNode : public NodeType, public ROSEnabledNode
      * @return false If the operation fails
      */
     template<typename T>
-    bool getFromBlackboard(rclcpp::Node::SharedPtr rosnode, BT::Blackboard::Ptr bb, const std::string& key, T& value) {
-        try {
-            if(bb->get<T>(key, value)) {
-                return true;
-            }
-        } catch (std::runtime_error& ex) {
-            RCLCPP_ERROR(this->rosNode()->get_logger(), "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
-        }
-
-        return false;
-    }
-
-    /**
-     * @brief Get a thing from a BT blackboard.
-     * 
-     * @tparam T The type of the pointer to grab.
-     * @param n The UwrtBtNode to get the bb value from
-     * @param key The name of the value to grab.
-     * @param value The variable to be populated with the desired blackboard entry.
-     * @return true If the operation succeeds
-     * @return false If the operation fails
-     */
-    template<typename T>
     bool getFromBlackboard(const std::string& key, T& value) {
         if(!this->config().blackboard) {
             RCLCPP_ERROR(this->rosNode()->get_logger(), "Cannot get from blackboard! The passed TreeNode does not have one!");
@@ -80,7 +83,11 @@ class UwrtBtNode : public NodeType, public ROSEnabledNode
         std::ostringstream stream;
         stream << value;
 
-        NodeType::setOutput(key, stream.str());
+        BT::Result res = this->template setOutput<std::string>(key, stream.str());
+        if(!res)
+        {
+            RCLCPP_ERROR(rosNode()->get_logger(), "Error setting output: %s", res.error().c_str());
+        }
     }
 
     /**
