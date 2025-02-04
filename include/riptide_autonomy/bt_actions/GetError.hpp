@@ -1,9 +1,9 @@
 #pragma once
 
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
 
 class GetError : public UWRTActionNode {
-    using Cov = geometry_msgs::msg::PoseWithCovarianceStamped;
     
     public:
     GetError(const std::string& name, const BT::NodeConfiguration& config)
@@ -37,7 +37,7 @@ class GetError : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         topicName = "mapping/" + tryGetRequiredInput<std::string>("target", "ERROR_VALUE");
-        subscriber = rosNode()->create_subscription<Cov>(topicName,  rclcpp::SensorDataQoS(), std::bind(&GetError::topic_callback, this, _1));
+        subscriber = rosNode()->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(topicName,  rclcpp::SensorDataQoS(), std::bind(&GetError::topic_callback, this, _1));
         
         msgReceived = false;
         startTime = rosNode()->get_clock()->now();
@@ -70,7 +70,7 @@ class GetError : public UWRTActionNode {
     }
 
     private:
-    void topic_callback(const Cov::SharedPtr msg)
+    void topic_callback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
     {
         error = 0;
 
@@ -88,7 +88,7 @@ class GetError : public UWRTActionNode {
     }
 
     bool msgReceived;
-    rclcpp::Subscription<Cov>::SharedPtr subscriber;
+    rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr subscriber;
     double error;
     rclcpp::Time startTime;
     std::string topicName;

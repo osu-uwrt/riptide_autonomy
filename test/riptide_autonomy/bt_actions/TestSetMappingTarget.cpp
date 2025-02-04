@@ -1,6 +1,8 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/DummyService.hpp"
 
+#include <riptide_msgs2/srv/mapping_target.hpp>
+
 using namespace std::chrono_literals;
 using MappingTarget = riptide_msgs2::srv::MappingTarget;
 using MappingTargetTest = ServiceTest<MappingTarget>;

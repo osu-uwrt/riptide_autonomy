@@ -1,4 +1,9 @@
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
+
+#include "ament_index_cpp/get_package_prefix.hpp"
+
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 using namespace std::chrono_literals;
 

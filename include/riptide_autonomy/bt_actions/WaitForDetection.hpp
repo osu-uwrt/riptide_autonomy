@@ -1,6 +1,9 @@
 #pragma once
 
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
+
+#include <vision_msgs/msg/detection3_d_array.hpp>
 
 class WaitForDetection : public UWRTActionNode {
     public:

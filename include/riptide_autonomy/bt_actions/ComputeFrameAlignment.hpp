@@ -1,6 +1,9 @@
 #pragma once
 
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
+
+#include <tf2_ros/static_transform_broadcaster.h>
 
 inline void printTransform(rclcpp::Node::SharedPtr node, const std::string& msg, const geometry_msgs::msg::TransformStamped& transform) {
     geometry_msgs::msg::Vector3 rotationRpy = toRPY(transform.transform.rotation);

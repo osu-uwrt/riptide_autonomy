@@ -1,7 +1,10 @@
 #pragma once
 
-#include "riptide_autonomy/autonomy_lib.hpp"
-#include <robot_localization/srv/set_pose.h>
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
+
+#include <robot_localization/srv/set_pose.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 class PublishEKFPose : public UWRTActionNode {
     using SetPose = robot_localization::srv::SetPose;

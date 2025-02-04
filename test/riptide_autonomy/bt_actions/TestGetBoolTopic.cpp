@@ -1,6 +1,8 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
+#include <std_msgs/msg/bool.hpp>
+
 using namespace std::chrono_literals;
 
 const std::chrono::duration<double> TESTBOOL_TIMEOUT = 5s;

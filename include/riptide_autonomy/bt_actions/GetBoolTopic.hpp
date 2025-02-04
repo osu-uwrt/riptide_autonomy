@@ -1,6 +1,9 @@
 #pragma once
 
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
+
+#include <std_msgs/msg/bool.hpp>
 
 /**
  * This is here for now - may replace later with a generic subscription node for trivial types (int, double, string, bool)

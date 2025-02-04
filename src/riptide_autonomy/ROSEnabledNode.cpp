@@ -1,4 +1,4 @@
-#include "riptide_autonomy/UwrtBtNode.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
 
 std::shared_ptr<tf2_ros::Buffer> ROSEnabledNode::tfBuffer = nullptr;
 std::shared_ptr<tf2_ros::TransformListener> ROSEnabledNode::tfListener = nullptr;

@@ -1,6 +1,8 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/DummyService.hpp"
 
+#include <std_srvs/srv/trigger.hpp>
+
 using namespace std::chrono_literals;
 using Trigger = std_srvs::srv::Trigger;
 using TriggerTest = ServiceTest<Trigger>;

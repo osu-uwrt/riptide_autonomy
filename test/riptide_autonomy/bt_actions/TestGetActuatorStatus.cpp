@@ -1,6 +1,9 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
+#include <riptide_msgs2/msg/actuator_status.hpp>
+#include <std_msgs/msg/bool.hpp>
+
 struct GetActuatorStatusInfo {
     int
         statusIntervalMs,

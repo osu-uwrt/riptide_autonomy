@@ -91,5 +91,3 @@ protected:
 };
 
 std::atomic<bool> UwrtLogger::ref_count(false);
-
-//ros2 action send_goal /tempest/autonomy/run_tree riptide_msgs2/action/ExecuteTree "tree: '/home/coalman321/osu-uwrt/riptide_software/install/riptide_autonomy2/share/riptide_autonomy2/trees/ActuatorTrees.xml'"

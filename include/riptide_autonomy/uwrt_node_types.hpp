@@ -1,32 +1,7 @@
 #pragma once
 
 #include "riptide_autonomy/autonomy_base.hpp"
-
-
-/**
- * @brief Get a thing from a BT blackboard.
- * 
- * @tparam T The type of the pointer to grab.
- * @param n The UwrtBtNode to get the bb value from
- * @param key The name of the value to grab.
- * @param value The variable to be populated with the desired blackboard entry.
- * @return true If the operation succeeds
- * @return false If the operation fails
- */
-template<typename T>
-bool getFromBlackboard(rclcpp::Node::SharedPtr rosnode, BT::Blackboard::Ptr bb, const std::string& key, T& value) {
-    try {
-        if(bb->get<T>(key, value)) {
-            return true;
-        }
-    } catch (std::runtime_error& ex) {
-        RCLCPP_ERROR(rosnode->get_logger(), "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
-    }
-
-    RCLCPP_ERROR(rosnode->get_logger(), "No blackboard value named \"%s\"", key.c_str());
-    return false;
-}
-
+#include "tf2_ros/transform_listener.h"
 
 class ROSEnabledNode {
     public:
@@ -215,37 +190,6 @@ class UwrtBtNode : public NodeType, public ROSEnabledNode
     }
 };
 
-
 typedef UwrtBtNode<BT::StatefulActionNode> UWRTActionNode;
 typedef UwrtBtNode<BT::ConditionNode> UWRTConditionNode;
 typedef UwrtBtNode<BT::DecoratorNode>UWRTDecoratorNode;
-
-// /**
-//  * @brief UWRT superclass for BT action nodes
-//  */
-// class UWRTActionNode : virtual public BT::StatefulActionNode, public UwrtBtNode {
-//     public:
-//     UWRTActionNode(const std::string& name, const BT::NodeConfiguration& config)
-//      : StatefulActionNode(name, config) { };
-// };
-
-// /**
-//  * @brief UWRT superclass for integrating ConditionNodes with ROS.
-//  * Similar to UWRTSyncActionNode, this class inherits both the BT 
-//  * ConditionNode and UwrtBtNode.
-//  */
-// class UWRTConditionNode : virtual public BT::ConditionNode, public UwrtBtNode {
-//     public:
-//     UWRTConditionNode(const std::string& name, const BT::NodeConfiguration& config)
-//      : ConditionNode(name, config) { };
-// };
-
-// /**
-//  * @brief UWRT superclass for integrating DecoratorNodes with ROS.
-//  * Operates exactly the same as UWRTConditionNode and UWRTActionNode.
-//  */
-// class UWRTDecoratorNode : virtual public BT::DecoratorNode, public UwrtBtNode {
-//     public:
-//     UWRTDecoratorNode(const std::string& name, const BT::NodeConfiguration& config)
-//      : DecoratorNode(name, config) { };
-// };

@@ -59,7 +59,7 @@ def checkFiles(args, autonomyRootLoc: str):
                 madeChanges = True
             elif response == 1: #delete file
                 if askConfirmation(args, "Do you really want to delete {}?".format(file)):
-                    pathToFile = "{0}/bt_{1}s/{2}.bt{1}.hpp".format(autonomyIncludeLocation(autonomyRootLoc), nodeType.name.lower(), file)
+                    pathToFile = "{}/bt_{}s/{}.hpp".format(autonomyIncludeLocation(autonomyRootLoc), nodeType.name.lower(), file)
                     os.remove(pathToFile)
                     info(args, "Removed {} {}.".format(nodeType.name.lower(), file))
                     madeChanges = True

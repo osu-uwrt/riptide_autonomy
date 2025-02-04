@@ -1,6 +1,8 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/BufferedSubscriber.hpp"
 
+#include <riptide_msgs2/msg/controller_command.hpp>
+
 using namespace std::chrono_literals;
 
 static std::tuple<BT::NodeStatus, std::vector<riptide_msgs2::msg::ControllerCommand> > publishTest(std::shared_ptr<BtTestTool> toolNode, bool orientation, int mode, double x, double y, double z, const std::string expectedTopic) {

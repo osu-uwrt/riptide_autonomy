@@ -1,6 +1,8 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+
 BT::NodeStatus testGetError(std::shared_ptr<BtTestTool> toolNode, const std::string& target, std::array<double, 36UL> arr, int publishIntMs, double& error, bool& outputSet) {
     //configure node
     BT::NodeConfiguration cfg;

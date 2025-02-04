@@ -1,14 +1,14 @@
-// #include <behaviortree_cpp/loggers/bt_zmq_publisher.h>
-// #include <behaviortree_cpp/loggers/bt_cout_logger.h>
-// #include <behaviortree_cpp/loggers/bt_file_logger.h>
-
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/executors/multi_threaded_executor.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+#include <std_msgs/msg/bool.hpp>
+
 #include <riptide_msgs2/action/execute_tree.hpp>
 #include <riptide_msgs2/srv/list_trees.hpp>
+#include <riptide_msgs2/msg/led_command.hpp>
+#include <riptide_msgs2/msg/controller_command.hpp>
 
 #include <vector>
 #include <chrono>
@@ -16,7 +16,8 @@
 
 #include <unistd.h>
 
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
 #include "riptide_autonomy/UWRTLogger.hpp"
 
 /**
@@ -213,15 +214,6 @@ namespace do_task
                 // add the loggers to the BT context
                 RCLCPP_INFO(get_logger(), "DoTask: Loading Monitor");
 
-                //TODO FIX LOGGERS
-                // PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
-                // FileLogger fileLogger(tree, FBLFilePath.c_str());
-                // UwrtLogger uwrtLogger(tree, this->shared_from_this());
-
-                // configure our loggers
-                // zmq.setEnabled(enableZMQ);
-                // uwrtLogger.setEnabled(true);
-
                 // set up idle sleep rate
                 rclcpp::Rate loop_rate(10ms);
 
@@ -252,9 +244,6 @@ namespace do_task
                 disable.mode = riptide_msgs2::msg::ControllerCommand::DISABLED;
                 linearPub->publish(disable);
                 angularPub->publish(disable);
-
-                // other post tree things
-                // fileLogger.flush();
 
                 std::string resultStr = "SUCCESS";
                 switch(tickStatus) {
@@ -424,6 +413,5 @@ int main(int argc, char *argv[])
     executor.add_node(node);
     executor.spin();
 
-    // rclcpp::spin(node);
     rclcpp::shutdown();
 }

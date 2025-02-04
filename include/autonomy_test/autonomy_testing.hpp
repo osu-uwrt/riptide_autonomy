@@ -2,8 +2,10 @@
 
 //this header contains helpful declarations and includes for testing the UWRT behavior tree system
 
-#include <gtest/gtest.h>
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
+
+#include <gtest/gtest.h> 
 
 /**
  * @brief Counts the number of elements in vector that match the object obj.

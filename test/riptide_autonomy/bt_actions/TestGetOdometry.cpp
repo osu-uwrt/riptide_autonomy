@@ -1,6 +1,8 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
+#include <nav_msgs/msg/odometry.hpp>
+
 BT::NodeStatus testGetOdometry(
     std::shared_ptr<BtTestTool> toolNode, 
     nav_msgs::msg::Odometry in, 

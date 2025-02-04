@@ -1,6 +1,8 @@
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/BufferedSubscriber.hpp"
 
+#include <riptide_msgs2/msg/led_command.hpp>
+
 using LedCmd = riptide_msgs2::msg::LedCommand;
 
 BT::NodeStatus testSetStatus(std::shared_ptr<BtTestTool> toolNode, const std::string& status, LedCmd& cmdOut) {

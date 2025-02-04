@@ -1,6 +1,9 @@
 #pragma once
 
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
+
+#include <std_srvs/srv/trigger.hpp>
 
 class CallTriggerService : public UWRTActionNode {
     using Trigger = std_srvs::srv::Trigger;

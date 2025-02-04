@@ -1,4 +1,5 @@
 #include "autonomy_test/autonomy_testing.hpp"
+#include <tf2_ros/static_transform_broadcaster.h>
 
 #define PRINT_RESULTS_OF_TEST
 

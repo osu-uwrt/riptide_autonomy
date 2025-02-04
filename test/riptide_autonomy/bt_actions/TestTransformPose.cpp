@@ -1,5 +1,7 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
+#include <tf2_ros/static_transform_broadcaster.h>
+
 using namespace std::chrono_literals;
 
 static geometry_msgs::msg::TransformStamped createTransform(std::shared_ptr<BtTestTool> toolNode, double x, double y, double z, double roll, double pitch, double yaw, std::string parentFrame, std::string childFrame) {

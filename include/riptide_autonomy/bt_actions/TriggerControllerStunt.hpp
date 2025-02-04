@@ -1,6 +1,9 @@
 #pragma once
 
-#include "riptide_autonomy/autonomy_lib.hpp"
+#include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/uwrt_node_types.hpp"
+
+#include <std_msgs/msg/u_int16.hpp>
 
 #define STUNT_STATE_TRIGGER_TOPIC "/talos/controller/stunt_state"
 #define STUNT_STATE_STATUS_TOPIC "/talos/controller/running_stunt_state"
@@ -30,23 +33,8 @@ class TriggerControllerStunt : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        //get the name of the complete controller
-        // std::vector<std::string> nodeNames = rosnode->get_node_names();
-        // std::string controllerNodeName = "";
-
-        // for(size_t i = 0; i < nodeNames.size(); i++){
-
-        //     std::string controllerSeedString = "/complete_controller";
-        //     if(nodeNames.at(i).substr(0,7) == controllerSeedString.substr(0,7)){
-        //         RCLCPP_INFO(rosnode->get_logger(), "Found Controller to disable safe mode lol");
-        //         controllerNodeName = nodeNames.at(i);
-        //     }
-        // }
-
         stuntStateSub = rosNode()->create_subscription<std_msgs::msg::UInt16>(STUNT_STATE_STATUS_TOPIC, 10, std::bind(&TriggerControllerStunt::running_stunt_state_cb, this, _1));
         stuntStatePub = rosNode()->create_publisher<std_msgs::msg::UInt16>(STUNT_STATE_TRIGGER_TOPIC, 10);
-
-
     }
 
     /**
