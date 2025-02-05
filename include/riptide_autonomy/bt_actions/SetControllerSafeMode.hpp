@@ -16,8 +16,11 @@ class SetControllerSafeMode : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("safe"),
-            UwrtInput("timeout_secs")
+            UwrtInput("safe", PORT_REQUIRED,
+                "Boolean; 1 for safe mode, 0 for stunts enabled"),
+
+            UwrtInput("timeout_secs", PORT_REQUIRED,
+                "Timeout for service call, after which node will return FAILURE")
         };
     }
 

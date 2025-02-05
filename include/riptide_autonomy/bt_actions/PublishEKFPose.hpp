@@ -22,16 +22,26 @@ class PublishEKFPose : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("x"),
-            UwrtInput("setX"),
-            UwrtInput("y"),
-            UwrtInput("setY"),
-            UwrtInput("z"),
-            UwrtInput("setZ"),
-            UwrtInput("roll"),
-            UwrtInput("pitch"),
-            UwrtInput("yaw"),
-            UwrtInput("setOrientation")
+            UwrtInput("x", PORT_OPTIONAL,
+                "Optional input; if populated, EKF will be set to this coordinate in the X axis."),
+
+            UwrtInput("y", PORT_OPTIONAL,
+                "Optional input; if populated, EKF will be set to this coordinate in the Y axis."),
+
+            UwrtInput("z", PORT_OPTIONAL,
+                "Optional input; if populated, EKF will be set to this coordinate in the Z axis."),
+
+            UwrtInput("or", PORT_OPTIONAL,
+                "Optional input; if populated, EKF will be set to this coordinate in the roll axis. "
+                "If another orientation specified, defaults to 0"),
+
+            UwrtInput("op", PORT_OPTIONAL,
+                "Optional input; if populated, EKF will be set to this coordinate in the pitch axis. "
+                "If another orientation specified, defaults to 0"),
+
+            UwrtInput("oy", PORT_OPTIONAL,
+                "Optional input; if populated, EKF will be set to this coordinate in the yaw axis. "
+                "If another orientation specified, defaults to 0"),
         };
     }
 

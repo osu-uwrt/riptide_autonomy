@@ -19,9 +19,14 @@ class CallSetBoolService : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("srv_name"),
-            UwrtInput("data"),
-            UwrtInput("time_limit_secs")
+            UwrtInput("srv_name", PORT_REQUIRED,
+                "Name of the service to call"),
+
+            UwrtInput("data", PORT_REQUIRED,
+                "Boolean data to provide with service call (1 or 0)"),
+
+            UwrtInput("time_limit_secs", PORT_REQUIRED,
+                "Time limit for service call after which node will return FAILURE")
         };
     }
 

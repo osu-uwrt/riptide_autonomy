@@ -23,7 +23,7 @@ class TriggerControllerStunt : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("targetStuntState")
+            UwrtInput("stunt_state", PORT_REQUIRED)
         };
     }
 
@@ -46,7 +46,7 @@ class TriggerControllerStunt : public UWRTActionNode {
         startTime = rosNode()->get_clock()->now();
 
         std_msgs::msg::UInt16 msg;
-        msg.data = tryGetRequiredInput<int>("targetStuntState", 0);
+        msg.data = tryGetRequiredInput<int>("stunt_state", 0);
         stuntStatePub->publish(msg);
 
         return BT::NodeStatus::SUCCESS;
@@ -57,13 +57,13 @@ class TriggerControllerStunt : public UWRTActionNode {
      * @return NodeStatus The node status after 
      */
     BT::NodeStatus onRunning() override {
-        if(stunt_state == tryGetRequiredInput<int>("targetStuntState", 0)){
+        if(stunt_state == tryGetRequiredInput<int>("stunt_state", 0)){
             return BT::NodeStatus::SUCCESS;
         }
 
         if(rosNode()->get_clock()->now().seconds() > startTime.seconds() + retry_count + RETRY_INTERVAL){
             std_msgs::msg::UInt16 msg;
-            msg.data = tryGetRequiredInput<int>("targetStuntState", 0);
+            msg.data = tryGetRequiredInput<int>("stunt_state", 0);
             stuntStatePub->publish(msg);
 
             retry_count++;

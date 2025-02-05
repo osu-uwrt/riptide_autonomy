@@ -16,14 +16,18 @@ class TransformPose : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("from_frame"),
-            UwrtInput("to_frame"),
-            UwrtInput("x"),
-            UwrtInput("y"),
-            UwrtInput("z"),
-            UwrtInput("or"),
-            UwrtInput("op"),
-            UwrtInput("oy"),
+            UwrtInput("from_frame", PORT_REQUIRED,
+                "Frame in which input pose resides."),
+
+            UwrtInput("to_frame", PORT_REQUIRED,
+                "Frame to which to transform the input coordinate"),
+
+            UwrtInput("x", PORT_REQUIRED),
+            UwrtInput("y", PORT_REQUIRED),
+            UwrtInput("z", PORT_REQUIRED),
+            UwrtInput("or", PORT_REQUIRED),
+            UwrtInput("op", PORT_REQUIRED),
+            UwrtInput("oy", PORT_REQUIRED),
             UwrtOutput("out_x"),
             UwrtOutput("out_y"),
             UwrtOutput("out_z"),

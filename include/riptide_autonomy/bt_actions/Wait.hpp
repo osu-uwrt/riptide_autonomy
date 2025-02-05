@@ -16,7 +16,8 @@ class Wait : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("seconds")
+            UwrtInput("seconds", PORT_REQUIRED,
+                "Seconds to wait while spinning ROS node")
         };
     }
 

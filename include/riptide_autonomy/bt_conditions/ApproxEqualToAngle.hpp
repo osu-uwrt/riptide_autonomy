@@ -16,9 +16,14 @@ class ApproxEqualToAngle : public UWRTConditionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("a"),
-            UwrtInput("b"),
-            UwrtInput("range")
+            UwrtInput("a", PORT_REQUIRED,
+                "left-hand side"),
+                
+            UwrtInput("b", PORT_REQUIRED,
+                "right-hand side"),
+
+            UwrtInput("range", PORT_REQUIRED,
+                "range for SUCCESS")
         };
     }
 

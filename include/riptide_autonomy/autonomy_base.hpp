@@ -51,12 +51,56 @@ const std::string
  * TYPES
  *  
  */
-inline std::pair<std::string, BT::PortInfo> UwrtInput(BT::StringView name, BT::StringView description = {}) {
-    return BT::InputPort<std::string>(name, description);
+
+typedef std::pair<std::string, BT::PortInfo> BtPort;
+
+//this will be used to describe necessity of ports instead of bools because
+//this will force you to read/write if ports are required or not
+enum UwrtPortNecessity
+{
+    PORT_REQUIRED,
+    PORT_OPTIONAL
+};
+
+/**
+ * Wrapper around default behaviortree port type allowing specification of required vs optional ports
+ */
+class UwrtPort : public BtPort
+{
+    public:
+    //direction makes this extendable to output ports but this is meant for input only atm
+    UwrtPort(const BT::PortDirection& direction, const BT::StringView& name, const UwrtPortNecessity& portNecessity, const BT::StringView& description = "")
+     : BtPort(BT::CreatePort<std::string>(direction, name, description)),
+       _necessity(portNecessity)
+    { }
+
+    
+    BT::StringView name()
+    {
+        return first;
+    }
+
+    BT::PortInfo portInfo()
+    {
+        return second;
+    }
+
+    bool necessity()
+    {
+        return _necessity;
+    }
+
+    private:
+    UwrtPortNecessity _necessity;
+};
+
+
+inline std::pair<std::string, BT::PortInfo> UwrtInput(const BT::StringView& name, const UwrtPortNecessity& necessity, const BT::StringView& description = {}) {
+    return UwrtPort(BT::PortDirection::INPUT, name, necessity, description);
 }
 
-inline std::pair<std::string, BT::PortInfo> UwrtOutput(BT::StringView name, BT::StringView description = {}) {
-    return BT::OutputPort<std::string>(name, description);
+inline std::pair<std::string, BT::PortInfo> UwrtOutput(const BT::StringView& name, const BT::StringView& description = {}) {
+    return UwrtPort(BT::PortDirection::OUTPUT, name, PORT_OPTIONAL, description);
 }
 
 /**

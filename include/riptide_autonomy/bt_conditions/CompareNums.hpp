@@ -16,9 +16,14 @@ class CompareNums : public UWRTConditionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("test"),
-            UwrtInput("a"),
-            UwrtInput("b")
+            UwrtInput("test", PORT_REQUIRED,
+                "Test to perform (can be <, >, or ==)"),
+
+            UwrtInput("a", PORT_REQUIRED,
+                "left-hand side"),
+
+            UwrtInput("b", PORT_REQUIRED,
+                "right-hand side")
         };
     }
 

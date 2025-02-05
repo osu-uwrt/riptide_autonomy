@@ -19,8 +19,11 @@ class GetBoolTopic : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("topic"),
-            UwrtOutput("value")
+            UwrtInput("topic", PORT_REQUIRED,
+                "The name of the topic to publish to"),
+
+            UwrtOutput("value",
+                "The data to publish (1 = true, 0 = false)")
         };
     }
 

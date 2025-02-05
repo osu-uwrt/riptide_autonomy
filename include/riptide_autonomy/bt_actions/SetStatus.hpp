@@ -44,7 +44,8 @@ class SetStatus : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("status")
+            UwrtInput("status", PORT_REQUIRED,
+                "Status string, corresponding to table on autonomy README")
         };
     }
 

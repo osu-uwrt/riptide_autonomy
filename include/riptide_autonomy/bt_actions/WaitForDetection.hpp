@@ -18,8 +18,11 @@ class WaitForDetection : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("object_name"),
-            UwrtInput("timeout_secs")
+            UwrtInput("object_name", PORT_REQUIRED,
+                "object to wait for"),
+                
+            UwrtInput("timeout_secs", PORT_REQUIRED,
+                "timeout for wait, after which node will return FAILURE")
         };
     }
 

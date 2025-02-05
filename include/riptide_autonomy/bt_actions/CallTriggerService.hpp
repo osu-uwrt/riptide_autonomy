@@ -19,8 +19,11 @@ class CallTriggerService : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("srv_name"),
-            UwrtInput("time_limit_secs")
+            UwrtInput("srv_name", PORT_REQUIRED,
+                "Name of the service to call"),
+                
+            UwrtInput("time_limit_secs", PORT_REQUIRED,
+                "Time limit for service call after which node will return FAILURE")
         };
     }
 

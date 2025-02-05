@@ -18,8 +18,11 @@ class PublishUInt16 : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("topic"),
-            UwrtInput("data")
+            UwrtInput("topic", PORT_REQUIRED,
+                "Name of the topic to publish to"),
+
+            UwrtInput("data", PORT_REQUIRED,
+                "Data to publish to topic")
         };
     }
 

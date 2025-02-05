@@ -18,11 +18,20 @@ class PublishToController : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("isOrientation"),
-            UwrtInput("mode"),
-            UwrtInput("x"),
-            UwrtInput("y"),
-            UwrtInput("z"),
+            UwrtInput("is_orientation", PORT_REQUIRED,
+                "1 if publishing RPY orientation, 0 otherwise"),
+
+            UwrtInput("mode", PORT_REQUIRED,
+                "mode integer, corresponding to any mode in the ControllerCommand message."),
+
+            UwrtInput("x", PORT_REQUIRED,
+                "If is_orientation == 1, this is roll. Otherwise, this is X."),
+
+            UwrtInput("y", PORT_REQUIRED,
+                "If is_orientation == 1, this is pitch. Otherwise, this is Y."),
+                
+            UwrtInput("z", PORT_REQUIRED,
+                "If is_orientation == 1, this is yaw. Otherwise, this is Z."),
         };
     }
 

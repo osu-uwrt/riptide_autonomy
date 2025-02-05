@@ -18,10 +18,17 @@ class GetImuOrientation : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("topic"),
-            UwrtOutput("or"),
-            UwrtOutput("op"),
-            UwrtOutput("oy")
+            UwrtInput("topic", PORT_REQUIRED,
+                "Name of the IMU topic to listen to"),
+
+            UwrtOutput("or",
+                "Output orientation"),
+
+            UwrtOutput("op",
+                "Output orientation"),
+
+            UwrtOutput("oy",
+                "Output orientation")
         };
     }
 

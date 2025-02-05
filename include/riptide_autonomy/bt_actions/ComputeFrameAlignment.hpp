@@ -42,20 +42,42 @@ class ComputeFrameAlignment : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("x"),
-            UwrtInput("y"),
-            UwrtInput("z"),
-            UwrtInput("or"),
-            UwrtInput("op"),
-            UwrtInput("oy"),
-            UwrtInput("reference_frame"), //the frame to align relative to
-            UwrtInput("target_frame"),    //the frame to align
-            UwrtOutput("out_x"),
-            UwrtOutput("out_y"),
-            UwrtOutput("out_z"),
-            UwrtOutput("out_or"),
-            UwrtOutput("out_op"),
-            UwrtOutput("out_oy")
+            UwrtInput("x", PORT_REQUIRED),
+            UwrtInput("y", PORT_REQUIRED),
+            UwrtInput("z", PORT_REQUIRED),
+            
+            UwrtInput("or", PORT_REQUIRED,
+                "roll"),
+            
+            UwrtInput("op", PORT_REQUIRED,
+                "pitch"),
+            
+            UwrtInput("oy", PORT_REQUIRED,
+                "yaw"),
+            
+            UwrtInput("reference_frame", PORT_REQUIRED,
+                "The frame in which the input pose resides"), //the frame to align relative to
+            
+            UwrtInput("target_frame", PORT_REQUIRED,
+                "The robot link to align"),    //the frame to align
+            
+            UwrtOutput("out_x",
+                "world-frame coordinate for robot"),
+            
+            UwrtOutput("out_y",
+                "world-frame coordinate for robot"),
+            
+            UwrtOutput("out_z",
+                "world-frame coordinate for robot"),
+            
+            UwrtOutput("out_or",
+                "world-frame coordinate for robot"),
+            
+            UwrtOutput("out_op",
+                "world-frame coordinate for robot"),
+            
+            UwrtOutput("out_oy",
+                "world-frame coordinate for robot")
         };
     }
 

@@ -19,12 +19,23 @@ class GetActuatorStatus : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtOutput("claw_state"),
-            UwrtOutput("torpedo_state"),
-            UwrtOutput("torpedo_available_count"),
-            UwrtOutput("dropper_state"),
-            UwrtOutput("dropper_available_count"),
-            UwrtOutput("actuators_busy")
+            UwrtOutput("claw_state",
+                "1 if ready-to-go, 0 otherwise"),
+            
+            UwrtOutput("torpedo_state",
+                "1 if RTG 0 otherwise"),
+            
+            UwrtOutput("torpedo_available_count",
+                "number of available torpedoes"),
+            
+            UwrtOutput("dropper_state",
+                "1 if RTG 0 otherwise"),
+            
+            UwrtOutput("dropper_available_count",
+                "number of available dropppers"),
+            
+            UwrtOutput("actuators_busy",
+                "1 if actuators are busy 0 otherwise")
         };
     }
 

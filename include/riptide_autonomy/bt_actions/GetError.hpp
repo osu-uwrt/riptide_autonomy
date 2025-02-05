@@ -17,8 +17,11 @@ class GetError : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("target"),
-            UwrtOutput("error")
+            UwrtInput("target", PORT_REQUIRED,
+                "The name of the object to track"),
+
+            UwrtOutput("error",
+                "total error of mapping object")
         };
     }
 

@@ -21,9 +21,14 @@ class SetMappingTarget : public UWRTActionNode {
      */
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("target_object"),
-            UwrtInput("lock_map"),
-            UwrtInput("time_limit_secs")
+            UwrtInput("target_object", PORT_REQUIRED,
+                "New target mapping object"),
+
+            UwrtInput("lock_map", PORT_REQUIRED,
+                "1 for lock map (vision detections will not cause updates), 0 for unlocked (normal operation)"),
+                
+            UwrtInput("time_limit_secs", PORT_REQUIRED,
+                "Time limit for service call, after which node will return FAILURE")
         };
     }
 
