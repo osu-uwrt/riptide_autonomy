@@ -110,9 +110,7 @@ target_compile_definitions(autonomy_actions PRIVATE BT_PLUGIN_EXPORT)
 #
 # condition library
 #
-file(GLOB simple_conditions_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_conditions/*.simple.cpp)
 add_library(autonomy_conditions SHARED
-  ${simple_conditions_sources}
   ${PROJECT_BINARY_DIR}/autonomy_generator/registerConditions.cpp
 )
 
@@ -128,9 +126,7 @@ target_link_libraries(autonomy_conditions autonomy_utils)
 #
 # decorator library
 #
-file(GLOB simple_decorators_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/bt_decorators/*.simple.cpp)
 add_library(autonomy_decorators SHARED
-  ${simple_decorators_sources}
   ${PROJECT_BINARY_DIR}/autonomy_generator/registerDecorators.cpp
 )
 
@@ -141,6 +137,26 @@ target_include_directories(autonomy_decorators PUBLIC
 
 ament_target_dependencies(autonomy_decorators ${deps})
 target_link_libraries(autonomy_decorators autonomy_utils)
+
+#
+# Health
+#
+
+# library
+file(GLOB health_sources RELATIVE ${PROJECT_SOURCE_DIR} src/riptide_autonomy/health/*.cpp)
+add_library(autonomy_health
+  ${health_sources})
+
+target_include_directories(autonomy_health PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+target_link_libraries(autonomy_health autonomy_utils)
+
+# bt checker executable
+add_executable(check_bt src/riptide_autonomy/check_bt.cpp)
+target_link_libraries(check_bt autonomy_utils autonomy_health)
+
 
 #
 # Tree execution executable
@@ -162,46 +178,8 @@ ament_target_dependencies(autonomy
   riptide_msgs2
 )
 
-#
-# BT Health Checker executable
-#
-
-#check that we are on Ubuntu 22.04. otherwise tinyxml will be sad
-execute_process(COMMAND lsb_release -s -i
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  OUTPUT_VARIABLE OS_NAME
-)
-
-execute_process(COMMAND lsb_release -s -r
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  OUTPUT_VARIABLE OS_VERSION
-)
-
-string(COMPARE EQUAL ${OS_NAME} "Ubuntu\n" OS_NAME_UBUNTU)
-string(COMPARE EQUAL ${OS_VERSION} "20.04\n" OS_VERSION_20_04)
-if((OS_NAME_UBUNTU AND OS_VERSION_20_04) OR BUILD_DEPLOY)
-  message("Skipping BT Health checker for deploy build or OS version incompatibility")
-else()
-  add_executable(check_bt src/riptide_autonomy/check_bt.cpp)
-
-  target_include_directories(check_bt PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
-      $<INSTALL_INTERFACE:include>)
-
-  target_link_libraries(check_bt autonomy_utils)
-  target_compile_definitions(check_bt PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
-
-  ament_target_dependencies(check_bt
-    behaviortree_cpp
-  )
-  install(TARGETS check_bt
-    DESTINATION lib/${PROJECT_NAME}
-  )
-endif()
-
-#install executable
-install(TARGETS autonomy
+#install executables
+install(TARGETS autonomy check_bt
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "riptide_autonomy/autonomy_base.hpp"
-
+#include <tinyxml2.h>
 
 typedef std::unordered_map<std::string, BT::TreeNodeManifest> NodeManifests;
 
@@ -31,9 +31,9 @@ class AutonomyIssue
 
     AutonomyIssue(const AutonomyIssueSeverity& severity, const std::string& type, const std::string& description);
 
-    AutonomyIssueSeverity severity();
-    std::string type();
-    std::string issue();
+    AutonomyIssueSeverity severity() const;
+    std::string type() const;
+    std::string issue() const;
 
     virtual HealthError fix() = 0;
 
@@ -51,7 +51,7 @@ class AutonomyIssueDetector
     typedef std::shared_ptr<AutonomyIssueDetector> Ptr;
 
     virtual HealthError detect() = 0;
-    std::vector<AutonomyIssue::Ptr> issues();
+    std::vector<AutonomyIssue::Ptr> issues() const;
 
     protected:
     void addIssue(const AutonomyIssue::Ptr& issue);
@@ -68,7 +68,8 @@ class AutonomyIssueDetector
  */
 class AutonomySystemIssueDetector : public AutonomyIssueDetector
 {
-    
+    public:
+    HealthError detect() override;
 };
 
 /**
@@ -76,7 +77,8 @@ class AutonomySystemIssueDetector : public AutonomyIssueDetector
  */
 class AutonomySyncIssueDetector : public AutonomyIssueDetector
 {
-
+    public:
+    HealthError detect() override;
 };
 
 /**
@@ -84,7 +86,11 @@ class AutonomySyncIssueDetector : public AutonomyIssueDetector
  */
 class AutonomyTreeIssueDetector : public AutonomyIssueDetector
 {
-    
+    public:
+    AutonomyTreeIssueDetector(const tinyxml2::XMLDocument& document);
+    AutonomyTreeIssueDetector(const std::string& file);
+
+    HealthError detect() override;
 };
 
 /**
@@ -92,5 +98,7 @@ class AutonomyTreeIssueDetector : public AutonomyIssueDetector
  */
 class AutonomyNodeIssueDetector : public AutonomyIssueDetector
 {
-
+    public:
+    AutonomyNodeIssueDetector(const tinyxml2::XMLElement& node);
+    HealthError detect() override;
 };

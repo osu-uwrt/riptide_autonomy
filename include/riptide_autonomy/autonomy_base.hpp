@@ -25,6 +25,10 @@
 using namespace std::chrono_literals;
 using namespace std::placeholders;
 
+//autonomy asset names
+const std::string
+    AUTONOMY_BTPROJ = "trees/uwrt_autonomy.btproj";
+
 //useful topic names for autonomy
 const std::string
     ODOMETRY_TOPIC = "odometry/filtered",
@@ -146,6 +150,7 @@ void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosContext);
 geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose pose, geometry_msgs::msg::TransformStamped transform);
 
 
+//move this to a member function of uwrtbtnode and ditch the defining your own timer thing
 bool lookupTransformNow(
     rclcpp::Node::SharedPtr node,
     const std::shared_ptr<const tf2_ros::Buffer> buffer,
