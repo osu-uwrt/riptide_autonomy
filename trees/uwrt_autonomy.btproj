@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4" project_name="Project">
     <include path="test.xml"/>
+    <include path="test2.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
         <Condition ID="ApproxEqualTo" editable="true">
@@ -107,16 +108,16 @@
             <input_port name="yaw"/>
             <input_port name="set_orientation"/>
         </Action>
-        <Action ID="PublishInt16" editable="true">
-            <input_port name="topic"/>
-            <input_port name="data"/>
-        </Action>
         <Action ID="PublishToController" editable="true">
             <input_port name="is_orientation"/>
             <input_port name="mode"/>
             <input_port name="x"/>
             <input_port name="y"/>
             <input_port name="z"/>
+        </Action>
+        <Action ID="PublishUInt16" editable="true">
+            <input_port name="topic"/>
+            <input_port name="data"/>
         </Action>
         <Decorator ID="RetryUntilSuccessfulOrTimeout" editable="true">
             <input_port name="num_seconds"/>

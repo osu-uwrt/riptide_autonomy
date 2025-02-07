@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4"
       main_tree_to_execute="tree">
+  <include path="test2.xml"/>
+
   <BehaviorTree ID="tree">
     <Sequence>
       <SetBlackboard value="72"
                      output_key="something"/>
-      <PublishInt16 topic="/data"
-                    data="{something}"/>
+      <PublishUInt16 topic="/data"
+                     data="{something}"/>
+      <SubTree ID="subt"/>
     </Sequence>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
-    <Action ID="PublishInt16"
+    <Action ID="PublishUInt16"
             editable="true">
       <input_port name="topic"/>
       <input_port name="data"/>

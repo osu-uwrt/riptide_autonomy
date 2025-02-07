@@ -7,9 +7,9 @@ typedef std::unordered_map<std::string, BT::TreeNodeManifest> NodeManifests;
 
 struct HealthError
 {
-    HealthError()
-     : error(false),
-       message("") { }
+    HealthError(bool error, const std::string message)
+     : error(error),
+       message(message) { }
 
     bool error;
     std::string message;
@@ -29,9 +29,18 @@ class AutonomyIssue
     public:
     typedef std::shared_ptr<AutonomyIssue> Ptr;
 
-    AutonomyIssue(const AutonomyIssueSeverity& severity, const std::string& type, const std::string& description);
+    static std::string fileAndLine(const std::string& file, const tinyxml2::XMLElement *element);
+
+    AutonomyIssue(
+        const AutonomyIssueSeverity& severity,
+        const std::string& file,
+        int line,
+        const std::string& type,
+        const std::string& description);
 
     AutonomyIssueSeverity severity() const;
+    std::string file() const;
+    int line() const;
     std::string type() const;
     std::string issue() const;
 
@@ -39,9 +48,29 @@ class AutonomyIssue
 
     private:
     const AutonomyIssueSeverity _severity;
+    const int _line;
     const std::string 
+        _file,
         _type,
         _description;
+};
+
+
+class UnfixableAutonomyIssue : public AutonomyIssue
+{
+    public:
+    UnfixableAutonomyIssue(
+        const AutonomyIssueSeverity& severity,
+        const std::string& file,
+        int line,
+        const std::string& type,
+        const std::string& description)
+     : AutonomyIssue(severity, file, line, type, description) { }
+
+    HealthError fix()
+    {
+        return HealthError(true, "Issue cannot be automatically fixed.");
+    }
 };
 
 
@@ -72,26 +101,116 @@ class AutonomySystemIssueDetector : public AutonomyIssueDetector
     HealthError detect() override;
 };
 
+//defined in AutonomySyncIssueDetector.cpp
+class AutonomyMismatchIssue : public AutonomyIssue
+{
+    public:
+    AutonomyMismatchIssue(
+        const std::string& file, 
+        int line, 
+        const std::string& nodeId, 
+        bool fixableInXml,
+        const std::string& description);
+
+    HealthError fix() override;
+
+    private:
+    const std::string _nodeId;
+    const bool _fixableInXml;
+};
+
 /**
  * Detects issues in information sync between code and XML
  */
 class AutonomySyncIssueDetector : public AutonomyIssueDetector
 {
     public:
+    static std::string portDirectionToString(const BT::PortDirection& direction);
+    static BT::PortDirection stringToPortDirection(const std::string& str);
+
+    AutonomySyncIssueDetector(
+        const std::string& file,
+        const BT::BehaviorTreeFactory& factory);
+
     HealthError detect() override;
+    NodeManifests palette() const;
+
+    private:
+    tinyxml2::XMLElement *detectTreeNodesModel(tinyxml2::XMLDocument& xmlDoc);
+    bool detectIdAndTypeIssues(const char *xmlId, const char *xmlType, tinyxml2::XMLElement *nodeElement);
+    bool detectPortIssues(const char *xmlId, tinyxml2::XMLElement* nodeElement);
+
+    const std::string _file;
+    const BT::BehaviorTreeFactory& _factory;
+
+    NodeManifests _palette;
 };
 
+
+class AutonomyFileIssueDetector : public AutonomyIssueDetector
+{
+    public:
+    AutonomyFileIssueDetector(const std::string& file, const BT::BehaviorTreeFactory& factory);
+    HealthError detect() override;
+    NodeManifests palette() const;
+
+    private:
+    const std::string _file;
+    const BT::BehaviorTreeFactory& _factory;
+    NodeManifests _palette;
+};
+
+
+class AutonomyOmittedIssue : public AutonomyIssue
+{
+
+};
+
+
+
 /**
- * Detects issues in specific trees such as nonexistent bb variables or overpopulating decorators, etc
+ * Detects issues in specific trees such as bad includes, overpopulated decorators, etc.
+ * Invokes AutonomyNodeIssueDetector as a subdetector.
  */
 class AutonomyTreeIssueDetector : public AutonomyIssueDetector
 {
     public:
-    AutonomyTreeIssueDetector(const tinyxml2::XMLDocument& document);
-    AutonomyTreeIssueDetector(const std::string& file);
+    AutonomyTreeIssueDetector(
+        const std::string& fileName,
+        const std::string& cwd,
+        tinyxml2::XMLElement *root,
+        const BT::BehaviorTreeFactory& factory,
+        const NodeManifests& palette);
 
     HealthError detect() override;
+    NodeManifests palette() const;
+
+    protected:
+    void addSubdetector(const AutonomyIssueDetector::Ptr& detector);
+    
+    private:
+    void processTreeRecursive(tinyxml2::XMLElement *treeRoot, std::vector<std::string>& blackboardDefinitions);
+    void mergeNewPalette(const NodeManifests& palette);
+
+    const std::string _fileName, _cwd;
+    const BT::BehaviorTreeFactory& _factory;
+    NodeManifests _palette;
+    
+    tinyxml2::XMLElement *_rootElement;
 };
+
+
+class AutonomyBlackboardIssue : public AutonomyIssue
+{
+
+};
+
+
+class AutonomyUndefinedIssue : public AutonomyIssue
+{
+
+};
+
 
 /**
  * Detects issues in specific XML node instances, like unfilled required ports
@@ -99,6 +218,11 @@ class AutonomyTreeIssueDetector : public AutonomyIssueDetector
 class AutonomyNodeIssueDetector : public AutonomyIssueDetector
 {
     public:
-    AutonomyNodeIssueDetector(const tinyxml2::XMLElement& node);
+    AutonomyNodeIssueDetector(
+        tinyxml2::XMLElement *node,
+        const BT::BehaviorTreeFactory& factory,
+        const NodeManifests& palette,
+        const std::vector<std::string>& blackboardDefinitions = {});
+    
     HealthError detect() override;
 };
