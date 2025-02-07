@@ -166,7 +166,30 @@ class AutonomyOmittedIssue : public AutonomyIssue
 
 };
 
+//
+// This stuff defines how we analyze control nodes to detect potentially undefined blackboard entries
+//
 
+typedef std::function<std::vector<int>(size_t n)> NodeExecutionOrder;
+
+enum NodeExecutionBlackboardLinkStatus
+{
+    BLACKBOARD_LINKED,
+    BLACKBOARD_UNLINKED
+};
+
+struct NodeExecutionOrderWithBlackboard
+{
+    NodeExecutionOrderWithBlackboard(const NodeExecutionOrder& order, NodeExecutionBlackboardLinkStatus blackboardLinked)
+     : order(order),
+       blackboardLinked(blackboardLinked) { }
+
+    NodeExecutionOrder order;
+    NodeExecutionBlackboardLinkStatus blackboardLinked;
+};
+
+typedef std::vector<NodeExecutionOrderWithBlackboard> NodeExecutionDescription;
+static const std::map<std::string, NodeExecutionDescription> NODE_EXECUTION_DESCRIPTIONS();
 
 /**
  * Detects issues in specific trees such as bad includes, overpopulated decorators, etc.
