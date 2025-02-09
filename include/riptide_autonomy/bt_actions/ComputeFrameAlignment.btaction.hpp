@@ -132,7 +132,7 @@ class ComputeFrameAlignment : public UWRTActionNode {
         }
 
         if(!haveGoalPoseFrameToWorld) {
-            haveGoalPoseFrameToWorld = lookupTransformThrottled(rosNode(), tfBuffer, goalPoseFrameName, "world", 0.5, goalPoseToWorldTimer, goalPoseToWorldTransform, true);
+            haveGoalPoseFrameToWorld = lookupTransformThrottled(rosNode(), tfBuffer, goalPoseFrameName, "world", 0.5, goalPoseToWorldTimer, goalPoseToWorldTransform);
         }
 
         if(haveBaselinkToTarget && haveGoalPoseFrameToWorld) {
