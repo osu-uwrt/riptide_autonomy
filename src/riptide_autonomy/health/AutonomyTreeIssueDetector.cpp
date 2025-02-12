@@ -74,6 +74,12 @@ NodeManifests AutonomyTreeIssueDetector::palette() const
     return _palette;
 }
 
+
+std::string AutonomyTreeIssueDetector::file() const
+{
+    return _fileName;
+}
+
 // addSubdetector override to ensure that palette and blackboard can be updated by subdetectors.
 void AutonomyTreeIssueDetector::addSubdetector(const AutonomyIssueDetector::Ptr& detector)
 {
@@ -90,7 +96,7 @@ void AutonomyTreeIssueDetector::addSubdetector(const AutonomyIssueDetector::Ptr&
         AutonomyIssueDetector::addSubdetector(detector);
 
         //now pull palette out of detector
-        mergeNewPalette(treeDetector->palette());
+        mergeNewPalette(fileDetector->palette());
     }
 }
 
@@ -100,7 +106,7 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
     std::string nodeName = treeRoot->Name();
 
     // spawn and run a node issue detector for the tree root first
-    auto nodeIssueDetector = std::make_shared<AutonomyNodeIssueDetector>(treeRoot, _factory, _palette, blackboardDefinitions);
+    auto nodeIssueDetector = std::make_shared<AutonomyNodeIssueDetector>(treeRoot, _fileName, _factory, _palette, blackboardDefinitions);
     addSubdetector(nodeIssueDetector);
 
     if(_palette.count(nodeName) == 0)
@@ -282,14 +288,24 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
                     newBlackboardDefs = intersected;
                 }
 
-                blackboardDefinitions = newBlackboardDefs;
+                blackboardDefinitions = newBlackboardDefs; //now contains guaranteed blackboard defs
             }
         }
     }
 }
 
 
-void AutonomyTreeIssueDetector::mergeNewPalette(const NodeManifests& palette)
+void AutonomyTreeIssueDetector::mergeNewPalette(const NodeManifests& newPalette)
 {
+    //iterate through palette
+    for(auto pair : newPalette)
+    {        
+        std::string nodeName = pair.first;
+        BT::TreeNodeManifest newManifest = pair.second;
 
+        if(_palette.count(nodeName) == 0)
+        {
+            _palette.insert(pair);
+        }
+    }
 }

@@ -20,7 +20,7 @@ class PublishEKFPose : public UWRTActionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("x", PORT_OPTIONAL,
                 "Optional input; if populated, EKF will be set to this coordinate in the X axis."),

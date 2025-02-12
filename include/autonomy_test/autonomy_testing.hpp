@@ -67,7 +67,7 @@ class DummyActionNode : public UWRTActionNode {
     DummyActionNode(const std::string& name, const BT::NodeConfiguration& config)
     : UWRTActionNode(name, config) { }
 
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return { };
     }
 

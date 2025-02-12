@@ -102,10 +102,10 @@ class AutonomySystemIssueDetector : public AutonomyIssueDetector
 };
 
 //defined in AutonomySyncIssueDetector.cpp
-class AutonomyMismatchIssue : public AutonomyIssue
+class AutonomyNodeMismatchIssue : public AutonomyIssue
 {
     public:
-    AutonomyMismatchIssue(
+    AutonomyNodeMismatchIssue(
         const std::string& file, 
         int line, 
         const std::string& nodeId, 
@@ -153,6 +153,7 @@ class AutonomyFileIssueDetector : public AutonomyIssueDetector
     AutonomyFileIssueDetector(const std::string& file, const BT::BehaviorTreeFactory& factory);
     HealthError detect() override;
     NodeManifests palette() const;
+    std::string file() const;
 
     private:
     const std::string _file;
@@ -163,7 +164,12 @@ class AutonomyFileIssueDetector : public AutonomyIssueDetector
 
 class AutonomyOmittedIssue : public AutonomyIssue
 {
+    public:
+    AutonomyOmittedIssue(const std::string& file);
+    HealthError fix();
 
+    private:
+    std::string file;
 };
 
 //
@@ -207,6 +213,7 @@ class AutonomyTreeIssueDetector : public AutonomyIssueDetector
 
     HealthError detect() override;
     NodeManifests palette() const;
+    std::string file() const;
 
     protected:
     void addSubdetector(const AutonomyIssueDetector::Ptr& detector);
@@ -223,15 +230,11 @@ class AutonomyTreeIssueDetector : public AutonomyIssueDetector
 };
 
 
-class AutonomyBlackboardIssue : public AutonomyIssue
-{
-
-};
-
-
 class AutonomyUndefinedIssue : public AutonomyIssue
 {
-
+    public:
+    AutonomyUndefinedIssue(tinyxml2::XMLElement *node);
+    HealthError fix();
 };
 
 
@@ -243,9 +246,17 @@ class AutonomyNodeIssueDetector : public AutonomyIssueDetector
     public:
     AutonomyNodeIssueDetector(
         tinyxml2::XMLElement *node,
+        const std::string& file,
         const BT::BehaviorTreeFactory& factory,
         const NodeManifests& palette,
         const std::vector<std::string>& blackboardDefinitions = {});
     
     HealthError detect() override;
+
+    private:
+    tinyxml2::XMLElement *_node;
+    const std::string _fileName;
+    const BT::BehaviorTreeFactory& _factory;
+    NodeManifests _palette;
+    std::vector<std::string> _blackboardDefs;
 };

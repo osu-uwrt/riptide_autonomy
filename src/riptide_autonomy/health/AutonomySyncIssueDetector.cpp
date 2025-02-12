@@ -2,10 +2,10 @@
 
 
 //
-// AutonomyMismatchIssue
+// AutonomyNodeMismatchIssue
 //
-AutonomyMismatchIssue::AutonomyMismatchIssue(const std::string& file, int line, const std::string& nodeId, bool fixableInXml, const std::string& description)
- : AutonomyIssue(ISSUE_ERROR, file, line, "AutonomyMismatchIssue", description),
+AutonomyNodeMismatchIssue::AutonomyNodeMismatchIssue(const std::string& file, int line, const std::string& nodeId, bool fixableInXml, const std::string& description)
+ : AutonomyIssue(ISSUE_ERROR, file, line, "AutonomyNodeMismatchIssue", description),
    _nodeId(nodeId),
    _fixableInXml(fixableInXml) { }
 
@@ -116,7 +116,7 @@ HealthError AutonomySyncIssueDetector::detect()
         }
 
         addIssue(
-            std::make_shared<AutonomyMismatchIssue>(
+            std::make_shared<AutonomyNodeMismatchIssue>(
                 _file, treeNodesModel->GetLineNum(), "TreeNodesModel", true, message));
     }
 
@@ -181,11 +181,23 @@ bool AutonomySyncIssueDetector::detectIdAndTypeIssues(const char *xmlId, const c
         return false;
     }
 
+    //check that ID is not the same as that of a builtin node
+    if(_factory.builtinNodes().count(xmlId) > 0)
+    {
+        addIssue(
+            std::make_shared<UnfixableAutonomyIssue>(
+                ISSUE_ERROR,
+                _file,
+                nodeElement->GetLineNum(),
+                "NameError",
+                "Custom node name " + std::string(xmlId) + " is the same as a builtin node"));
+    }
+
     //check that ID is a node that exists in the code
     if(_factory.manifests().count(xmlId) != 1)
     {
         addIssue(
-            std::make_shared<AutonomyMismatchIssue>(
+            std::make_shared<AutonomyNodeMismatchIssue>(
                 _file,
                 nodeElement->GetLineNum(),
                 xmlId,
@@ -218,7 +230,7 @@ bool AutonomySyncIssueDetector::detectIdAndTypeIssues(const char *xmlId, const c
     if(xmlType != factoryType)
     {
         addIssue(
-            std::make_shared<AutonomyMismatchIssue>(
+            std::make_shared<AutonomyNodeMismatchIssue>(
                 _file,
                 nodeElement->GetLineNum(),
                 xmlId,
@@ -256,7 +268,7 @@ bool AutonomySyncIssueDetector::detectPortIssues(const char *xmlId, tinyxml2::XM
         {
             //xml port does not have a name
             addIssue(
-                std::make_shared<AutonomyMismatchIssue>(
+                std::make_shared<AutonomyNodeMismatchIssue>(
                     _file, 
                     portElement->GetLineNum(),
                     xmlId,
@@ -271,7 +283,7 @@ bool AutonomySyncIssueDetector::detectPortIssues(const char *xmlId, tinyxml2::XM
         if(xmlDirectionEnum == (BT::PortDirection) -1)
         {
             addIssue(
-                std::make_shared<AutonomyMismatchIssue>(
+                std::make_shared<AutonomyNodeMismatchIssue>(
                     _file,
                     portElement->GetLineNum(),
                     xmlId,
@@ -291,7 +303,7 @@ bool AutonomySyncIssueDetector::detectPortIssues(const char *xmlId, tinyxml2::XM
         {
             //xml port not present in factory manifest
             addIssue(
-                std::make_shared<AutonomyMismatchIssue>(
+                std::make_shared<AutonomyNodeMismatchIssue>(
                     _file,
                     portElement->GetLineNum(),
                     xmlId,
@@ -306,7 +318,7 @@ bool AutonomySyncIssueDetector::detectPortIssues(const char *xmlId, tinyxml2::XM
         if(xmlDirectionEnum != factoryPortDirection)
         {
             addIssue(
-                std::make_shared<AutonomyMismatchIssue>(
+                std::make_shared<AutonomyNodeMismatchIssue>(
                     _file,
                     portElement->GetLineNum(),
                     xmlId,
@@ -330,7 +342,7 @@ bool AutonomySyncIssueDetector::detectPortIssues(const char *xmlId, tinyxml2::XM
         }
 
         addIssue(
-            std::make_shared<AutonomyMismatchIssue>(
+            std::make_shared<AutonomyNodeMismatchIssue>(
                 _file, nodeElement->GetLineNum(), xmlId, true, message));
         
         return false;

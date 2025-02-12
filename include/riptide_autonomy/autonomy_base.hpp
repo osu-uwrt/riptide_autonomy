@@ -56,8 +56,6 @@ const std::string
  *  
  */
 
-typedef std::pair<std::string, BT::PortInfo> BtPort;
-
 //this will be used to describe necessity of ports instead of bools because
 //this will force you to read/write if ports are required or not
 enum UwrtPortNecessity
@@ -65,6 +63,8 @@ enum UwrtPortNecessity
     PORT_REQUIRED,
     PORT_OPTIONAL
 };
+
+typedef std::pair<std::string, BT::PortInfo> BtPort;
 
 /**
  * Wrapper around default behaviortree port type allowing specification of required vs optional ports
@@ -74,7 +74,7 @@ class UwrtPort : public BtPort
     public:
     //direction makes this extendable to output ports but this is meant for input only atm
     UwrtPort(const BT::PortDirection& direction, const BT::StringView& name, const UwrtPortNecessity& portNecessity, const BT::StringView& description = "")
-     : BtPort(BT::CreatePort<std::string>(direction, name, description)),
+     : BtPort(BT::CreatePort(direction, name, description)),
        _necessity(portNecessity)
     { }
 
@@ -84,12 +84,12 @@ class UwrtPort : public BtPort
         return first;
     }
 
-    BT::PortInfo portInfo()
+    BT::PortInfo info()
     {
         return second;
     }
 
-    bool necessity()
+    UwrtPortNecessity necessity()
     {
         return _necessity;
     }
@@ -98,13 +98,83 @@ class UwrtPort : public BtPort
     UwrtPortNecessity _necessity;
 };
 
+typedef std::vector<UwrtPort> UwrtPortInformation;
 
-inline std::pair<std::string, BT::PortInfo> UwrtInput(const BT::StringView& name, const UwrtPortNecessity& necessity, const BT::StringView& description = {}) {
+// these structs can be used to determine if a class provides the static function portInformation
+// this is how BT does it so ik none of yall are going to tell me this is cursed
+template <typename T, typename = void>
+struct has_static_method_portInformation : std::false_type { };
+
+template <typename T>
+struct has_static_method_portInformation<
+    T, typename std::enable_if<
+           std::is_same<decltype(T::portInformation()), UwrtPortInformation>::value>::type>
+  : std::true_type { };
+
+
+inline UwrtPort UwrtInput(const BT::StringView& name, const UwrtPortNecessity& necessity, const BT::StringView& description = {}) {
     return UwrtPort(BT::PortDirection::INPUT, name, necessity, description);
 }
 
-inline std::pair<std::string, BT::PortInfo> UwrtOutput(const BT::StringView& name, const BT::StringView& description = {}) {
+inline UwrtPort UwrtOutput(const BT::StringView& name, const BT::StringView& description = {}) {
     return UwrtPort(BT::PortDirection::OUTPUT, name, PORT_OPTIONAL, description);
+}
+
+//literally just static storage for port information
+class UwrtNodesManifest
+{
+    public:
+    static void addPortInformation(const std::string& node, const UwrtPortInformation& info)
+    {
+        manifest.insert({ node, info });
+    }
+
+    static bool hasInformationForNode(const std::string& name)
+    {
+        return manifest.count(name) > 0;
+    }
+
+    static UwrtPortInformation lookupInformationByNodeName(const std::string& name)
+    {
+        if(!hasInformationForNode(name))
+        {
+            return UwrtPortInformation();
+        }
+
+        return manifest.at(name);
+    }
+
+    private:
+    static std::unordered_map<std::string, UwrtPortInformation> manifest;
+};
+
+// custom node registration function which will handle grabbing of uwrt port information
+template<typename T, typename... ExtraArgs>
+void registerUwrtNode(const std::string& id, BT::BehaviorTreeFactory& factory)
+{
+    constexpr bool paramConstructable =
+          std::is_constructible<T, const std::string&, const BT::NodeConfig&,
+                                ExtraArgs...>::value;
+
+    constexpr bool hasPortInformationFunction = has_static_method_portInformation<T>::value;
+    
+    static_assert(!(paramConstructable && !hasPortInformationFunction),
+        "[registerNode]: you MUST implement the static method:\n"
+        "  UwrtPortInformation portInformation();\n");
+    
+    //now store uwrt port information
+    UwrtPortInformation info = T::portInformation();
+    UwrtNodesManifest::addPortInformation(id, info);
+
+    //assemble portslist
+    BT::PortsList pl;
+    for(UwrtPort port : info)
+    {
+        pl.insert(port);
+    }
+
+    //now register node with BT
+    factory.registerNodeType<T>(id, pl);
 }
 
 /**

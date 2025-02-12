@@ -15,7 +15,7 @@ class GetError : public UWRTActionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("target", PORT_REQUIRED,
                 "The name of the object to track"),

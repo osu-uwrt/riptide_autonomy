@@ -14,7 +14,7 @@ class SetControllerSafeMode : public UWRTActionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("safe", PORT_REQUIRED,
                 "Boolean; 1 for safe mode, 0 for stunts enabled"),

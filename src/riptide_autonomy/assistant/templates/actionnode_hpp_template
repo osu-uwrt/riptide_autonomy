@@ -14,7 +14,7 @@ class <1> : public <2> {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
 
         };

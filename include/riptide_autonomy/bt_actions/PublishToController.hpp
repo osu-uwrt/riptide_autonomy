@@ -16,7 +16,7 @@ class PublishToController : public UWRTActionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("is_orientation", PORT_REQUIRED,
                 "1 if publishing RPY orientation, 0 otherwise"),

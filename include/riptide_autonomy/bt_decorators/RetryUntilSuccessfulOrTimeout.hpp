@@ -14,7 +14,7 @@ class RetryUntilSuccessfulOrTimeout : public UWRTDecoratorNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("num_seconds", PORT_REQUIRED,
                 "Number of seconds to tick child before returning FAILURE")

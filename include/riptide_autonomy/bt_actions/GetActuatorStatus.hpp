@@ -17,7 +17,7 @@ class GetActuatorStatus : public UWRTActionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtOutput("claw_state",
                 "1 if ready-to-go, 0 otherwise"),

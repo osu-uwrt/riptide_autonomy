@@ -17,7 +17,7 @@ class CallTriggerService : public UWRTActionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("srv_name", PORT_REQUIRED,
                 "Name of the service to call"),

@@ -19,7 +19,7 @@ class SetMappingTarget : public UWRTActionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("target_object", PORT_REQUIRED,
                 "New target mapping object"),

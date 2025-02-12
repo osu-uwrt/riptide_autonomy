@@ -14,7 +14,7 @@ class CompareNums : public UWRTConditionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("test", PORT_REQUIRED,
                 "Test to perform (can be <, >, or ==)"),

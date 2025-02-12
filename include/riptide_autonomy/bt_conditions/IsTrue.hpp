@@ -14,7 +14,7 @@ class IsTrue : public UWRTConditionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("value", PORT_REQUIRED,
                 "Boolean; 1 for true, 0 for false")

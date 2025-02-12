@@ -13,7 +13,7 @@ def onGenerateRegistrators(args, autonomyRootLoc: str):
         headers = ""
         for file in generalFiles:
             # perform general registration on all other hpps
-            registrations += "    factory.registerNodeType<{0}>(\"{0}\");\n".format(fileNameNoExt(file))
+            registrations += "    registerUwrtNode<{0}>(\"{0}\", factory);\n".format(fileNameNoExt(file))
             
             #figure out node type (its in the name between the second to last and last dots)
             lastDelimiter = file.rfind("/")

@@ -40,7 +40,7 @@ class ComputeFrameAlignment : public UWRTActionNode {
      * @brief Declares ports needed by this node.
      * @return PortsList Needed ports.
      */
-    static BT::PortsList providedPorts() {
+    static UwrtPortInformation portInformation() {
         return {
             UwrtInput("x", PORT_REQUIRED),
             UwrtInput("y", PORT_REQUIRED),
