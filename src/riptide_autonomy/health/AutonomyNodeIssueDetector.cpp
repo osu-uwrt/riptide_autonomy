@@ -1,9 +1,29 @@
 #include "riptide_autonomy/autonomy_health.hpp"
 
+//
+// AutonomyUndefinedIssue
+//
+
+AutonomyUndefinedIssue::AutonomyUndefinedIssue(const std::string& file, tinyxml2::XMLElement *node)
+ : AutonomyIssue(ISSUE_ERROR, file, node->GetLineNum(), "AutonomyUndefinedIssue",
+                  "Node " + std::string(node->Name()) + " is undefined")
+ { }
+
+
+HealthError AutonomyUndefinedIssue::fix()
+{
+   return HealthError(false, "");
+}
+
+
+//
+// AutonomyNodeIssueDetector
+//
+
 AutonomyNodeIssueDetector::AutonomyNodeIssueDetector(
     tinyxml2::XMLElement *node,
     const std::string& file,
-    const BT::BehaviorTreeFactory& factory,
+    std::shared_ptr<const BT::BehaviorTreeFactory> factory,
     const NodeManifests& palette,
     const std::vector<std::string>& blackboardDefinitions)
  : _node(node),
@@ -18,49 +38,71 @@ HealthError AutonomyNodeIssueDetector::detect()
    std::string nodeName = _node->Name(); //should exist
 
    //does it exist in the manifests
-   if(_factory.manifests().count(nodeName) == 0)
+   if(_factory->manifests().count(nodeName) == 0)
    {
-      addIssue(std::make_shared<AutonomyUndefinedIssue>(_node));
+      addIssue(std::make_shared<AutonomyUndefinedIssue>(_fileName, _node));
+      return HealthError(true, "Aborted due to previous errors");
    }
 
-   if(!UwrtNodesManifest::hasInformationForNode(nodeName))
+   if(_factory->builtinNodes().count(nodeName) == 0 && _palette.count(nodeName) == 0)
    {
       addIssue(
          std::make_shared<UnfixableAutonomyIssue>(
             ISSUE_ERROR,
-            "",
-            0,
-            "CodeError",
-            "Node with name " + nodeName + " is not known by the UWRT nodes manifest"));
-         
+            _fileName,
+            _node->GetLineNum(),
+            "ModelError",
+            "Node " + nodeName + " is not present in the TreeNodesModel"));
+
       return HealthError(true, "Aborted due to previous errors");
    }
 
-   UwrtPortInformation ports = UwrtNodesManifest::lookupInformationByNodeName(nodeName);
+   //now process individual port values for issues
+   BT::PortsList btPorts = _factory->manifests().at(nodeName).ports;
 
-   //now iterate through ports. Make sure the required ones are populated and that bb refs are good
-   for(UwrtPort port : ports)
+   // check UWRT port information if able to
+   std::map<std::string, UwrtPortNecessity> portNecessities;
+
+   if(UwrtNodesManifest::hasInformationForNode(nodeName))
    {
-      std::string portName(port.name());
+      UwrtPortInformation uwrtPorts = UwrtNodesManifest::lookupInformationByNodeName(nodeName);
+      for(UwrtPort port : uwrtPorts)
+      {
+         portNecessities.insert({ std::string(port.name()), port.necessity() });
+      }
+   }         
 
-      UwrtPortNecessity necessity = port.necessity();
 
+   //check for bad blackboard refs (this does not require uwrt ports so it is done in another loop)
+   for(auto pair : btPorts)
+   {
+      //name and value
+      std::string portName = pair.first;
       const char *portValue = _node->Attribute(portName.c_str());
 
-      if(!portValue && necessity == PORT_REQUIRED)
+      //                                                 super secret hack
+      UwrtPortNecessity necessity = (portName.at(0) == '_' ? PORT_OPTIONAL : PORT_REQUIRED);
+      if(portNecessities.count(portName) > 0)
+      {
+         necessity = portNecessities.at(portName);
+      }
+
+      // necessity. If required then the value must be provided
+      if((!portValue || std::string(portValue).empty()) && necessity == PORT_REQUIRED)
       {
          addIssue(
             std::make_shared<UnfixableAutonomyIssue>(
                ISSUE_ERROR,
                _fileName,
                _node->GetLineNum(),
-               "PortError",
-               nodeName + " missing value for required port " + portName));
+               "RequiredPortError",
+               nodeName + " missing value for required port \"" + portName + "\""));
          
          continue;
       }
 
-      if(BT::TreeNode::isBlackboardPointer(portValue))
+      //bad blackboard ref
+      if(portValue && BT::TreeNode::isBlackboardPointer(portValue))
       {
          //now check that blackboard reference is good
          std::string targetPointer = std::string(BT::TreeNode::stripBlackboardPointer(portValue));
@@ -77,5 +119,7 @@ HealthError AutonomyNodeIssueDetector::detect()
             continue;
          }
       }
-   }
+   }   
+
+   return HealthError(false, "");
 }

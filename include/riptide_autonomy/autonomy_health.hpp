@@ -130,7 +130,7 @@ class AutonomySyncIssueDetector : public AutonomyIssueDetector
 
     AutonomySyncIssueDetector(
         const std::string& file,
-        const BT::BehaviorTreeFactory& factory);
+        std::shared_ptr<const BT::BehaviorTreeFactory> factory);
 
     HealthError detect() override;
     NodeManifests palette() const;
@@ -141,7 +141,7 @@ class AutonomySyncIssueDetector : public AutonomyIssueDetector
     bool detectPortIssues(const char *xmlId, tinyxml2::XMLElement* nodeElement);
 
     const std::string _file;
-    const BT::BehaviorTreeFactory& _factory;
+    std::shared_ptr<const BT::BehaviorTreeFactory> _factory;
 
     NodeManifests _palette;
 };
@@ -150,14 +150,14 @@ class AutonomySyncIssueDetector : public AutonomyIssueDetector
 class AutonomyFileIssueDetector : public AutonomyIssueDetector
 {
     public:
-    AutonomyFileIssueDetector(const std::string& file, const BT::BehaviorTreeFactory& factory);
+    AutonomyFileIssueDetector(const std::string& file, std::shared_ptr<const BT::BehaviorTreeFactory> factory);
     HealthError detect() override;
     NodeManifests palette() const;
     std::string file() const;
 
     private:
     const std::string _file;
-    const BT::BehaviorTreeFactory& _factory;
+    std::shared_ptr<const BT::BehaviorTreeFactory> _factory;
     NodeManifests _palette;
 };
 
@@ -208,7 +208,7 @@ class AutonomyTreeIssueDetector : public AutonomyIssueDetector
         const std::string& fileName,
         const std::string& cwd,
         tinyxml2::XMLElement *root,
-        const BT::BehaviorTreeFactory& factory,
+        std::shared_ptr<const BT::BehaviorTreeFactory> factory,
         const NodeManifests& palette);
 
     HealthError detect() override;
@@ -223,7 +223,7 @@ class AutonomyTreeIssueDetector : public AutonomyIssueDetector
     void mergeNewPalette(const NodeManifests& palette);
 
     const std::string _fileName, _cwd;
-    const BT::BehaviorTreeFactory& _factory;
+    std::shared_ptr<const BT::BehaviorTreeFactory> _factory;
     NodeManifests _palette;
     
     tinyxml2::XMLElement *_rootElement;
@@ -233,7 +233,7 @@ class AutonomyTreeIssueDetector : public AutonomyIssueDetector
 class AutonomyUndefinedIssue : public AutonomyIssue
 {
     public:
-    AutonomyUndefinedIssue(tinyxml2::XMLElement *node);
+    AutonomyUndefinedIssue(const std::string& file, tinyxml2::XMLElement *node);
     HealthError fix();
 };
 
@@ -247,7 +247,7 @@ class AutonomyNodeIssueDetector : public AutonomyIssueDetector
     AutonomyNodeIssueDetector(
         tinyxml2::XMLElement *node,
         const std::string& file,
-        const BT::BehaviorTreeFactory& factory,
+        std::shared_ptr<const BT::BehaviorTreeFactory> factory,
         const NodeManifests& palette,
         const std::vector<std::string>& blackboardDefinitions = {});
     
@@ -256,7 +256,7 @@ class AutonomyNodeIssueDetector : public AutonomyIssueDetector
     private:
     tinyxml2::XMLElement *_node;
     const std::string _fileName;
-    const BT::BehaviorTreeFactory& _factory;
+    std::shared_ptr<const BT::BehaviorTreeFactory> _factory;
     NodeManifests _palette;
     std::vector<std::string> _blackboardDefs;
 };

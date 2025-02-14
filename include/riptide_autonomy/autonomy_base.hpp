@@ -25,6 +25,11 @@
 using namespace std::chrono_literals;
 using namespace std::placeholders;
 
+//defined as a macro (rather than const str) as a backup to the compile def given by cmake
+#ifndef AUTONOMY_PACKAGE_NAME
+#define AUTONOMY_PKG_NAME "riptide_autonomy2"
+#endif
+
 //autonomy asset names
 const std::string
     AUTONOMY_BTPROJ = "trees/uwrt_autonomy.btproj";

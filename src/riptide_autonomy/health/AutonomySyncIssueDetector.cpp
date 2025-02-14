@@ -40,7 +40,7 @@ BT::PortDirection AutonomySyncIssueDetector::stringToPortDirection(const std::st
 
 AutonomySyncIssueDetector::AutonomySyncIssueDetector(
     const std::string& file,
-    const BT::BehaviorTreeFactory& factory)
+    std::shared_ptr<const BT::BehaviorTreeFactory> factory)
  : _file(file),
    _factory(factory) { }
 
@@ -53,7 +53,7 @@ HealthError AutonomySyncIssueDetector::detect()
     tinyxml2::XMLElement *treeNodesModel = detectTreeNodesModel(xmlDoc);
 
     //populate list of factory nodes
-    for(auto it : _factory.manifests())
+    for(auto it : _factory->manifests())
     {
         factoryNodes.push_back(it.first);
     }
@@ -182,7 +182,7 @@ bool AutonomySyncIssueDetector::detectIdAndTypeIssues(const char *xmlId, const c
     }
 
     //check that ID is not the same as that of a builtin node
-    if(_factory.builtinNodes().count(xmlId) > 0)
+    if(_factory->builtinNodes().count(xmlId) > 0)
     {
         addIssue(
             std::make_shared<UnfixableAutonomyIssue>(
@@ -194,7 +194,7 @@ bool AutonomySyncIssueDetector::detectIdAndTypeIssues(const char *xmlId, const c
     }
 
     //check that ID is a node that exists in the code
-    if(_factory.manifests().count(xmlId) != 1)
+    if(_factory->manifests().count(xmlId) != 1)
     {
         addIssue(
             std::make_shared<AutonomyNodeMismatchIssue>(
@@ -209,7 +209,7 @@ bool AutonomySyncIssueDetector::detectIdAndTypeIssues(const char *xmlId, const c
 
     //check that node types match between XML and code
     std::string factoryType = "Undefined";
-    switch(_factory.manifests().at(xmlId).type)
+    switch(_factory->manifests().at(xmlId).type)
     {
         case BT::NodeType::ACTION:
             factoryType = "Action";
@@ -247,7 +247,7 @@ bool AutonomySyncIssueDetector::detectIdAndTypeIssues(const char *xmlId, const c
 bool AutonomySyncIssueDetector::detectPortIssues(const char *xmlId, tinyxml2::XMLElement* nodeElement)
 {
     //get a vector of factory port names so we can keep track of which was are invalid/missing
-    BT::PortsList factoryPorts = _factory.manifests().at(xmlId).ports;
+    BT::PortsList factoryPorts = _factory->manifests().at(xmlId).ports;
     std::vector<std::string> factoryPortNames;
     for(auto it : factoryPorts)
     {

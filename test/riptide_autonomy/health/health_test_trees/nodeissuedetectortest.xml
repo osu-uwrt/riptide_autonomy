@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="UselessSubtree">
+    <AlwaysSuccess/>
+  </BehaviorTree>
+
+  <BehaviorTree ID="badtree">
+    <Sequence>
+      <GetBoolTopic topic="/some_topic"
+                    value=""/>
+      <PublishUInt16 topic="/something_else"
+                     data=""/>
+      <SetBlackboard value=""
+                     output_key="asdf"/>
+      <SetBlackboard value="something"
+                     output_key=""/>
+      <SetBlackboard value="something"
+                     output_key="value"/>
+      <Script code=""/>
+      <Script code="something:=4"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="goodtree">
+    <Sequence>
+      <Fallback>
+        <CallTriggerService srv_name="/some_srv"
+                            time_limit_secs="3"/>
+        <CallSetBoolService srv_name="/some_other_srv"
+                            data="1"
+                            time_limit_secs="4"/>
+      </Fallback>
+      <Info message="what"/>
+      <Script code="var:=5"/>
+      <CompareNums test="&gt;"
+                   a="{var}"
+                   b="4"/>
+      <SubTree ID="UselessSubtree"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="CallSetBoolService"
+            editable="true">
+      <input_port name="srv_name"/>
+      <input_port name="data"/>
+      <input_port name="time_limit_secs"/>
+    </Action>
+    <Action ID="CallTriggerService"
+            editable="true">
+      <input_port name="srv_name"/>
+      <input_port name="time_limit_secs"/>
+    </Action>
+    <Condition ID="CompareNums"
+               editable="true">
+      <input_port name="test"/>
+      <input_port name="a"/>
+      <input_port name="b"/>
+    </Condition>
+    <Action ID="GetBoolTopic"
+            editable="true">
+      <input_port name="topic"/>
+      <output_port name="value"/>
+    </Action>
+    <Action ID="Info"
+            editable="true">
+      <input_port name="message"/>
+    </Action>
+    <Action ID="PublishUInt16"
+            editable="true">
+      <input_port name="topic"/>
+      <input_port name="data"/>
+    </Action>
+  </TreeNodesModel>
+
+</root>

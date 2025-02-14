@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" project_name="Project">
+    <include path="nodeissuedetectortest.xml"/>
+    <!-- Description of Node Models (used by Groot) -->
+    <TreeNodesModel>
+        <Condition ID="ApproxEqualTo" editable="true">
+            <input_port name="a"/>
+            <input_port name="b"/>
+            <input_port name="range"/>
+        </Condition>
+        <Condition ID="ApproxEqualToAngle" editable="true">
+            <input_port name="a"/>
+            <input_port name="b"/>
+            <input_port name="range"/>
+        </Condition>
+        <Action ID="CalculateDistance" editable="true">
+            <input_port name="x1"/>
+            <input_port name="y1"/>
+            <input_port name="z1"/>
+            <input_port name="x2"/>
+            <input_port name="y2"/>
+            <input_port name="z2"/>
+            <output_port name="dist"/>
+        </Action>
+        <Action ID="CallSetBoolService" editable="true">
+            <input_port name="srv_name"/>
+            <input_port name="data"/>
+            <input_port name="time_limit_secs"/>
+        </Action>
+        <Action ID="CallTriggerService" editable="true">
+            <input_port name="srv_name"/>
+            <input_port name="time_limit_secs"/>
+        </Action>
+        <Condition ID="CompareNums" editable="true">
+            <input_port name="test"/>
+            <input_port name="a"/>
+            <input_port name="b"/>
+        </Condition>
+        <Action ID="ComputeFrameAlignment" editable="true">
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+            <input_port name="or"/>
+            <input_port name="op"/>
+            <input_port name="oy"/>
+            <input_port name="reference_frame"/>
+            <input_port name="target_frame"/>
+            <output_port name="out_x"/>
+            <output_port name="out_y"/>
+            <output_port name="out_z"/>
+            <output_port name="out_or"/>
+            <output_port name="out_op"/>
+            <output_port name="out_oy"/>
+        </Action>
+        <Action ID="Error" editable="true">
+            <input_port name="message"/>
+        </Action>
+        <Action ID="GetActuatorStatus" editable="true">
+            <input_port name="claw_state"/>
+            <input_port name="torpedo_state"/>
+            <input_port name="torpedo_available_count"/>
+            <input_port name="dropper_state"/>
+            <input_port name="dropper_available_count"/>
+            <input_port name="actuators_busy"/>
+        </Action>
+        <Action ID="GetBoolTopic" editable="true">
+            <input_port name="topic"/>
+            <output_port name="value"/>
+        </Action>
+        <Action ID="GetError" editable="true">
+            <input_port name="target"/>
+            <output_port name="error"/>
+        </Action>
+        <Action ID="GetHeadingToPoint" editable="true">
+            <input_port name="curr_x"/>
+            <input_port name="curr_y"/>
+            <input_port name="targ_x"/>
+            <input_port name="targ_y"/>
+            <output_port name="heading"/>
+        </Action>
+        <Action ID="GetImuOrientation" editable="true">
+            <input_port name="topic"/>
+            <output_port name="or"/>
+            <output_port name="op"/>
+            <output_port name="oy"/>
+        </Action>
+        <Action ID="GetOdometry" editable="true">
+            <output_port name="x"/>
+            <output_port name="y"/>
+            <output_port name="z"/>
+            <output_port name="or"/>
+            <output_port name="op"/>
+            <output_port name="oy"/>
+        </Action>
+        <Action ID="Info" editable="true">
+            <input_port name="message"/>
+        </Action>
+        <Action ID="PublishEKFPose" editable="true">
+            <input_port name="x"/>
+            <input_port name="set_x">bool, 1 for true 0 for false</input_port>
+            <input_port name="y"/>
+            <input_port name="set_y"/>
+            <input_port name="z"/>
+            <input_port name="set_z"/>
+            <input_port name="roll"/>
+            <input_port name="pitch"/>
+            <input_port name="yaw"/>
+            <input_port name="set_orientation"/>
+        </Action>
+        <Action ID="PublishToController" editable="true">
+            <input_port name="is_orientation"/>
+            <input_port name="mode"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </Action>
+        <Action ID="PublishUInt16" editable="true">
+            <input_port name="topic"/>
+            <input_port name="data"/>
+        </Action>
+        <Decorator ID="RetryUntilSuccessfulOrTimeout" editable="true">
+            <input_port name="num_seconds"/>
+        </Decorator>
+        <Action ID="SetControllerSafeMode" editable="true">
+            <input_port name="safe"/>
+            <input_port name="timeout_secs"/>
+        </Action>
+        <Action ID="SetMappingTarget" editable="true">
+            <input_port name="target_object"/>
+            <input_port name="lock_map"/>
+            <input_port name="time_limit_secs"/>
+        </Action>
+        <Action ID="SetStatus" editable="true">
+            <input_port name="status"/>
+        </Action>
+        <Action ID="TransformPose" editable="true">
+            <input_port name="from_frame"/>
+            <input_port name="to_frame"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+            <input_port name="or"/>
+            <input_port name="op"/>
+            <input_port name="oy"/>
+            <output_port name="out_x"/>
+            <output_port name="out_y"/>
+            <output_port name="out_z"/>
+            <output_port name="out_or"/>
+            <output_port name="out_op"/>
+            <output_port name="out_oy"/>
+        </Action>
+        <Action ID="TriggerControllerStunt" editable="true">
+            <input_port name="stunt_state"/>
+        </Action>
+        <Action ID="Wait" editable="true">
+            <input_port name="seconds"/>
+        </Action>
+        <Action ID="WaitForDetection" editable="true">
+            <input_port name="object_name"/>
+            <input_port name="timeout_secs"/>
+        </Action>
+        <Action ID="format" editable="true">
+            <input_port name="format"/>
+            <output_port name="out"/>
+        </Action>
+    </TreeNodesModel>
+</root>

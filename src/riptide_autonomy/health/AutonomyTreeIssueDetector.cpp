@@ -5,7 +5,7 @@ AutonomyTreeIssueDetector::AutonomyTreeIssueDetector(
     const std::string& fileName,
     const std::string& cwd,
     tinyxml2::XMLElement *root,
-    const BT::BehaviorTreeFactory& factory,
+    std::shared_ptr<const BT::BehaviorTreeFactory> factory,
     const NodeManifests& palette)
  : _fileName(fileName),
    _cwd(cwd),

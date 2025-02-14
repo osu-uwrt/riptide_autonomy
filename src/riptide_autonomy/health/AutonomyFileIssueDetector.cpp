@@ -1,6 +1,6 @@
 #include "riptide_autonomy/autonomy_health.hpp"
 
-AutonomyFileIssueDetector::AutonomyFileIssueDetector(const std::string& file, const BT::BehaviorTreeFactory& factory)
+AutonomyFileIssueDetector::AutonomyFileIssueDetector(const std::string& file, std::shared_ptr<const BT::BehaviorTreeFactory> factory)
  : _file(file),
    _factory(factory) { }
 

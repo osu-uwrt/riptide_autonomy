@@ -225,6 +225,10 @@ if(AUTONOMY_BUILD_TESTS)
     #set(ament_cmake_cpplint_FOUND TRUE)
     ament_lint_auto_find_test_dependencies()
 
+    #
+    # node tester
+    #
+
     #glob all test sources together
     file(GLOB action_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_actions/*.cpp)
     file(GLOB condition_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/bt_conditions/*.cpp)
@@ -250,8 +254,28 @@ if(AUTONOMY_BUILD_TESTS)
       $<INSTALL_INTERFACE:include>)
     
     install(TARGETS test_nodes
-      DESTINATION lib/${PROJECT_NAME}
-    )
+      DESTINATION lib/${PROJECT_NAME})
+
+    #
+    # health utilities tester
+    #
+    file(GLOB health_test_sources RELATIVE ${PROJECT_SOURCE_DIR} test/riptide_autonomy/health/*.cpp)
+    ament_add_gtest(test_health_utils
+      ${health_test_sources})
+
+    target_link_libraries(test_health_utils autonomy_health)
+
+    target_include_directories(test_health_utils PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>)
+
+    #executable
+    install(TARGETS test_health_utils
+      DESTINATION lib/${PROJECT_NAME})
+    
+    #test trees
+    install(DIRECTORY test/riptide_autonomy/health/health_test_trees
+      DESTINATION share/${PROJECT_NAME})
   endif()
 endif()
 
