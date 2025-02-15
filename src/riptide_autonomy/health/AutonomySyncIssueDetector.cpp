@@ -5,10 +5,14 @@
 // AutonomyNodeMismatchIssue
 //
 AutonomyNodeMismatchIssue::AutonomyNodeMismatchIssue(const std::string& file, int line, const std::string& nodeId, bool fixableInXml, const std::string& description)
- : AutonomyIssue(ISSUE_ERROR, file, line, "AutonomyNodeMismatchIssue", description),
+ : AutonomyIssue(ISSUE_ERROR, file, line, "NodeMismatchIssue", description),
    _nodeId(nodeId),
    _fixableInXml(fixableInXml) { }
 
+HealthError AutonomyNodeMismatchIssue::fix()
+{
+    return HealthError(false, "");
+}
 
 //
 // AutonomySyncIssueDetector

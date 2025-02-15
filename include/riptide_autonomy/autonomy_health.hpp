@@ -169,7 +169,7 @@ class AutonomyOmittedIssue : public AutonomyIssue
     HealthError fix();
 
     private:
-    std::string file;
+    std::string _file;
 };
 
 //
@@ -195,7 +195,7 @@ struct NodeExecutionOrderWithBlackboard
 };
 
 typedef std::vector<NodeExecutionOrderWithBlackboard> NodeExecutionDescription;
-static const std::map<std::string, NodeExecutionDescription> NODE_EXECUTION_DESCRIPTIONS();
+const std::map<std::string, NodeExecutionDescription> NODE_EXECUTION_DESCRIPTIONS();
 
 /**
  * Detects issues in specific trees such as bad includes, overpopulated decorators, etc.
@@ -238,6 +238,17 @@ class AutonomyUndefinedIssue : public AutonomyIssue
 };
 
 
+class AutonomyOutputPortFormatIssue : public AutonomyIssue
+{
+    public:
+    AutonomyOutputPortFormatIssue(
+        const std::string& file, 
+        tinyxml2::XMLElement *node, 
+        const std::string& offender);
+    HealthError fix();
+};
+
+
 /**
  * Detects issues in specific XML node instances, like unfilled required ports
  */
@@ -252,11 +263,26 @@ class AutonomyNodeIssueDetector : public AutonomyIssueDetector
         const std::vector<std::string>& blackboardDefinitions = {});
     
     HealthError detect() override;
+    std::vector<std::string> blackboardDefinitions() const;
 
-    private:
+    protected:
     tinyxml2::XMLElement *_node;
     const std::string _fileName;
     std::shared_ptr<const BT::BehaviorTreeFactory> _factory;
     NodeManifests _palette;
     std::vector<std::string> _blackboardDefs;
+};
+
+
+class AutonomyScriptIssueDetector : public AutonomyNodeIssueDetector
+{
+    public:
+    AutonomyScriptIssueDetector(
+        tinyxml2::XMLElement *node,
+        const std::string& file,
+        std::shared_ptr<const BT::BehaviorTreeFactory> factory,
+        const NodeManifests& palette,
+        const std::vector<std::string>& blackboardDefinitions = {});
+    
+    HealthError detect() override;
 };

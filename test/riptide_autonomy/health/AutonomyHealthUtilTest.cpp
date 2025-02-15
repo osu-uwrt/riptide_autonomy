@@ -19,12 +19,6 @@ void AutonomyHealthUtilTest::TearDown()
 
 tinyxml2::XMLElement *AutonomyHealthUtilTest::walkTree(tinyxml2::XMLDocument& doc, const std::string& file, const std::vector<std::pair<std::string, int>>& path)
 {
-    if(path.empty())
-    {
-        std::cerr << "Path is empty" << std::endl;
-        return nullptr;
-    }
-
     //find the desired file in the share directory
     std::string 
         shareDir = ament_index_cpp::get_package_share_directory(AUTONOMY_PKG_NAME),

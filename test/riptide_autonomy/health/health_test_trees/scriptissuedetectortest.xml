@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="tree">
+    <Sequence>
+      <Script code="a:=5"/>
+      <Script code="a:=b+c"/>
+      <Script code="haa:=5;c:=2;t:=haa==c"/>
+      <Script code=";;"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel/>
+
+</root>

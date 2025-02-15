@@ -5,12 +5,27 @@
 //
 
 AutonomyUndefinedIssue::AutonomyUndefinedIssue(const std::string& file, tinyxml2::XMLElement *node)
- : AutonomyIssue(ISSUE_ERROR, file, node->GetLineNum(), "AutonomyUndefinedIssue",
+ : AutonomyIssue(ISSUE_ERROR, file, node->GetLineNum(), "UndefinedIssue",
                   "Node " + std::string(node->Name()) + " is undefined")
  { }
 
 
 HealthError AutonomyUndefinedIssue::fix()
+{
+   return HealthError(false, "");
+}
+
+
+AutonomyOutputPortFormatIssue::AutonomyOutputPortFormatIssue(
+   const std::string& file, 
+   tinyxml2::XMLElement *node, 
+   const std::string& offender)
+ : AutonomyIssue(ISSUE_ERROR, file, node->GetLineNum(), "OutputPortFormatIssue",
+                  "Output port " + offender + " must have braces") 
+{ }
+
+
+HealthError AutonomyOutputPortFormatIssue::fix()
 {
    return HealthError(false, "");
 }
@@ -102,7 +117,7 @@ HealthError AutonomyNodeIssueDetector::detect()
       }
 
       //bad blackboard ref
-      if(portValue && BT::TreeNode::isBlackboardPointer(portValue))
+      if(portValue && BT::TreeNode::isBlackboardPointer(portValue) && pair.second.direction() == BT::PortDirection::INPUT)
       {
          //now check that blackboard reference is good
          std::string targetPointer = std::string(BT::TreeNode::stripBlackboardPointer(portValue));
@@ -119,7 +134,51 @@ HealthError AutonomyNodeIssueDetector::detect()
             continue;
          }
       }
-   }   
+
+      //output ports must have braces
+      if(portValue 
+         && !std::string(portValue).empty() 
+         && pair.second.direction() == BT::PortDirection::OUTPUT
+         && !BT::TreeNode::isBlackboardPointer(portValue))
+      {   
+         addIssue(
+            std::make_shared<AutonomyOutputPortFormatIssue>(
+               _fileName,
+               _node,
+               pair.first));
+      }
+
+      if(portValue
+         && !std::string(portValue).empty()
+         && (pair.second.direction() == BT::PortDirection::OUTPUT
+               || pair.second.direction() == BT::PortDirection::INOUT)
+         && std::find(_blackboardDefs.begin(), _blackboardDefs.end(), pair.first) == _blackboardDefs.end())
+      {
+         _blackboardDefs.push_back(portValue);
+      }
+   }
+
+   //if the node is a script, we have a special detector we can use
+   if(nodeName == "Script")
+   {
+      std::shared_ptr<AutonomyScriptIssueDetector> scriptIssueDetector = 
+         std::make_shared<AutonomyScriptIssueDetector>(
+            _node,
+            _fileName,
+            _factory,
+            _palette,
+            _blackboardDefs);
+
+      addSubdetector(scriptIssueDetector);
+
+      _blackboardDefs = scriptIssueDetector->blackboardDefinitions();
+   }
 
    return HealthError(false, "");
+}
+
+
+std::vector<std::string> AutonomyNodeIssueDetector::blackboardDefinitions() const
+{
+   return _blackboardDefs;
 }

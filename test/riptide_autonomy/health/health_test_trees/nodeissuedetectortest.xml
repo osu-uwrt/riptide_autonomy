@@ -8,6 +8,10 @@
     <Sequence>
       <GetBoolTopic topic="/some_topic"
                     value=""/>
+      <GetBoolTopic topic="/some_topic"
+                    value="ugh"/>
+      <GetBoolTopic topic="/some_topic"
+                    value="{ugh}"/>
       <PublishUInt16 topic="/something_else"
                      data=""/>
       <SetBlackboard value=""

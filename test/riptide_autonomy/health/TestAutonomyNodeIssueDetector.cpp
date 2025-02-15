@@ -53,10 +53,14 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestGoodBuiltinNodeWithPorts)
 
     AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
-    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() > 0);
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 0);
     ASSERT_FALSE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 0);
+    
+    std::vector<std::string> bbDefs = nodeIssueDetector.blackboardDefinitions();
+    ASSERT_EQ(bbDefs.size(), 1);
+    ASSERT_EQ(bbDefs[0], "var");
 }
 
 
@@ -136,7 +140,7 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestNodeNotInManifest)
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 1);
     AutonomyIssue::Ptr iss = issues[0];
-    ASSERT_EQ(iss->type(), "AutonomyUndefinedIssue");
+    ASSERT_EQ(iss->type(), "UndefinedIssue");
 }
 
 
@@ -184,6 +188,55 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestGoodCustomNodeWithBlankOutputPort)
     AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
     printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() > 0);
+    ASSERT_FALSE(err.error);
+    std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
+    ASSERT_EQ(issues.size(), 0);
+}
+
+TEST_F(AutonomyNodeIssueDetectorTest, TestNodeWithoutBracedOutput)
+{
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLElement *node = walkTree(doc, NODEISSUDETECTOR_FILE,
+        {
+            {"BehaviorTree", 1},
+            {"Sequence", 0},
+            {"GetBoolTopic", 1}
+        });
+    
+    ASSERT_TRUE(node);
+
+    //add our nodes to the model
+    _palette.insert({ "GetBoolTopic", BT::TreeNodeManifest() });
+    _palette.insert({ "PublishUInt16", BT::TreeNodeManifest() });
+    
+    AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
+    HealthError err = nodeIssueDetector.detect();
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() == 0);
+    ASSERT_FALSE(err.error);
+    std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
+    ASSERT_EQ(issues.size(), 1);
+    ASSERT_EQ(issues[0]->type(), "OutputPortFormatIssue");
+}
+
+TEST_F(AutonomyNodeIssueDetectorTest, TestGoodOutput)
+{
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLElement *node = walkTree(doc, NODEISSUDETECTOR_FILE,
+        {
+            {"BehaviorTree", 1},
+            {"Sequence", 0},
+            {"GetBoolTopic", 2}
+        });
+    
+    ASSERT_TRUE(node);
+
+    //add our nodes to the model
+    _palette.insert({ "GetBoolTopic", BT::TreeNodeManifest() });
+    _palette.insert({ "PublishUInt16", BT::TreeNodeManifest() });
+    
+    AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
+    HealthError err = nodeIssueDetector.detect();
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 0);
     ASSERT_FALSE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 0);
@@ -345,4 +398,8 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestGoodSetBlackboardNode)
     ASSERT_FALSE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 0);
+
+    std::vector<std::string> bbDefs = nodeIssueDetector.blackboardDefinitions();
+    ASSERT_EQ(bbDefs.size(), 1);
+    ASSERT_EQ(bbDefs[0], "value");
 }

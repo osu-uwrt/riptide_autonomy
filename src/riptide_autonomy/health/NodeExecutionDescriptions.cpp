@@ -29,7 +29,7 @@ const NodeExecutionDescription CONDITION_DRIVEN_NODE_EXECUTION_DESCRIPTION = {
 };
 
 
-static const std::map<std::string, NodeExecutionDescription> NODE_EXECUTION_DESCRIPTIONS()
+const std::map<std::string, NodeExecutionDescription> NODE_EXECUTION_DESCRIPTIONS()
 {
     return {
         {

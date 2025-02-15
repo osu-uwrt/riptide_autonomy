@@ -1,6 +1,18 @@
 #include "riptide_autonomy/autonomy_health.hpp"
 
 
+AutonomyOmittedIssue::AutonomyOmittedIssue(const std::string& file)
+ : AutonomyIssue(ISSUE_WARN, file, 0, "OmittedIssue", "File " + file + " is not present in the main autonomy project"),
+   _file(file)
+{ }
+
+
+HealthError AutonomyOmittedIssue::fix()
+{
+    return HealthError(false, "");
+}
+
+
 AutonomyTreeIssueDetector::AutonomyTreeIssueDetector(
     const std::string& fileName,
     const std::string& cwd,
@@ -29,7 +41,7 @@ HealthError AutonomyTreeIssueDetector::detect()
                     ISSUE_ERROR,
                     _fileName,
                     includeElement->GetLineNum(),
-                    "UnspecifiedInclude",
+                    "UnspecifiedIncludeError",
                     "Include tag does not specify a path"));
             
             continue;
@@ -66,6 +78,8 @@ HealthError AutonomyTreeIssueDetector::detect()
 
         processTreeRecursive(treeRoot, bbDefs);
     }
+
+    return HealthError(false, "");
 }
 
 
@@ -108,33 +122,13 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
     // spawn and run a node issue detector for the tree root first
     auto nodeIssueDetector = std::make_shared<AutonomyNodeIssueDetector>(treeRoot, _fileName, _factory, _palette, blackboardDefinitions);
     addSubdetector(nodeIssueDetector);
+    blackboardDefinitions = nodeIssueDetector->blackboardDefinitions();
 
     if(_palette.count(nodeName) == 0)
     {
         //cant do any of the rest of the tests without knowing what the node is.
         //node subdetector should have already caught and reported this so we wont here.
         return;
-    }
-
-    // now add outputs to blackboard...
-    for(const tinyxml2::XMLAttribute *nodeAttribute = treeRoot->FirstAttribute();
-        nodeAttribute;
-        nodeAttribute = nodeAttribute->Next())
-    {
-        const char 
-            *name = nodeAttribute->Name(),
-            *value = nodeAttribute->Value();
-        
-        //check that port is in the palette. palette contains node because we already checked that
-        //If it is not we will also ignore it
-        BT::PortsList ports = _palette.at(nodeName).ports;
-        if( name && value
-            && ports.count(name) > 0 
-            && ports.at(name).direction() == BT::PortDirection::OUTPUT)
-        {
-            //if we get here, value exists and this is an output port. Add value to blackboard
-            blackboardDefinitions.push_back(value);
-        }
     }
 
     // put children into vector. Not only does this count them but it also helps us with exec order later
