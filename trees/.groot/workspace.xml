@@ -24,9 +24,10 @@
             <SetBlackboard output_key="search_timeout" value="180"/>
             <Action ID="Info" message="BIN TIME"/>
             <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="bin_target" target_cov="target_err" timeout_sec="search_timeout"/>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <Action ID="GetOdometry" op="" or="" oy="yaw" x="" y="" z=""/>
-            <Action ID="Math" a="{yaw}" b="3.1415" operator="+" out="ryaw"/>
+            <Action ID="Math" a="{yaw}" b="-1.5707" operator="+" out="ryaw"/>
             <Action ID="ComputeFrameAlignment" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{ryaw}" reference_frame="{frame}" target_frame="talos/droppers_link" x="0" y="0" z="{overbin}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="SetStatus" status="performing"/>
@@ -171,7 +172,7 @@
             <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
             <Action ID="Info" message="{object_name} error at {lcov}"/>
             <Action ID="GetOdometry" op="" or="" oy="yaw" x="" y="" z=""/>
-            <Action ID="Math" a="{yaw}" b="3.1415" operator="+" out="{ryaw}"/>
+            <Action ID="Math" a="{yaw}" b="-1.5707" operator="+" out="{ryaw}"/>
             <Action ID="ComputeFrameAlignment" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{ryaw}" reference_frame="{frame}" target_frame="talos/dfc_base_link" x="{gx}" y="{gy}" z="{gz}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
