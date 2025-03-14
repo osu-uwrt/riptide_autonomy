@@ -24,7 +24,7 @@
             <SetBlackboard output_key="bin_target" value="bin_target"/>
             <SetBlackboard output_key="search_prox" value="1.8"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
-            <SetBlackboard output_key="overbin" value="0.85"/>
+            <SetBlackboard output_key="overbin" value="0.4"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="object" value="bin"/>
@@ -33,12 +33,14 @@
             <SetBlackboard output_key="search_timeout" value="180"/>
             <Action ID="Info" message="BIN TIME"/>
             <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="bin_target" target_cov="target_err" timeout_sec="search_timeout"/>
-            <Sequence name="DownwardsMiniSearch">
-                <SetBlackboard output_key="a_lot" value="1000"/>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="DownwardsMiniSearchLoop" num_seconds="{timeout_secs}">
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="search_prox" object_name="bin_target" reset_adjust_threshold="a_lot" target_Cov="target_err"/>
-                </Decorator>
-            </Sequence>
+            <ForceSuccess>
+                <Sequence name="DownwardsMiniSearch">
+                    <SetBlackboard output_key="a_lot" value="1000"/>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="DownwardsMiniSearchLoop" num_seconds="20">
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="search_prox" object_name="bin_target" reset_adjust_threshold="a_lot" target_Cov="0"/>
+                    </Decorator>
+                </Sequence>
+            </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <Action ID="GetOdometry" op="" or="" oy="yaw" x="" y="" z=""/>
@@ -47,6 +49,7 @@
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+            <Action ID="Wait" seconds="10"/>
             <Repeat num_cycles="2">
                 <SubTree ID="FireDropper"/>
             </Repeat>
