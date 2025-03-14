@@ -13,9 +13,9 @@
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
             <SetBlackboard output_key="frame" value="bin_target_frame"/>
             <SetBlackboard output_key="bin_target" value="bin_target"/>
-            <SetBlackboard output_key="search_prox" value="0.7"/>
+            <SetBlackboard output_key="search_prox" value="1.8"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
-            <SetBlackboard output_key="overbin" value="0.7"/>
+            <SetBlackboard output_key="overbin" value="0.85"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="object" value="bin"/>
@@ -28,8 +28,8 @@
             <Action ID="SetStatus" status="aligning"/>
             <Action ID="GetOdometry" op="" or="" oy="yaw" x="" y="" z=""/>
             <Action ID="Math" a="{yaw}" b="-1.5707" operator="+" out="ryaw"/>
-            <Action ID="ComputeFrameAlignment" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{ryaw}" reference_frame="{frame}" target_frame="talos/droppers_link" x="0" y="0" z="{overbin}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
+            <Action ID="ComputeFrameAlignment" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" target_frame="talos/droppers_link" x="0" y="0" z="{overbin}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <Repeat num_cycles="2">
@@ -224,7 +224,8 @@
                                     <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" test="&gt;"/>
                                     <Sequence name="reset dist">
                                         <Action ID="Info" message="Detected object enough to sufficiently move. Resetting search"/>
-                                        <SetBlackboard output_key="dist" value="0"/>
+                                        <SetBlackboard output_key="dist" value="{radius_step}"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
                                     </Sequence>
                                     <AlwaysSuccess/>
                                 </IfThenElse>
@@ -232,7 +233,8 @@
                                     <Condition ID="CompareNums" a="{dist}" b="3" test="&gt;"/>
                                     <Sequence>
                                         <Action ID="Info" message="Got too far away from object estimate. Resetting search"/>
-                                        <SetBlackboard output_key="dist" value="0"/>
+                                        <SetBlackboard output_key="dist" value="{radius_step}"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
                                     </Sequence>
                                     <AlwaysSuccess/>
                                 </IfThenElse>
