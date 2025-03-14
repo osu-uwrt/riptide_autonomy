@@ -33,6 +33,12 @@
             <SetBlackboard output_key="search_timeout" value="180"/>
             <Action ID="Info" message="BIN TIME"/>
             <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="bin_target" target_cov="target_err" timeout_sec="search_timeout"/>
+            <Sequence name="DownwardsMiniSearch">
+                <SetBlackboard output_key="a_lot" value="1000"/>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="DownwardsMiniSearchLoop" num_seconds="{timeout_secs}">
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="search_prox" object_name="bin_target" reset_adjust_threshold="a_lot" target_Cov="target_err"/>
+                </Decorator>
+            </Sequence>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <Action ID="GetOdometry" op="" or="" oy="yaw" x="" y="" z=""/>
