@@ -29,6 +29,11 @@ find_package(tinyxml2_vendor REQUIRED)
 find_package(chameleon_tf_msgs REQUIRED)
 find_package(nortek_dvl_msgs REQUIRED)
 
+# Ensure we use the correct Python version
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+message(STATUS "Using Python3 library: ${Python3_LIBRARY}")
+set(PYTHON_LIBRARY ${Python3_LIBRARY})
+
 
 #create directory for auto-generated code which will include headers for custom nodes as well as source code that registers custom nodes
 make_directory(${PROJECT_BINARY_DIR}/autonomy_generator)
