@@ -51,7 +51,9 @@
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <Action ID="Wait" seconds="10"/>
             <Repeat num_cycles="2">
-                <SubTree ID="FireDropper"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <SubTree ID="FireDropper"/>
+                </RetryUntilSuccessful>
             </Repeat>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
         </Sequence>
