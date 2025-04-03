@@ -23,7 +23,12 @@
             <SetBlackboard output_key="target_err" value="0.01"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <Action ID="Info" message="BIN TIME"/>
-            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="bin_target" target_cov="target_err" timeout_sec="search_timeout"/>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="bin_target" target_cov="target_err" timeout_sec="search_timeout"/>
+                </Sequence>
+            </ForceSuccess>
             <ForceSuccess>
                 <Sequence name="DownwardsMiniSearch">
                     <SetBlackboard output_key="a_lot" value="1000"/>
@@ -34,13 +39,11 @@
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <Action ID="GetOdometry" op="" or="" oy="yaw" x="" y="" z=""/>
-            <Action ID="Math" a="{yaw}" b="-1.5707" operator="+" out="ryaw"/>
             <Action ID="ComputeFrameAlignment" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" target_frame="talos/droppers_link" x="0" y="0" z="{overbin}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            <Action ID="Wait" seconds="10"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-            <Action ID="Wait" seconds="10"/>
             <Repeat num_cycles="2">
                 <RetryUntilSuccessful num_attempts="3">
                     <SubTree ID="FireDropper"/>
@@ -95,7 +98,10 @@
             <SetBlackboard output_key="prop" value="buoy"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <ForceSuccess>
-                <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="prop" target_cov="target_cov" timeout_secs="search_time"/>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="prop" target_cov="target_cov" timeout_secs="search_time"/>
+                </Sequence>
             </ForceSuccess>
             <Action ID="Info" message="BUOY TIME"/>
             <Action ID="SetStatus" name="set status to aligning" status="aligning"/>
@@ -181,11 +187,9 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action Covariance="Icov" ID="getCovariance" Target="{object_name}"/>
             <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
-            <Action ID="Info" message="{object_name} error at {lcov}"/>
-            <Action ID="GetOdometry" op="" or="" oy="yaw" x="" y="" z=""/>
-            <Action ID="Math" a="{yaw}" b="-1.5707" operator="+" out="{ryaw}"/>
-            <Action ID="ComputeFrameAlignment" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{ryaw}" reference_frame="{frame}" target_frame="talos/dfc_base_link" x="{gx}" y="{gy}" z="{gz}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
+            <Action ID="Info" message="{object_name} error at {Icov}"/>
+            <Action ID="ComputeFrameAlignment" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" target_frame="talos/dfc_base_link" x="{gx}" y="{gy}" z="{gz}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
             <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
             <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" name="Did we move the object significantly?" test="&gt;"/>
@@ -360,10 +364,13 @@
             <SetBlackboard output_key="subprop" value="gate_hot"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Info" message="GATE TIME"/>
-            <Action ID="SetStatus" status="aligning"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                <Sequence name="Set camera and search">
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                </Sequence>
             </ForceSuccess>
+            <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate_depth"/>
@@ -443,7 +450,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -488,6 +495,20 @@
             <Action ID="TransformPose" from_frame="{frame_name}" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="ReloadActuators">
+        <Fallback>
+            <Sequence>
+                <Action ID="Info" message="Attempting to notify actuators to reload..."/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="command/actuator/notify_reload" time_limit_secs="2"/>
+                </RetryUntilSuccessful>
+                <Action ID="Info" message="Actuator reload successful."/>
+            </Sequence>
+            <ForceFailure>
+                <Action ID="Error" message="Failed to notify actuator reload after 3 attempts"/>
+            </ForceFailure>
+        </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="Search">
         <Sequence name="Search">
@@ -557,6 +578,24 @@
                 </ForceFailure>
             </Fallback>
         </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="SetActiveCamera">
+        <Fallback>
+            <Sequence>
+                <IfThenElse>
+                    <Condition ID="IsTrue" value="{is_dfc}"/>
+                    <Action ID="Info" message="Attempting to set the camera to DFC"/>
+                    <Action ID="Info" message="Attempting to set the camera to FFC"/>
+                </IfThenElse>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallSetBoolService" data="{is_dfc}" srv_name="set_camera_is_dfc" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+                <Action ID="Info" message="Active camera set successfully."/>
+            </Sequence>
+            <ForceFailure>
+                <Action ID="Error" message="Failed to set the active camera after 3 attempts!"/>
+            </ForceFailure>
+        </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="SetActuatorsArmed">
         <ForceSuccess name="REMOVE ME">
@@ -723,7 +762,10 @@
             <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
             <ForceSuccess>
-                <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="search_timeout"/>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="search_timeout"/>
+                </Sequence>
             </ForceSuccess>
             <Fallback name="Try run while armed">
                 <Sequence name="torpedo">
@@ -841,7 +883,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
+            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port name="op" required="true"/>
@@ -934,7 +976,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -1002,6 +1044,7 @@
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
         </SubTree>
+        <SubTree ID="ReloadActuators"/>
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
             <input_port name="num_seconds" required="true">number of seconds until abandonment.</input_port>
         </Decorator>
@@ -1012,6 +1055,10 @@
             <input_port name="object_name" required="false">Frame to search for</input_port>
             <input_port default="1.25" name="target_cov" required="false">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="false">Timeout for search</input_port>
+        </SubTree>
+        <SubTree ID="SetActiveCamera">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="is_dfc" required="true">1 for dfc, 0 otherwise</input_port>
         </SubTree>
         <SubTree ID="SetActuatorsArmed">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -1084,3 +1131,4 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
+

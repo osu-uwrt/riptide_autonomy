@@ -8,36 +8,24 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
-        <Sequence name="COMP">
+        <Sequence>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="3" value="3"/>
-            <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
-            <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="depth" value="-0.56"/>
-            <ForceSuccess>
-                <SubTree ID="ReloadActuators"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
-            </ForceSuccess>
-            <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <ForceSuccess>
-                <SubTree ID="GateTree"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="BuoyTree"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="TorpedoTree"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="BinTree"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="SurfaceTree"/>
-            </ForceSuccess>
-            <SubTree ID="KillController"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <Repeat num_cycles="4">
+                <Sequence>
+                    <Action ID="Info" message="Setting active camera to FFC"/>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <Action ID="Info" message="Long wait..."/>
+                    <Action ID="Wait" seconds="10"/>
+                    <Action ID="Info" message="Setting active camera to DFC"/>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+                    <Action ID="Info" message="Long wait..."/>
+                    <Action ID="Wait" seconds="10"/>
+                </Sequence>
+            </Repeat>
+            <Action ID="Info" message="Seting active camera back to FFC"/>
+            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+            <Action ID="Info" message="Done!"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
@@ -220,7 +208,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action Covariance="Icov" ID="getCovariance" Target="{object_name}"/>
             <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
-            <Action ID="Info" message="{object_name} error at {Icov}"/>
+            <Action ID="Info" message="{object_name} error at {lcov}"/>
             <Action ID="ComputeFrameAlignment" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" target_frame="talos/dfc_base_link" x="{gx}" y="{gy}" z="{gz}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
