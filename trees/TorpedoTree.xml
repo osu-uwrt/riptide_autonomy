@@ -19,7 +19,13 @@
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
         <Sequence name="BINS">
-            <SetBlackboard output_key="overbin" value="0.35"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
+            <SetBlackboard output_key="frame" value="bin_target_frame"/>
+            <SetBlackboard output_key="bin_target" value="bin_target"/>
+            <SetBlackboard output_key="search_prox" value="1.8"/>
+            <SetBlackboard output_key="search_timeout" value="180"/>
+            <SetBlackboard output_key="overbin" value="0.4"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="object" value="bin"/>
@@ -27,12 +33,31 @@
             <SetBlackboard output_key="target_err" value="0.01"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <Action ID="Info" message="BIN TIME"/>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="bin_target" target_cov="target_err" timeout_sec="search_timeout"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess>
+                <Sequence name="DownwardsMiniSearch">
+                    <SetBlackboard output_key="a_lot" value="1000"/>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="DownwardsMiniSearchLoop" num_seconds="20">
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="search_prox" object_name="bin_target" reset_adjust_threshold="a_lot" target_Cov="0"/>
+                    </Decorator>
+                </Sequence>
+            </ForceSuccess>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="object_frame" op="0" or="0" oy="0" x="0" y="0" z="overbin"/>
+            <Action ID="ComputeFrameAlignment" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" target_frame="talos/droppers_link" x="0" y="0" z="{overbin}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            <Action ID="Wait" seconds="10"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <Repeat num_cycles="2">
-                <SubTree ID="FireDropper"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <SubTree ID="FireDropper"/>
+                </RetryUntilSuccessful>
             </Repeat>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
         </Sequence>
@@ -83,7 +108,10 @@
             <SetBlackboard output_key="prop" value="buoy"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <ForceSuccess>
-                <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="prop" target_cov="target_cov" timeout_secs="search_time"/>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="prop" target_cov="target_cov" timeout_secs="search_time"/>
+                </Sequence>
             </ForceSuccess>
             <Action ID="Info" message="BUOY TIME"/>
             <Action ID="SetStatus" name="set status to aligning" status="aligning"/>
@@ -165,66 +193,94 @@
     </BehaviorTree>
     <BehaviorTree ID="DownwardMove">
         <Sequence>
+            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="before_x" out_y="before_y" out_z="before_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
             <SetBlackboard output_key="0" value="0"/>
             <Action Covariance="Icov" ID="getCovariance" Target="{object_name}"/>
-            <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" test="&gt;"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="gx" y="gy" z="gz"/>
+            <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
+            <Action ID="Info" message="{object_name} error at {Icov}"/>
+            <Action ID="ComputeFrameAlignment" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" target_frame="talos/dfc_base_link" x="{gx}" y="{gy}" z="{gz}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
+            <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
+            <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" name="Did we move the object significantly?" test="&gt;"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="DownwardSearch">
-        <Sequence>
-            <Action ID="Info" message="Searching for {object_name} with target covarience {target_cov}"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
-            <SetBlackboard output_key="radius_step" value="2"/>
-            <Action ID="SetStatus" status="searching"/>
-            <Action ID="Format" format="{object_name}_frame" out="frame"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="frame" op="0" or="0" oy="0" x="0" y="0" z="min_dist"/>
-            <SetBlackboard name="half the distance you want" output_key="dist" value="{radius_step}"/>
-            <SetBlackboard output_key="link" value="talos/dropper_link"/>
-            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
-                <Fallback>
-                    <Sequence>
-                        <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="before_x" out_y="before_y" out_z="before_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                        <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
-                        <Action ID="Math" a="{dist}" b="-1" operator="*" out="{ndist}"/>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" target_Cov="target_cov"/>
-                        <Action ID="Math" a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
-                        <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
-                        <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
-                        <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                        <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
-                        <Action ID="Info" message="Estimate moved {amount_adjusted} meters during last loop"/>
-                        <IfThenElse name="should we reset dist">
-                            <Condition ID="CompareNums" a="{amount_adjusted}" b="0.15" test="&gt;"/>
-                            <Sequence name="reset dist">
-                                <Action ID="Info" message="Detected object enough to sufficiently move. Resetting search"/>
-                                <SetBlackboard output_key="dist" value="0"/>
-                            </Sequence>
-                            <AlwaysSuccess/>
-                        </IfThenElse>
-                        <IfThenElse>
-                            <Condition ID="CompareNums" a="{dist}" b="3" test="&gt;"/>
+        <Fallback>
+            <Sequence>
+                <Action ID="Info" message="Searching for {object_name} with target covarience {target_cov}"/>
+                <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&gt;"/>
+                <SetBlackboard output_key="reset_adjust_threshold" value="0.15"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+                <SetBlackboard output_key="radius_step" value="0.5"/>
+                <Action ID="SetStatus" status="searching"/>
+                <Action ID="Format" format="{object_name}_frame" out="frame"/>
+                <Action ID="GetOdometry" op="" or="" oy="abs_yaw" x="" y="" z=""/>
+                <Action ID="TransformPose" from_frame="odom" op="0" or="0" out_op="" out_or="" out_oy="rel_yaw" out_x="" out_y="" out_z="" oy="{abs_yaw}" to_frame="{frame}" x="0" y="0" z="0"/>
+                <ForceSuccess>
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                </ForceSuccess>
+                <SetBlackboard name="half the distance you want" output_key="dist" value="{radius_step}"/>
+                <SetBlackboard output_key="link" value="talos/dropper_link"/>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
+                    <Fallback>
+                        <Sequence>
+                            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="before_x" out_y="before_y" out_z="before_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
+                            <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
+                            <Action ID="Math" a="{dist}" b="-1" operator="*" out="{ndist}"/>
+                            <ForceSuccess>
+                                <Fallback>
+                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                </Fallback>
+                            </ForceSuccess>
                             <Sequence>
-                                <Action ID="Info" message="Got too far away from object estimate. Resetting search"/>
-                                <SetBlackboard output_key="dist" value="0"/>
+                                <Action ID="Math" a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
+                                <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                                <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
+                                <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
+                                <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
+                                <Action ID="Info" message="{frame} moved {amount_adjusted} meters during last loop."/>
+                                <IfThenElse name="should we reset dist">
+                                    <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" test="&gt;"/>
+                                    <Sequence name="reset dist">
+                                        <Action ID="Info" message="Detected object enough to sufficiently move. Resetting search"/>
+                                        <SetBlackboard output_key="dist" value="{radius_step}"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    </Sequence>
+                                    <AlwaysSuccess/>
+                                </IfThenElse>
+                                <IfThenElse>
+                                    <Condition ID="CompareNums" a="{dist}" b="3" test="&gt;"/>
+                                    <Sequence>
+                                        <Action ID="Info" message="Got too far away from object estimate. Resetting search"/>
+                                        <SetBlackboard output_key="dist" value="{radius_step}"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    </Sequence>
+                                    <AlwaysSuccess/>
+                                </IfThenElse>
+                                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="Check that covariance is good" test="&lt;"/>
                             </Sequence>
-                            <AlwaysSuccess/>
-                        </IfThenElse>
-                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
-                    </Sequence>
-                    <Sequence>
-                        <Action Covariance="final_cov" ID="getCovariance" Target="{object_name}"/>
-                        <Action ID="Info" message="error is {final_cov}"/>
-                        <Condition ID="CompareNums" a="{final_cov}" b="{target_cov}" test="&lt;"/>
-                    </Sequence>
-                </Fallback>
-            </Decorator>
-            <Action ID="Info" message="{object_name} found"/>
-        </Sequence>
+                        </Sequence>
+                        <Sequence>
+                            <Action Covariance="final_cov" ID="getCovariance" Target="{object_name}"/>
+                            <Action ID="Info" message="error is {final_cov}"/>
+                            <Condition ID="CompareNums" a="{final_cov}" b="{target_cov}" test="&lt;"/>
+                        </Sequence>
+                    </Fallback>
+                </Decorator>
+                <Action ID="Info" message="{object_name} found"/>
+            </Sequence>
+            <Sequence>
+                <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                <Action ID="Info" message="error {cov}, target: {target_cov}, tree ending"/>
+                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+            </Sequence>
+        </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="FireDropper">
         <ForceSuccess name="REMOVE ME">
@@ -318,10 +374,13 @@
             <SetBlackboard output_key="subprop" value="gate_hot"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Info" message="GATE TIME"/>
-            <Action ID="SetStatus" status="aligning"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                <Sequence name="Set camera and search">
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                </Sequence>
             </ForceSuccess>
+            <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate_depth"/>
@@ -373,12 +432,13 @@
     </BehaviorTree>
     <BehaviorTree ID="Move">
         <Sequence>
+            <SetBlackboard output_key="30" value="30"/>
             <SetBlackboard output_key="15" value="15"/>
             <Action ID="Info" message="Moving to XYZ {x}, {y}, {z} with RPY {or}, {op}, {oy}"/>
             <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z=""/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="15" x="cx" y="cy" z="z"/>
             <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="x" y="y" z="z"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" timeout="15" y="oy"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="or" r="op" timeout="30" y="oy"/>
             <Action ID="Wait" seconds="2"/>
             <Action ID="Info" message="Move Complete."/>
         </Sequence>
@@ -445,6 +505,20 @@
             <Action ID="TransformPose" from_frame="{frame_name}" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="ReloadActuators">
+        <Fallback>
+            <Sequence>
+                <Action ID="Info" message="Attempting to notify actuators to reload..."/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="command/actuator/notify_reload" time_limit_secs="2"/>
+                </RetryUntilSuccessful>
+                <Action ID="Info" message="Actuator reload successful."/>
+            </Sequence>
+            <ForceFailure>
+                <Action ID="Error" message="Failed to notify actuator reload after 3 attempts"/>
+            </ForceFailure>
+        </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="Search">
         <Sequence name="Search">
@@ -515,6 +589,24 @@
             </Fallback>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="SetActiveCamera">
+        <Fallback>
+            <Sequence>
+                <IfThenElse>
+                    <Condition ID="IsTrue" value="{is_dfc}"/>
+                    <Action ID="Info" message="Attempting to set the camera to DFC"/>
+                    <Action ID="Info" message="Attempting to set the camera to FFC"/>
+                </IfThenElse>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallSetBoolService" data="{is_dfc}" srv_name="set_camera_is_dfc" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+                <Action ID="Info" message="Active camera set successfully."/>
+            </Sequence>
+            <ForceFailure>
+                <Action ID="Error" message="Failed to set the active camera after 3 attempts!"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
     <BehaviorTree ID="SetActuatorsArmed">
         <ForceSuccess name="REMOVE ME">
             <Sequence>
@@ -532,8 +624,8 @@
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.5"/>
-            <SetBlackboard output_key="ms_prox" value="2"/>
+            <SetBlackboard output_key="shoot_prox" value="0.33"/>
+            <SetBlackboard output_key="ms_prox" value="1.5"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="15"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
@@ -676,11 +768,14 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="search_timeout" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.0025"/>
-            <SetBlackboard output_key="min_dist" value="0.5"/>
-            <SetBlackboard output_key="max_dist" value="2"/>
+            <SetBlackboard output_key="min_dist" value="2"/>
+            <SetBlackboard output_key="max_dist" value="5"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
             <ForceSuccess>
-                <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="search_timeout"/>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="search_timeout"/>
+                </Sequence>
             </ForceSuccess>
             <Fallback name="Try run while armed">
                 <Sequence name="torpedo">
@@ -828,6 +923,7 @@
             <input_port name="gy" required="false"/>
             <input_port name="gz" required="true"/>
             <input_port name="object_name" required="true"/>
+            <input_port name="reset_adjust_threshold" required="true"/>
             <input_port name="target_Cov" required="true"/>
         </SubTree>
         <SubTree ID="DownwardSearch">
@@ -959,6 +1055,7 @@
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
         </SubTree>
+        <SubTree ID="ReloadActuators"/>
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
             <input_port name="num_seconds" required="true">number of seconds until abandonment.</input_port>
         </Decorator>
@@ -969,6 +1066,10 @@
             <input_port name="object_name" required="false">Frame to search for</input_port>
             <input_port default="1.25" name="target_cov" required="false">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="false">Timeout for search</input_port>
+        </SubTree>
+        <SubTree ID="SetActiveCamera">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="is_dfc" required="true">1 for dfc, 0 otherwise</input_port>
         </SubTree>
         <SubTree ID="SetActuatorsArmed">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
