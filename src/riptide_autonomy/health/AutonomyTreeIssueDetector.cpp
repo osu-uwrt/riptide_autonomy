@@ -27,58 +27,22 @@ AutonomyTreeIssueDetector::AutonomyTreeIssueDetector(
 
 HealthError AutonomyTreeIssueDetector::detect()
 {
-    //process includes first to ensure that subtrees will be recognized
-    for(
-        tinyxml2::XMLElement *includeElement = _rootElement->FirstChildElement("include");
-        includeElement;
-        includeElement = includeElement->NextSiblingElement("include"))
+    tinyxml2::XMLElement *treeRoot = _rootElement->FirstChildElement();
+    if(!treeRoot)
     {
-        const char *pathAttribute = includeElement->Attribute("path");
-        if(!pathAttribute)
-        {
-            addIssue(
-                std::make_shared<UnfixableAutonomyIssue>(
-                    ISSUE_ERROR,
-                    _fileName,
-                    includeElement->GetLineNum(),
-                    "UnspecifiedIncludeError",
-                    "Include tag does not specify a path"));
-            
-            continue;
-        }
+        addIssue(
+            std::make_shared<UnfixableAutonomyIssue>(
+                ISSUE_WARN,
+                _fileName,
+                _rootElement->GetLineNum(),
+                "EmptyTree",
+                "Behavior Tree is empty"));
 
-        std::shared_ptr<AutonomyFileIssueDetector> fileDetector = 
-            std::make_shared<AutonomyFileIssueDetector>(
-                _cwd + _fileName, _factory);
-
-        addSubdetector(fileDetector);
+        return HealthError(true, "Aborted due to previous issues");        
     }
 
-    //now process trees. Assume our palette is correct
-    for(
-        tinyxml2::XMLElement *behaviorTree = _rootElement->FirstChildElement("BehaviorTree");
-        behaviorTree;
-        behaviorTree = behaviorTree->NextSiblingElement("BehaviorTree"))
-    {
-        std::vector<std::string> bbDefs;
-        tinyxml2::XMLElement *treeRoot = behaviorTree->FirstChildElement();
-
-        if(!treeRoot)
-        {
-            addIssue(
-                std::make_shared<UnfixableAutonomyIssue>(
-                    ISSUE_WARN,
-                    _fileName,
-                    behaviorTree->GetLineNum(),
-                    "EmptyTree",
-                    "Behavior Tree is empty"));
-            
-            continue;
-        }
-
-        processTreeRecursive(treeRoot, bbDefs);
-    }
-
+    std::vector<std::string> bbDefs;
+    processTreeRecursive(treeRoot, bbDefs);
     return HealthError(false, "");
 }
 
@@ -111,6 +75,9 @@ void AutonomyTreeIssueDetector::addSubdetector(const AutonomyIssueDetector::Ptr&
 
         //now pull palette out of detector
         mergeNewPalette(fileDetector->palette());
+    } else
+    {
+        AutonomyIssueDetector::addSubdetector(detector);
     }
 }
 
@@ -124,7 +91,11 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
     addSubdetector(nodeIssueDetector);
     blackboardDefinitions = nodeIssueDetector->blackboardDefinitions();
 
-    if(_palette.count(nodeName) == 0)
+    bool
+        hasDefinitionInPalette = _palette.count(nodeName) > 0,
+        isDefinitionBuiltin = _factory->builtinNodes().count(nodeName) > 0;
+
+    if(!hasDefinitionInPalette && !isDefinitionBuiltin)
     {
         //cant do any of the rest of the tests without knowing what the node is.
         //node subdetector should have already caught and reported this so we wont here.
@@ -143,7 +114,24 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
 
     // ensure that if there are children, the node is a decorator or control. 
     // if there are multiple children, the node must be a control
-    BT::NodeType nodeType = _palette.at(nodeName).type;
+    BT::TreeNodeManifest manifest;
+    if(hasDefinitionInPalette)
+    {
+        //pull from the palette for a custom node. this is so the detector goes by the tree definition
+        //which could lead to less confusing errors. sync issues will be caught by another detector
+        manifest = _palette.at(nodeName);
+    } else if(isDefinitionBuiltin)
+    {
+        //if it is a builtin node, pull from the factory rather than the definition in the tree
+        manifest = _factory->manifests().at(nodeName);
+    } else
+    {
+        //this should never be reached
+        std::cout << "INTERNAL ERROR @ " << __FILE__ << ":" << __LINE__ << std::endl;
+        return;
+    }
+
+    BT::NodeType nodeType = manifest.type;
     
     if(nodeType == BT::NodeType::CONTROL && children.size() == 0)
     {
@@ -152,7 +140,7 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
                 ISSUE_ERROR,
                 _fileName,
                 treeRoot->GetLineNum(),
-                "BTError",
+                "BTControlError",
                 "Control node cannot have zero children"));
         
         return;
@@ -165,14 +153,14 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
                 ISSUE_ERROR,
                 _fileName,
                 treeRoot->GetLineNum(),
-                "BTError",
+                "BTDecoratorError",
                 "Decorator must have exactly one child"));
         
         return;
     }
 
     if((nodeType == BT::NodeType::ACTION
-        || nodeType == BT::NodeType::DECORATOR
+        || nodeType == BT::NodeType::CONDITION
         || nodeType == BT::NodeType::SUBTREE)
         && children.size() > 0)
     {
@@ -181,7 +169,7 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
                 ISSUE_ERROR,
                 _fileName,
                 treeRoot->GetLineNum(),
-                "BTError",
+                "BTLeafError",
                 "Leaf nodes cannot have children."));
         
         return;
@@ -238,7 +226,7 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
                         _fileName,
                         treeRoot->GetLineNum(),
                         "BTWarning",
-                        "INTERNAL ERROR: Node execution description for node " + std::string(nodeName) + " included"
+                        "Node execution description for node " + std::string(nodeName) + " included"
                         "an index for a child node (" + std::to_string(idx) + " that does not exist."
                         "(we have " + std::to_string(children.size()) + ")"));
                 }
@@ -262,7 +250,8 @@ void AutonomyTreeIssueDetector::processTreeRecursive(tinyxml2::XMLElement *treeR
                 for(int idx : order)
                 {
                     std::vector<std::string> scopedBlackboardDefs(blackboardDefinitions);
-                    processTreeRecursive(children[idx], blackboardDefinitions);
+                    processTreeRecursive(children[idx], scopedBlackboardDefs);
+                    blackboardPossibilities.push_back(scopedBlackboardDefs);
                 }
 
                 //vector intersection: https://stackoverflow.com/questions/19483663/vector-intersection-in-c

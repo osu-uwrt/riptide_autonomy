@@ -2,7 +2,16 @@
 
 std::vector<AutonomyIssue::Ptr> AutonomyIssueDetector::issues() const
 {
-    return _issues;
+    std::vector<AutonomyIssue::Ptr> v(_issues);
+
+    //add issues from all subdetectors now
+    for(AutonomyIssueDetector::Ptr subdetector : _subdetectors)
+    {
+        std::vector<AutonomyIssue::Ptr> subIssues = subdetector->issues();
+        v.insert(v.end(), subIssues.begin(), subIssues.end());
+    }
+
+    return v;
 }
 
 

@@ -92,3 +92,17 @@ void AutonomyHealthUtilTest::printIssuesIf(const AutonomyIssueDetector& detector
         std::cerr << message << std::endl;
     }
 }
+
+
+bool AutonomyHealthUtilTest::issueVectorContains(const std::vector<AutonomyIssue::Ptr>& vec, const std::string issueType)
+{
+    for(AutonomyIssue::Ptr iss : vec)
+    {
+        if(iss->type() == issueType)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}

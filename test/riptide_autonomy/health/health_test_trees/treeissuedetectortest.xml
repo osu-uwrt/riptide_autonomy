@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
+
+  <BehaviorTree ID="simplegoodtree">
+    <AlwaysSuccess/>
+  </BehaviorTree>
+
+  <BehaviorTree ID="recursiontesttree">
+    <Sequence>
+      <Fallback>
+        <AlwaysFailure/>
+        <AlwaysFailure/>
+        <AlwaysSuccess/>
+        <AlwaysFailure/>
+      </Fallback>
+      <Inverter>
+        <Script/> <!--should cause error-->
+      </Inverter>
+      <AlwaysSuccess/>
+    </Sequence>
+  </BehaviorTree>
+
   <BehaviorTree ID="complexgoodtree">
     <Sequence>
       <Info message="a"/>
@@ -17,25 +37,6 @@
       <Info message="{aa}"/>
       <Info message="{b}"/>
     </Sequence>
-  </BehaviorTree>
-
-  <BehaviorTree ID="recursiontesttree">
-    <Sequence>
-      <Fallback>
-        <AlwaysFailure/>
-        <AlwaysFailure/>
-        <AlwaysSuccess/>
-        <AlwaysFailure/>
-      </Fallback>
-      <Inverter>
-        <Script code=""/>
-      </Inverter>
-      <AlwaysSuccess/>
-    </Sequence>
-  </BehaviorTree>
-
-  <BehaviorTree ID="simplegoodtree">
-    <AlwaysSuccess/>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->

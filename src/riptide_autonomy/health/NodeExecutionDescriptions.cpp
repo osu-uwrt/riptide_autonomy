@@ -24,8 +24,8 @@ const NodeExecutionDescription SEQUENTIAL_UNLINKED_NODE_EXECUTION_DESCRIPTION = 
 };
 
 const NodeExecutionDescription CONDITION_DRIVEN_NODE_EXECUTION_DESCRIPTION = {
-    NodeExecutionOrderWithBlackboard([](size_t n) { return std::vector<int>{ 1 }; }, BLACKBOARD_LINKED),
-    NodeExecutionOrderWithBlackboard([](size_t n) { return std::vector<int>{ 2, 3 }; }, BLACKBOARD_UNLINKED),
+    NodeExecutionOrderWithBlackboard([](size_t n) { return std::vector<int>{ 0 }; }, BLACKBOARD_LINKED),
+    NodeExecutionOrderWithBlackboard([](size_t n) { return std::vector<int>{ 1, 2 }; }, BLACKBOARD_UNLINKED),
 };
 
 
@@ -62,6 +62,10 @@ const std::map<std::string, NodeExecutionDescription> NODE_EXECUTION_DESCRIPTION
         },
         {
             "ReactiveSequence",
+            SEQUENTIAL_LINKED_NODE_EXECUTION_DESCRIPTION
+        },
+        {
+            "Sequence",
             SEQUENTIAL_LINKED_NODE_EXECUTION_DESCRIPTION
         },
         {

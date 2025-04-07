@@ -100,11 +100,47 @@ HealthError AutonomyFileIssueDetector::detect()
         return HealthError(true, "Aborted due to earlier issues");
     }
 
-    auto treeDetector = std::make_shared<AutonomyTreeIssueDetector>(_file, cwd, fileRootElement, _factory, _palette);
-    addSubdetector(treeDetector); //function will run detector
+    //process includes first to ensure that subtrees will be recognized
+    for(
+        tinyxml2::XMLElement *includeElement = fileRootElement->FirstChildElement("include");
+        includeElement;
+        includeElement = includeElement->NextSiblingElement("include"))
+    {
+        const char *pathAttribute = includeElement->Attribute("path");
+        if(!pathAttribute)
+        {
+            addIssue(
+                std::make_shared<UnfixableAutonomyIssue>(
+                    ISSUE_ERROR,
+                    _file,
+                    includeElement->GetLineNum(),
+                    "UnspecifiedIncludeError",
+                    "Include tag does not specify a path"));
+            
+            continue;
+        }
 
-    //now make the palette accessible through our accessor
-    _palette = treeDetector->palette();
+        std::shared_ptr<AutonomyFileIssueDetector> fileDetector = 
+            std::make_shared<AutonomyFileIssueDetector>(
+                cwd + _file, _factory);
+
+        addSubdetector(fileDetector);
+    }
+
+
+    //now process trees. Assume our palette is correct
+    for(
+        tinyxml2::XMLElement *behaviorTree = fileRootElement->FirstChildElement("BehaviorTree");
+        behaviorTree;
+        behaviorTree = behaviorTree->NextSiblingElement("BehaviorTree"))
+    {
+        tinyxml2::XMLElement *treeRoot = behaviorTree->FirstChildElement();
+
+        auto treeDetector = std::make_shared<AutonomyTreeIssueDetector>(_file, cwd, fileRootElement, _factory, _palette);
+        addSubdetector(treeDetector); //function will run detector
+    }
+
+    return HealthError(false, "");
 }
 
 

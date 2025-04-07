@@ -135,7 +135,7 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestNodeNotInManifest)
 
     AutonomyNodeIssueDetector nodeIssueDetector(node, BADMANIFEST_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
-    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() == 0);
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 1);
     ASSERT_TRUE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 1);
@@ -160,7 +160,7 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestNodeNotInModel)
 
     AutonomyNodeIssueDetector nodeIssueDetector(node, BADMANIFEST_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
-    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() == 0);
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 1);
     ASSERT_TRUE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 1);
@@ -211,7 +211,7 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestNodeWithoutBracedOutput)
     
     AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
-    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() == 0);
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 1);
     ASSERT_FALSE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 1);
@@ -261,7 +261,7 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestCustomNodeWithBlankRequiredInputPort)
     
     AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
-    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() == 0);
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 1);
     ASSERT_FALSE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 1);
@@ -288,7 +288,7 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestBuiltinNodeWithBlankInputPort)
     
     AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
-    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() == 0);
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 1);
     ASSERT_FALSE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 1);
@@ -315,7 +315,7 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestBuiltinNodeWithBlankInOutPort)
     
     AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
-    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() == 0);
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 1);
     ASSERT_FALSE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 1);
@@ -342,7 +342,7 @@ TEST_F(AutonomyNodeIssueDetectorTest, TestBlankScript)
     
     AutonomyNodeIssueDetector nodeIssueDetector(node, NODEISSUDETECTOR_FILE, _factory, _palette);
     HealthError err = nodeIssueDetector.detect();
-    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() == 0);
+    printIssuesIf(nodeIssueDetector, nodeIssueDetector.issues().size() != 1);
     ASSERT_FALSE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = nodeIssueDetector.issues();
     ASSERT_EQ(issues.size(), 1);

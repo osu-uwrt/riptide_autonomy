@@ -90,7 +90,7 @@ TEST_F(AutonomyScriptIssueDetectorTest, TestSimpleScriptWithBadBlackboardRefs)
         _palette);
     
     HealthError err = detector.detect();
-    printIssuesIf(detector, detector.issues().size() == 0);
+    printIssuesIf(detector, detector.issues().size() != 1);
     ASSERT_TRUE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = detector.issues();
     ASSERT_EQ(issues.size(), 1);
@@ -148,7 +148,7 @@ TEST_F(AutonomyScriptIssueDetectorTest, TestBadScript)
         _palette);
     
     HealthError err = detector.detect();
-    printIssuesIf(detector, detector.issues().size() == 0);
+    printIssuesIf(detector, detector.issues().size() != 1);
     ASSERT_TRUE(err.error);
     std::vector<AutonomyIssue::Ptr> issues = detector.issues();
     ASSERT_EQ(issues.size(), 1);
