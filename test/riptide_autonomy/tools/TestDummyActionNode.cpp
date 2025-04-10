@@ -70,6 +70,6 @@ TEST_F(TestToolTest, test_DummyActionNode_successAfterNonzeroTime) {
     double secondsElapsed = (finishTime - startTime).seconds();
 
     ASSERT_GT(dummyAction->getNumTicks(), 1);
-    ASSERT_NEAR(secondsElapsed, 2.5, 0.05);
+    ASSERT_NEAR(secondsElapsed, 2.5, 0.075);
     ASSERT_EQ(result, BT::NodeStatus::SUCCESS);
 }

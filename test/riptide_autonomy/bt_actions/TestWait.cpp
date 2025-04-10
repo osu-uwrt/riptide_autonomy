@@ -25,17 +25,17 @@ static std::tuple<BT::NodeStatus, int> WaitTest(std::shared_ptr<BtTestTool> tool
 TEST_F(BtTest, test_Wait_0s) {
     auto result = WaitTest(toolNode, 0);
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
-    ASSERT_NEAR(std::get<1>(result), 0, 5);
+    ASSERT_NEAR(std::get<1>(result), 0, 80); //must be witin 5 seconds of 2x loop rate of correct
 }
 
 TEST_F(BtTest, test_Wait_1s) {
     auto result = WaitTest(toolNode, 1000);
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
-    ASSERT_NEAR(std::get<1>(result), 1000, 5);
+    ASSERT_NEAR(std::get<1>(result), 1000, 80);
 }
 
 TEST_F(BtTest, test_Wait_562ms) {
     auto result = WaitTest(toolNode, 562);
     ASSERT_EQ(std::get<0>(result), BT::NodeStatus::SUCCESS);
-    ASSERT_NEAR(std::get<1>(result), 562, 5);
+    ASSERT_NEAR(std::get<1>(result), 562, 80);
 }

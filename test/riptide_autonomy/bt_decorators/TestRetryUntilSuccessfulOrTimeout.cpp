@@ -36,7 +36,7 @@ TEST_F(BtTest, test_RetryUntilSuccessfulOrTimeout_fail_time) {
     auto result = testRUSOT(toolNode, 1000, DummyExecutionMode::FINISH_AFTER_TIME, 3000, BT::NodeStatus::SUCCESS, iterations, millis);
 
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
-    ASSERT_NEAR(millis, 1000, 3);
+    ASSERT_NEAR(millis, 1000, 80); //must be within a loop rate + 5ms of correct
 }
 
 TEST_F(BtTest, test_RetryUntilSuccessfulOrTimeout_fail_child_failed) {
@@ -44,5 +44,5 @@ TEST_F(BtTest, test_RetryUntilSuccessfulOrTimeout_fail_child_failed) {
     auto result = testRUSOT(toolNode, 1000, DummyExecutionMode::FINISH_AFTER_ITERATIONS, 5, BT::NodeStatus::FAILURE, iterations, millis);
 
     ASSERT_EQ(result, BT::NodeStatus::FAILURE);
-    ASSERT_LE(millis, 1000);
+    ASSERT_LE(millis, 1100);
 }

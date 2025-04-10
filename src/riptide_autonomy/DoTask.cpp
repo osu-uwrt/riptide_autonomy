@@ -221,7 +221,7 @@ namespace do_task
                 uwrtLogger.setEnabled(true);
 
                 // set up idle sleep rate
-                rclcpp::Rate loop_rate(10ms);
+                rclcpp::Rate loop_rate(30ms);
 
                 // start ticking the tree with feedback
                 // keep executing tick until it returns either SUCCESS or FAILURE

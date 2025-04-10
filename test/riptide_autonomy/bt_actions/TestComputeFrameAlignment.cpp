@@ -61,15 +61,20 @@ geometry_msgs::msg::TransformStamped createTransform(std::shared_ptr<BtTestTool>
 
 
 bool lookupTransform(rclcpp::Node::SharedPtr node, const std::string& fromFrame, const std::string& toFrame, geometry_msgs::msg::TransformStamped& transform) {
-    bool evalTransformLookedUp = false;
     std::shared_ptr<tf2_ros::Buffer> buffer = std::make_shared<tf2_ros::Buffer>(node->get_clock());
     tf2_ros::TransformListener listener(*buffer);
-    DEF_THROTTLE_TIMER(throtTimer);
-    while(!evalTransformLookedUp) {
-        evalTransformLookedUp = lookupTransformThrottled(node, buffer, fromFrame, toFrame, 0.5, throtTimer, transform, true);
+    for(int i = 0; i < 10; i++) {
+        try {
+            transform = buffer->lookupTransform(toFrame, fromFrame, tf2::TimePointZero);
+            return true;
+        } catch(tf2::TransformException& ex) {
+            RCLCPP_WARN(node->get_logger(), "TEST: Failed to look up transform from %s to %s (%s)", fromFrame.c_str(), toFrame.c_str(), ex.what());
+        }
+
+        rclcpp::Rate(250ms).sleep();
     }
 
-    return evalTransformLookedUp;
+    return false;
 }
 
 
@@ -88,7 +93,7 @@ BT::NodeStatus testLinkAlign(
 {
     std::vector<geometry_msgs::msg::TransformStamped> transforms = {
         createTransform(toolNode, baseLinkPose, "world", "bt_testing/base_link"),
-        createTransform(toolNode, linkGoalPose, "world", "bt_testing/testlinkgoal"),
+        createTransform(toolNode, linkGoalPose, goalFrameName, "bt_testing/testlinkgoal"),
         createTransform(toolNode, goalFramePose, "world", goalFrameName)
     };
 
@@ -108,7 +113,8 @@ BT::NodeStatus testLinkAlign(
     cfg.input_ports["op"] = std::to_string(linkGoalPose.v2.y);
     cfg.input_ports["oy"] = std::to_string(linkGoalPose.v2.z);
     cfg.input_ports["reference_frame"] = goalFrameName;
-    cfg.input_ports["target_frame"] = childLinkName;
+    cfg.input_ports["link_frame"] = childLinkName;
+    cfg.input_ports["base_frame"] = "bt_testing/base_link";
 
     auto node = toolNode->createLeafNodeFromConfig("ComputeFrameAlignment", cfg);
     BT::NodeStatus status = toolNode->tickUntilFinished(node);
