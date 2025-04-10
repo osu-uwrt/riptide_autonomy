@@ -32,8 +32,8 @@ TEST_F(MappingTargetTest, test_SetMappingTarget_success_some_object_no_lock) {
 
     ASSERT_EQ(stat, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(reqReceived);
-    ASSERT_EQ(req->target_object, "some_object");
-    ASSERT_FALSE(req->lock_map);
+    ASSERT_EQ(req->target_info.target_object, "some_object");
+    ASSERT_FALSE(req->target_info.lock_map);
 }
 
 TEST_F(MappingTargetTest, test_SetMappingTarget_success_some_object_lock) {
@@ -47,8 +47,8 @@ TEST_F(MappingTargetTest, test_SetMappingTarget_success_some_object_lock) {
 
     ASSERT_EQ(stat, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(reqReceived);
-    ASSERT_EQ(req->target_object, "some_object");
-    ASSERT_TRUE(req->lock_map);
+    ASSERT_EQ(req->target_info.target_object, "some_object");
+    ASSERT_TRUE(req->target_info.lock_map);
 }
 
 TEST_F(MappingTargetTest, test_SetMappingTarget_success_other_object_lock) {
@@ -62,8 +62,8 @@ TEST_F(MappingTargetTest, test_SetMappingTarget_success_other_object_lock) {
 
     ASSERT_EQ(stat, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(reqReceived);
-    ASSERT_EQ(req->target_object, "other_object");
-    ASSERT_FALSE(req->lock_map);
+    ASSERT_EQ(req->target_info.target_object, "other_object");
+    ASSERT_FALSE(req->target_info.lock_map);
 }
 
 TEST_F(MappingTargetTest, test_SetMappingTarget_success_other_object_lock_long_time) {
@@ -77,8 +77,8 @@ TEST_F(MappingTargetTest, test_SetMappingTarget_success_other_object_lock_long_t
 
     ASSERT_EQ(stat, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(reqReceived);
-    ASSERT_EQ(req->target_object, "other_object");
-    ASSERT_FALSE(req->lock_map);
+    ASSERT_EQ(req->target_info.target_object, "other_object");
+    ASSERT_FALSE(req->target_info.lock_map);
 }
 
 TEST_F(MappingTargetTest, test_SetMappingTarget_fail_not_available) {
@@ -97,6 +97,6 @@ TEST_F(MappingTargetTest, test_SetMappingTarget_fail_timed_out) {
 
     ASSERT_EQ(stat, BT::NodeStatus::FAILURE);
     ASSERT_TRUE(reqReceived);
-    ASSERT_EQ(req->target_object, "some_object");
-    ASSERT_FALSE(req->lock_map);
+    ASSERT_EQ(req->target_info.target_object, "some_object");
+    ASSERT_FALSE(req->target_info.lock_map);
 }
