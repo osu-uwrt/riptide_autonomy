@@ -1,11 +1,18 @@
 <?xml version="1.0"?>
 <root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="AlignLink">
-        <Sequence name="align torpedos">
-            <Action ID="TransformPose" from_frame="{frame_name}" op="0" or="0" out_op="op" out_or="or" out_oy="oy" out_x="obj_x" out_y="obj_y" out_z="obj_z" oy="3.1415" to_frame="world" x="{prox_x}" y="0" z="{prox_z}"/>
-            <Action ID="ComputeFrameAlignment" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" reference_frame="world" target_frame="{link_name}" x="{obj_x}" y="{obj_y}" z="{obj_z}"/>
+        <Sequence name="align robot link">
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_name}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" reference_frame="{frame_name}" x="{prox_x}" y="0" z="{prox_z}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="AssertTree">
+        <Fallback>
+            <Condition ID="CompareNums" a="{a}" b="{b}" test="&gt;"/>
+            <ForceFailure>
+                <Action ID="Info" message="Assertion {aname} ({a} {test} {b}) failed"/>
+            </ForceFailure>
+        </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="COMP">
@@ -36,6 +43,8 @@
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
         <Sequence name="BINS">
+            <SetBlackboard output_key="ctrler_timeout" value="30"/>
+            <SetBlackboard output_key="ctrler_trust" value="0.95"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
             <SetBlackboard output_key="frame" value="bin_target_frame"/>
@@ -66,11 +75,13 @@
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <Action ID="ComputeFrameAlignment" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" target_frame="talos/droppers_link" x="0" y="0" z="{overbin}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
-            <Action ID="Wait" seconds="10"/>
-            <Action ID="SetStatus" status="performing"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/dropper_link" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="0" y="0" z="{overbin}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" __shared_blackboard="false" timeout="ctrler_timeout" trust="ctrler_trust"/>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="performing"/>
             <Repeat num_cycles="2">
                 <RetryUntilSuccessful num_attempts="3">
                     <SubTree ID="FireDropper"/>
@@ -92,7 +103,7 @@
                 <SetBlackboard output_key="talos/poker_link" value="talos/poker_link"/>
                 <SetBlackboard output_key="0" value="0"/>
                 <Action ID="SetStatus" status="aligning"/>
-                <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="object_frame" link_name="poker_link" prox_x="1" prox_z="0"/>
+                <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="poker_link" prox_x="1" prox_z="0"/>
                 <Action ID="Wait" seconds="5"/>
                 <Action ID="SetStatus" status="performing"/>
                 <SetBlackboard output_key="proximity" value="0.5"/>
@@ -102,7 +113,7 @@
                     <Sequence>
                         <Action ID="Info" message="ALIGNING WITH PROX {proximity}"/>
                         <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="fop" out_or="for" out_oy="foy" out_x="fx" out_y="fy" out_z="fz" oy="3.1415" to_frame="world" x="{proximity}" y="0" z="0"/>
-                        <Action ID="ComputeFrameAlignment" op="{fop}" or="{for}" out_op="" out_or="" out_oy="" out_x="bx" out_y="by" out_z="bz" oy="{foy}" reference_frame="world" target_frame="{poker_link}" x="{fx}" y="{fy}" z="{fz}"/>
+                        <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/poker_link" op="{fop}" or="{for}" out_op="" out_or="" out_oy="" out_x="bx" out_y="by" out_z="bz" oy="{foy}" reference_frame="world" x="{fx}" y="{fy}" z="{fz}"/>
                         <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="5" x="bx" y="by" z="bz"/>
                         <Action ID="Math" a="{proximity}" b="0.125" operator="-" out="proximity"/>
                         <Action ID="Info" message="PROX NOW {proximity}"/>
@@ -139,16 +150,16 @@
             </IfThenElse>
             <Action ID="Math" a="{circ_y}" b="{circ_radius}" name="multiply by radius to get actual y" operator="*" out="{circ_y}"/>
             <Action ID="Info" message="Lining up with buoy"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" name="" op="0" or="0" oy="3.1415" x="circ_radius" y="0" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" op="0" or="0" oy="3.1415" x="circ_radius" y="0" z="0"/>
             <Action ID="SetStatus" name="performing" status="performing"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" name="" op="0" or="0" oy="3.1415" x="0" y="circ_y" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" op="0" or="0" oy="3.1415" x="0" y="circ_y" z="0"/>
             <Action ID="Math" a="{circ_radius}" b="-1" name="get behind buoy x" operator="*" out="n_circ_radius"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" name="" op="0" or="0" oy="3.1415" x="n_circ_radius" y="0" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" op="0" or="0" oy="3.1415" x="n_circ_radius" y="0" z="0"/>
             <Action ID="Math" a="{circ_y}" b="-1" name="get other side of buoy y" operator="*" out="n_circ_y"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" name="" op="0" or="0" oy="3.1415" x="0" y="n_circ_y" z="0"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" name="" op="0" or="0" oy="3.1415" x="circ_radius" y="0" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" op="0" or="0" oy="3.1415" x="0" y="n_circ_y" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" op="0" or="0" oy="3.1415" x="circ_radius" y="0" z="0"/>
             <Action ID="SetStatus" name="moving to better spot" status="moving"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" name="" op="0" or="0" oy="3.1415" x="0" y="circ_y" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="prop_frame" op="0" or="0" oy="3.1415" x="0" y="circ_y" z="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="CheckActuatorStates">
@@ -215,7 +226,7 @@
             <Action Covariance="Icov" ID="getCovariance" Target="{object_name}"/>
             <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
             <Action ID="Info" message="{object_name} error at {Icov}"/>
-            <Action ID="ComputeFrameAlignment" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" target_frame="talos/dfc_base_link" x="{gx}" y="{gy}" z="{gz}"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/dfc_base_link" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="{gx}" y="{gy}" z="{gz}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
             <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
@@ -611,11 +622,25 @@
             <Sequence>
                 <IfThenElse>
                     <Condition ID="IsTrue" value="{is_dfc}"/>
-                    <Action ID="Info" message="Attempting to set the camera to DFC"/>
-                    <Action ID="Info" message="Attempting to set the camera to FFC"/>
+                    <Sequence>
+                        <Action ID="Info" message="Attempting to set the camera to DFC"/>
+                        <SetBlackboard output_key="sleep_ffc" value="1"/>
+                        <SetBlackboard output_key="sleep_dfc" value="0"/>
+                    </Sequence>
+                    <Sequence>
+                        <Action ID="Info" message="Attempting to set the camera to FFC"/>
+                        <SetBlackboard output_key="sleep_dfc" value="0"/>
+                        <SetBlackboard output_key="sleep_ffc" value="1"/>
+                    </Sequence>
                 </IfThenElse>
                 <RetryUntilSuccessful num_attempts="3">
                     <Action ID="CallSetBoolService" data="{is_dfc}" srv_name="set_camera_is_dfc" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallSetBoolService" data="{sleep_dfc}" srv_name="sleep_dfc" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallSetBoolService" data="{sleep_ffc}" srv_name="sleep_ffc" time_limit_secs="3"/>
                 </RetryUntilSuccessful>
                 <Action ID="Info" message="Active camera set successfully."/>
             </Sequence>
@@ -640,9 +665,11 @@
     </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
+            <SetBlackboard output_key="ctrler_timeout" value="30"/>
+            <SetBlackboard output_key="0.95" value="0.95"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.33"/>
-            <SetBlackboard output_key="ms_prox" value="1.5"/>
+            <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="15"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
@@ -658,12 +685,15 @@
             </Fallback>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" allignment="1" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
-            <Action ID="Wait" seconds="20"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" __shared_blackboard="false" timeout="ctrler_timeout" trust="0.95"/>
+            </ForceSuccess>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="3">
                 <SubTree ID="FireTorpedo"/>
             </RetryUntilSuccessful>
+            <Action ID="Wait" seconds="10"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">
@@ -835,6 +865,32 @@
             </ForceFailure>
         </Fallback>
     </BehaviorTree>
+    <BehaviorTree ID="WaitForController">
+        <Fallback>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout}">
+                <Sequence name="Wait for scale trust">
+                    <SetBlackboard output_key="Yaw" value="Yaw"/>
+                    <SetBlackboard output_key="Pitch" value="Pitch"/>
+                    <SetBlackboard output_key="Roll" value="Roll"/>
+                    <SetBlackboard output_key="Z" value="Z"/>
+                    <SetBlackboard output_key="Y" value="Y"/>
+                    <SetBlackboard output_key="X" value="X"/>
+                    <SetBlackboard output_key="&gt;" value="&gt;"/>
+                    <Action ID="Wait" seconds="1"/>
+                    <Action ID="GetTwistTopic" topic="controller/scale/trust" vel_pitch="top" vel_roll="tor" vel_x="tx" vel_y="ty" vel_yaw="toy" vel_z="tz"/>
+                    <SubTree ID="AssertTree" __shared_blackboard="false" a="tx" aname="X" b="trust" test="&gt;"/>
+                    <SubTree ID="AssertTree" __shared_blackboard="false" a="ty" aname="Y" b="trust" test="&gt;"/>
+                    <SubTree ID="AssertTree" __shared_blackboard="false" a="tz" aname="Z" b="trust" test="&gt;"/>
+                    <SubTree ID="AssertTree" __shared_blackboard="false" a="tor" aname="Roll" b="trust" test="&gt;"/>
+                    <SubTree ID="AssertTree" __shared_blackboard="false" a="top" aname="Pitch" b="trust" test="&gt;"/>
+                    <SubTree ID="AssertTree" __shared_blackboard="false" a="toy" aname="Yaw" b="trust" test="&gt;"/>
+                </Sequence>
+            </Decorator>
+            <ForceFailure>
+                <Action ID="Error" message="Controller trust did not settle in time"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
     <BehaviorTree ID="WaitForKillSwitch">
         <Sequence>
             <Action ID="SetStatus" status="waiting"/>
@@ -858,7 +914,6 @@
     <TreeNodesModel>
         <SubTree ID="AlignLink">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port default="1" name="allignment" required="true">in front or above</input_port>
             <input_port name="frame_name" required="true">frame to align to</input_port>
             <input_port name="link_name" required="true">link to align</input_port>
             <input_port default="1" name="prox_x" required="true">default x promity</input_port>
@@ -874,6 +929,13 @@
             <input_port name="b" required="true"/>
             <input_port name="range" required="true"/>
         </Condition>
+        <SubTree ID="AssertTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="a" required="true"/>
+            <input_port name="aname" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port name="test" required="true">Same as CompareNums</input_port>
+        </SubTree>
         <SubTree ID="BinTree"/>
         <SubTree ID="BumpObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -914,6 +976,8 @@
             <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
+            <input_port default="talos/base_link" name="base_frame" required="true"/>
+            <input_port name="link_frame" required="true"/>
             <input_port name="op" required="true"/>
             <input_port name="or" required="true"/>
             <output_port name="out_op" required="false"/>
@@ -924,7 +988,6 @@
             <output_port name="out_z" required="false"/>
             <input_port name="oy" required="true"/>
             <input_port name="reference_frame" required="true"/>
-            <input_port name="target_frame" required="true"/>
             <input_port name="x" required="true">target x-pos of frameName in world frame</input_port>
             <input_port name="y" required="true">target y-pos of frameName in world frame</input_port>
             <input_port name="z" required="true">target z-pos of frameName in world frame</input_port>
@@ -986,6 +1049,15 @@
             <output_port name="x" required="false"/>
             <output_port name="y" required="false"/>
             <output_port name="z" required="false"/>
+        </Action>
+        <Action ID="GetTwistTopic">
+            <input_port name="topic" required="false">Topic to listen to</input_port>
+            <output_port name="vel_pitch" required="false"/>
+            <output_port name="vel_roll" required="false"/>
+            <output_port name="vel_x" required="false"/>
+            <output_port name="vel_y" required="false"/>
+            <output_port name="vel_yaw" required="false"/>
+            <output_port name="vel_z" required="false"/>
         </Action>
         <Action ID="HeadingToPoint">
             <input_port name="currX" required="true"/>
@@ -1146,6 +1218,11 @@
         <SubTree ID="WaitForActuators">
             <inout_port name="__shared_blackboard" required="true"/>
             <inout_port name="timeout_secs" required="true"/>
+        </SubTree>
+        <SubTree ID="WaitForController">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="timeout" required="true">max time to wait in seconds</input_port>
+            <input_port name="trust" required="true">minimum controller scale trust threshold</input_port>
         </SubTree>
         <Action ID="WaitForDetection">
             <input_port name="object_name" required="true"/>
