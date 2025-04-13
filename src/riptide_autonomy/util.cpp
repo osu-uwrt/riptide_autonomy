@@ -136,7 +136,7 @@ std::string formatStringWithBlackboard(const std::string& str, UwrtBtNode *n) {
                 nameOfEntry = tokenWithBrackets.substr(1, tokenWithBrackets.length() - 2),
                 valueOfEntry;
 
-            //get the value of the entry
+            //get the name or value of the entry
             if(getFromBlackboard<std::string>(n, nameOfEntry, valueOfEntry)) {
                 //if nameOfEntry exists, valueOfEntry was populated by the call above
                 result += valueOfEntry;

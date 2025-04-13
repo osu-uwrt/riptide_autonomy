@@ -147,9 +147,13 @@ double vector3Length(const geometry_msgs::msg::Vector3& vec3);
 template<typename T>
 bool getFromBlackboard(rclcpp::Node::SharedPtr rosnode, BT::Blackboard::Ptr bb, const std::string& key, T& value) {
     try {
+        bb->entryMutex().lock();
+        
         if(bb->get<T>(key, value)) {
             return true;
         }
+
+        bb->entryMutex().unlock();
     } catch (std::runtime_error& ex) {
         RCLCPP_ERROR(rosnode->get_logger(), "Error getting blackboard value named \"%s\": %s", key.c_str(), ex.what());
     }
