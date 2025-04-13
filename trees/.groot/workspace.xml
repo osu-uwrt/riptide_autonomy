@@ -595,25 +595,14 @@
             <Sequence>
                 <IfThenElse>
                     <Condition ID="IsTrue" value="{is_dfc}"/>
-                    <Sequence>
-                        <Action ID="Info" message="Attempting to set the camera to DFC"/>
-                        <SetBlackboard output_key="sleep_ffc" value="1"/>
-                        <SetBlackboard output_key="sleep_dfc" value="0"/>
-                    </Sequence>
-                    <Sequence>
-                        <Action ID="Info" message="Attempting to set the camera to FFC"/>
-                        <SetBlackboard output_key="sleep_dfc" value="0"/>
-                        <SetBlackboard output_key="sleep_ffc" value="1"/>
-                    </Sequence>
+                    <Action ID="Info" message="Attempting to set the camera to FFC"/>
+                    <Action ID="Info" message="Attempting to set the camera to DFC"/>
                 </IfThenElse>
                 <RetryUntilSuccessful num_attempts="3">
                     <Action ID="CallSetBoolService" data="{is_dfc}" srv_name="set_camera_is_dfc" time_limit_secs="3"/>
                 </RetryUntilSuccessful>
                 <RetryUntilSuccessful num_attempts="3">
-                    <Action ID="CallSetBoolService" data="{sleep_dfc}" srv_name="sleep_dfc" time_limit_secs="3"/>
-                </RetryUntilSuccessful>
-                <RetryUntilSuccessful num_attempts="3">
-                    <Action ID="CallSetBoolService" data="{sleep_ffc}" srv_name="sleep_ffc" time_limit_secs="3"/>
+                    <Action ID="CallSetBoolService" data="{is_dfc}" srv_name="use_dfc" time_limit_secs="3"/>
                 </RetryUntilSuccessful>
                 <Action ID="Info" message="Active camera set successfully."/>
             </Sequence>
