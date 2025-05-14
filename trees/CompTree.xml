@@ -35,9 +35,6 @@
             <ForceSuccess>
                 <SubTree ID="BinTree"/>
             </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="SurfaceTree"/>
-            </ForceSuccess>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
@@ -76,7 +73,7 @@
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/dropper_link" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="0" y="0" z="{overbin}"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dropper_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="0" y="0" z="{overbin}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <ForceSuccess>
                 <SubTree ID="WaitForController" __shared_blackboard="false" timeout="ctrler_timeout" trust="ctrler_trust"/>
@@ -446,7 +443,7 @@
                     <IfThenElse name="move in front of sub object if confident">
                         <Condition ID="CompareNums" a="{cov}" b="0.1" name="if error good enough" test="&lt;"/>
                         <Sequence name="move in front of object">
-                            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="" out_or="" out_oy="new_yaw" out_x="new_x" out_y="new_y" out_z="new_z" oy="3.1415" to_frame="world" x="{prox_x}" y="0" z="{prox_z}"/>
+                            <Action ID="TransformPose" from_frame="{parent_frame}" op="0" or="0" out_op="" out_or="" out_oy="new_yaw" out_x="new_x" out_y="new_y" out_z="new_z" oy="3.1415" to_frame="world" x="{prox_x}" y="0" z="{prox_z}"/>
                             <Action ID="PublishToController" isOrientation="0" mode="3" x="{new_x}" y="{new_y}" z="{new_z}"/>
                             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{new_yaw}"/>
                         </Sequence>
@@ -622,25 +619,11 @@
             <Sequence>
                 <IfThenElse>
                     <Condition ID="IsTrue" value="{is_dfc}"/>
-                    <Sequence>
-                        <Action ID="Info" message="Attempting to set the camera to DFC"/>
-                        <SetBlackboard output_key="sleep_ffc" value="1"/>
-                        <SetBlackboard output_key="sleep_dfc" value="0"/>
-                    </Sequence>
-                    <Sequence>
-                        <Action ID="Info" message="Attempting to set the camera to FFC"/>
-                        <SetBlackboard output_key="sleep_dfc" value="0"/>
-                        <SetBlackboard output_key="sleep_ffc" value="1"/>
-                    </Sequence>
+                    <Action ID="Info" message="Attempting to set the camera to FFC"/>
+                    <Action ID="Info" message="Attempting to set the camera to DFC"/>
                 </IfThenElse>
                 <RetryUntilSuccessful num_attempts="3">
                     <Action ID="CallSetBoolService" data="{is_dfc}" srv_name="set_camera_is_dfc" time_limit_secs="3"/>
-                </RetryUntilSuccessful>
-                <RetryUntilSuccessful num_attempts="3">
-                    <Action ID="CallSetBoolService" data="{sleep_dfc}" srv_name="sleep_dfc" time_limit_secs="3"/>
-                </RetryUntilSuccessful>
-                <RetryUntilSuccessful num_attempts="3">
-                    <Action ID="CallSetBoolService" data="{sleep_ffc}" srv_name="sleep_ffc" time_limit_secs="3"/>
                 </RetryUntilSuccessful>
                 <Action ID="Info" message="Active camera set successfully."/>
             </Sequence>
@@ -665,13 +648,13 @@
     </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
-            <SetBlackboard output_key="ctrler_timeout" value="30"/>
+            <SetBlackboard output_key="ctrler_timeout" value="60"/>
             <SetBlackboard output_key="0.95" value="0.95"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.33"/>
             <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="ms_timeout" value="15"/>
+            <SetBlackboard output_key="ms_timeout" value="30"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
             <Action ID="Format" format="{torpedo_name}_frame" out="torpedo_frame"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
@@ -685,6 +668,9 @@
             </Fallback>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
+            <Action ID="Math" a="{shoot_prox}" b="3" operator="*" out="shoot_prox_x2"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox_x2" prox_z="0"/>
+            <Action ID="Wait" name="REMOVE ME" seconds="10"/>
             <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
             <ForceSuccess>
                 <SubTree ID="WaitForController" __shared_blackboard="false" timeout="ctrler_timeout" trust="0.95"/>
