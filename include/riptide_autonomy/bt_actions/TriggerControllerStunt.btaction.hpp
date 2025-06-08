@@ -2,8 +2,8 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
-#define STUNT_STATE_TRIGGER_TOPIC "/talos/controller/stunt_state"
-#define STUNT_STATE_STATUS_TOPIC "/talos/controller/running_stunt_state"
+#define STUNT_STATE_TRIGGER_TOPIC "controller/stunt_state"
+#define STUNT_STATE_STATUS_TOPIC "controller/running_stunt_state"
 #define MAX_RETRY 5
 #define RETRY_INTERVAL 2
 
