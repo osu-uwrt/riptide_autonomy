@@ -107,6 +107,11 @@ BT::NodeStatus getHeadingToPoint(UwrtBtNode& n) {
     return BT::NodeStatus::SUCCESS;
 }
 
+BT::NodeStatus checkBlackboardExists(UwrtBtNode& n) {
+    std::string s = tryGetOptionalInput<std::string>(&n, "input", "");
+    return s.empty() ? BT::NodeStatus::FAILURE : BT::NodeStatus::SUCCESS;
+}
+
 
 void registerSimpleUwrtAction(BT::BehaviorTreeFactory& factory, const std::string& id, const UWRTSimpleActionNode::TickFunctor& tickFunctor, BT::PortsList ports) {
     BT::NodeBuilder builder = [tickFunctor, id] (const std::string& name, const BT::NodeConfiguration& config) {
@@ -167,6 +172,12 @@ void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
             UwrtInput("targX"),
             UwrtInput("targY"),
             UwrtOutput("heading")
+        }
+    );
+
+    registerSimpleUwrtAction(factory, "CheckBlackboardExists", checkBlackboardExists,
+        {
+            UwrtInput("input")
         }
     );
 }
