@@ -26,6 +26,12 @@ def generate_launch_description():
                         }
                     ]
                 ),
+                Node(
+                    package='riptide_hardware2',
+                    executable='actuator_service_translator.py',
+                    respawn=True,
+                    output='screen'
+                )
                 
                 # Node(
                 #     package='riptide_autonomy2',
