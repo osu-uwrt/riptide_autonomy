@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<root>
+<root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="AlignLink">
         <Sequence name="align robot link">
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_name}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" reference_frame="{frame_name}" x="{prox_x}" y="0" z="{prox_z}"/>
@@ -13,6 +13,16 @@
                 <Action ID="Info" message="Assertion {aname} ({a} {test} {b}) failed"/>
             </ForceFailure>
         </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence name="SLALOM TREE">
+            <SetBlackboard output_key="depth" value="-1"/>
+            <SetBlackboard output_key="pass_on_left" value="0"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="pass_on_left"/>
+            <SubTree ID="KillController"/>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
         <Sequence name="BINS">
@@ -1025,6 +1035,7 @@
             <Action ID="Wait" seconds="5"/>
         </Sequence>
     </BehaviorTree>
+    <!-- ////////// -->
     <TreeNodesModel>
         <SubTree ID="AlignLink">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
