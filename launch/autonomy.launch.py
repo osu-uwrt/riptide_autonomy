@@ -13,14 +13,6 @@ def generate_launch_description():
                     LC("robot"),
                 ),
 
-                # create the nodes
-                Node(
-                    package='tf2_ros',
-                    executable='static_transform_publisher',
-                    name='torpedo_hole_publisher',
-                    arguments=["0", "0.1524", "0.381", "0", "0", "0", "torpedoGman_frame", "torpedoHole_frame"]
-                ),
-
                 Node(
                     package='riptide_autonomy2',
                     executable='doTask',
@@ -34,6 +26,12 @@ def generate_launch_description():
                         }
                     ]
                 ),
+                Node(
+                    package='riptide_hardware2',
+                    executable='actuator_service_translator.py',
+                    respawn=True,
+                    output='screen'
+                )
                 
                 # Node(
                 #     package='riptide_autonomy2',

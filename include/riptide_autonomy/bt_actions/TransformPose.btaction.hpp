@@ -72,7 +72,7 @@ class TransformPose : public UWRTActionNode {
             from = tryGetRequiredInput<std::string>(this, "from_frame", ""),
             to = tryGetRequiredInput<std::string>(this, "to_frame", "");
 
-        bool res = lookupTransformThrottled(rosnode, tfBuffer, from, to, 0.5, lookupTimer, transform);
+        bool res = lookupTransform(from, to, transform);
         if(res) {
             //lookup success! apply transform and set outputs
             geometry_msgs::msg::Pose result = doTransform(original, transform);
@@ -111,7 +111,6 @@ class TransformPose : public UWRTActionNode {
     }
 
     private:
-    DEF_THROTTLE_TIMER(lookupTimer);
     std::string 
         fromFrame,
         toFrame;

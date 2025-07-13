@@ -15,24 +15,37 @@
         </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
-        <Sequence name="COMP">
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="3" value="3"/>
-            <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
-            <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="depth" value="-0.56"/>
-            <ForceSuccess>
-                <SubTree ID="ReloadActuators"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
-            </ForceSuccess>
+        <Sequence name="LILTANK COMP TREE">
             <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <ForceSuccess>
-                <SubTree ID="TorpedoTree"/>
-            </ForceSuccess>
-            <SubTree ID="KillController"/>
+            <Sequence name="Discover Loop">
+                <SetBlackboard output_key="0" value="0"/>
+                <SetBlackboard output_key="surge_power" value="0.1"/>
+                <SetBlackboard output_key="surge_duration" value="7"/>
+                <SetBlackboard output_key="15" value="15"/>
+                <SetBlackboard output_key="target_error" value="0.01"/>
+                <SetBlackboard output_key="base_link" value="liltank/base_link"/>
+                <SetBlackboard output_key="bin_pink" value="bin_pink"/>
+                <SetBlackboard output_key="bin_yellow" value="bin_yellow"/>
+                <SetBlackboard output_key="cup_yellow" value="cup_yellow"/>
+                <SetBlackboard output_key="cup_pink" value="cup_pink"/>
+                <SetBlackboard output_key="spoon_yellow" value="spoon_yellow"/>
+                <SetBlackboard output_key="spoon_pink" value="spoon_pink"/>
+                <Sequence name="Loop sequence">
+                    <SubTree ID="DiscoverObjects" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_bin" target_1="bin_pink" target_2="bin_yellow" target_3="" target_4="" target_error="target_error"/>
+                    <Action ID="Info" message="DISCOVERED BIN OBJECT: {discovered_bin}. Attempting to lock in"/>
+                    <Action ID="SetMappingTarget" lock_map="0" target_object="{discovered_bin}" time_limit_secs="3"/>
+                    <ForceSuccess name="Lock in discovered object in TF">
+                        <RetryUntilSuccessful num_attempts="2">
+                            <SubTree ID="CollectDets" __shared_blackboard="false" target="discovered_bin" target_error="target_error"/>
+                        </RetryUntilSuccessful>
+                    </ForceSuccess>
+                    <Action ID="Format" format="{discovered_bin}_frame" out="discovered_bin_frame"/>
+                    <Action ID="TransformPose" from_frame="{discovered_bin_frame}" name="Look up bin XY pos" op="0" or="0" out_op="" out_or="" out_oy="" out_x="bin_x" out_y="bin_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                    <Action ID="HeadingToPoint" currX="0" currY="0" heading="targ_heading" targX="{bin_x}" targY="{bin_y}"/>
+                    <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="targ_heading"/>
+                    <SubTree ID="TankLongitudinalMove" __shared_blackboard="false" duration="surge_duration" power="surge_power"/>
+                </Sequence>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
@@ -728,7 +741,7 @@
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
             <SetBlackboard output_key="0.95" value="0.95"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.15"/>
+            <SetBlackboard output_key="shoot_prox" value="0.33"/>
             <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
@@ -756,6 +769,7 @@
             <RetryUntilSuccessful num_attempts="3">
                 <SubTree ID="FireTorpedo"/>
             </RetryUntilSuccessful>
+            <Action ID="Wait" seconds="10"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">

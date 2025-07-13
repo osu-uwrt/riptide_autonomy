@@ -16,6 +16,14 @@ class UwrtBtNode {
 
     protected:
     virtual void rosInit() = 0;
+
+    //some helper functions
+    bool lookupTransform(
+        const std::string& fromFrame,
+        const std::string& toFrame,
+        geometry_msgs::msg::TransformStamped& transform,
+        bool useCurrentTime = false);
+
     static std::shared_ptr<tf2_ros::Buffer> tfBuffer;
     rclcpp::Node::SharedPtr rosnode;
 

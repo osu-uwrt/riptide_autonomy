@@ -39,56 +39,14 @@ void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosNode) {
 }
 
 
-geometry_msgs::msg::Pose doTransform(geometry_msgs::msg::Pose relative, geometry_msgs::msg::TransformStamped transform) {
+geometry_msgs::msg::Pose doTransform(const geometry_msgs::msg::Pose& relative, const geometry_msgs::msg::TransformStamped& transform) {
     geometry_msgs::msg::Pose result;
     tf2::doTransform(relative, result, transform);
     return result;
 }
 
 
-bool lookupTransformNow(
-    rclcpp::Node::SharedPtr node,
-    const std::shared_ptr<const tf2_ros::Buffer> buffer,
-    const std::string& fromFrame,
-    const std::string& toFrame,
-    geometry_msgs::msg::TransformStamped& transform,
-    bool lookupNext)
-{
-    try {
-        tf2::TimePoint tp = (lookupNext ? tf2_ros::fromRclcpp(node->get_clock()->now()) : tf2::TimePointZero);
-        transform = buffer->lookupTransform(toFrame, fromFrame, tp);
-        return true;
-    } catch(tf2::TransformException& ex) {
-        RCLCPP_WARN(node->get_logger(), "Failed to look up transform from %s to %s (%s)", fromFrame.c_str(), toFrame.c_str(), ex.what());
-    }
-    
-    return false;
-}
-
-
-bool lookupTransformThrottled(
-    rclcpp::Node::SharedPtr node,
-    const std::shared_ptr<const tf2_ros::Buffer> buffer,
-    const std::string& fromFrame,
-    const std::string& toFrame,
-    double throttleDuration,
-    double& lastLookup,
-    geometry_msgs::msg::TransformStamped& transform,
-    bool lookupNext)
-{
-    double 
-        currentLookup = node->get_clock()->now().seconds(),
-        elapsedSinceLastLookup = currentLookup - lastLookup;
-    
-    if(elapsedSinceLastLookup >= throttleDuration) {
-        lastLookup = currentLookup;
-        return lookupTransformNow(node, buffer, fromFrame, toFrame, transform, lookupNext);
-    }
-    return false; 
-}
-
-
-geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point pt) {
+geometry_msgs::msg::Vector3 pointToVector3(const geometry_msgs::msg::Point& pt) {
     geometry_msgs::msg::Vector3 v;
     v.x = pt.x;
     v.y = pt.y;
@@ -97,7 +55,7 @@ geometry_msgs::msg::Vector3 pointToVector3(geometry_msgs::msg::Point pt) {
 }
 
 
-geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3 v) {
+geometry_msgs::msg::Point vector3ToPoint(const geometry_msgs::msg::Vector3& v) {
     geometry_msgs::msg::Point pt;
     pt.x = v.x;
     pt.y = v.y;
@@ -106,12 +64,12 @@ geometry_msgs::msg::Point vector3ToPoint(geometry_msgs::msg::Vector3 v) {
 }
 
 
-double vector3Length(geometry_msgs::msg::Vector3 v) {
+double vector3Length(const geometry_msgs::msg::Vector3& v) {
     return sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
 }
 
 
-geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion orientation) {
+geometry_msgs::msg::Vector3 toRPY(const geometry_msgs::msg::Quaternion& orientation) {
     tf2::Quaternion tf2Orientation;
     tf2::fromMsg(orientation, tf2Orientation);
 
@@ -121,7 +79,7 @@ geometry_msgs::msg::Vector3 toRPY(geometry_msgs::msg::Quaternion orientation) {
 }
 
 
-geometry_msgs::msg::Quaternion toQuat(geometry_msgs::msg::Vector3 rpy) {
+geometry_msgs::msg::Quaternion toQuat(const geometry_msgs::msg::Vector3& rpy) {
     tf2::Quaternion tf2Quat;
     tf2Quat.setRPY(rpy.x, rpy.y, rpy.z);
     tf2Quat.normalize();
@@ -130,12 +88,35 @@ geometry_msgs::msg::Quaternion toQuat(geometry_msgs::msg::Vector3 rpy) {
 }
 
 
-double distance(geometry_msgs::msg::Point point1, geometry_msgs::msg::Point point2) {
+tf2::Transform geometryMsgsToTf2Transform(const geometry_msgs::msg::TransformStamped& t)
+{
+    tf2::Quaternion q;
+    tf2::Vector3 c;
+
+    tf2::fromMsg(t.transform.rotation, q);
+    tf2::fromMsg(t.transform.translation, c);
+
+    tf2::Transform tf2T(q, c);
+    return tf2T;
+}
+
+
+geometry_msgs::msg::TransformStamped tf2TransformToGeometryMsgs(const tf2::Transform& t)
+{
+    geometry_msgs::msg::TransformStamped geomT;
+    geomT.transform.rotation = tf2::toMsg(t.getRotation());
+    geomT.transform.translation = tf2::toMsg(t.getOrigin());
+
+    return geomT;
+}
+
+
+double distance(const geometry_msgs::msg::Point& point1, const geometry_msgs::msg::Point& point2) {
     return sqrt(pow(point2.x - point1.x, 2) +pow(point2.y - point1.y, 2) + pow(point2.z - point1.z, 2));
 }
 
 
-double distance(geometry_msgs::msg::Vector3 point1, geometry_msgs::msg::Vector3 point2) {
+double distance(const geometry_msgs::msg::Vector3& point1, const geometry_msgs::msg::Vector3& point2) {
     return distance(vector3ToPoint(point1), vector3ToPoint(point2));
 }
 
@@ -155,7 +136,7 @@ std::string formatStringWithBlackboard(const std::string& str, UwrtBtNode *n) {
                 nameOfEntry = tokenWithBrackets.substr(1, tokenWithBrackets.length() - 2),
                 valueOfEntry;
 
-            //get the value of the entry
+            //get the name or value of the entry
             if(getFromBlackboard<std::string>(n, nameOfEntry, valueOfEntry)) {
                 //if nameOfEntry exists, valueOfEntry was populated by the call above
                 result += valueOfEntry;
