@@ -707,7 +707,7 @@
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
             <SetBlackboard output_key="0.95" value="0.95"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.33"/>
+            <SetBlackboard output_key="shoot_prox" value="0.15"/>
             <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
@@ -735,7 +735,6 @@
             <RetryUntilSuccessful num_attempts="3">
                 <SubTree ID="FireTorpedo"/>
             </RetryUntilSuccessful>
-            <Action ID="Wait" seconds="10"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">
