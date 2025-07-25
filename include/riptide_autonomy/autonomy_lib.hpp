@@ -16,6 +16,7 @@ using namespace std::placeholders;
 //useful topic names for autonomy
 const std::string
     ODOMETRY_TOPIC = "odometry/filtered",
+    MAPPING_TARGET_INFO_TOPIC = "state/mapping",
     CONTROL_LINEAR_TOPIC = "controller/linear",
     CONTROL_ANGULAR_TOPIC = "controller/angular",
     ACTUATOR_BUSY_TOPIC = "state/actuator/busy",

@@ -16,19 +16,49 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboard output_key="15" value="15"/>
-            <SetBlackboard output_key="duration" value="4"/>
-            <SetBlackboard output_key="power" value="0.1"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <Action ID="Math" a="{power}" b="-1" operator="*" out="npower"/>
+            <SetBlackboard output_key="depth" value="-1.5"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <Action ID="GetOdometry" op="" or="" oy="yaw" x="" y="" z=""/>
-            <Action ID="Math" a="{yaw}" b="3.1415" operator="+" out="nyaw"/>
-            <SubTree ID="TankLongitudinalMove" __shared_blackboard="false" duration="duration" power="power"/>
-            <SubTree ID="TankLongitudinalMove" __shared_blackboard="false" duration="duration" power="npower"/>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="nyaw"/>
-            <SubTree ID="TankLongitudinalMove" __shared_blackboard="false" duration="duration" power="npower"/>
-            <SubTree ID="TankLongitudinalMove" __shared_blackboard="false" duration="duration" power="power"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            <Sequence>
+                <Action ID="Info" message="Controlling surge to {x} relative to target map object, at depth {z}."/>
+                <Fallback>
+                    <Parallel failure_threshold="1" success_threshold="1">
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Never-ending rotation loop" num_seconds="{timeout}">
+                            <ForceFailure>
+                                <Sequence name="Rotate to face object">
+                                    <AlwaysSuccess/>
+                                </Sequence>
+                            </ForceFailure>
+                        </Decorator>
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Linear loop" num_seconds="{timeout}">
+                            <Sequence name="Attempt to control surge">
+                                <SetBlackboard output_key="no_track_counter" value="0"/>
+                                <RetryUntilSuccessful num_attempts="5">
+                                    <Sequence>
+                                        <Action ID="Wait" seconds="0.25"/>
+                                        <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="0" z="{z}"/>
+                                        <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="cz"/>
+                                        <Action ID="GetFloat64Topic" topic="controller/surge/reference/filtered" value="cx"/>
+                                        <Action ID="GetBoolTopic" topic="controller/surge/tracking" value="tracking"/>
+                                        <Condition ID="ApproxEqualTo" a="{cz}" b="{z}" range="0.25"/>
+                                        <Condition ID="ApproxEqualTo" a="{cx}" b="{x}" range="0.25"/>
+                                    </Sequence>
+                                </RetryUntilSuccessful>
+                                <Fallback name="Eval tracking">
+                                    <Condition ID="CompareNums" a="{no_track_counter}" b="3" name="Was tracking lost?" test="&gt;"/>
+                                    <ForceFailure>
+                                        <Action ID="Error" message="Surge move failed because tracking was lost."/>
+                                    </ForceFailure>
+                                </Fallback>
+                            </Sequence>
+                        </Decorator>
+                    </Parallel>
+                    <ForceSuccess>
+                        <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}. Moving on anyway."/>
+                    </ForceSuccess>
+                </Fallback>
+            </Sequence>
+            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
@@ -170,50 +200,63 @@
             </Fallback>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="CollectDetsAtAngle">
+    <BehaviorTree ID="CollectDets">
         <Sequence>
-            <Action ID="Info" message="collecting dets at angle offset {rel_yaw}"/>
-            <SetBlackboard output_key="15" value="15"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <Action ID="Math" a="{rel_yaw}" b="3.1415" operator="+" out="{frame_yaw}"/>
-            <Action Covariance="{cov_at_start}" ID="getCovariance" Target="{target}"/>
-            <Condition ID="CompareNums" a="{cov_at_start}" b="{target_error}" name="break early if we found it" test="&gt;"/>
-            <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{frame_yaw}" to_frame="world" x="0" y="0" z="0"/>
-            <Action Covariance="{curr_error}" ID="getCovariance" Target="{target}"/>
-            <Inverter name="Is target error already there?">
-                <Condition ID="CompareNums" a="{curr_error}" b="{target_error}" test="&lt;"/>
-            </Inverter>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="goy"/>
-            <Repeat name="Wait and eval dets" num_cycles="5">
-                <Parallel failure_threshold="1" name="Grab detections" success_threshold="2">
-                    <Action ID="WaitForDetection" object_name="{target}" timeout_secs="2"/>
-                    <Sequence name="Wait and report error">
-                        <Action ID="Wait" seconds="2"/>
-                        <Action Covariance="cov" ID="getCovariance" Target="{target}"/>
-                        <Action ID="Info" message="Object {target} has error  {cov}"/>
-                    </Sequence>
-                </Parallel>
-            </Repeat>
+            <SetBlackboard output_key="cov" value="5"/>
+            <Fallback>
+                <Repeat name="Wait and eval dets" num_cycles="14">
+                    <Parallel failure_threshold="1" name="Grab detections" success_threshold="2">
+                        <Action ID="WaitForDetection" object_name="{target}" timeout_secs="4"/>
+                        <Sequence name="Wait and report error">
+                            <Action ID="Wait" seconds="2"/>
+                            <Action Covariance="cov" ID="getCovariance" Target="{target}"/>
+                            <Action ID="Info" message="Object {target} has error  {cov}"/>
+                            <Condition ID="CompareNums" a="{cov}" b="{target_error}" name="Break if we found it" test="&gt;"/>
+                        </Sequence>
+                    </Parallel>
+                </Repeat>
+                <Condition ID="CompareNums" a="{cov}" b="{target_error}" name="did we find it?" test="&lt;"/>
+                <ForceFailure>
+                    <Action ID="Info" message="Breaking detection collection because no detections on {target} were found."/>
+                </ForceFailure>
+            </Fallback>
         </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="CollectDetsAtAngle">
+        <Fallback>
+            <Sequence>
+                <Action ID="Info" message="collecting dets on {target} at angle offset {rel_yaw}, target error {target_error}"/>
+                <SetBlackboard output_key="15" value="15"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <Action ID="Math" a="{rel_yaw}" b="3.1415" operator="+" out="{frame_yaw}"/>
+                <Action Covariance="{cov_at_start}" ID="getCovariance" Target="{target}"/>
+                <Condition ID="CompareNums" a="{cov_at_start}" b="{target_error}" name="break early if we found it" test="&gt;"/>
+                <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{frame_yaw}" to_frame="world" x="0" y="0" z="0"/>
+                <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="goy"/>
+                <SubTree ID="CollectDets" __shared_blackboard="false" target="target" target_error="target_error"/>
+            </Sequence>
+            <Sequence name="check if broke because object found">
+                <Action Covariance="{err_at_end}" ID="getCovariance" Target="{target}"/>
+                <Condition ID="CompareNums" a="{err_at_end}" b="{target_error}" name="break early if we found it" test="&lt;"/>
+            </Sequence>
+        </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="DiscoverObjects">
         <Sequence name="Discover Loop">
             <Action ID="Info" message="Discovering {target_1}, {target_2}, {target_3}, {target_4}"/>
-            <SetBlackboard name="-90 degrees" output_key="angle" value="-1.5707"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="angle_inc" value="0.78"/>
             <Fallback>
                 <Inverter>
-                    <Repeat num_cycles="8">
+                    <Repeat num_cycles="12">
                         <Inverter>
                             <Fallback>
-                                <SubTree ID="OptionallyCollectDetsAtAngle" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target="target_1" target_angle="search_angle" target_error="target_error"/>
-                                <SubTree ID="OptionallyCollectDetsAtAngle" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target="target_2" target_angle="search_angle" target_error="target_error"/>
-                                <SubTree ID="OptionallyCollectDetsAtAngle" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target="target_3" target_angle="search_angle" target_error="target_error"/>
-                                <SubTree ID="OptionallyCollectDetsAtAngle" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target="target_4" target_angle="search_angle" target_error="target_error"/>
-                                <ForceFailure name="Increment angle and try again">
-                                    <Sequence>
-                                        <Action ID="Info" message="No targets found at angle {search_angle}. Incrementing."/>
-                                        <Action ID="Math" a="{angle}" b="0.7853" name="add 45 degrees" operator="+" out="{angle}"/>
-                                    </Sequence>
+                                <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="angle_inc" discovered_object="discovered_object" target="target_1" target_error="target_error"/>
+                                <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_2" target_error="target_error"/>
+                                <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_3" target_error="target_error"/>
+                                <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_4" target_error="target_error"/>
+                                <ForceFailure>
+                                    <Action ID="Info" message="No targets found. Trying again."/>
                                 </ForceFailure>
                             </Fallback>
                         </Inverter>
@@ -223,6 +266,27 @@
                     <Action ID="Error" message="Discover tree ending without discovering any objects."/>
                 </ForceFailure>
             </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="DiscoverSingleMapObject">
+        <Sequence>
+            <Action ID="Info" message="discovering {target} using delta angle {delta_angle}, target error {target_error}"/>
+            <IfThenElse>
+                <Action ID="CheckBlackboardExists" input="{target}"/>
+                <Sequence name="Discover target">
+                    <SetBlackboard output_key="15" value="15"/>
+                    <SetBlackboard output_key="0" value="0"/>
+                    <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
+                    <Action ID="Math" a="{curr_yaw}" b="{delta_angle}" operator="+" out="targ_angle"/>
+                    <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="targ_angle"/>
+                    <Action ID="PublishToController" isOrientation="1" mode="0" name="Disable orientation controller" x="0" y="0" z="0"/>
+                    <SubTree ID="CollectDets" __shared_blackboard="false" target="target" target_error="target_error"/>
+                    <SetBlackboard output_key="discovered_object" value="{target}"/>
+                </Sequence>
+                <ForceFailure>
+                    <Action ID="Info" message="Skipping discovery because target is not specified."/>
+                </ForceFailure>
+            </IfThenElse>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="Dive">
@@ -491,16 +555,21 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="OptionallyCollectDetsAtAngle">
-        <IfThenElse>
-            <Action ID="CheckBlackboardExists" input="{target}"/>
-            <Sequence>
-                <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="base_link" rel_yaw="search_angle" target="target" target_error="target_error"/>
-                <SetBlackboard output_key="discovered_object" value="{target}"/>
-            </Sequence>
-            <ForceFailure>
-                <Action ID="Info" message="Skipping target for tank discovery because it is not specified."/>
-            </ForceFailure>
-        </IfThenElse>
+        <Sequence>
+            <Action ID="Info" message="Discovering {target}"/>
+            <IfThenElse>
+                <Action ID="CheckBlackboardExists" input="{target}"/>
+                <Sequence>
+                    <Action ID="Info" message="collecting dets at angle {target_angle} for target {target}"/>
+                    <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="target_frame" rel_yaw="target_angle" target="target" target_error="target_error"/>
+                    <SetBlackboard output_key="discovered_object" value="{target}"/>
+                    <Action ID="Info" message="Done discovering"/>
+                </Sequence>
+                <ForceFailure>
+                    <Action ID="Info" message="Skipping target for tank discovery because it is not specified."/>
+                </ForceFailure>
+            </IfThenElse>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="PrimitiveMoveOrientation">
         <Sequence>
@@ -1002,6 +1071,11 @@
         <Action ID="CheckBlackboardExists">
             <input_port name="input" required="true"/>
         </Action>
+        <SubTree ID="CollectDets">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="target" required="true"/>
+            <input_port name="target_error" required="true"/>
+        </SubTree>
         <SubTree ID="CollectDetsAtAngle">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="frame" required="true"/>
@@ -1039,6 +1113,13 @@
             <input_port name="target_2" required="false"/>
             <input_port name="target_3" required="false"/>
             <input_port name="target_4" required="false"/>
+            <input_port name="target_error" required="true"/>
+        </SubTree>
+        <SubTree ID="DiscoverSingleMapObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="delta_angle" required="true"/>
+            <output_port name="discovered_object" required="false"/>
+            <input_port name="target" required="true"/>
             <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="Dive">
@@ -1083,6 +1164,10 @@
         </Action>
         <Action ID="GetBoolTopic">
             <input_port name="topic" required="true">The topic to subscribe to.</input_port>
+            <output_port name="value" required="false"/>
+        </Action>
+        <Action ID="GetFloat64Topic">
+            <input_port name="topic" required="false"/>
             <output_port name="value" required="false"/>
         </Action>
         <Action ID="GetImuOrientation">
