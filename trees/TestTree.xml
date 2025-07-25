@@ -16,48 +16,19 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
+            <SetBlackboard output_key="30" value="30"/>
+            <SetBlackboard output_key="x" value="2"/>
             <SetBlackboard output_key="depth" value="-1.5"/>
             <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="" time_limit_secs="3"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <Sequence>
-                <Action ID="Info" message="Controlling surge to {x} relative to target map object, at depth {z}."/>
-                <Fallback>
-                    <Parallel failure_threshold="1" success_threshold="1">
-                        <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Never-ending rotation loop" num_seconds="{timeout}">
-                            <ForceFailure>
-                                <Sequence name="Rotate to face object">
-                                    <AlwaysSuccess/>
-                                </Sequence>
-                            </ForceFailure>
-                        </Decorator>
-                        <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Linear loop" num_seconds="{timeout}">
-                            <Sequence name="Attempt to control surge">
-                                <SetBlackboard output_key="no_track_counter" value="0"/>
-                                <RetryUntilSuccessful num_attempts="5">
-                                    <Sequence>
-                                        <Action ID="Wait" seconds="0.25"/>
-                                        <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="0" z="{z}"/>
-                                        <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="cz"/>
-                                        <Action ID="GetFloat64Topic" topic="controller/surge/reference/filtered" value="cx"/>
-                                        <Action ID="GetBoolTopic" topic="controller/surge/tracking" value="tracking"/>
-                                        <Condition ID="ApproxEqualTo" a="{cz}" b="{z}" range="0.25"/>
-                                        <Condition ID="ApproxEqualTo" a="{cx}" b="{x}" range="0.25"/>
-                                    </Sequence>
-                                </RetryUntilSuccessful>
-                                <Fallback name="Eval tracking">
-                                    <Condition ID="CompareNums" a="{no_track_counter}" b="3" name="Was tracking lost?" test="&gt;"/>
-                                    <ForceFailure>
-                                        <Action ID="Error" message="Surge move failed because tracking was lost."/>
-                                    </ForceFailure>
-                                </Fallback>
-                            </Sequence>
-                        </Decorator>
-                    </Parallel>
-                    <ForceSuccess>
-                        <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}. Moving on anyway."/>
-                    </ForceSuccess>
-                </Fallback>
-            </Sequence>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="table_basket_pink" time_limit_secs="3"/>
+            <Repeat num_cycles="10">
+                <Sequence>
+                    <SubTree ID="SurgeMove" __shared_blackboard="false" timeout="30" x="x" z="depth"/>
+                    <Action ID="Math" a="{x}" b="0.3" operator="-" out="x"/>
+                </Sequence>
+            </Repeat>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
@@ -897,6 +868,80 @@
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="SurgeMove">
+        <Sequence name="SurgeMove">
+            <Action ID="GetMappingState" map_locked="" target_name="target_object"/>
+            <Action ID="Format" format="{target_object}_frame" name="get frame from obj" out="target_object_frame"/>
+            <Action ID="Info" message="Controlling surge to {x} relative to target map object {target_object}, at depth {z}."/>
+            <SetBlackboard output_key="error" value="0"/>
+            <Fallback>
+                <Parallel failure_threshold="1" success_threshold="1">
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Never-ending rotation loop" num_seconds="{timeout}">
+                        <ForceFailure>
+                            <Sequence name="Rotate to face object">
+                                <SetBlackboard output_key="15" value="15"/>
+                                <SetBlackboard output_key="0" value="0"/>
+                                <Action ID="TransformPose" from_frame="{target_object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="wx" out_y="wy" out_z="wz" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                                <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z="cz"/>
+                                <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="hdg" targX="{wx}" targY="{wy}"/>
+                                <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="hdg"/>
+                                <Action ID="Wait" seconds="1"/>
+                            </Sequence>
+                        </ForceFailure>
+                    </Decorator>
+                    <Sequence>
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Linear loop" num_seconds="{timeout}">
+                            <Sequence name="Attempt to control surge">
+                                <SetBlackboard output_key="no_track_counter" value="0"/>
+                                <Fallback name="Try move and eval tracking">
+                                    <RetryUntilSuccessful num_attempts="5">
+                                        <Sequence>
+                                            <Action ID="Wait" seconds="0.25"/>
+                                            <Action ID="PublishToController" isOrientation="0" mode="3" x="{x}" y="0" z="{z}"/>
+                                            <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="cz"/>
+                                            <Action ID="GetFloat64Topic" topic="controller/surge/reference/filtered" value="cx"/>
+                                            <Action ID="GetBoolTopic" topic="controller/surge/tracking" value="tracking"/>
+                                            <Fallback name="Check tracking">
+                                                <Condition ID="IsTrue" name="is controller tracking the object?" value="{tracking}"/>
+                                                <ForceFailure>
+                                                    <Sequence>
+                                                        <Action ID="Math" a="{no_track_counter}" b="1" name="no, increment counter" operator="+" out="no_track_counter"/>
+                                                        <Action ID="Info" message="Surge lost tracking! Incremented counter (now {no_track_counter})"/>
+                                                    </Sequence>
+                                                </ForceFailure>
+                                            </Fallback>
+                                            <Condition ID="ApproxEqualTo" a="{cz}" b="{z}" range="0.25"/>
+                                            <Condition ID="ApproxEqualTo" a="{cx}" b="{x}" range="0.25"/>
+                                        </Sequence>
+                                    </RetryUntilSuccessful>
+                                    <Inverter>
+                                        <Fallback>
+                                            <Inverter name="Was tracking lost?">
+                                                <Condition ID="CompareNums" a="{no_track_counter}" b="3" name="Was tracking good?" test="&gt;"/>
+                                            </Inverter>
+                                            <ForceFailure>
+                                                <Sequence>
+                                                    <Action ID="Error" message="Surge move failed because tracking was lost."/>
+                                                    <SetBlackboard name="This will succeed but then tree will report error" output_key="error" value="1"/>
+                                                </Sequence>
+                                            </ForceFailure>
+                                        </Fallback>
+                                    </Inverter>
+                                </Fallback>
+                            </Sequence>
+                        </Decorator>
+                        <Inverter>
+                            <Condition ID="CompareNums" a="{error}" b="0.1" name="Error in surge tree?" test="&gt;"/>
+                        </Inverter>
+                        <Action ID="Info" message="Successfully moved surge to setpoint x={x}, z={z}"/>
+                    </Sequence>
+                </Parallel>
+                <ForceSuccess>
+                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}. Moving on anyway."/>
+                </ForceSuccess>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="TankLongitudinalMove">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
@@ -1176,6 +1221,10 @@
             <output_port name="oy" required="false"/>
             <input_port name="topic" required="true"/>
         </Action>
+        <Action ID="GetMappingState">
+            <output_port name="map_locked" required="false"/>
+            <output_port name="target_name" required="false"/>
+        </Action>
         <Action ID="GetOdometry">
             <output_port name="op" required="false"/>
             <output_port name="or" required="false"/>
@@ -1334,6 +1383,12 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
         <SubTree ID="SurfaceTree"/>
+        <SubTree ID="SurgeMove">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="30" name="timeout" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="z" required="true"/>
+        </SubTree>
         <SubTree ID="TankLongitudinalMove">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="duration" required="true"/>

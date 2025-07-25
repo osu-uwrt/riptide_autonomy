@@ -24,7 +24,7 @@
                 <SetBlackboard output_key="15" value="15"/>
                 <SetBlackboard output_key="target_error" value="0.01"/>
                 <SetBlackboard output_key="base_link" value="liltank/base_link"/>
-                <SetBlackboard output_key="bin_pink" value="bin_pink"/>
+                <SetBlackboard output_key="bin_pink" value="table_basket_pink"/>
                 <SetBlackboard output_key="bin_yellow" value="bin_yellow"/>
                 <SetBlackboard output_key="cup_yellow" value="cup_yellow"/>
                 <SetBlackboard output_key="cup_pink" value="cup_pink"/>
@@ -1153,11 +1153,19 @@
             <input_port name="topic" required="true">The topic to subscribe to.</input_port>
             <output_port name="value" required="false"/>
         </Action>
+        <Action ID="GetFloat64Topic">
+            <input_port name="topic" required="false"/>
+            <output_port name="value" required="false"/>
+        </Action>
         <Action ID="GetImuOrientation">
             <output_port name="op" required="false"/>
             <output_port name="or" required="false"/>
             <output_port name="oy" required="false"/>
             <input_port name="topic" required="true"/>
+        </Action>
+        <Action ID="GetMappingState">
+            <output_port name="map_locked" required="false"/>
+            <output_port name="target_name" required="false"/>
         </Action>
         <Action ID="GetOdometry">
             <output_port name="op" required="false"/>
