@@ -445,9 +445,9 @@
                     <Action ID="Info" message="Setting correct active camera"/>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
                     <Action ID="Info" message="Mini-searching for primary prop"/>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                     <Action ID="Info" message="Mini-searching for alternate prop"/>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="prop" prox_x="max_dist" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="prop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" name="Lock the map" target_object="" time_limit_secs="3"/>
@@ -492,7 +492,7 @@
             <Action ID="Format" format="{parent_object}_frame" out="parent_frame"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="SetStatus" status="searching"/>
-            <Action ID="TransformPose" from_frame="{parent_frame}" op="0" or="0" out_op="" out_or="" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="{prox_x}" y="0" z="{prox_z}"/>
+            <Action ID="TransformPose" from_frame="{parent_frame}" op="0" or="0" out_op="" out_or="" out_oy="oy" out_x="x" out_y="y" out_z="z" oy="3.1415" to_frame="world" x="{prox_x}" y="{prox_y}" z="{prox_z}"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="z"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="oy"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
@@ -550,8 +550,8 @@
         <Sequence name="PassThruSlalom">
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="3"/>
-            <SetBlackboard name="Space between slaloms" output_key="space_between_slaloms" value="2"/>
+            <SetBlackboard name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="4"/>
+            <SetBlackboard name="Space between slaloms" output_key="space_between_slaloms" value="0.7"/>
             <Action ID="Math" a="{whole_slalom_width}" b="4" operator="/" out="slalom_lat_offset_pos"/>
             <Action ID="Math" a="{slalom_lat_offset_pos}" b="-1" operator="*" out="slalom_lat_offset_neg"/>
             <Action ID="Math" a="{space_between_slaloms}" b="2" operator="/" out="slalom_long_offset_pos"/>
@@ -568,6 +568,7 @@
     </BehaviorTree>
     <BehaviorTree ID="PrepForRun">
         <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <ForceSuccess>
                 <SubTree ID="ReloadActuators"/>
@@ -770,7 +771,7 @@
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
             <Fallback>
                 <Sequence>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
                     <SetBlackboard output_key="frame_to_shoot" value="{object_frame}"/>
                 </Sequence>
                 <SetBlackboard output_key="frame_to_shoot" value="{torpedo_frame}"/>
@@ -801,20 +802,20 @@
             <SetBlackboard output_key="slalom_middle" value="slalom_middle"/>
             <SetBlackboard output_key="slalom_back" value="slalom_back"/>
             <SetBlackboard output_key="srch_timeout" value="60"/>
-            <SetBlackboard output_key="target_srch_err" value="0.1"/>
+            <SetBlackboard output_key="target_srch_err" value="0.2"/>
             <SetBlackboard output_key="min_srch_dist" value="3"/>
             <SetBlackboard output_key="max_srch_dist" value="6"/>
-            <SetBlackboard output_key="msrch_prox" value="2"/>
-            <SetBlackboard output_key="msrch_timeout" value="30"/>
+            <SetBlackboard output_key="msrch_prox" value="1.2"/>
+            <SetBlackboard output_key="msrch_y_prox" value="0.3"/>
+            <SetBlackboard output_key="msrch_timeout" value="60"/>
             <Action ID="Info" message="SALMON TIME"/>
-            <ForceSuccess>
-                <SubTree ID="Search" __shared_blackboard="false" max_dist="max_srch_dist" min_dist="min_srch_dist" object_name="slalom_front" target_cov="target_srch_err" timeout_secs="srch_timeout"/>
-            </ForceSuccess>
             <Fallback>
                 <Sequence name="Minisearches">
                     <AlwaysSuccess name="NOTE: Dont forcesuccess the minisearches, blindly going into the slalom could endanger the run"/>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_middle" parent_object="slalom_front" prox_x="msrch_prox" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_back" parent_object="slalom_front" prox_x="msrch_prox" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="msrch_prox" min_dist="msrch_prox" object_name="slalom_front" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+                    <Action ID="TransformPose" from_frame="slalom_front_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="new_prox_x" out_y="new_prox_y" out_z="" oy="0" to_frame="talos/base_link" x="0" y="0" z="0"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_middle" parent_object="slalom_front" prox_x="new_prox_x" prox_y="new_prox_y" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_back" parent_object="slalom_front" prox_x="new_prox_x" prox_y="new_prox_y" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
                 </Sequence>
                 <ForceFailure>
                     <Action ID="Error" message="Aborting slalom because pole locations could not be found"/>
@@ -1259,6 +1260,7 @@
             <input_port name="object_name" required="true"/>
             <input_port name="parent_object" required="true"/>
             <input_port default="1" name="prox_x" required="true"/>
+            <input_port default="0" name="prox_y" required="true"/>
             <input_port default="0" name="prox_z" required="true"/>
             <input_port default="1.25" name="target_cov" required="true"/>
             <input_port default="60" name="timeout_secs" required="true"/>
