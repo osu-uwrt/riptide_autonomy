@@ -17,7 +17,7 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
             <SetBlackboard output_key="30" value="30"/>
-            <SetBlackboard output_key="x" value="2"/>
+            <SetBlackboard output_key="x" value="1.5"/>
             <SetBlackboard output_key="depth" value="-1.5"/>
             <SubTree ID="WaitForKillSwitch"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="" time_limit_secs="3"/>
@@ -25,8 +25,8 @@
             <Action ID="SetMappingTarget" lock_map="0" target_object="table_basket_pink" time_limit_secs="3"/>
             <Repeat num_cycles="10">
                 <Sequence>
-                    <SubTree ID="SurgeMove" __shared_blackboard="false" timeout="30" x="x" z="depth"/>
-                    <Action ID="Math" a="{x}" b="0.3" operator="-" out="x"/>
+                    <SubTree ID="SmartMoveSurge" __shared_blackboard="false" timeout="30" x="x" z="depth"/>
+                    <Action ID="Math" a="{x}" b="1" operator="-" out="x"/>
                 </Sequence>
             </Repeat>
             <SubTree ID="KillController"/>
@@ -599,6 +599,27 @@
             <Action ID="Info" message="Translation Complete."/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="RecoverTrackingAtHeading">
+        <Sequence name="Try to obtain surge at relative yaw">
+            <SetBlackboard output_key="track_counter" value="0"/>
+            <SetBlackboard output_key="num_cycles" value="5"/>
+            <Action ID="Info" message="Recovering surge object tracking at yaw {relative_yaw}"/>
+            <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="relative_yaw" target_frame="target_obj_frame"/>
+            <Repeat num_cycles="{num_cycles}">
+                <ForceSuccess>
+                    <Sequence>
+                        <Action ID="Wait" seconds="0.5"/>
+                        <Action ID="GetBoolTopic" topic="controller/surge/tracking" value="tracking"/>
+                        <Action ID="Info" message="Tracking: {tracking}"/>
+                        <Condition ID="IsTrue" name="Are we tracking?" value="{tracking}"/>
+                        <Action ID="Math" a="{track_counter}" b="1" name="Increment track counter" operator="+" out="track_counter"/>
+                    </Sequence>
+                </ForceSuccess>
+            </Repeat>
+            <Action ID="Info" message="Received {track_counter} / {num_cycles} successful tracks"/>
+            <Condition ID="CompareNums" a="{track_counter}" b="2" test="&gt;"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="RelativeMove">
         <Sequence>
             <Action ID="TransformPose" from_frame="{frame_name}" op="{op}" or="{or}" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="{oy}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
@@ -618,6 +639,17 @@
                 <Action ID="Error" message="Failed to notify actuator reload after 3 attempts"/>
             </ForceFailure>
         </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="RotateToFrame">
+        <Sequence name="Rotate to face object">
+            <SetBlackboard output_key="15" value="15"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="TransformPose" from_frame="{target_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="wx" out_y="wy" out_z="wz" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z="cz"/>
+            <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="hdg" targX="{wx}" targY="{wy}"/>
+            <Action ID="Math" a="{hdg}" b="{relative_yaw}" operator="+" out="{hdg}"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="hdg"/>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="Search">
         <Sequence name="Search">
@@ -809,6 +841,62 @@
             </ForceFailure>
         </Fallback>
     </BehaviorTree>
+    <BehaviorTree ID="SmartMoveSurge">
+        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout}">
+            <Sequence>
+                <SetBlackboard output_key="liltank/base_link" value="liltank/base_link"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <SetBlackboard output_key="1" value="1"/>
+                <SetBlackboard output_key="1.5707" value="1.5707"/>
+                <SetBlackboard output_key="-1.5707" value="-1.5707"/>
+                <SetBlackboard output_key="30" value="30"/>
+                <Fallback>
+                    <SubTree ID="SurgeMove" __shared_blackboard="false" timeout="30" x="x" z="z"/>
+                    <ForceFailure>
+                        <Sequence name="Attempt to fix surge move failure">
+                            <Action ID="Info" message="Detected surge move failure!"/>
+                            <Action ID="GetBoolTopic" topic="controller/surge/tracking" value="surge_tracking"/>
+                            <Action ID="Info" message="Surge tracking state is currently {surge_tracking}"/>
+                            <IfThenElse name="Fix surge failure">
+                                <Condition ID="IsTrue" value="{surge_tracking}"/>
+                                <Sequence name="Fix impedance issue">
+                                    <SetBlackboard output_key="imp_pwr" value="0.3"/>
+                                    <Action ID="Info" message="Detected impedance issue. Attempting to move out of the way"/>
+                                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="liltank/base_link" op="0" or="0" oy="1.5707" x="0" y="0" z="0"/>
+                                    <SubTree ID="TankLongitudinalFF" __shared_blackboard="false" duration="1" power="imp_pwr"/>
+                                    <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="liltank/base_link" op="0" or="0" oy="-1.5707" x="0" y="0" z="0"/>
+                                </Sequence>
+                                <Sequence name="Fix tracking issue">
+                                    <SetBlackboard output_key="right_angle" value="0.785"/>
+                                    <Action ID="Math" a="{right_angle}" b="-1" operator="*" out="left_angle"/>
+                                    <SetBlackboard output_key="1" value="1"/>
+                                    <SetBlackboard name="Must be negative so vehicle moves backwards" output_key="long_pwr" value="-0.3"/>
+                                    <Action ID="Info" message="Detected surge tracking issue. Attempting to recover it"/>
+                                    <SubTree ID="TankLongitudinalFF" __shared_blackboard="false" duration="1" power="long_pwr"/>
+                                    <Action ID="GetMappingState" map_locked="" target_name="target_obj"/>
+                                    <Action ID="Format" format="{target_obj}_frame" out="target_obj_frame"/>
+                                    <Repeat num_cycles="5">
+                                        <Action ID="PublishToController" isOrientation="0" mode="0" name="Disable linear" x="0" y="0" z="0"/>
+                                    </Repeat>
+                                    <Fallback>
+                                        <SubTree ID="RecoverTrackingAtHeading" __shared_blackboard="false" relative_yaw="0" target_obj_frame="target_obj_frame"/>
+                                        <SubTree ID="RecoverTrackingAtHeading" __shared_blackboard="false" relative_yaw="right_angle" target_obj_frame="target_obj_frame"/>
+                                        <SubTree ID="RecoverTrackingAtHeading" __shared_blackboard="false" relative_yaw="left_angle" target_obj_frame="target_obj_frame"/>
+                                        <ForceFailure>
+                                            <Sequence>
+                                                <Action ID="Info" message="Unable to recover tracking. Resetting map target"/>
+                                                <Action ID="SetMappingTarget" lock_map="0" target_object="{target_obj}" time_limit_secs="3"/>
+                                            </Sequence>
+                                        </ForceFailure>
+                                    </Fallback>
+                                </Sequence>
+                            </IfThenElse>
+                        </Sequence>
+                    </ForceFailure>
+                </Fallback>
+            </Sequence>
+        </Decorator>
+    </BehaviorTree>
     <BehaviorTree ID="SpinTree">
         <Sequence>
             <SetBlackboard output_key="15" value="15"/>
@@ -878,13 +966,9 @@
                 <Parallel failure_threshold="1" success_threshold="1">
                     <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Never-ending rotation loop" num_seconds="{timeout}">
                         <ForceFailure>
-                            <Sequence name="Rotate to face object">
-                                <SetBlackboard output_key="15" value="15"/>
+                            <Sequence>
                                 <SetBlackboard output_key="0" value="0"/>
-                                <Action ID="TransformPose" from_frame="{target_object_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="wx" out_y="wy" out_z="wz" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                                <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z="cz"/>
-                                <Action ID="HeadingToPoint" currX="{cx}" currY="{cy}" heading="hdg" targX="{wx}" targY="{wy}"/>
-                                <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="hdg"/>
+                                <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_object_frame"/>
                                 <Action ID="Wait" seconds="1"/>
                             </Sequence>
                         </ForceFailure>
@@ -911,7 +995,7 @@
                                                 </ForceFailure>
                                             </Fallback>
                                             <Condition ID="ApproxEqualTo" a="{cz}" b="{z}" range="0.25"/>
-                                            <Condition ID="ApproxEqualTo" a="{cx}" b="{x}" range="0.25"/>
+                                            <Condition ID="ApproxEqualTo" a="{cx}" b="{x}" range="0.05"/>
                                         </Sequence>
                                     </RetryUntilSuccessful>
                                     <Inverter>
@@ -936,26 +1020,30 @@
                         <Action ID="Info" message="Successfully moved surge to setpoint x={x}, z={z}"/>
                     </Sequence>
                 </Parallel>
-                <ForceSuccess>
-                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}. Moving on anyway."/>
-                </ForceSuccess>
+                <ForceFailure>
+                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                </ForceFailure>
             </Fallback>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="TankLongitudinalMove">
+    <BehaviorTree ID="TankLongitudinalFF">
         <Sequence>
+            <Action ID="Info" message="Surging with power {power} for duration {duration}"/>
             <SetBlackboard output_key="0" value="0"/>
-            <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="depth"/>
             <Inverter>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{duration}">
                     <Inverter>
                         <Sequence>
-                            <Action ID="PublishToController" isOrientation="0" mode="3" x="{power}" y="0" z="{depth}"/>
+                            <Action ID="PublishToController" isOrientation="0" mode="1" x="{power}" y="0" z="0"/>
                             <Action ID="Wait" seconds="0.1"/>
                         </Sequence>
                     </Inverter>
                 </Decorator>
             </Inverter>
+            <Repeat name="Reset to 0" num_cycles="5">
+                <Action ID="PublishToController" isOrientation="0" mode="1" x="0" y="0" z="0"/>
+            </Repeat>
+            <Action ID="Info" message="Done surging."/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="TorpedoTree">
@@ -1325,6 +1413,11 @@
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
         </Action>
+        <SubTree ID="RecoverTrackingAtHeading">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="relative_yaw" required="true"/>
+            <input_port name="target_obj_frame" required="true"/>
+        </SubTree>
         <SubTree ID="RelativeMove">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="frame_name" required="true">the frame to move relative to</input_port>
@@ -1339,6 +1432,11 @@
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
             <input_port name="num_seconds" required="true">number of seconds until abandonment.</input_port>
         </Decorator>
+        <SubTree ID="RotateToFrame">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="0" name="relative_yaw" required="true"/>
+            <input_port name="target_frame" required="true"/>
+        </SubTree>
         <SubTree ID="Search">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port default="4.0" name="max_dist" required="false"/>
@@ -1379,6 +1477,12 @@
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
         </SubTree>
+        <SubTree ID="SmartMoveSurge">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="60" name="timeout" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="z" required="true"/>
+        </SubTree>
         <SubTree ID="SpinTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
         </SubTree>
@@ -1389,7 +1493,7 @@
             <input_port name="x" required="true"/>
             <input_port name="z" required="true"/>
         </SubTree>
-        <SubTree ID="TankLongitudinalMove">
+        <SubTree ID="TankLongitudinalFF">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="duration" required="true"/>
             <input_port name="power" required="true"/>
