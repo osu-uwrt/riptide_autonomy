@@ -198,21 +198,24 @@
         <Sequence name="Discover Loop">
             <Action ID="Info" message="Discovering {target_1}, {target_2}, {target_3}, {target_4}"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="angle_inc" value="0.78"/>
+            <SetBlackboard name="dont inc first time" output_key="angle_inc" value="0"/>
             <Fallback>
                 <Inverter>
                     <Repeat num_cycles="12">
-                        <Inverter>
-                            <Fallback>
-                                <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="angle_inc" discovered_object="discovered_object" target="target_1" target_error="target_error"/>
-                                <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_2" target_error="target_error"/>
-                                <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_3" target_error="target_error"/>
-                                <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_4" target_error="target_error"/>
-                                <ForceFailure>
-                                    <Action ID="Info" message="No targets found. Trying again."/>
-                                </ForceFailure>
-                            </Fallback>
-                        </Inverter>
+                        <Sequence>
+                            <Inverter>
+                                <Fallback>
+                                    <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="angle_inc" discovered_object="discovered_object" target="target_1" target_error="target_error"/>
+                                    <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_2" target_error="target_error"/>
+                                    <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_3" target_error="target_error"/>
+                                    <SubTree ID="DiscoverSingleMapObject" __shared_blackboard="false" delta_angle="0" discovered_object="discovered_object" target="target_4" target_error="target_error"/>
+                                    <ForceFailure>
+                                        <Action ID="Info" message="No targets found. Trying again."/>
+                                    </ForceFailure>
+                                </Fallback>
+                            </Inverter>
+                            <SetBlackboard name="now inc" output_key="angle_inc" value="0.78"/>
+                        </Sequence>
                     </Repeat>
                 </Inverter>
                 <ForceFailure>
@@ -981,6 +984,9 @@
                                             <Condition ID="ApproxEqualTo" a="{cx}" b="{x}" range="0.05"/>
                                         </Sequence>
                                     </RetryUntilSuccessful>
+                                    <ForceFailure>
+                                        <Action ID="Info" message="Surge is currently at {cx} (want {x})" name="Report current surge"/>
+                                    </ForceFailure>
                                     <Inverter>
                                         <Fallback>
                                             <Inverter name="Was tracking lost?">
