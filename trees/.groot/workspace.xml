@@ -27,7 +27,7 @@
             <SetBlackboard output_key="overbin" value="0.4"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="object" value="bin"/>
+            <SetBlackboard output_key="object" value="bin_target"/>
             <Action ID="Format" format="{object}_frame" out="object_frame"/>
             <SetBlackboard output_key="target_err" value="0.01"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
@@ -439,8 +439,8 @@
             <SetBlackboard output_key="undergate_depth" value="-0.75"/>
             <SetBlackboard output_key="prop" value="gate"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
-            <SetBlackboard output_key="subprop" value="gate_hot"/>
-            <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_cold"/>
+            <SetBlackboard output_key="subprop" value="gate_reefshark"/>
+            <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_sawfish"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Format" format="{alt_subprop}_frame" out="alt_subprop_frame"/>
             <Action ID="Info" message="GATE TIME"/>
@@ -1373,8 +1373,8 @@
                 <Sequence name="torpedo">
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
                     <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
-                    <SetBlackboard output_key="torpedo_first" value="torpedo_small_hole"/>
-                    <SetBlackboard output_key="torpedo_second" value="torpedo_large_hole"/>
+                    <SetBlackboard output_key="torpedo_first" value="torpedo_shark_hole"/>
+                    <SetBlackboard output_key="torpedo_second" value="torpedo_sawfish_hole"/>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
                     <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_first" torpedo_link_name="talos/torpedo_0_link" torpedo_name="torpedo"/>
                     <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_second" torpedo_link_name="talos/torpedo_1_link" torpedo_name="torpedo"/>
