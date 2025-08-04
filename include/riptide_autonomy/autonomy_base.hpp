@@ -19,6 +19,7 @@
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/int8.hpp>
 #include <std_msgs/msg/u_int16.hpp>
+#include <std_msgs/msg/float64.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -30,6 +31,7 @@
 #include <riptide_msgs2/msg/actuator_status.hpp>
 #include <riptide_msgs2/msg/controller_command.hpp>
 #include <riptide_msgs2/msg/led_command.hpp>
+#include <riptide_msgs2/msg/mapping_target_info.hpp>
 
 #include <std_srvs/srv/set_bool.hpp>
 #include <std_srvs/srv/trigger.hpp>

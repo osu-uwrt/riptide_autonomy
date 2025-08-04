@@ -5,7 +5,7 @@ using namespace std::chrono_literals;
 
 const std::chrono::duration<double> TESTBOOL_TIMEOUT = 5s;
 
-BT::NodeStatus testGetBoolTopic(std::shared_ptr<BtTestTool> toolNode, const std::string& topic, const bool valToPub, bool& outputSet, bool& receivedVal, const int pubPeriodMs = 125) {
+BT::NodeStatus testGetFloat64Topic(std::shared_ptr<BtTestTool> toolNode, const std::string& topic, const bool valToPub, bool& outputSet, bool& receivedVal, const int pubPeriodMs = 125) {
     //set up node
     BT::NodeConfiguration cfg;
     cfg.input_ports["topic"] = topic;
@@ -27,7 +27,7 @@ BT::NodeStatus testGetBoolTopic(std::shared_ptr<BtTestTool> toolNode, const std:
 
 TEST_F(BtTest, test_GetBoolTopic_true_success) {
     bool outSet, result;
-    BT::NodeStatus stat = testGetBoolTopic(toolNode, "/some/bool", true, outSet, result);
+    BT::NodeStatus stat = testGetFloat64Topic(toolNode, "/some/bool", true, outSet, result);
 
     ASSERT_EQ(stat, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outSet);
@@ -36,7 +36,7 @@ TEST_F(BtTest, test_GetBoolTopic_true_success) {
 
 TEST_F(BtTest, test_GetBoolTopic_false_success) {
     bool outSet, result;
-    BT::NodeStatus stat = testGetBoolTopic(toolNode, "/some/bool", false, outSet, result);
+    BT::NodeStatus stat = testGetFloat64Topic(toolNode, "/some/bool", false, outSet, result);
 
     ASSERT_EQ(stat, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outSet);
@@ -45,7 +45,7 @@ TEST_F(BtTest, test_GetBoolTopic_false_success) {
 
 TEST_F(BtTest, test_GetBoolTopic_true_success_another_topic) {
     bool outSet, result;
-    BT::NodeStatus stat = testGetBoolTopic(toolNode, "another_topic", false, outSet, result);
+    BT::NodeStatus stat = testGetFloat64Topic(toolNode, "another_topic", false, outSet, result);
 
     ASSERT_EQ(stat, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outSet);
@@ -54,7 +54,7 @@ TEST_F(BtTest, test_GetBoolTopic_true_success_another_topic) {
 
 TEST_F(BtTest, test_GetBoolTopic_false_success_another_topic) {
     bool outSet, result;
-    BT::NodeStatus stat = testGetBoolTopic(toolNode, "another_topic", false, outSet, result);
+    BT::NodeStatus stat = testGetFloat64Topic(toolNode, "another_topic", false, outSet, result);
 
     ASSERT_EQ(stat, BT::NodeStatus::SUCCESS);
     ASSERT_TRUE(outSet);
@@ -63,7 +63,7 @@ TEST_F(BtTest, test_GetBoolTopic_false_success_another_topic) {
 
 TEST_F(BtTest, test_GetBoolTopic_fail_timeout) {
     bool outSet, result;
-    BT::NodeStatus stat = testGetBoolTopic(toolNode, "/some/bool", true, outSet, result, 3500);
+    BT::NodeStatus stat = testGetFloat64Topic(toolNode, "/some/bool", true, outSet, result, 3500);
 
     ASSERT_EQ(stat, BT::NodeStatus::FAILURE);
     ASSERT_TRUE(outSet);
