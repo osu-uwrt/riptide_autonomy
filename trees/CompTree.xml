@@ -21,16 +21,14 @@
             <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="depth" value="-0.56"/>
-            <ForceSuccess>
-                <SubTree ID="ReloadActuators"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
-            </ForceSuccess>
+            <SubTree ID="PrepForRun"/>
             <SubTree ID="WaitForKillSwitch"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <ForceSuccess>
-                <SubTree ID="TorpedoTree"/>
+                <SubTree ID="GateTree" __shared_blackboard="false" sla_pass_on_left="sla_pass_on_left"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <SubTree ID="KillController"/>
         </Sequence>
@@ -446,7 +444,7 @@
         <Sequence>
             <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="search_timeout" value="10"/>
+            <SetBlackboard output_key="search_timeout" value="20"/>
             <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="search_prox_z" value="-0.5"/>
             <SetBlackboard output_key="min_dist" value="1.5"/>
@@ -457,19 +455,41 @@
             <SetBlackboard output_key="prop" value="gate"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <SetBlackboard output_key="subprop" value="gate_hot"/>
+            <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_cold"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
+            <Action ID="Format" format="{alt_subprop}_frame" out="alt_subprop_frame"/>
             <Action ID="Info" message="GATE TIME"/>
             <ForceSuccess>
                 <Sequence name="Set camera and search">
+                    <Action ID="Info" message="Setting correct active camera"/>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <Action ID="Info" message="Mini-searching for primary prop"/>
                     <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    <Action ID="Info" message="Mini-searching for alternate prop"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="prop" prox_x="max_dist" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
+            <Action ID="SetMappingTarget" lock_map="1" name="Lock the map" target_object="" time_limit_secs="3"/>
+            <Sequence name="Determine pass_on_left for slalom">
+                <Action ID="Info" message="Determining slalom pass-on-left value"/>
+                <Action ID="TransformPose" from_frame="{alt_subprop_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="" out_y="dist_prim_to_alt" out_z="" oy="0" to_frame="{subprop_frame}" x="0" y="0" z="0"/>
+                <IfThenElse>
+                    <Condition ID="CompareNums" a="{dist_prim_to_alt}" b="0" name="If is positive" test="&gt;"/>
+                    <Sequence name="Should pass on left">
+                        <SetBlackboard output_key="sla_pass_on_left" value="1"/>
+                        <Action ID="Info" message="Slaom should pass on LEFT"/>
+                    </Sequence>
+                    <Sequence name="Should pass on right">
+                        <SetBlackboard output_key="sla_pass_on_left" value="0"/>
+                        <Action ID="Info" message="Slalom should pass on RIGHT"/>
+                    </Sequence>
+                </IfThenElse>
+            </Sequence>
             <Action ID="SetStatus" status="aligning"/>
+            <Action ID="Info" message="Performing gate task"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate_depth"/>
-            <SubTree ID="FlipTree"/>
             <Action ID="Wait" seconds="2"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="undergate_depth"/>
         </Sequence>
@@ -543,6 +563,37 @@
                     <Action ID="Info" message="Skipping target for tank discovery because it is not specified."/>
                 </ForceFailure>
             </IfThenElse>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="PassThroughSlalom">
+        <Sequence name="PassThruSlalom">
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="3"/>
+            <SetBlackboard name="Space between slaloms" output_key="space_between_slaloms" value="2"/>
+            <Action ID="Math" a="{whole_slalom_width}" b="4" operator="/" out="slalom_lat_offset_pos"/>
+            <Action ID="Math" a="{slalom_lat_offset_pos}" b="-1" operator="*" out="slalom_lat_offset_neg"/>
+            <Action ID="Math" a="{space_between_slaloms}" b="2" operator="/" out="slalom_long_offset_pos"/>
+            <Action ID="Math" a="{slalom_long_offset_pos}" b="-1" operator="*" out="slalom_long_offset_neg"/>
+            <IfThenElse name="Choose lateral slalom offset">
+                <Condition ID="CompareNums" a="{pass_on_left}" b="1" test="=="/>
+                <SetBlackboard name="Negative is left bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_neg}"/>
+                <SetBlackboard name="Positive is right bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_pos}"/>
+            </IfThenElse>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_pos" y="slalom_lat_offset" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="0" y="slalom_lat_offset" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_neg" y="slalom_lat_offset" z="0"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="PrepForRun">
+        <Sequence>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            <ForceSuccess>
+                <SubTree ID="ReloadActuators"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            </ForceSuccess>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="PrimitiveMoveOrientation">
@@ -756,6 +807,43 @@
             <RetryUntilSuccessful num_attempts="3">
                 <SubTree ID="FireTorpedo"/>
             </RetryUntilSuccessful>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="SlalomTree">
+        <Sequence name="Slalom">
+            <SetBlackboard output_key="slalom_back_frame" value="slalom_back_frame"/>
+            <SetBlackboard output_key="slalom_middle_frame" value="slalom_middle_frame"/>
+            <SetBlackboard output_key="slalom_front_frame" value="slalom_front_frame"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="slalom_front" value="slalom_front"/>
+            <SetBlackboard output_key="slalom_middle" value="slalom_middle"/>
+            <SetBlackboard output_key="slalom_back" value="slalom_back"/>
+            <SetBlackboard output_key="srch_timeout" value="60"/>
+            <SetBlackboard output_key="target_srch_err" value="0.1"/>
+            <SetBlackboard output_key="min_srch_dist" value="3"/>
+            <SetBlackboard output_key="max_srch_dist" value="6"/>
+            <SetBlackboard output_key="msrch_prox" value="2"/>
+            <SetBlackboard output_key="msrch_timeout" value="30"/>
+            <Action ID="Info" message="SALMON TIME"/>
+            <ForceSuccess>
+                <SubTree ID="Search" __shared_blackboard="false" max_dist="max_srch_dist" min_dist="min_srch_dist" object_name="slalom_front" target_cov="target_srch_err" timeout_secs="srch_timeout"/>
+            </ForceSuccess>
+            <Fallback>
+                <Sequence name="Minisearches">
+                    <AlwaysSuccess name="NOTE: Dont forcesuccess the minisearches, blindly going into the slalom could endanger the run"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_middle" parent_object="slalom_front" prox_x="msrch_prox" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_back" parent_object="slalom_front" prox_x="msrch_prox" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+                </Sequence>
+                <ForceFailure>
+                    <Action ID="Error" message="Aborting slalom because pole locations could not be found"/>
+                </ForceFailure>
+            </Fallback>
+            <Action ID="Info" message="Performing slalom run"/>
+            <Action ID="SetStatus" status="performing"/>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_front_frame"/>
+            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_middle_frame"/>
+            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_back_frame"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">
@@ -1126,7 +1214,10 @@
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
         </Action>
-        <SubTree ID="GateTree"/>
+        <SubTree ID="GateTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <output_port name="sla_pass_on_left" required="false"/>
+        </SubTree>
         <Action ID="GetActuatorStatus">
             <output_port name="actuators_busy" required="false"/>
             <output_port name="claw_state" required="false"/>
@@ -1208,6 +1299,12 @@
             <input_port name="target_error" required="true"/>
             <input_port name="target_frame" required="true"/>
         </SubTree>
+        <SubTree ID="PassThroughSlalom">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="pass_on_left" required="true"/>
+            <input_port name="slalom_object" required="true"/>
+        </SubTree>
+        <SubTree ID="PrepForRun"/>
         <SubTree ID="PrimitiveMoveOrientation">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="p" required="true"/>
@@ -1292,6 +1389,10 @@
             <input_port name="object_name" required="true"/>
             <input_port default="talos/torpedo_link" name="torpedo_link_name" required="true"/>
             <input_port default="torpedo" name="torpedo_name" required="true"/>
+        </SubTree>
+        <SubTree ID="SlalomTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="pass_on_left" required="true"/>
         </SubTree>
         <SubTree ID="SmartMovePosition">
             <inout_port name="__shared_blackboard" required="true"/>
