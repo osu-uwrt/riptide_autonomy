@@ -573,7 +573,9 @@
             <SetBlackboard output_key="discov_basket_prox" value="0.15"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="15" value="15"/>
-            <SubTree ID="DiscoverObjects" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target_1="object_1" target_2="object_2" target_3="object_3" target_4="object_4" target_error="target_error"/>
+            <RetryUntilSuccessful num_attempts="4">
+                <SubTree ID="DiscoverObjects" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target_1="object_1" target_2="object_2" target_3="object_3" target_4="object_4" target_error="target_error"/>
+            </RetryUntilSuccessful>
             <Action ID="Info" message="DISCOVERED GO-ABLE OBJECT: {discovered_object}. Attempting to lock in"/>
             <SubTree ID="LockInObject" __shared_blackboard="false" object="discovered_object" target_error="target_error"/>
             <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="z"/>
