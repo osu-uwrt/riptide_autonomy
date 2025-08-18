@@ -21,47 +21,29 @@
             <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="depth" value="-0.56"/>
-            <SubTree ID="PrepForRun"/>
             <SubTree ID="WaitForKillSwitch"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <ForceSuccess>
                 <SubTree ID="GateTree" __shared_blackboard="false" sla_pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
+                <Sequence>
+                    <SetBlackboard output_key="slalom_back" value="slalom_back_frame"/>
+                    <SetBlackboard output_key="slalom_middle" value="slalom_middle_frame"/>
+                    <SetBlackboard output_key="slalom_front" value="slalom_front_frame"/>
+                    <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="sla_pass_on_left" slalom_object="slalom_front"/>
+                    <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="sla_pass_on_left" slalom_object="slalom_middle"/>
+                    <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="sla_pass_on_left" slalom_object="slalom_back"/>
+                </Sequence>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="DeployTankTree"/>
+                <SubTree ID="BinTree"/>
             </ForceSuccess>
-            <IfThenElse name="Torpedo/bin tasks + table notify">
-                <Inverter name="is table?">
-                    <Condition ID="CompareNums" a="{pinger_is_table}" b="0" name="is not table?" test="=="/>
-                </Inverter>
-                <Sequence name="table then torpedo">
-                    <ForceSuccess>
-                        <AlwaysSuccess name="Notify tank table start"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="BinTree"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="TorpedoTree"/>
-                    </ForceSuccess>
-                </Sequence>
-                <Sequence name="torpedo then table">
-                    <ForceSuccess>
-                        <SubTree ID="TorpedoTree"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <AlwaysSuccess name="Notify tank table start"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="BinTree"/>
-                    </ForceSuccess>
-                </Sequence>
-            </IfThenElse>
             <ForceSuccess>
-                <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
+                <SubTree ID="TorpedoTree"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SurfaceTree"/>
             </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="ReturnHomeTree"/>
@@ -78,7 +60,7 @@
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
             <SetBlackboard output_key="frame" value="bin_target_frame"/>
             <SetBlackboard output_key="bin_target" value="bin_target"/>
-            <SetBlackboard output_key="search_prox" value="1.8"/>
+            <SetBlackboard output_key="search_prox" value="1"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="overbin" value="0.4"/>
             <SetBlackboard output_key="0" value="0"/>
@@ -249,6 +231,14 @@
                 <Condition ID="CompareNums" a="{err_at_end}" b="{target_error}" name="break early if we found it" test="&lt;"/>
             </Sequence>
         </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="CollectDetsOnSlalom">
+        <Sequence>
+            <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="rel_yaw" target="target" target_error="target_error"/>
+            <Action ID="TransformPose" from_frame="slalom_close_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="dx" out_y="dy" out_z="dz" oy="0" to_frame="talos/base_link" x="0" y="0" z="0"/>
+            <Action ID="CalculateDistance" dist="d" x1="0" x2="{dx}" y1="0" y2="{dy}" z1="0" z2="{dz}"/>
+            <Condition ID="CompareNums" a="{d}" b="2.6" test="&lt;"/>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="DeployTankTree">
         <Sequence name="TANK DEPLOY TREE">
@@ -537,17 +527,17 @@
             <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="search_timeout" value="20"/>
-            <SetBlackboard output_key="max_dist" value="2"/>
-            <SetBlackboard output_key="search_prox_z" value="-0.5"/>
+            <SetBlackboard output_key="max_dist" value="1.5"/>
+            <SetBlackboard output_key="search_prox_z" value="0"/>
             <SetBlackboard output_key="min_dist" value="1.5"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="target_cov" value="0.1"/>
-            <SetBlackboard output_key="undergate_depth" value="-0.75"/>
+            <SetBlackboard output_key="undergate_depth" value="-0.625"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
-            <SetBlackboard output_key="subprop" value="gate_reefshark"/>
+            <SetBlackboard output_key="subprop" value="gate_sawfish"/>
             <SetBlackboard output_key="prop" value="{subprop}"/>
-            <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_sawfish"/>
+            <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_reefshark"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Format" format="{alt_subprop}_frame" out="alt_subprop_frame"/>
             <Action ID="Info" message="GATE TIME"/>
@@ -568,7 +558,7 @@
                 <IfThenElse>
                     <Condition ID="CompareNums" a="{dist_prim_to_alt}" b="0" name="If is positive" test="&gt;"/>
                     <Sequence name="Should pass on left">
-                        <SetBlackboard output_key="sla_pass_on_left" value="1"/>
+                        <SetBlackboard output_key="sla_pass_on_left" value="0"/>
                         <Action ID="Info" message="Slaom should pass on LEFT"/>
                     </Sequence>
                     <Sequence name="Should pass on right">
@@ -743,11 +733,11 @@
         <Sequence name="PassThruSlalom">
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="4"/>
-            <SetBlackboard name="Space between slaloms" output_key="space_between_slaloms" value="1.3"/>
+            <SetBlackboard name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="3.2"/>
+            <SetBlackboard name="Space between slaloms" output_key="space_between_slaloms" value="1.5"/>
             <Action ID="Math" a="{whole_slalom_width}" b="4" operator="/" out="slalom_lat_offset_pos"/>
-            <Action ID="Math" a="{slalom_lat_offset_pos}" b="-1" operator="*" out="slalom_lat_offset_neg"/>
             <Action ID="Math" a="{space_between_slaloms}" b="2" operator="/" out="slalom_long_offset_pos"/>
+            <Action ID="Math" a="{slalom_lat_offset_pos}" b="-1" operator="*" out="slalom_lat_offset_neg"/>
             <Action ID="Math" a="{slalom_long_offset_pos}" b="-1" operator="*" out="slalom_long_offset_neg"/>
             <IfThenElse name="Choose lateral slalom offset">
                 <Condition ID="CompareNums" a="{pass_on_left}" b="1" test="=="/>
@@ -755,14 +745,16 @@
                 <SetBlackboard name="Positive is right bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_pos}"/>
             </IfThenElse>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_pos" y="slalom_lat_offset" z="0"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="0" y="slalom_lat_offset" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="x" y="slalom_lat_offset" z="0"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_neg" y="slalom_lat_offset" z="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="PrepForRun">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
-            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            <ForceSuccess>
+                <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="ReloadActuators"/>
             </ForceSuccess>
@@ -797,7 +789,7 @@
     </BehaviorTree>
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
-            <SetBlackboard output_key="min_depth" value="-0.55"/>
+            <SetBlackboard output_key="min_depth" value="-0.8"/>
             <SetBlackboard output_key="max_depth" value="-4"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
@@ -822,7 +814,7 @@
                     <Action ID="Wait" seconds="0.25"/>
                     <Action ID="GetOdometry" name="Get Current XYZ" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
                     <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="{cx}" y1="{y}" y2="{cy}" z1="{valid_z}" z2="{cz}"/>
-                    <Condition ID="CompareNums" a="{dist}" b="0.25" name="At goal point?" test="&lt;"/>
+                    <Condition ID="CompareNums" a="{dist}" b="0.5" name="At goal point?" test="&lt;"/>
                 </Sequence>
             </Decorator>
             <Action ID="Info" message="Translation Complete."/>
@@ -897,12 +889,11 @@
             <SetBlackboard output_key="30" value="30"/>
             <SetBlackboard output_key="gate" value="gate"/>
             <Action ID="Format" format="{gate}_frame" out="gate_frame"/>
-            <SetBlackboard output_key="undergate" value="-0.75"/>
+            <SetBlackboard output_key="undergate" value="-1.1"/>
             <SetBlackboard output_key="max_dist" value="4"/>
             <SetBlackboard output_key="min_dist" value="2"/>
             <SetBlackboard output_key="target_err" value="0.01"/>
             <Action ID="Info" message="WINNING TIME"/>
-            <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="gate" target_cov="target_err" timeout_secs="30"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate"/>
             <SubTree ID="FlipTree"/>
@@ -1059,7 +1050,7 @@
             <SetBlackboard output_key="scale_trust" value="0.99"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0"/>
+            <SetBlackboard output_key="shoot_prox" value="0.5"/>
             <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
@@ -1104,35 +1095,69 @@
             <SetBlackboard output_key="target_srch_err" value="0.2"/>
             <SetBlackboard output_key="min_srch_dist" value="3"/>
             <SetBlackboard output_key="max_srch_dist" value="6"/>
-            <SetBlackboard output_key="msrch_prox" value="1.2"/>
+            <SetBlackboard output_key="msrch_prox" value="2.5"/>
+            <SetBlackboard output_key="slalom_front_frame" value="slalom_front_frame"/>
             <SetBlackboard output_key="msrch_timeout" value="60"/>
-            <Action ID="Info" message="SALMON TIME"/>
+            <Action ID="Info" message="SALMONI TIME"/>
             <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_close" parent_object="slalom_close" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <SetBlackboard name="DO NOT MODIFY THIS &gt;:( &gt;:(" output_key="lateral_shift" value="0"/>
+            <SetBlackboard name="DO NOT MODIFY THIS &gt;:( &gt;:(" output_key="srch_ang" value="0"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_front" time_limit_secs="3"/>
             <Repeat num_cycles="3">
                 <Sequence name="Slalom Loop">
                     <Action ID="Info" message="Shifting laterally {lateral_shift} meters."/>
-                    <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_close" time_limit_secs="3"/>
                     <SetBlackboard output_key="max_srch_atts" value="6"/>
                     <Action ID="Format" format="{max_srch_atts}" name="dont worry about it" out="dont_worry_about_it"/>
                     <Action ID="Info" message="Looking for slalom_red"/>
-                    <RetryUntilSuccessful num_attempts="{max_srch_atts}">
-                        <Fallback name="Find pole">
-                            <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_close" target_error="target_srch_err"/>
-                            <ForceFailure>
-                                <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="talos/base_link" op="0" or="0" oy="0" x="0" y="lateral_shift" z="0"/>
-                            </ForceFailure>
+                    <Fallback>
+                        <Sequence>
+                            <AlwaysFailure name="Comment out next in seq"/>
+                            <RetryUntilSuccessful num_attempts="{max_srch_atts}">
+                                <Fallback name="Find pole">
+                                    <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_close" target_error="target_srch_err"/>
+                                    <ForceFailure>
+                                        <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="talos/base_link" op="0" or="0" oy="0" x="0" y="lateral_shift" z="0"/>
+                                    </ForceFailure>
+                                </Fallback>
+                            </RetryUntilSuccessful>
+                        </Sequence>
+                        <Fallback>
+                            <SubTree ID="CollectDetsOnSlalom" __shared_blackboard="false" frame="slalom_close_frame" rel_yaw="0" target="slalom_close" target_error="target_srch_err"/>
+                            <SubTree ID="CollectDetsOnSlalom" __shared_blackboard="false" frame="slalom_close_frame" rel_yaw="srch_ang" target="slalom_close" target_error="target_srch_err"/>
+                            <Sequence name="Search neg. angle">
+                                <Action ID="Math" a="{srch_ang}" b="-1" operator="*" out="n_srch_ang"/>
+                                <SubTree ID="CollectDetsOnSlalom" __shared_blackboard="false" frame="slalom_close_frame" rel_yaw="n_srch_ang" target="slalom_close" target_error="target_srch_err"/>
+                            </Sequence>
+                            <Sequence name="search far angle">
+                                <Action ID="Math" a="{srch_ang}" b="1.2" operator="*" out="far_srch_ang"/>
+                                <SubTree ID="CollectDetsOnSlalom" __shared_blackboard="false" frame="slalom_close_frame" rel_yaw="far_srch_ang" target="slalom_close" target_error="far_srch_ang"/>
+                            </Sequence>
                         </Fallback>
-                    </RetryUntilSuccessful>
+                    </Fallback>
                     <Action ID="Info" message="Passing through slalom"/>
                     <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-                    <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_close_frame"/>
-                    <IfThenElse>
-                        <Condition ID="ApproxEqualTo" a="{lateral_shift}" b="0" range="0.01"/>
-                        <SetBlackboard name="SET LATERAL SHIFT HERE" output_key="lateral_shift" value="0.5"/>
-                        <Action ID="Math" a="{lateral_shift}" b="-1" operator="*" out="lateral_shift"/>
-                    </IfThenElse>
+                    <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_front_frame"/>
+                    <Fallback>
+                        <Sequence>
+                            <AlwaysFailure name="Comment out to the right"/>
+                            <IfThenElse>
+                                <Condition ID="ApproxEqualTo" a="{lateral_shift}" b="0" range="0.01"/>
+                                <SetBlackboard name="SET LATERAL SHIFT HERE" output_key="lateral_shift" value="0.5"/>
+                                <Action ID="Math" a="{lateral_shift}" b="-1" operator="*" out="lateral_shift"/>
+                            </IfThenElse>
+                        </Sequence>
+                        <IfThenElse>
+                            <Condition ID="ApproxEqualTo" a="{srch_ang}" b="0" range="0.01"/>
+                            <IfThenElse>
+                                <Condition ID="ApproxEqualTo" a="{pass_on_left}" b="0" range="0.01"/>
+                                <SetBlackboard output_key="srch_ang" value="0.7854"/>
+                                <SetBlackboard output_key="srch_ang" value="-0.7854"/>
+                            </IfThenElse>
+                            <Action ID="Math" a="{srch_ang}" b="-1" operator="*" out="lateral_shift"/>
+                        </IfThenElse>
+                    </Fallback>
+                    <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_close" time_limit_secs="3"/>
                 </Sequence>
             </Repeat>
         </Sequence>
@@ -1141,18 +1166,34 @@
         <Fallback>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="120">
                 <Sequence name="Try move to position">
-                    <SetBlackboard output_key="timeout" value="15"/>
+                    <SetBlackboard output_key="timeout" value="1"/>
+                    <SetBlackboard output_key="sec_timeout" value="10"/>
                     <Action ID="Info" message="Attempting to move forward for {timeout} seconds"/>
                     <Action ID="GetOdometry" op="" or="" oy="" x="old_x" y="old_y" z="old_z"/>
                     <Fallback>
                         <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="timeout" x="x" y="y" z="z"/>
                         <Sequence name="Evaluate possible obstacle">
                             <Action ID="GetOdometry" op="" or="" oy="" x="curr_x" y="curr_y" z="curr_z"/>
+                            <Action ID="Math" a="{curr_z}" b="{z}" operator="-" out="{z_dist}"/>
+                            <IfThenElse>
+                                <Condition ID="CompareNums" a="{z_dist}" b="0.15" test="&gt;"/>
+                                <Sequence>
+                                    <Action ID="Info" message="Bad depth! At {curr_z} but want {z}. Correcting before moving on."/>
+                                    <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="15">
+                                        <Sequence>
+                                            <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z="cz"/>
+                                            <Action ID="PublishToController" isOrientation="0" mode="3" x="{cx}" y="{cy}" z="{z}"/>
+                                            <Action ID="Math" a="{cz}" b="{z}" operator="-" out="z_diff"/>
+                                            <Condition ID="CompareNums" a="{z_diff}" b="0.15" test="&lt;"/>
+                                        </Sequence>
+                                    </Decorator>
+                                </Sequence>
+                            </IfThenElse>
                             <Action ID="CalculateDistance" dist="dist_travelled" x1="{old_x}" x2="{curr_x}" y1="{old_y}" y2="{curr_y}" z1="{old_z}" z2="{curr_z}"/>
                             <IfThenElse name="avoid obstacle if necessary">
-                                <Condition ID="CompareNums" a="{dist_travelled}" b="0.25" name="expect 1 meter travelled in 11 seconds" test="&lt;"/>
+                                <Condition ID="CompareNums" a="{dist_travelled}" b="0" name="expect x meter travelled in timeout seconds" test="&lt;"/>
                                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="60">
-                                    <Sequence name="if dist &lt; 1m, move out the way">
+                                    <Sequence name="if dist &lt; something, move out the way">
                                         <SetBlackboard output_key="5" value="5"/>
                                         <SetBlackboard output_key="60" value="60"/>
                                         <SetBlackboard output_key="-0.75" value="-0.75"/>
@@ -1292,26 +1333,13 @@
             <SetBlackboard output_key="180" value="180"/>
             <SetBlackboard output_key="table_frame" value="table_frame"/>
             <SetBlackboard output_key="target_cov" value="1"/>
-            <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="table_x" y="table_y" z="depth"/>
-            <ForceSuccess>
-                <IfThenElse name="conditional surface">
-                    <Condition ID="CompareNums" a="{cool_surface}" b="1" name="is surface cool?" test="=="/>
-                    <Sequence name="cool surface">
-                        <SetBlackboard output_key="15" value="15"/>
-                        <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="target_pitch" r="0" timeout="15" y="0"/>
-                        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="1.5">
-                            <Sequence>
-                                <Action ID="PublishToController" isOrientation="0" mode="2" name="go as fast as possible" x="100" y="0" z="0"/>
-                                <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="curr_z"/>
-                                <Condition ID="CompareNums" a="{curr_z}" b="0" test="&gt;"/>
-                            </Sequence>
-                        </Decorator>
-                    </Sequence>
-                    <AlwaysSuccess/>
-                </IfThenElse>
-            </ForceSuccess>
-            <SubTree ID="KillController"/>
+            <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="table_w" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="table_w" x="table_x" y="table_y" z="depth"/>
+            <Repeat num_cycles="5">
+                <Action ID="PublishToController" isOrientation="0" mode="3" x="{table_x}" y="{table_y}" z="1"/>
+            </Repeat>
+            <Action ID="Wait" seconds="3"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="table_w" x="table_x" y="table_y" z="depth"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurgeMove">
@@ -1526,8 +1554,8 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="search_timeout" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.0025"/>
-            <SetBlackboard output_key="min_dist" value="2"/>
-            <SetBlackboard output_key="max_dist" value="3"/>
+            <SetBlackboard output_key="min_dist" value="1"/>
+            <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
             <ForceSuccess>
                 <Sequence>
@@ -1702,6 +1730,13 @@
             <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="CollectDetsAtAngle">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="true"/>
+            <input_port name="rel_yaw" required="true"/>
+            <input_port name="target" required="true"/>
+            <input_port name="target_error" required="true"/>
+        </SubTree>
+        <SubTree ID="CollectDetsOnSlalom">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="frame" required="true"/>
             <input_port name="rel_yaw" required="true"/>

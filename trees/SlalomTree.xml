@@ -8,7 +8,7 @@
     </BehaviorTree>
     <BehaviorTree ID="AssertTree">
         <Fallback>
-            <Condition ID="CompareNums" a="{a}" b="{b}" test="&gt;"/>
+            <Condition ID="CompareNums" a="{a}" b="{b}" test="{test}"/>
             <ForceFailure>
                 <Action ID="Info" message="Assertion {aname} ({a} {test} {b}) failed"/>
             </ForceFailure>
@@ -28,6 +28,7 @@
         <Sequence name="BINS">
             <SetBlackboard output_key="ctrler_timeout" value="30"/>
             <SetBlackboard output_key="ctrler_trust" value="0.95"/>
+            <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
             <SetBlackboard output_key="frame" value="bin_target_frame"/>
@@ -62,7 +63,7 @@
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dropper_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="0" y="0" z="{overbin}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <ForceSuccess>
-                <SubTree ID="WaitForController" __shared_blackboard="false" timeout="ctrler_timeout" trust="ctrler_trust"/>
+                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="dropper_link" target_frame="frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
             </ForceSuccess>
             <Action ID="SetStatus" status="performing"/>
             <Repeat num_cycles="2">
@@ -204,16 +205,27 @@
             </Sequence>
         </Fallback>
     </BehaviorTree>
+    <BehaviorTree ID="CollectDetsOnSlalom">
+        <Sequence>
+            <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="frame" rel_yaw="rel_yaw" target="target" target_error="target_error"/>
+            <Action ID="TransformPose" from_frame="slalom_close_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="dx" out_y="dy" out_z="dz" oy="0" to_frame="talos/base_link" x="0" y="0" z="0"/>
+            <Action ID="CalculateDistance" dist="d" x1="0" x2="{dx}" y1="0" y2="{dy}" z1="0" z2="{dz}"/>
+            <Condition ID="CompareNums" a="{d}" b="2.6" test="&lt;"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="DeployTankTree">
         <Sequence name="TANK DEPLOY TREE">
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="2" value="2"/>
+            <SetBlackboard output_key="-2" value="-2"/>
             <SetBlackboard output_key="overtable" value="0.5"/>
             <SetBlackboard output_key="table_sawfish" value="table_sawfish"/>
             <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
             <SetBlackboard output_key="table_reefshark" value="table_reefshark"/>
             <SetBlackboard output_key="search_dist" value="1.8"/>
             <SetBlackboard output_key="table" value="table"/>
+            <Action ID="Format" format="{table}_frame" out="table_frame"/>
             <SetBlackboard output_key="target_err" value="0.01"/>
             <SetBlackboard output_key="search_timeout" value="60"/>
             <Action ID="Info" message="TANK DEPLOYMENT TIME"/>
@@ -224,12 +236,15 @@
                 </Sequence>
             </ForceSuccess>
             <Action ID="Info" message="Aligning hitch to table"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/hitch_link" op="0" or="0" out_op="oop" out_or="oor" out_oy="ooy" out_x="ox" out_y="oy" out_z="oz" oy="0" reference_frame="table_frame" x="0" y="0" z="2"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="oop" or="oor" oy="ooy" x="ox" y="oy" z="oz"/>
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/hitch_link" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="table_frame" x="0" y="0" z="{overtable}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="Info" message="Deploying tank"/>
             <AlwaysSuccess name="De-energize hitch"/>
             <Sequence name="Get Fish Heading">
                 <Action ID="Info" message="Determining reefshark heading"/>
+                <SubTree ID="Move" __shared_blackboard="false" op="oop" or="oor" oy="ooy" x="ox" y="oy" z="oz"/>
                 <RetryUntilSuccessful num_attempts="4">
                     <SubTree ID="DiscoverObjects" __shared_blackboard="false" base_link="talos/base_link" discovered_object="table_fish" target_1="table_reefshark" target_2="table_sawfish" target_3="" target_4="" target_error="target_err"/>
                 </RetryUntilSuccessful>
@@ -262,6 +277,7 @@
                 <Action ID="Info" message="Transmitting reefshark heading to tank"/>
                 <AlwaysSuccess name="Transmit tank_reefshark_heading to tank"/>
             </Sequence>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="table_frame" op="0" or="0" oy="0" x="-2" y="0" z="2"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="DiscoverObjects">
@@ -448,28 +464,13 @@
     </BehaviorTree>
     <BehaviorTree ID="FireTorpedo">
         <ForceSuccess name="REMOVE ME">
-            <Sequence>
-                <SetBlackboard output_key="10" value="10"/>
-                <Action ID="Info" message="Attempting to fire torpedo..."/>
+            <Sequence name="fire torpedo">
                 <SetBlackboard output_key="torpedo_srv" value="command/actuator/torpedo"/>
-                <SubTree ID="CheckActuatorStates" __shared_blackboard="false"/>
+                <Action ID="Info" message="Calling trigger service {torpedo_srv}"/>
+                <Action ID="CallTriggerService" srv_name="{torpedo_srv}" time_limit_secs="1"/>
+                <Action ID="Wait" seconds="1"/>
                 <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
-                <Action ID="GetActuatorStatus" actuators_busy="" claw_state="" dropper_available_count="" dropper_state="" torpedo_available_count="torpedoes" torpedo_state=""/>
-                <Action ID="Info" message="{torpedoes} droppers available."/>
-                <Action ID="Format" format="{torpedoes}.0" out="torpedoesstr"/>
-                <IfThenElse>
-                    <Condition ID="CompareNums" a="{torpedoesstr}" b="0" name="droppers available?" test="&gt;"/>
-                    <Sequence name="fire torpedo">
-                        <Action ID="Info" message="Calling trigger service {torpedo_srv}"/>
-                        <Action ID="CallTriggerService" srv_name="{torpedo_srv}" time_limit_secs="1"/>
-                        <Action ID="Wait" seconds="1"/>
-                        <SubTree ID="WaitForActuators" __shared_blackboard="false" timeout_secs="10"/>
-                        <Action ID="Info" message="Torpedo fired!"/>
-                    </Sequence>
-                    <ForceFailure>
-                        <Action ID="Error" message="No torpedoes available!"/>
-                    </ForceFailure>
-                </IfThenElse>
+                <Action ID="Info" message="Torpedo fired!"/>
             </Sequence>
         </ForceSuccess>
     </BehaviorTree>
@@ -576,7 +577,9 @@
             <SetBlackboard output_key="discov_basket_prox" value="0.15"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="15" value="15"/>
-            <SubTree ID="DiscoverObjects" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target_1="object_1" target_2="object_2" target_3="object_3" target_4="object_4" target_error="target_error"/>
+            <RetryUntilSuccessful num_attempts="4">
+                <SubTree ID="DiscoverObjects" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target_1="object_1" target_2="object_2" target_3="object_3" target_4="object_4" target_error="target_error"/>
+            </RetryUntilSuccessful>
             <Action ID="Info" message="DISCOVERED GO-ABLE OBJECT: {discovered_object}. Attempting to lock in"/>
             <SubTree ID="LockInObject" __shared_blackboard="false" object="discovered_object" target_error="target_error"/>
             <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="z"/>
@@ -703,19 +706,23 @@
         <Sequence name="PassThruSlalom">
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="4"/>
+            <SetBlackboard name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="3.2"/>
             <SetBlackboard name="Space between slaloms" output_key="space_between_slaloms" value="1.3"/>
             <Action ID="Math" a="{whole_slalom_width}" b="4" operator="/" out="slalom_lat_offset_pos"/>
-            <Action ID="Math" a="{slalom_lat_offset_pos}" b="-1" operator="*" out="slalom_lat_offset_neg"/>
             <Action ID="Math" a="{space_between_slaloms}" b="2" operator="/" out="slalom_long_offset_pos"/>
+            <Action ID="Math" a="{slalom_lat_offset_pos}" b="-1" operator="*" out="slalom_lat_offset_neg"/>
             <Action ID="Math" a="{slalom_long_offset_pos}" b="-1" operator="*" out="slalom_long_offset_neg"/>
             <IfThenElse name="Choose lateral slalom offset">
                 <Condition ID="CompareNums" a="{pass_on_left}" b="1" test="=="/>
                 <SetBlackboard name="Negative is left bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_neg}"/>
                 <SetBlackboard name="Positive is right bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_pos}"/>
             </IfThenElse>
+            <Action ID="TransformPose" from_frame="slalom_close_frame" op="0" or="0" out_op="{op}" out_or="{or}" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="0" to_frame="slalom_front_frame" x="0" y="0" z="0"/>
+            <Action ID="Math" a="{x}" b="{slalom_long_offset_pos}" operator="+" out="{slalom_long_offset_pos}"/>
+            <Action ID="Math" a="{x}" b="{slalom_long_offset_neg}" operator="+" out="{slalom_long_offset_neg}"/>
+            <Action ID="Math" a="{y}" b="{slalom_lat_offset}" operator="+" out="{slalom_lat_offset}"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_pos" y="slalom_lat_offset" z="0"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="0" y="slalom_lat_offset" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="x" y="slalom_lat_offset" z="0"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_neg" y="slalom_lat_offset" z="0"/>
         </Sequence>
     </BehaviorTree>
@@ -954,8 +961,8 @@
             <Sequence>
                 <IfThenElse>
                     <Condition ID="IsTrue" value="{is_dfc}"/>
-                    <Action ID="Info" message="Attempting to set the camera to FFC"/>
                     <Action ID="Info" message="Attempting to set the camera to DFC"/>
+                    <Action ID="Info" message="Attempting to set the camera to FFC"/>
                 </IfThenElse>
                 <RetryUntilSuccessful num_attempts="3">
                     <Action ID="CallSetBoolService" data="{is_dfc}" srv_name="set_camera_is_dfc" time_limit_secs="3"/>
@@ -1016,9 +1023,10 @@
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
-            <SetBlackboard output_key="0.95" value="0.95"/>
+            <SetBlackboard output_key="scale_trust" value="0.99"/>
+            <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.15"/>
+            <SetBlackboard output_key="shoot_prox" value="0.5"/>
             <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
@@ -1026,21 +1034,25 @@
             <Action ID="Format" format="{torpedo_name}_frame" out="torpedo_frame"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot object {object_name}"/>
-            <Fallback>
-                <Sequence>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
-                    <SetBlackboard output_key="frame_to_shoot" value="{object_frame}"/>
-                </Sequence>
-                <SetBlackboard output_key="frame_to_shoot" value="{torpedo_frame}"/>
-            </Fallback>
-            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <Action ID="SetStatus" status="aligning"/>
-            <Action ID="Math" a="{shoot_prox}" b="3" operator="*" out="shoot_prox_x2"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox_x2" prox_z="0"/>
-            <Action ID="Wait" name="REMOVE ME" seconds="10"/>
-            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
             <ForceSuccess>
-                <SubTree ID="WaitForController" __shared_blackboard="false" timeout="ctrler_timeout" trust="0.95"/>
+                <RetryUntilSuccessful num_attempts="2">
+                    <Sequence>
+                        <Fallback>
+                            <Sequence>
+                                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
+                                <SetBlackboard output_key="frame_to_shoot" value="{object_frame}"/>
+                            </Sequence>
+                            <SetBlackboard output_key="frame_to_shoot" value="{torpedo_frame}"/>
+                        </Fallback>
+                        <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+                        <Action ID="SetStatus" status="aligning"/>
+                        <Action ID="Math" a="{shoot_prox}" b="0.5" operator="+" out="shoot_prox_plus"/>
+                        <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox_plus" prox_z="0"/>
+                        <Action ID="Wait" name="REMOVE ME" seconds="10"/>
+                        <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
+                        <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="torpedo_link_name" target_frame="frame_to_shoot" timeout="ctrler_timeout" trust="scale_trust"/>
+                    </Sequence>
+                </RetryUntilSuccessful>
             </ForceSuccess>
             <Action ID="SetStatus" status="performing"/>
             <RetryUntilSuccessful num_attempts="3">
@@ -1052,42 +1064,76 @@
         <Sequence name="Slalom">
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="slalom_front" value="slalom_front"/>
-            <SetBlackboard output_key="slalom_red" value="slalom_red"/>
-            <SetBlackboard output_key="slalom_red_frame" value="slalom_red_frame"/>
+            <SetBlackboard output_key="slalom_close" value="slalom_close"/>
+            <SetBlackboard output_key="slalom_close_frame" value="slalom_close_frame"/>
             <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
             <SetBlackboard output_key="srch_timeout" value="60"/>
             <SetBlackboard output_key="target_srch_err" value="0.2"/>
             <SetBlackboard output_key="min_srch_dist" value="3"/>
             <SetBlackboard output_key="max_srch_dist" value="6"/>
             <SetBlackboard output_key="msrch_prox" value="1.2"/>
+            <SetBlackboard output_key="slalom_front_frame" value="slalom_front_frame"/>
             <SetBlackboard output_key="msrch_timeout" value="60"/>
             <Action ID="Info" message="SALMON TIME"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_red" parent_object="slalom_red" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_close" parent_object="slalom_close" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <SetBlackboard name="DO NOT MODIFY THIS &gt;:( &gt;:(" output_key="lateral_shift" value="0"/>
+            <SetBlackboard name="DO NOT MODIFY THIS &gt;:( &gt;:(" output_key="srch_ang" value="0"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_front" time_limit_secs="3"/>
             <Repeat num_cycles="3">
                 <Sequence name="Slalom Loop">
                     <Action ID="Info" message="Shifting laterally {lateral_shift} meters."/>
-                    <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_red" time_limit_secs="3"/>
                     <SetBlackboard output_key="max_srch_atts" value="6"/>
                     <Action ID="Format" format="{max_srch_atts}" name="dont worry about it" out="dont_worry_about_it"/>
                     <Action ID="Info" message="Looking for slalom_red"/>
-                    <RetryUntilSuccessful num_attempts="{max_srch_atts}">
-                        <Fallback name="Find pole">
-                            <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_red" target_error="target_srch_err"/>
-                            <ForceFailure>
-                                <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="talos/base_link" op="0" or="0" oy="0" x="0" y="lateral_shift" z="0"/>
-                            </ForceFailure>
+                    <Fallback>
+                        <Sequence>
+                            <AlwaysFailure name="Comment out next in seq"/>
+                            <RetryUntilSuccessful num_attempts="{max_srch_atts}">
+                                <Fallback name="Find pole">
+                                    <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_close" target_error="target_srch_err"/>
+                                    <ForceFailure>
+                                        <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="talos/base_link" op="0" or="0" oy="0" x="0" y="lateral_shift" z="0"/>
+                                    </ForceFailure>
+                                </Fallback>
+                            </RetryUntilSuccessful>
+                        </Sequence>
+                        <Fallback>
+                            <SubTree ID="CollectDetsOnSlalom" __shared_blackboard="false" frame="slalom_close_frame" rel_yaw="0" target="slalom_close" target_error="target_srch_err"/>
+                            <SubTree ID="CollectDetsOnSlalom" __shared_blackboard="false" frame="slalom_close_frame" rel_yaw="srch_ang" target="slalom_close" target_error="target_srch_err"/>
+                            <Sequence name="Search neg. angle">
+                                <Action ID="Math" a="{srch_ang}" b="-1" operator="*" out="n_srch_ang"/>
+                                <SubTree ID="CollectDetsOnSlalom" __shared_blackboard="false" frame="slalom_close_frame" rel_yaw="n_srch_ang" target="slalom_close" target_error="target_srch_err"/>
+                            </Sequence>
+                            <Sequence name="search far angle">
+                                <Action ID="Math" a="{srch_ang}" b="1.2" operator="*" out="far_srch_ang"/>
+                                <SubTree ID="CollectDetsOnSlalom" __shared_blackboard="false" frame="slalom_close_frame" rel_yaw="far_srch_ang" target="slalom_close" target_error="far_srch_ang"/>
+                            </Sequence>
                         </Fallback>
-                    </RetryUntilSuccessful>
+                    </Fallback>
                     <Action ID="Info" message="Passing through slalom"/>
                     <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-                    <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_red_frame"/>
-                    <IfThenElse>
-                        <Condition ID="ApproxEqualTo" a="{lateral_shift}" b="0" range="0.01"/>
-                        <SetBlackboard name="SET LATERAL SHIFT HERE" output_key="lateral_shift" value="0.5"/>
-                        <Action ID="Math" a="{lateral_shift}" b="-1" operator="*" out="lateral_shift"/>
-                    </IfThenElse>
+                    <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_front_frame"/>
+                    <Fallback>
+                        <Sequence>
+                            <AlwaysFailure name="Comment out to the right"/>
+                            <IfThenElse>
+                                <Condition ID="ApproxEqualTo" a="{lateral_shift}" b="0" range="0.01"/>
+                                <SetBlackboard name="SET LATERAL SHIFT HERE" output_key="lateral_shift" value="0.5"/>
+                                <Action ID="Math" a="{lateral_shift}" b="-1" operator="*" out="lateral_shift"/>
+                            </IfThenElse>
+                        </Sequence>
+                        <IfThenElse>
+                            <Condition ID="ApproxEqualTo" a="{srch_ang}" b="0" range="0.01"/>
+                            <IfThenElse>
+                                <Condition ID="ApproxEqualTo" a="{pass_on_left}" b="0" range="0.01"/>
+                                <SetBlackboard output_key="srch_ang" value="0.7854"/>
+                                <SetBlackboard output_key="srch_ang" value="-0.7854"/>
+                            </IfThenElse>
+                            <Action ID="Math" a="{srch_ang}" b="-1" operator="*" out="lateral_shift"/>
+                        </IfThenElse>
+                    </Fallback>
+                    <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_close" time_limit_secs="3"/>
                 </Sequence>
             </Repeat>
         </Sequence>
@@ -1481,8 +1527,8 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="search_timeout" value="60"/>
             <SetBlackboard output_key="target_cov" value="0.0025"/>
-            <SetBlackboard output_key="min_dist" value="2"/>
-            <SetBlackboard output_key="max_dist" value="3"/>
+            <SetBlackboard output_key="min_dist" value="1"/>
+            <SetBlackboard output_key="max_dist" value="2"/>
             <SetBlackboard output_key="object_name" value="torpedo"/>
             <ForceSuccess>
                 <Sequence>
@@ -1541,7 +1587,9 @@
                     <SetBlackboard output_key="Z" value="Z"/>
                     <SetBlackboard output_key="Y" value="Y"/>
                     <SetBlackboard output_key="X" value="X"/>
+                    <SetBlackboard output_key="Dist" value="Dist"/>
                     <SetBlackboard output_key="&gt;" value="&gt;"/>
+                    <SetBlackboard output_key="&lt;" value="&lt;"/>
                     <Action ID="Wait" seconds="1"/>
                     <Action ID="GetTwistTopic" topic="controller/scale/trust" vel_pitch="top" vel_roll="tor" vel_x="tx" vel_y="ty" vel_yaw="toy" vel_z="tz"/>
                     <SubTree ID="AssertTree" __shared_blackboard="false" a="tx" aname="X" b="trust" test="&gt;"/>
@@ -1550,6 +1598,15 @@
                     <SubTree ID="AssertTree" __shared_blackboard="false" a="tor" aname="Roll" b="trust" test="&gt;"/>
                     <SubTree ID="AssertTree" __shared_blackboard="false" a="top" aname="Pitch" b="trust" test="&gt;"/>
                     <SubTree ID="AssertTree" __shared_blackboard="false" a="toy" aname="Yaw" b="trust" test="&gt;"/>
+                    <Action ID="TransformPose" from_frame="{link_frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="" out_y="link_y" out_z="" oy="0" to_frame="{target_frame}" x="0" y="0" z="0"/>
+                    <ForceSuccess>
+                        <Sequence>
+                            <Condition ID="CompareNums" a="{link_y}" b="0" test="&lt;"/>
+                            <Action ID="Math" a="{link_y}" b="-1" operator="*" out="link_y"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <Action ID="Info" message="Link dist is {link_y}"/>
+                    <SubTree ID="AssertTree" __shared_blackboard="false" a="link_y" aname="Dist" b="dist" test="&lt;"/>
                 </Sequence>
             </Decorator>
             <ForceFailure>
@@ -1646,6 +1703,13 @@
             <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="CollectDetsAtAngle">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="true"/>
+            <input_port name="rel_yaw" required="true"/>
+            <input_port name="target" required="true"/>
+            <input_port name="target_error" required="true"/>
+        </SubTree>
+        <SubTree ID="CollectDetsOnSlalom">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="frame" required="true"/>
             <input_port name="rel_yaw" required="true"/>
@@ -2024,6 +2088,9 @@
         </SubTree>
         <SubTree ID="WaitForController">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="dist" required="true"/>
+            <input_port name="link_frame" required="true"/>
+            <input_port name="target_frame" required="true"/>
             <input_port name="timeout" required="true">max time to wait in seconds</input_port>
             <input_port name="trust" required="true">minimum controller scale trust threshold</input_port>
         </SubTree>
