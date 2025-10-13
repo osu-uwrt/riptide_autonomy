@@ -25,7 +25,7 @@
             <SetBlackboard output_key="bin_target" value="bin_target"/>
             <SetBlackboard output_key="search_prox" value="1"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
-            <SetBlackboard output_key="overbin" value="0.4"/>
+            <SetBlackboard output_key="overbin" value="0.6"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="object" value="bin_target"/>
@@ -496,7 +496,7 @@
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="target_cov" value="0.1"/>
-            <SetBlackboard output_key="undergate_depth" value="-0.625"/>
+            <SetBlackboard output_key="undergate_depth" value="-0.4"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <SetBlackboard output_key="subprop" value="gate_sawfish"/>
             <SetBlackboard output_key="prop" value="{subprop}"/>
@@ -1012,7 +1012,7 @@
             <SetBlackboard output_key="scale_trust" value="0.99"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.5"/>
+            <SetBlackboard output_key="shoot_prox" value="0.3"/>
             <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
