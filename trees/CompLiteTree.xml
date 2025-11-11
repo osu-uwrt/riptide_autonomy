@@ -1027,7 +1027,7 @@
             <SetBlackboard output_key="scale_trust" value="0.99"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.3"/>
+            <SetBlackboard output_key="shoot_prox" value="0.4"/>
             <SetBlackboard output_key="ms_prox" value="2"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
