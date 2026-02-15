@@ -1023,13 +1023,10 @@
             <ForceSuccess>
                 <RetryUntilSuccessful num_attempts="2">
                     <Sequence>
-                        <Fallback>
-                            <Sequence>
-                                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
-                                <SetBlackboard output_key="frame_to_shoot" value="{object_frame}"/>
-                            </Sequence>
-                            <SetBlackboard output_key="frame_to_shoot" value="{torpedo_frame}"/>
-                        </Fallback>
+                        <ForceSuccess>
+                            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
+                        </ForceSuccess>
+                        <SetBlackboard output_key="frame_to_shoot" value="{object_frame}"/>
                         <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
                         <Action ID="SetStatus" status="aligning"/>
                         <Action ID="Math" a="{shoot_prox}" b="0.5" operator="+" out="shoot_prox_plus"/>
