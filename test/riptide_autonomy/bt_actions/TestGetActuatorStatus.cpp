@@ -56,7 +56,7 @@ TEST_F(BtTest, test_GetActuatorStatus_success_busy) {
     GetActuatorStatusInfo in;
     in.statusIntervalMs     = 50;
     in.busyIntervalMs       = 50;
-    in.clawState            = riptide_msgs2::msg::ActuatorStatus::CLAW_CLOSED;
+    in.clawState            = riptide_msgs2::msg::ActuatorStatus::CLAW_BOTTLE_CLOSED;
     in.torpedoState         = riptide_msgs2::msg::ActuatorStatus::TORPEDO_DISARMED;
     in.torpedoAvailable     = 2;
     in.dropperState         = riptide_msgs2::msg::ActuatorStatus::DROPPER_DISARMED;
