@@ -214,17 +214,21 @@
     </BehaviorTree>
     <BehaviorTree ID="DemoTableTree">
         <Sequence>
+            <SetBlackboard output_key="claw_topic" value="talos/command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="claw_open_s" value="1.5"/>
-            <SetBlackboard output_key="claw_close_s" value="1.5"/>
+            <SetBlackboard output_key="claw_drop_s" value="0.3"/>
+            <SetBlackboard output_key="claw_open_s" value="2.0"/>
+            <SetBlackboard output_key="claw_close_s" value="-2.0"/>
             <SetBlackboard output_key="ctrlr_timeout" value="30"/>
             <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
             <SetBlackboard output_key="overtable" value="0.2"/>
-            <SetBlackboard output_key="claw_link" value="talos/torpedo_link"/>
-            <SetBlackboard output_key="frame" value="bin_target_frame"/>
-            <SetBlackboard output_key="table_target" value="bin_target"/>
+            <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
+            <SetBlackboard output_key="frame" value="torpedo_frame"/>
+            <SetBlackboard output_key="table_target" value="torpedo"/>
+            <SetBlackboard output_key="dropoff_frame" value="torpedo_shark_hole_frame"/>
+            <SetBlackboard output_key="table_dropoff_target" value="torpedo_shark_hole"/>
             <SetBlackboard output_key="search_prox" value="1"/>
             <SetBlackboard output_key="target_err" value="0.01"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
@@ -245,7 +249,7 @@
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-            <Action ID="PublishFloat32" data="{claw_open_s}" topic="talos/command/claw_s"/>
+            <Action ID="PublishFloat32" data="{claw_open_s}" topic="{claw_topic}"/>
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="0" y="0" z="{search_prox}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{frame}" x="0" y="0" z="{overtable}"/>
@@ -254,11 +258,34 @@
                 <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
             </ForceSuccess>
             <Action ID="SetStatus" status="performing"/>
-            <Action ID="PublishFloat32" data="{claw_close_s}" topic="talos/command/claw_s"/>
+            <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
             <Action ID="Math" a="{claw_close_s}" b="1000" operator="*" out="claw_close_ms"/>
-            <Delay delay_msec="{claw_close_ms}">
+            <Action ID="Math" a="{claw_close_ms}" b="-1" operator="*" out="claw_close_ms_neg"/>
+            <Delay delay_msec="{claw_close_ms_neg}">
                 <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             </Delay>
+            <ForceSuccess name="DropoffSearch">
+                <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="table_dropoff_target" target_cov="target_err" timeout_sec="search_timeout"/>
+            </ForceSuccess>
+            <ForceSuccess name="Dropoff Minisearch">
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="dropoff_frame" gx="0" gy="0" gz="search_prox" object_name="table_dropoff_target" reset_adjust_threshold="a_lot" target_Cov="0"/>
+                </Decorator>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="aligning"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{dropoff_frame}" x="0" y="0" z="{overtable}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="bop" or="bor" oy="boy" x="bx" y="by" z="bz"/>
+            <ForceSuccess name="DropoffTrust">
+                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="dropoff_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
+            </ForceSuccess>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            <Action ID="SetStatus" status="performing"/>
+            <Action ID="PublishFloat32" data="{claw_drop_s}" topic="{claw_topic}"/>
+            <Action ID="Math" a="{claw_open_s}" b="1000" operator="+" out="claw_open_ms"/>
+            <Delay delay_msec="{claw_open_ms}">
+                <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            </Delay>
+            <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
         </Sequence>
     </BehaviorTree>
