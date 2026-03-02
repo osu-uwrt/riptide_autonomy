@@ -39,7 +39,7 @@ class PublishFloat32 : public UWRTActionNode {
             return BT::NodeStatus::FAILURE;
         }
 
-        int data = tryGetRequiredInput<int>(this, "data", 0.0f);
+        float data = tryGetRequiredInput<float>(this, "data", 0.0f);
 
         pub = rosnode->create_publisher<std_msgs::msg::Float32>(topic, 10);
         std_msgs::msg::Float32 msg;
