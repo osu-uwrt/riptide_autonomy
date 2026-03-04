@@ -1,0 +1,87 @@
+name: ROS2 CI/CD
+
+on:
+  push:
+    branches: [ main, develop, test-cicd, ros2 ]
+  pull_request:
+    branches: [ main, develop, ros2 ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    
+    strategy:
+      matrix:
+        ros_distro: [humble] 
+    
+    container:
+      image: ros:${{ matrix.ros_distro }}-ros-base
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: src/riptide_autonomy
+          submodules: recursive
+
+      - name: Install system dependencies
+        run: |
+          apt update
+          apt install -y \
+            libboost-log-dev \
+            python3-colcon-common-extensions \
+            python3-rosdep \
+            python3-vcstool \
+            git
+
+      - name: Initialize rosdep
+        run: |
+          rosdep init || true
+          rosdep update
+
+      - name: Fetch custom dependencies
+        run: |
+          vcs import src < src/riptide_autonomy/dependencies.repos
+
+      - name: Install ROS dependencies
+        run: |
+          rosdep install --from-paths src --ignore-src -r -y
+
+      - name: Source ROS workspace
+        run: |
+          . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+
+      - name: Build workspace
+        run: |
+          . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+          colcon build --cmake-force-configure \
+            --event-handlers console_direct+
+
+      - name: Run tests
+        run: |
+          . /opt/ros/${{ matrix.ros_distro }}/setup.sh
+          . install/setup.sh
+          colcon test --return-code-on-test-failure \
+            --packages-select riptide_autonomy2 \
+            --event-handlers console_direct+
+
+      - name: Show test results
+        if: failure()
+        run: |
+          colcon test-result --all --verbose
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.ros_distro }}
+          path: |
+            build/*/test_results/
+            log/
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.ros_distro }}
+          path: install/

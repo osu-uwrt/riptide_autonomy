@@ -1,0 +1,13 @@
+repositories:
+  riptide_core:
+    type: git
+    url: https://github.com/osu-uwrt/riptide_core.git
+    version: master
+  chameleon_tf:
+    type: git
+    url: https://github.com/coalman321/chameleon_tf.git
+    version: master
+  nortek_dvl:
+    type: git
+    url: https://github.com/osu-uwrt/nortek_dvl.git
+    version: ros2_dev
