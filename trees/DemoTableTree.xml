@@ -214,6 +214,7 @@
     </BehaviorTree>
     <BehaviorTree ID="DemoTableTree">
         <Sequence>
+            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
             <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -242,7 +243,7 @@
                 <Sequence name="DownwardsMiniSearch">
                     <SetBlackboard output_key="a_lot" value="1000"/>
                     <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="search_prox" object_name="table_target" reset_adjust_threshold="a_lot" target_Cov="0"/>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="minisearch_prox" object_name="table_target" reset_adjust_threshold="a_lot" target_Cov="0"/>
                     </Decorator>
                 </Sequence>
             </ForceSuccess>
@@ -269,7 +270,7 @@
             </ForceSuccess>
             <ForceSuccess name="Dropoff Minisearch">
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="dropoff_frame" gx="0" gy="0" gz="search_prox" object_name="table_dropoff_target" reset_adjust_threshold="a_lot" target_Cov="0"/>
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="dropoff_frame" gx="0" gy="0" gz="minisearch_prox" object_name="table_dropoff_target" reset_adjust_threshold="a_lot" target_Cov="0"/>
                 </Decorator>
             </ForceSuccess>
             <Action ID="SetStatus" status="aligning"/>
@@ -430,7 +431,7 @@
             <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
             <Action ID="Info" message="{object_name} error at {Icov}"/>
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/dfc_base_link" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="{gx}" y="{gy}" z="{gz}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="ax" y="ay" z="az"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
             <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
             <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" name="Did we move the object significantly?" test="&gt;"/>
@@ -449,7 +450,7 @@
                 <Action ID="SetStatus" status="searching"/>
                 <Action ID="Format" format="{object_name}_frame" out="frame"/>
                 <Action ID="GetOdometry" op="" or="" oy="abs_yaw" x="" y="" z=""/>
-                <Action ID="TransformPose" from_frame="odom" op="0" or="0" out_op="" out_or="" out_oy="rel_yaw" out_x="" out_y="" out_z="" oy="{abs_yaw}" to_frame="{frame}" x="0" y="0" z="0"/>
+                <Action ID="TransformPose" from_frame="odom" op="0" or="0" out_op="" out_or="" out_oy="rel_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
                 <ForceSuccess>
                     <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
                 </ForceSuccess>
