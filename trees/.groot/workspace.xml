@@ -1125,6 +1125,7 @@
     </BehaviorTree>
     <BehaviorTree ID="SlalomTree">
         <Sequence name="Slalom">
+            <SetBlackboard output_key="slalom_parent" value="slalom_parent"/>
             <SetBlackboard output_key="slalom_back" value="slalom_back"/>
             <SetBlackboard output_key="slalom_middle" value="slalom_middle"/>
             <SetBlackboard output_key="slalom_back_frame" value="slalom_back_frame"/>
@@ -1142,8 +1143,8 @@
             <SetBlackboard output_key="slalom_front_frame" value="slalom_front_frame"/>
             <SetBlackboard output_key="msrch_timeout" value="60"/>
             <Action ID="Info" message="SALMONI TIME"/>
-            <Action ID="CallSetStringService" data="slalom_front" srv_name="set_slalom_type" time_limit_secs="1"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_front" parent_object="slalom_front" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+            <Action ID="CallSetStringService" data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="1"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_parent" parent_object="slalom_parent" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_front_frame"/>
             <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="slalom_middle_frame"/>
