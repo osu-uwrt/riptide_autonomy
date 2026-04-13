@@ -1135,6 +1135,8 @@
     </BehaviorTree>
     <BehaviorTree ID="SlalomTree">
         <Sequence name="Slalom">
+            <SetBlackboard output_key="slalom_back" value="slalom_back"/>
+            <SetBlackboard output_key="slalom_middle" value="slalom_middle"/>
             <SetBlackboard output_key="slalom_back_frame" value="slalom_back_frame"/>
             <SetBlackboard output_key="slalom_middle_frame" value="slalom_middle_frame"/>
             <SetBlackboard output_key="0" value="0"/>
@@ -1150,19 +1152,22 @@
             <SetBlackboard output_key="slalom_front_frame" value="slalom_front_frame"/>
             <SetBlackboard output_key="msrch_timeout" value="60"/>
             <Action ID="Info" message="SALMONI TIME"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_close" parent_object="slalom_close" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+            <Action ID="CallSetStringService" data="slalom_front" srv_name="set_slalom_type" time_limit_secs="1"/>
+            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_front" parent_object="slalom_front" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_close_frame"/>
+            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_front_frame"/>
             <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="slalom_middle_frame"/>
-            <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_close" time_limit_secs="3"/>
-            <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_close" target_error="target_srch_err"/>
+            <Action ID="CallSetStringService" data="slalom_middle" srv_name="set_slalom_type" time_limit_secs="1"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_middle" time_limit_secs="3"/>
+            <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_middle" target_error="target_srch_err"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_close_frame"/>
+            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_middle_frame"/>
             <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="slalom_back_frame"/>
-            <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_close" time_limit_secs="3"/>
-            <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_close" target_error="target_srch_err"/>
+            <Action ID="CallSetStringService" data="slalom_back" srv_name="set_slalom_type" time_limit_secs="1"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="slalom_back" time_limit_secs="3"/>
+            <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_back" target_error="target_srch_err"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_close_frame"/>
+            <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_back_frame"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">
@@ -1716,6 +1721,11 @@
             <input_port name="data" required="true">boolean value to set the thing to</input_port>
             <input_port name="srv_name" required="true">Name of the service to call</input_port>
             <input_port name="time_limit_secs" required="true">time limit for service after the call is made. Another second may be consumed waiting for it to come up</input_port>
+        </Action>
+        <Action ID="CallSetStringService">
+            <input_port name="data" required="true">String value to set the thing to</input_port>
+            <input_port name="srv_name" required="true">Name of the service to call</input_port>
+            <input_port name="time_limit_secs" required="true">Time limit for service after the call is made. Another second may be consumed waiting for it to come up</input_port>
         </Action>
         <Action ID="CallTriggerService">
             <input_port name="srv_name" required="true"/>
