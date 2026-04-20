@@ -17,7 +17,7 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="SLALOM TREE">
             <SetBlackboard output_key="depth" value="-1"/>
-            <SetBlackboard output_key="pass_on_left" value="1"/>
+            <SetBlackboard output_key="pass_on_left" value="0"/>
             <SubTree ID="WaitForKillSwitch"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="pass_on_left"/>
@@ -790,7 +790,7 @@
             <Action ID="Math" a="{whole_slalom_width}" b="4" operator="/" out="slalom_lat_offset_pos"/>
             <Action ID="Math" a="{space_between_slaloms}" b="2" operator="/" out="slalom_long_offset_pos"/>
             <Action ID="Math" a="{slalom_lat_offset_pos}" b="-1" operator="*" out="slalom_lat_offset_neg"/>
-            <Action ID="Math" a="{slalom_long_offset_pos}" b="-1" operator="*" out="slalom_long_offset_neg"/>
+            <Action ID="Math" a="{slalom_long_offset_pos}" b="-0.5" operator="*" out="slalom_long_offset_neg"/>
             <IfThenElse name="Choose lateral slalom offset">
                 <Condition ID="CompareNums" a="{pass_on_left}" b="1" test="=="/>
                 <SetBlackboard name="Negative is left bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_neg}"/>

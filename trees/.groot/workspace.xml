@@ -780,7 +780,7 @@
             <Action ID="Math" a="{whole_slalom_width}" b="4" operator="/" out="slalom_lat_offset_pos"/>
             <Action ID="Math" a="{space_between_slaloms}" b="2" operator="/" out="slalom_long_offset_pos"/>
             <Action ID="Math" a="{slalom_lat_offset_pos}" b="-1" operator="*" out="slalom_lat_offset_neg"/>
-            <Action ID="Math" a="{slalom_long_offset_pos}" b="-1" operator="*" out="slalom_long_offset_neg"/>
+            <Action ID="Math" a="{slalom_long_offset_pos}" b="-0.5" operator="*" out="slalom_long_offset_neg"/>
             <IfThenElse name="Choose lateral slalom offset">
                 <Condition ID="CompareNums" a="{pass_on_left}" b="1" test="=="/>
                 <SetBlackboard name="Negative is left bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_neg}"/>
