@@ -1125,7 +1125,7 @@
     </BehaviorTree>
     <BehaviorTree ID="SingleSlalom">
         <Sequence>
-            <SetBlackboard output_key="srch_angle" value="0.174"/>
+            <SetBlackboard output_key="srch_angle" value="0.348"/>
             <SetBlackboard output_key="target_srch_err" value="0.2"/>
             <Action ID="Format" format="{slalom_type}_frame" out="slalom_frame"/>
             <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="slalom_frame"/>
