@@ -576,7 +576,7 @@
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="target_cov" value="0.1"/>
-            <SetBlackboard output_key="undergate_depth" value="-0.4"/>
+            <SetBlackboard output_key="undergate_depth" value="-1.0"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <SetBlackboard output_key="subprop" value="gate_sawfish"/>
             <SetBlackboard output_key="prop" value="{subprop}"/>
@@ -614,6 +614,7 @@
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate_depth"/>
+            <SubTree ID="FlipTree"/>
             <Action ID="Wait" seconds="2"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="undergate_depth"/>
         </Sequence>
@@ -856,7 +857,7 @@
                     <Action ID="Wait" seconds="0.25"/>
                     <Action ID="GetOdometry" name="Get Current XYZ" op="" or="" oy="" x="{cx}" y="{cy}" z="{cz}"/>
                     <Action ID="CalculateDistance" dist="{dist}" x1="{x}" x2="{cx}" y1="{y}" y2="{cy}" z1="{valid_z}" z2="{cz}"/>
-                    <Condition ID="CompareNums" a="{dist}" b="0.5" name="At goal point?" test="&lt;"/>
+                    <Condition ID="CompareNums" a="{dist}" b="0.25" name="At goal point?" test="&lt;"/>
                 </Sequence>
             </Decorator>
             <Action ID="Info" message="Translation Complete."/>
@@ -1145,11 +1146,13 @@
     </BehaviorTree>
     <BehaviorTree ID="SlalomTree">
         <Sequence name="Slalom">
+            <SetBlackboard output_key="1" value="slalom_exit_dist"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="slalom_parent" value="slalom_parent"/>
             <SetBlackboard output_key="slalom_front_frame" value="slalom_front_frame"/>
             <SetBlackboard output_key="slalom_front" value="slalom_front"/>
             <SetBlackboard output_key="slalom_middle" value="slalom_middle"/>
+            <SetBlackboard output_key="slalom_back_frame" value="slalom_back_frame"/>
             <SetBlackboard output_key="slalom_back" value="slalom_back"/>
             <SetBlackboard output_key="target_srch_err" value="0.2"/>
             <SetBlackboard output_key="msrch_prox" value="2.5"/>
@@ -1339,7 +1342,7 @@
             <Repeat num_cycles="5">
                 <Action ID="PublishToController" isOrientation="0" mode="3" x="{table_x}" y="{table_y}" z="1"/>
             </Repeat>
-            <Action ID="Wait" seconds="3"/>
+            <Action ID="Wait" seconds="5"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="table_w" x="table_x" y="table_y" z="depth"/>
         </Sequence>
     </BehaviorTree>
