@@ -605,9 +605,9 @@
             <SetBlackboard output_key="target_cov" value="0.1"/>
             <SetBlackboard output_key="undergate_depth" value="-1.0"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
-            <SetBlackboard output_key="subprop" value="gate_sawfish"/>
+            <SetBlackboard output_key="subprop" value="gate_saw"/>
             <SetBlackboard output_key="prop" value="{subprop}"/>
-            <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_reefshark"/>
+            <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_shark"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Format" format="{alt_subprop}_frame" out="alt_subprop_frame"/>
             <Action ID="Info" message="GATE TIME"/>
