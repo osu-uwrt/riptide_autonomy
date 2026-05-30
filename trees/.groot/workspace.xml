@@ -217,10 +217,10 @@
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
             <SetBlackboard output_key="overtable" value="0.1"/>
             <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
-            <SetBlackboard output_key="frame" value="torpedo_frame"/>
-            <SetBlackboard output_key="table_target" value="torpedo"/>
-            <SetBlackboard output_key="dropoff_frame" value="torpedo_shark_hole_frame"/>
-            <SetBlackboard output_key="table_dropoff_target" value="torpedo_shark_hole"/>
+            <SetBlackboard output_key="frame" value="nut_and_bolt_frame"/>
+            <SetBlackboard output_key="table_target" value="nut_and_bolt"/>
+            <SetBlackboard output_key="dropoff_frame" value="warning_frame"/>
+            <SetBlackboard output_key="table_dropoff_target" value="warning"/>
             <SetBlackboard output_key="search_prox" value="2"/>
             <SetBlackboard output_key="target_err" value="0.2"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
