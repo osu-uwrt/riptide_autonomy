@@ -31,13 +31,16 @@
             <ForceSuccess>
                 <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
             </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
+            </ForceSuccess>
             <IfThenElse name="Torpedo/bin tasks + table notify">
                 <Inverter name="is table?">
                     <Condition ID="CompareNums" a="{pinger_is_table}" b="0" name="is not table?" test="=="/>
                 </Inverter>
                 <Sequence name="table then torpedo">
                     <ForceSuccess>
-                        <AlwaysSuccess name="Notify tank table start"/>
+                        <SubTree ID="TableTree"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="BinTree"/>
@@ -51,16 +54,13 @@
                         <SubTree ID="TorpedoTree"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <AlwaysSuccess name="Notify tank table start"/>
+                        <SubTree ID="TableTree"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="BinTree"/>
                     </ForceSuccess>
                 </Sequence>
             </IfThenElse>
-            <ForceSuccess>
-                <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
-            </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="ReturnHomeTree"/>
             </ForceSuccess>
