@@ -16,6 +16,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="COMP">
+            <SetBlackboard name="Set Repair or not" output_key="0" value="repair_mission"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="3" value="3"/>
             <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
@@ -25,13 +26,10 @@
             <SubTree ID="WaitForKillSwitch"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <ForceSuccess>
-                <SubTree ID="GateTree" __shared_blackboard="false" sla_pass_on_left="sla_pass_on_left"/>
+                <SubTree ID="GateTree" __shared_blackboard="false" repair_mission="repair_mission" sla_pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="DeployTankTree"/>
             </ForceSuccess>
             <IfThenElse name="Torpedo/bin tasks + table notify">
                 <Inverter name="is table?">
@@ -634,12 +632,12 @@
             <SetBlackboard output_key="undergate_depth" value="-1.0"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <IfThenElse>
-                <Condition ID="CompareNums" a="repair_mission" b="0" test="="/>
+                <Condition ID="CompareNums" a="{repair_mission}" b="0" name="check if primary is repair" test="="/>
                 <Sequence name="Rescue is Primary">
                     <SetBlackboard output_key="subprop" value="gate_rescue"/>
                     <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_repair"/>
                 </Sequence>
-                <Sequence>
+                <Sequence name="repair is primary">
                     <SetBlackboard output_key="subprop" value="gate_repair"/>
                     <SetBlackboard name="Non-primary prop for slalom" output_key="alt_subprop" value="gate_rescue"/>
                 </Sequence>
@@ -1890,6 +1888,7 @@
         </Action>
         <SubTree ID="GateTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false">which prop to target</input_port>
             <output_port name="sla_pass_on_left" required="false"/>
         </SubTree>
         <Action ID="GetActuatorStatus">
