@@ -1803,9 +1803,23 @@
                 <SetBlackboard output_key="target_err" value="0.2"/>
                 <SetBlackboard output_key="search_timout" value="180"/>
             </Sequence>
-            <Sequence name="Set Frame blackboards">
+            <Sequence name="Set object stuff and frames">
                 <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
                 <SetBlackboard output_key="base_link" value="talos/base_link"/>
+                <SetBlackboard output_key="object1" value="bandage"/>
+                <SetBlackboard output_key="object2" value="pill"/>
+                <SetBlackboard output_key="object3" value="nut_and_bolt"/>
+                <SetBlackboard output_key="object4" value="plug"/>
+                <SetBlackboard output_key="repair_drop" value="warning"/>
+                <SetBlackboard output_key="rescue_drop" value="helmet"/>
+                <Sequence name="configure corresponding frames">
+                    <Action ID="Format" format="{object1}_frame" out="object1_frame"/>
+                    <Action ID="Format" format="{object2}_frame" out="object2_frame"/>
+                    <Action ID="Format" format="{object3}_frame" out="object3_frame"/>
+                    <Action ID="Format" format="{object4}_frame" out="object4_frame"/>
+                    <Action ID="Format" format="{rescue_drop}_frame" out="rescue_drop_frame"/>
+                    <Action ID="Format" format="{repair_drop}_frame" out="repair_drop_frame"/>
+                </Sequence>
             </Sequence>
             <ForceSuccess>
                 <SubTree ID="SurfaceTree"/>
@@ -1813,9 +1827,30 @@
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <ForceSuccess name="First Object Cycle">
                 <Sequence>
-                    <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="" object_name=""/>
+                    <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object1" object_name="object1_frame"/>
                     <SubTree ID="SurfaceTree"/>
-                    <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="" dropoff_name=""/>
+                    <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess name="Second Object Cycle">
+                <Sequence>
+                    <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object2" object_name="object2_frame"/>
+                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess name="Third Object Cycle">
+                <Sequence>
+                    <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object3" object_name="object3_frame"/>
+                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess name="Fourth Object Cycle">
+                <Sequence>
+                    <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object4" object_name="object4_frame"/>
+                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop"/>
                 </Sequence>
             </ForceSuccess>
         </Sequence>
