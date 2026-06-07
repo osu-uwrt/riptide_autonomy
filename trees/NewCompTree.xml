@@ -1853,6 +1853,7 @@
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop"/>
                 </Sequence>
             </ForceSuccess>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="pickupObject">
