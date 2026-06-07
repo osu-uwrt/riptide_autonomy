@@ -1769,7 +1769,7 @@
                 <SubTree ID="SurfaceTree"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="pickupObject" __shared_blackboard="false" object_frame="" object_name=""/>
+                <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="" claw_open_s="" claw_topic="" object_frame="" object_name=""/>
             </ForceSuccess>
         </Sequence>
     </BehaviorTree>
@@ -1780,14 +1780,37 @@
                 <SetBlackboard output_key="target_err" value="0.2"/>
                 <SetBlackboard output_key="search_timeout" value="180"/>
                 <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+                <SetBlackboard output_key="1000" value="reset_threshold"/>
+                <SetBlackboard output_key="overtable" value="0.1"/>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="1" value="1"/>
             </Sequence>
             <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
-            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
-            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
-                <SubTree ID="DownwardMove" __shared_blackboard="false" frame="object_frame" gx="0" gy="0" gz="minisearch_prox" object_name="object_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
-            </Decorator>
+            <ForceSuccess>
+                <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
+            </ForceSuccess>
+            <ForceSuccess name="downwardsMiniSearch">
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="object_frame" gx="0" gy="0" gz="minisearch_prox" object_name="object_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
+                </Decorator>
+            </ForceSuccess>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+            <Action ID="PublishFloat32" data="{claw_open_s}" topic="{claw_topic}"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/claw_link" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/claw_link" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{frame}" x="0" y="0" z="{overtable}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="boy" x="bx" y="by" z="bz"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="frame" timeout="crtlr_timeout" trust="ctrlr_trust"/>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="performing"/>
+            <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
+            <Action ID="Math" a="{claw_close_s}" b="-1000" operator="*" out="claw_close_ms_neg"/>
+            <Delay delay_msec="{claw_close_ms_neg}">
+                <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            </Delay>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -2281,6 +2304,9 @@
         </SubTree>
         <SubTree ID="pickupObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="claw_close_s" required="false"/>
+            <input_port name="claw_open_s" required="false"/>
+            <input_port name="claw_topic" required="false"/>
             <input_port name="object_frame" required="false"/>
             <input_port name="object_name" required="false"/>
         </SubTree>
