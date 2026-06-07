@@ -1743,6 +1743,30 @@
             <AlwaysSuccess name="Wait for start queue"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="newTableTree">
+        <Sequence>
+            <Sequence name="Set Blackboards">
+                <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+                <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <SetBlackboard output_key="1" value="1"/>
+                <SetBlackboard output_key="claw_drop_s" value="0.3"/>
+                <SetBlackboard output_key="claw_open_s" value="2.0"/>
+                <SetBlackboard output_key="claw_close_s" value="-2.0"/>
+                <SetBlackboard output_key="ctrlr_timeout" value="30"/>
+                <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
+                <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
+                <SetBlackboard output_key="overtable" value="0.1"/>
+                <SetBlackboard output_key="search_prox" value="2"/>
+                <SetBlackboard output_key="target_err" value="0.2"/>
+                <SetBlackboard output_key="search_timout" value="180"/>
+            </Sequence>
+            <Sequence name="Set Frame blackboards">
+                <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
+                <SetBlackboard output_key="base_link" value="talos/base_link"/>
+            </Sequence>
+        </Sequence>
+    </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
         <SubTree ID="AlignLink">
@@ -2228,6 +2252,10 @@
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
+        <SubTree ID="newTableTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false"/>
+        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
