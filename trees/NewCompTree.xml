@@ -1765,6 +1765,29 @@
                 <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
                 <SetBlackboard output_key="base_link" value="talos/base_link"/>
             </Sequence>
+            <ForceSuccess>
+                <SubTree ID="SurfaceTree"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="pickupObject" __shared_blackboard="false" object_frame="" object_name=""/>
+            </ForceSuccess>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="pickupObject">
+        <Sequence>
+            <Sequence name="Set Blackboards">
+                <SetBlackboard output_key="search_prox" value="2"/>
+                <SetBlackboard output_key="target_err" value="0.2"/>
+                <SetBlackboard output_key="search_timeout" value="180"/>
+                <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <SetBlackboard output_key="1" value="1"/>
+            </Sequence>
+            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
+                <SubTree ID="DownwardMove" __shared_blackboard="false" frame="object_frame" gx="0" gy="0" gz="minisearch_prox" object_name="object_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
+            </Decorator>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
@@ -2255,6 +2278,11 @@
         <SubTree ID="newTableTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="repair_mission" required="false"/>
+        </SubTree>
+        <SubTree ID="pickupObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_frame" required="false"/>
+            <input_port name="object_name" required="false"/>
         </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
