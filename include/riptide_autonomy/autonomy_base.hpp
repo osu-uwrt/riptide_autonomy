@@ -34,6 +34,7 @@
 #include <riptide_msgs2/msg/led_command.hpp>
 #include <riptide_msgs2/msg/mapping_target_info.hpp>
 #include <riptide_msgs2/srv/set_string.hpp>
+#include<riptide_msgs2/srv/start_binary_classifier.hpp>
 
 #include <std_srvs/srv/set_bool.hpp>
 #include <std_srvs/srv/trigger.hpp>
