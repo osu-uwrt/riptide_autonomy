@@ -30,7 +30,7 @@
             <ForceSuccess>
                 <Sequence>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
-                    <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" frame1_name="{object1}" frame2_name="{object2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="1"/>
+                    <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{object1}" object2_name="{object2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="1"/>
                     <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object1" target_cov="target_err" timeout_sec="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
@@ -1749,8 +1749,8 @@
         </Action>
         <Action ID="CallStartBinaryClassifierService">
             <input_port name="class_name" required="true">Which vision class to classify</input_port>
-            <input_port name="frame1_name" required="true">Frame of first mapping object</input_port>
-            <input_port name="frame2_name" required="true">Frame of second mapping object</input_port>
+            <input_port name="object1_name" required="true">First mapping object</input_port>
+            <input_port name="object2_name" required="true">Second mapping object</input_port>
             <input_port name="srv_name" required="true">Name of the service</input_port>
             <input_port name="time_limit_secs" required="true">How long to wait before failure</input_port>
         </Action>

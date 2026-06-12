@@ -18,8 +18,8 @@ class CallStartBinaryClassifierService : public UWRTActionNode {
         return {
             UwrtInput("srv_name"),
             UwrtInput("class_name"),
-            UwrtInput("frame1_name"),
-            UwrtInput("frame2_name"),
+            UwrtInput("object1_name"),
+            UwrtInput("object2_name"),
             UwrtInput("time_limit_secs")
         };
     }
@@ -48,8 +48,8 @@ class CallStartBinaryClassifierService : public UWRTActionNode {
         //assemble request
         auto request = std::make_shared<StartBinaryClassifier::Request>();
         request->class_name = tryGetRequiredInput<std::string>(this, "class_name", "");
-        request->frame1_name = tryGetRequiredInput<std::string>(this, "frame1_name", "");
-        request->frame2_name = tryGetRequiredInput<std::string>(this, "frame2_name", "");
+        request->object1_name = tryGetRequiredInput<std::string>(this, "object1_name", "");
+        request->object2_name = tryGetRequiredInput<std::string>(this, "object2_name", "");
         
         //send and mark send time
         result = client->async_send_request(request);

@@ -40,51 +40,36 @@
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
         <Sequence name="BINS">
-            <SetBlackboard output_key="ctrler_timeout" value="30"/>
-            <SetBlackboard output_key="ctrler_trust" value="0.95"/>
-            <SetBlackboard output_key="ctrler_dist" value="0.01"/>
-            <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
-            <SetBlackboard output_key="frame" value="bin_target_frame"/>
-            <SetBlackboard output_key="bin_target" value="bin_target"/>
             <SetBlackboard output_key="search_prox" value="1"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
-            <SetBlackboard output_key="overbin" value="0.6"/>
+            <SetBlackboard output_key="object_vision_class" value="blood"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="object" value="bin_target"/>
-            <Action ID="Format" format="{object}_frame" out="object_frame"/>
+            <SetBlackboard output_key="object1" value="bin_target1"/>
+            <SetBlackboard output_key="object2" value="bin_target2"/>
             <SetBlackboard output_key="target_err" value="0.01"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <Action ID="Info" message="BIN TIME"/>
             <ForceSuccess>
                 <Sequence>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
-                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="bin_target" target_cov="target_err" timeout_sec="search_timeout"/>
+                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object1" target_cov="target_err" timeout_sec="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
-            <ForceSuccess>
-                <Sequence name="DownwardsMiniSearch">
-                    <SetBlackboard output_key="a_lot" value="1000"/>
-                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="DownwardsMiniSearchLoop" num_seconds="20">
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="search_prox" object_name="bin_target" reset_adjust_threshold="a_lot" target_Cov="0"/>
-                    </Decorator>
-                </Sequence>
-            </ForceSuccess>
-            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <Action ID="SetStatus" status="aligning"/>
+            <Action ID="CallTriggerService" srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="1"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dropper_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="0" y="0" z="{overbin}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             <ForceSuccess>
-                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="dropper_link" target_frame="frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
+                <SubTree ID="ShootDownwardObject" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object1" search_prox="search_prox"/>
             </ForceSuccess>
-            <Action ID="SetStatus" status="performing"/>
-            <Repeat num_cycles="2">
-                <RetryUntilSuccessful num_attempts="3">
-                    <SubTree ID="FireDropper"/>
-                </RetryUntilSuccessful>
-            </Repeat>
+            <Action ID="CallTriggerService" srv_name="/talos/mapping/start_binary_classifier_second" time_limit_secs="1"/>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object2" target_cov="target_err" timeout_sec="search_timeout"/>
+                    <SubTree ID="ShootDownwardObject" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object2" search_prox="search_prox"/>
+                </Sequence>
+            </ForceSuccess>
+            <Action ID="CallTriggerService" srv_name="/talos/mapping/stop_binary_classifier" time_limit_secs="1"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
         </Sequence>
     </BehaviorTree>
@@ -241,10 +226,10 @@
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
             <SetBlackboard output_key="overtable" value="0.1"/>
             <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
-            <SetBlackboard output_key="frame" value="torpedo_frame"/>
-            <SetBlackboard output_key="table_target" value="torpedo"/>
-            <SetBlackboard output_key="dropoff_frame" value="torpedo_shark_hole_frame"/>
-            <SetBlackboard output_key="table_dropoff_target" value="torpedo_shark_hole"/>
+            <SetBlackboard output_key="frame" value="nut_and_bolt_frame"/>
+            <SetBlackboard output_key="table_target" value="nut_and_bolt"/>
+            <SetBlackboard output_key="dropoff_frame" value="warning_frame"/>
+            <SetBlackboard output_key="table_dropoff_target" value="warning"/>
             <SetBlackboard output_key="search_prox" value="2"/>
             <SetBlackboard output_key="target_err" value="0.2"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
@@ -436,6 +421,16 @@
             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="depth"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="oy"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="DownwardMiniSearch">
+        <Sequence name="DownwardsMiniSearch">
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="a_lot" value="1000"/>
+            <Action ID="SetStatus" status="searching"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" name="DownwardsMiniSearchLoop" num_seconds="20">
+                <SubTree ID="DownwardMove" __shared_blackboard="false" frame="object_frame" gx="0" gy="0" gz="search_prox" object_name="object_name" reset_adjust_threshold="a_lot" target_Cov="0"/>
+            </Decorator>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="DownwardMove">
@@ -1111,6 +1106,35 @@
             <Action ID="Wait" seconds="1"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="ShootDownwardObject">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="overbin" value="0.6"/>
+            <SetBlackboard output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboard output_key="ctrler_trust" value="0.95"/>
+            <SetBlackboard output_key="ctrler_timeout" value="30"/>
+            <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
+            <Action ID="Info" message="Attempting to shoot {object_frame}"/>
+            <ForceSuccess>
+                <RetryUntilSuccessful num_attempts="2">
+                    <Sequence>
+                        <ForceSuccess>
+                            <SubTree ID="DownwardMiniSearch" __shared_blackboard="false" object_frame="object_frame" object_name="object_name" search_prox="search_prox"/>
+                        </ForceSuccess>
+                        <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+                        <Action ID="SetStatus" status="aligning"/>
+                        <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dropper_link_name}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{overbin}"/>
+                        <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+                        <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="dropper_link_name" target_frame="object_frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
+                    </Sequence>
+                </RetryUntilSuccessful>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="performing"/>
+            <RetryUntilSuccessful num_attempts="3">
+                <SubTree ID="FireDropper"/>
+            </RetryUntilSuccessful>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
@@ -1747,6 +1771,13 @@
             <input_port name="srv_name" required="true">Name of the service to call</input_port>
             <input_port name="time_limit_secs" required="true">Time limit for service after the call is made. Another second may be consumed waiting for it to come up</input_port>
         </Action>
+        <Action ID="CallStartBinaryClassifierService">
+            <input_port name="class_name" required="true">Which vision class to classify</input_port>
+            <input_port name="object1_name" required="true">First mapping object</input_port>
+            <input_port name="object2_name" required="true">Second mapping object</input_port>
+            <input_port name="srv_name" required="true">Name of the service</input_port>
+            <input_port name="time_limit_secs" required="true">How long to wait before failure</input_port>
+        </Action>
         <Action ID="CallTriggerService">
             <input_port name="srv_name" required="true"/>
             <input_port name="time_limit_secs" required="true"/>
@@ -1820,6 +1851,12 @@
         <SubTree ID="Dive">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="depth" required="true">depth to submerge to</input_port>
+        </SubTree>
+        <SubTree ID="DownwardMiniSearch">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_frame" required="true"/>
+            <input_port name="object_name" required="true"/>
+            <input_port name="search_prox" required="true"/>
         </SubTree>
         <SubTree ID="DownwardMove">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -2084,6 +2121,12 @@
         <SubTree ID="SetWinchState">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="winch_extended" required="true"/>
+        </SubTree>
+        <SubTree ID="ShootDownwardObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="dropper_link_name" required="true"/>
+            <input_port name="object_name" required="true"/>
+            <input_port name="search_prox" required="true"/>
         </SubTree>
         <SubTree ID="ShootObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
