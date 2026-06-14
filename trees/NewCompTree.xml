@@ -16,7 +16,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="COMP">
-            <SetBlackboard name="Set Repair or not" output_key="0" value="repair_mission"/>
+            <SetBlackboard name="Set Repair or not" output_key="repair_mission" value="0"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="3" value="3"/>
             <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
@@ -29,10 +29,10 @@
                 <SubTree ID="GateTree" __shared_blackboard="false" repair_mission="repair_mission" sla_pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
+                <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
+                <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
             </ForceSuccess>
             <IfThenElse name="Torpedo/bin tasks + table notify">
                 <Inverter name="is table?">
@@ -632,7 +632,7 @@
             <SetBlackboard output_key="undergate_depth" value="-1.0"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <IfThenElse>
-                <Condition ID="CompareNums" a="{repair_mission}" b="0" name="check if primary is repair" test="="/>
+                <Condition ID="CompareNums" a="{repair_mission}" b="0" name="check if primary is repair" test="=="/>
                 <Sequence name="Rescue is Primary">
                     <SetBlackboard output_key="subprop" value="gate_rescue"/>
                     <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_repair"/>
