@@ -1636,12 +1636,12 @@
                     <IfThenElse name="Choose torpedo targets">
                         <Condition ID="CompareNums" a="repair_mission" b="0" test="="/>
                         <Sequence name="Rescue is target">
-                            <SetBlackboard output_key="torpedo_first" value="torpedo_blood_big"/>
-                            <SetBlackboard output_key="torpedo_second" value="torpedo_blood_small"/>
+                            <SetBlackboard output_key="torpedo_first" value="blood_hole_big"/>
+                            <SetBlackboard output_key="torpedo_second" value="blood_hole_small"/>
                         </Sequence>
                         <Sequence name="repair is target">
-                            <SetBlackboard output_key="torpedo_first" value="torpedo_fire_big"/>
-                            <SetBlackboard output_key="torpedo_second" value="torpedo_fire_small"/>
+                            <SetBlackboard output_key="torpedo_first" value="fire_hole_big"/>
+                            <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
                         </Sequence>
                     </IfThenElse>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
@@ -1858,6 +1858,7 @@
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
             </ForceSuccess>
+            <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
         </Sequence>
     </BehaviorTree>
