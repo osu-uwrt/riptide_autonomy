@@ -40,7 +40,7 @@
                 </Inverter>
                 <Sequence name="table then torpedo">
                     <ForceSuccess>
-                        <SubTree ID="TableTree"/>
+                        <SubTree ID="newTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="BinTree"/>
@@ -54,7 +54,7 @@
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="TableTree"/>
+                        <SubTree ID="newTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="BinTree"/>
