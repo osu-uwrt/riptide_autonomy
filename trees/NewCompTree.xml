@@ -1401,6 +1401,8 @@
             <SetBlackboard output_key="target_cov" value="1"/>
             <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="table_w" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="table_w" x="table_x" y="table_y" z="depth"/>
+            <Action ID="Format" format="{target_image}_frame" out="target_image_frame"/>
+            <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_image_frame"/>
             <Repeat num_cycles="5">
                 <Action ID="PublishToController" isOrientation="0" mode="3" x="{table_x}" y="{table_y}" z="1"/>
             </Repeat>
@@ -1823,13 +1825,13 @@
                 </Sequence>
             </Sequence>
             <ForceSuccess>
-                <SubTree ID="SurfaceTree"/>
+                <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
             </ForceSuccess>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <ForceSuccess name="First Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object1" object_name="object1_frame"/>
-                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop"/>
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
@@ -1837,7 +1839,7 @@
             <ForceSuccess name="Second Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object2" object_name="object2_frame"/>
-                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop"/>
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
@@ -1845,7 +1847,7 @@
             <ForceSuccess name="Third Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object3" object_name="object3_frame"/>
-                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop"/>
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
@@ -1853,12 +1855,14 @@
             <ForceSuccess name="Fourth Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object4" object_name="object4_frame"/>
-                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop"/>
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
             </ForceSuccess>
-            <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
+            <ForceSuccess>
+                <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
+            </ForceSuccess>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
         </Sequence>
     </BehaviorTree>
@@ -2325,7 +2329,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="num_cycles" required="true"/>
         </SubTree>
-        <SubTree ID="SurfaceTree"/>
+        <SubTree ID="SurfaceTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="target_image" required="false"/>
+        </SubTree>
         <SubTree ID="SurgeMove">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port default="30" name="timeout" required="true"/>
