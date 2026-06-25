@@ -40,7 +40,7 @@
                 </Inverter>
                 <Sequence name="table then torpedo">
                     <ForceSuccess>
-                        <SubTree ID="TableTree"/>
+                        <SubTree ID="newTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="BinTree"/>
@@ -54,7 +54,7 @@
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="TableTree"/>
+                        <SubTree ID="newTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="BinTree"/>
@@ -1390,6 +1390,9 @@
     </BehaviorTree>
     <BehaviorTree ID="SurfaceTree">
         <Sequence>
+            <ForceSuccess>
+                <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+            </ForceSuccess>
             <SetBlackboard output_key="5" value="5"/>
             <SetBlackboard name="boolean for if surface should be epic" output_key="cool_surface" value="0"/>
             <SetBlackboard output_key="depth" value="-0.5"/>
@@ -1401,11 +1404,16 @@
             <SetBlackboard output_key="target_cov" value="1"/>
             <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="table_w" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="table_w" x="table_x" y="table_y" z="depth"/>
+            <Action ID="Format" format="{target_image}_frame" out="target_image_frame"/>
+            <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_image_frame"/>
             <Repeat num_cycles="5">
                 <Action ID="PublishToController" isOrientation="0" mode="3" x="{table_x}" y="{table_y}" z="1"/>
             </Repeat>
             <Action ID="Wait" seconds="5"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="table_w" x="table_x" y="table_y" z="depth"/>
+            <ForceSuccess>
+                <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+            </ForceSuccess>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurgeMove">
@@ -1636,12 +1644,12 @@
                     <IfThenElse name="Choose torpedo targets">
                         <Condition ID="CompareNums" a="repair_mission" b="0" test="="/>
                         <Sequence name="Rescue is target">
-                            <SetBlackboard output_key="torpedo_first" value="torpedo_blood_big"/>
-                            <SetBlackboard output_key="torpedo_second" value="torpedo_blood_small"/>
+                            <SetBlackboard output_key="torpedo_first" value="blood_hole_big"/>
+                            <SetBlackboard output_key="torpedo_second" value="blood_hole_small"/>
                         </Sequence>
                         <Sequence name="repair is target">
-                            <SetBlackboard output_key="torpedo_first" value="torpedo_fire_big"/>
-                            <SetBlackboard output_key="torpedo_second" value="torpedo_fire_small"/>
+                            <SetBlackboard output_key="torpedo_first" value="fire_hole_big"/>
+                            <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
                         </Sequence>
                     </IfThenElse>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
@@ -1807,6 +1815,7 @@
             <Sequence name="Set object stuff and frames">
                 <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
                 <SetBlackboard output_key="base_link" value="talos/base_link"/>
+                <SetBlackboard output_key="table" value="table"/>
                 <SetBlackboard output_key="object1" value="bandage"/>
                 <SetBlackboard output_key="object2" value="pill"/>
                 <SetBlackboard output_key="object3" value="nut_and_bolt"/>
@@ -1822,14 +1831,18 @@
                     <Action ID="Format" format="{repair_drop}_frame" out="repair_drop_frame"/>
                 </Sequence>
             </Sequence>
+            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
             <ForceSuccess>
-                <SubTree ID="SurfaceTree"/>
+                <Sequence>
+                    <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="120"/>
+                    <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                </Sequence>
             </ForceSuccess>
-            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <ForceSuccess name="First Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object1" object_name="object1_frame"/>
-                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop"/>
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
@@ -1837,7 +1850,7 @@
             <ForceSuccess name="Second Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object2" object_name="object2_frame"/>
-                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop"/>
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
@@ -1845,7 +1858,7 @@
             <ForceSuccess name="Third Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object3" object_name="object3_frame"/>
-                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop"/>
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
@@ -1853,12 +1866,16 @@
             <ForceSuccess name="Fourth Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object4" object_name="object4_frame"/>
-                    <SubTree ID="SurfaceTree"/>
+                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
                     <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop"/>
                     <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                 </Sequence>
             </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
+            </ForceSuccess>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="pickupObject">
@@ -2324,7 +2341,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="num_cycles" required="true"/>
         </SubTree>
-        <SubTree ID="SurfaceTree"/>
+        <SubTree ID="SurfaceTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="target_image" required="false"/>
+        </SubTree>
         <SubTree ID="SurgeMove">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port default="30" name="timeout" required="true"/>
