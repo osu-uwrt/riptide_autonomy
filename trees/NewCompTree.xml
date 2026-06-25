@@ -1809,6 +1809,7 @@
             <Sequence name="Set object stuff and frames">
                 <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
                 <SetBlackboard output_key="base_link" value="talos/base_link"/>
+                <SetBlackboard output_key="table" value="table"/>
                 <SetBlackboard output_key="object1" value="bandage"/>
                 <SetBlackboard output_key="object2" value="pill"/>
                 <SetBlackboard output_key="object3" value="nut_and_bolt"/>
@@ -1824,10 +1825,14 @@
                     <Action ID="Format" format="{repair_drop}_frame" out="repair_drop_frame"/>
                 </Sequence>
             </Sequence>
+            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
             <ForceSuccess>
-                <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
+                <Sequence>
+                    <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="120"/>
+                    <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                </Sequence>
             </ForceSuccess>
-            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             <ForceSuccess name="First Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" object_frame="object1" object_name="object1_frame"/>
