@@ -1875,6 +1875,7 @@
                 <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
             </ForceSuccess>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="pickupObject">
