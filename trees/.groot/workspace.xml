@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <root>
     <BehaviorTree ID="AlignLink">
         <Sequence name="align robot link">
@@ -1698,48 +1699,48 @@
     </BehaviorTree>
     <TreeNodesModel>
         <SubTree ID="AlignLink">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="frame_name">frame to align to</input_port>
-            <input_port required="true" name="link_name">link to align</input_port>
-            <input_port required="true" name="prox_x" default="1">default x promity</input_port>
-            <input_port required="true" name="prox_z" default="0">default z proximity</input_port>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true">frame to align to</input_port>
+            <input_port name="link_name" required="true">link to align</input_port>
+            <input_port default="1" name="prox_x" required="true">default x promity</input_port>
+            <input_port default="0" name="prox_z" required="true">default z proximity</input_port>
         </SubTree>
         <Condition ID="ApproxEqualTo">
-            <input_port required="true" name="a"/>
-            <input_port required="true" name="b"/>
-            <input_port required="true" name="range"/>
+            <input_port name="a" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port name="range" required="true"/>
         </Condition>
         <Condition ID="ApproxEqualToAngle">
-            <input_port required="true" name="a"/>
-            <input_port required="true" name="b"/>
-            <input_port required="true" name="range"/>
+            <input_port name="a" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port name="range" required="true"/>
         </Condition>
         <SubTree ID="AssertTree">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="a"/>
-            <input_port required="true" name="aname"/>
-            <input_port required="true" name="b"/>
-            <input_port required="true" name="test">Same as CompareNums</input_port>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="a" required="true"/>
+            <input_port name="aname" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port name="test" required="true">Same as CompareNums</input_port>
         </SubTree>
         <SubTree ID="BinTree"/>
         <SubTree ID="BumpObject">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="object_frame"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_frame" required="true"/>
         </SubTree>
         <SubTree ID="BuoyTree"/>
         <Action ID="CalculateDistance">
-            <output_port required="false" name="dist"/>
-            <input_port required="true" name="x1"/>
-            <input_port required="true" name="x2"/>
-            <input_port required="true" name="y1"/>
-            <input_port required="true" name="y2"/>
-            <input_port required="true" name="z1"/>
-            <input_port required="true" name="z2"/>
+            <output_port name="dist" required="false"/>
+            <input_port name="x1" required="true"/>
+            <input_port name="x2" required="true"/>
+            <input_port name="y1" required="true"/>
+            <input_port name="y2" required="true"/>
+            <input_port name="z1" required="true"/>
+            <input_port name="z2" required="true"/>
         </Action>
         <Action ID="CallSetBoolService">
-            <input_port required="true" name="data">boolean value to set the thing to</input_port>
-            <input_port required="true" name="srv_name">Name of the service to call</input_port>
-            <input_port required="true" name="time_limit_secs">time limit for service after the call is made. Another second may be consumed waiting for it to come up</input_port>
+            <input_port name="data" required="true">boolean value to set the thing to</input_port>
+            <input_port name="srv_name" required="true">Name of the service to call</input_port>
+            <input_port name="time_limit_secs" required="true">time limit for service after the call is made. Another second may be consumed waiting for it to come up</input_port>
         </Action>
         <Action ID="CallSetStringService">
             <input_port name="data" required="true">String value to set the thing to</input_port>
@@ -1754,78 +1755,78 @@
             <input_port name="time_limit_secs" required="true">How long to wait before failure</input_port>
         </Action>
         <Action ID="CallTriggerService">
-            <input_port required="true" name="srv_name"/>
-            <input_port required="true" name="time_limit_secs"/>
+            <input_port name="srv_name" required="true"/>
+            <input_port name="time_limit_secs" required="true"/>
         </Action>
         <SubTree ID="CheckActuatorStates">
-            <inout_port required="true" name="__shared_blackboard"/>
+            <inout_port name="__shared_blackboard" required="true"/>
         </SubTree>
         <Action ID="CheckBlackboardExists">
-            <input_port required="false" name="input"/>
+            <input_port name="input" required="false"/>
         </Action>
         <SubTree ID="CollectDets">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="target"/>
-            <input_port required="true" name="target_error"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="target" required="true"/>
+            <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="CollectDetsAtAngle">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="frame"/>
-            <input_port required="true" name="rel_yaw"/>
-            <input_port required="true" name="target"/>
-            <input_port required="true" name="target_error"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="true"/>
+            <input_port name="rel_yaw" required="true"/>
+            <input_port name="target" required="true"/>
+            <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="CollectDetsOnSlalom">
-            <inout_port required="true" name="__shared_blackboard"/>
-            <inout_port required="true" name="frame"/>
-            <inout_port required="true" name="rel_yaw"/>
-            <inout_port required="true" name="target"/>
-            <inout_port required="true" name="target_error"/>
+            <inout_port name="__shared_blackboard" required="true"/>
+            <inout_port name="frame" required="true"/>
+            <inout_port name="rel_yaw" required="true"/>
+            <inout_port name="target" required="true"/>
+            <inout_port name="target_error" required="true"/>
         </SubTree>
         <Condition ID="CompareNums">
-            <input_port required="true" name="a"/>
-            <input_port required="true" name="b"/>
-            <input_port required="true" name="test">can be "&lt;", ">", or "=".</input_port>
+            <input_port name="a" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
-            <input_port required="true" name="base_frame" default="talos/base_link"/>
-            <input_port required="true" name="link_frame"/>
-            <input_port required="true" name="op"/>
-            <input_port required="true" name="or"/>
-            <output_port required="false" name="out_op"/>
-            <output_port required="false" name="out_or"/>
-            <output_port required="false" name="out_oy"/>
-            <output_port required="false" name="out_x"/>
-            <output_port required="false" name="out_y"/>
-            <output_port required="false" name="out_z"/>
-            <input_port required="true" name="oy"/>
-            <input_port required="true" name="reference_frame"/>
-            <input_port required="true" name="x">target x-pos of frameName in world frame</input_port>
-            <input_port required="true" name="y">target y-pos of frameName in world frame</input_port>
-            <input_port required="true" name="z">target z-pos of frameName in world frame</input_port>
+            <input_port default="talos/base_link" name="base_frame" required="true"/>
+            <input_port name="link_frame" required="true"/>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <output_port name="out_op" required="false"/>
+            <output_port name="out_or" required="false"/>
+            <output_port name="out_oy" required="false"/>
+            <output_port name="out_x" required="false"/>
+            <output_port name="out_y" required="false"/>
+            <output_port name="out_z" required="false"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="reference_frame" required="true"/>
+            <input_port name="x" required="true">target x-pos of frameName in world frame</input_port>
+            <input_port name="y" required="true">target y-pos of frameName in world frame</input_port>
+            <input_port name="z" required="true">target z-pos of frameName in world frame</input_port>
         </Action>
         <SubTree ID="DemoTableTree"/>
         <SubTree ID="DeployTankTree"/>
         <SubTree ID="DiscoverObjects">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="base_link"/>
-            <output_port required="false" name="discovered_object"/>
-            <input_port required="false" name="target_1"/>
-            <input_port required="false" name="target_2"/>
-            <input_port required="false" name="target_3"/>
-            <input_port required="false" name="target_4"/>
-            <input_port required="true" name="target_error"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="base_link" required="true"/>
+            <output_port name="discovered_object" required="false"/>
+            <input_port name="target_1" required="false"/>
+            <input_port name="target_2" required="false"/>
+            <input_port name="target_3" required="false"/>
+            <input_port name="target_4" required="false"/>
+            <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="DiscoverSingleMapObject">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="delta_angle"/>
-            <output_port required="false" name="discovered_object"/>
-            <input_port required="true" name="target"/>
-            <input_port required="true" name="target_error"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="delta_angle" required="true"/>
+            <output_port name="discovered_object" required="false"/>
+            <input_port name="target" required="true"/>
+            <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="Dive">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="depth">depth to submerge to</input_port>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="depth" required="true">depth to submerge to</input_port>
         </SubTree>
         <SubTree ID="DownwardMiniSearch">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -1844,259 +1845,258 @@
             <input_port name="target_Cov" required="true"/>
         </SubTree>
         <SubTree ID="DownwardSearch">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="false" name="min_dist"/>
-            <input_port required="false" name="object_name"/>
-            <input_port required="true" name="target_cov"/>
-            <input_port required="false" name="timeout_sec"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="min_dist" required="false"/>
+            <input_port name="object_name" required="false"/>
+            <input_port name="target_cov" required="true"/>
+            <input_port name="timeout_sec" required="false"/>
         </SubTree>
         <Action ID="Error">
-            <input_port required="true" name="message">The message to print.</input_port>
+            <input_port name="message" required="true">The message to print.</input_port>
         </Action>
         <SubTree ID="FireDropper"/>
         <SubTree ID="FireTorpedo"/>
         <SubTree ID="FlipTree"/>
         <Action ID="Format">
-            <input_port required="true" name="format"/>
-            <output_port required="false" name="out"/>
+            <input_port name="format" required="true"/>
+            <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="GateTree">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="false" name="repair_mission">which prop to target</input_port>
-            <output_port required="false" name="sla_pass_on_left"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <output_port name="sla_pass_on_left" required="false"/>
         </SubTree>
         <Action ID="GetActuatorStatus">
-            <output_port required="false" name="actuators_busy"/>
-            <output_port required="false" name="claw_state"/>
-            <output_port required="false" name="dropper_available_count"/>
-            <output_port required="false" name="dropper_state"/>
-            <output_port required="false" name="torpedo_available_count"/>
-            <output_port required="false" name="torpedo_state"/>
+            <output_port name="actuators_busy" required="false"/>
+            <output_port name="claw_state" required="false"/>
+            <output_port name="dropper_available_count" required="false"/>
+            <output_port name="dropper_state" required="false"/>
+            <output_port name="torpedo_available_count" required="false"/>
+            <output_port name="torpedo_state" required="false"/>
         </Action>
         <Action ID="GetBoolTopic">
-            <input_port required="true" name="topic">The topic to subscribe to.</input_port>
-            <output_port required="false" name="value"/>
+            <input_port name="topic" required="true">The topic to subscribe to.</input_port>
+            <output_port name="value" required="false"/>
         </Action>
         <Action ID="GetFloat64Topic">
-            <input_port required="false" name="topic"/>
-            <output_port required="false" name="value"/>
+            <input_port name="topic" required="false"/>
+            <output_port name="value" required="false"/>
         </Action>
         <Action ID="GetImuOrientation">
-            <output_port required="false" name="op"/>
-            <output_port required="false" name="or"/>
-            <output_port required="false" name="oy"/>
-            <input_port required="true" name="topic"/>
+            <output_port name="op" required="false"/>
+            <output_port name="or" required="false"/>
+            <output_port name="oy" required="false"/>
+            <input_port name="topic" required="true"/>
         </Action>
         <Action ID="GetMappingState">
-            <output_port required="false" name="map_locked"/>
-            <output_port required="false" name="target_name"/>
+            <output_port name="map_locked" required="false"/>
+            <output_port name="target_name" required="false"/>
         </Action>
         <Action ID="GetOdometry">
-            <output_port required="false" name="op"/>
-            <output_port required="false" name="or"/>
-            <output_port required="false" name="oy"/>
-            <output_port required="false" name="x"/>
-            <output_port required="false" name="y"/>
-            <output_port required="false" name="z"/>
+            <output_port name="op" required="false"/>
+            <output_port name="or" required="false"/>
+            <output_port name="oy" required="false"/>
+            <output_port name="x" required="false"/>
+            <output_port name="y" required="false"/>
+            <output_port name="z" required="false"/>
         </Action>
         <SubTree ID="GetOppositeColorBasket">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="obj"/>
-            <output_port required="false" name="out"/>
-            <output_port required="false" name="out_frame"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="obj" required="true"/>
+            <output_port name="out" required="false"/>
+            <output_port name="out_frame" required="false"/>
         </SubTree>
         <Action ID="GetTwistTopic">
-            <input_port required="false" name="topic">Topic to listen to</input_port>
-            <output_port required="false" name="vel_pitch"/>
-            <output_port required="false" name="vel_roll"/>
-            <output_port required="false" name="vel_x"/>
-            <output_port required="false" name="vel_y"/>
-            <output_port required="false" name="vel_yaw"/>
-            <output_port required="false" name="vel_z"/>
+            <input_port name="topic" required="false">Topic to listen to</input_port>
+            <output_port name="vel_pitch" required="false"/>
+            <output_port name="vel_roll" required="false"/>
+            <output_port name="vel_x" required="false"/>
+            <output_port name="vel_y" required="false"/>
+            <output_port name="vel_yaw" required="false"/>
+            <output_port name="vel_z" required="false"/>
         </Action>
         <SubTree ID="GoToObject">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <output_port required="false" name="discovered_object"/>
-            <input_port required="true" name="object_1"/>
-            <input_port required="false" name="object_2"/>
-            <input_port required="false" name="object_3"/>
-            <input_port required="false" name="object_4"/>
-            <input_port required="true" name="target_error"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <output_port name="discovered_object" required="false"/>
+            <input_port name="object_1" required="true"/>
+            <input_port name="object_2" required="false"/>
+            <input_port name="object_3" required="false"/>
+            <input_port name="object_4" required="false"/>
+            <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="GrabObject">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <output_port required="false" name="discovered_target"/>
-            <input_port required="true" name="object_1"/>
-            <input_port required="false" name="object_2"/>
-            <input_port required="false" name="object_3"/>
-            <input_port required="false" name="object_4"/>
-            <input_port required="true" name="target_error"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <output_port name="discovered_target" required="false"/>
+            <input_port name="object_1" required="true"/>
+            <input_port name="object_2" required="false"/>
+            <input_port name="object_3" required="false"/>
+            <input_port name="object_4" required="false"/>
+            <input_port name="target_error" required="true"/>
         </SubTree>
         <Action ID="HeadingToPoint">
-            <input_port required="true" name="currX"/>
-            <input_port required="true" name="currY"/>
-            <output_port required="false" name="heading"/>
-            <input_port required="true" name="targX"/>
-            <input_port required="true" name="targY"/>
+            <input_port name="currX" required="true"/>
+            <input_port name="currY" required="true"/>
+            <output_port name="heading" required="false"/>
+            <input_port name="targX" required="true"/>
+            <input_port name="targY" required="true"/>
         </Action>
         <Action ID="Info">
-            <input_port required="true" name="message">The message to print.</input_port>
+            <input_port name="message" required="true">The message to print.</input_port>
         </Action>
         <Condition ID="IsTrue">
-            <input_port required="true" name="value"/>
+            <input_port name="value" required="true"/>
         </Condition>
         <SubTree ID="KillController"/>
         <SubTree ID="LockInObject">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="object"/>
-            <input_port required="true" name="target_error"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object" required="true"/>
+            <input_port name="target_error" required="true"/>
         </SubTree>
         <Action ID="Math">
-            <input_port required="true" name="a"/>
-            <input_port required="true" name="b"/>
-            <input_port required="true" name="operator" default="+">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
-            <output_port required="false" name="out"/>
+            <input_port name="a" required="true"/>
+            <input_port name="b" required="true"/>
+            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="object_name"/>
-            <input_port required="true" name="parent_object"/>
-            <input_port required="true" name="prox_x" default="1"/>
-            <input_port required="true" name="prox_y" default="0"/>
-            <input_port required="true" name="prox_z" default="0"/>
-            <input_port required="true" name="target_cov" default="1.25"/>
-            <input_port required="true" name="timeout_secs" default="60"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_name" required="true"/>
+            <input_port name="parent_object" required="true"/>
+            <input_port default="1" name="prox_x" required="true"/>
+            <input_port default="0" name="prox_y" required="true"/>
+            <input_port default="0" name="prox_z" required="true"/>
+            <input_port default="1.25" name="target_cov" required="true"/>
+            <input_port default="60" name="timeout_secs" required="true"/>
         </SubTree>
         <SubTree ID="Move">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="op"/>
-            <input_port required="true" name="or"/>
-            <input_port required="true" name="oy"/>
-            <input_port required="true" name="x"/>
-            <input_port required="true" name="y"/>
-            <input_port required="true" name="z"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <SubTree ID="NotifyTankStartTable"/>
         <SubTree ID="OptionallyCollectDetsAtAngle">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <output_port required="false" name="discovered_object"/>
-            <input_port required="true" name="target"/>
-            <input_port required="true" name="target_angle"/>
-            <input_port required="true" name="target_error"/>
-            <input_port required="true" name="target_frame"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <output_port name="discovered_object" required="false"/>
+            <input_port name="target" required="true"/>
+            <input_port name="target_angle" required="true"/>
+            <input_port name="target_error" required="true"/>
+            <input_port name="target_frame" required="true"/>
         </SubTree>
         <SubTree ID="PassThroughSlalom">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="pass_on_left"/>
-            <input_port required="true" name="slalom_object"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="pass_on_left" required="true"/>
+            <input_port name="slalom_object" required="true"/>
         </SubTree>
         <SubTree ID="PrepForRun"/>
         <SubTree ID="PrimitiveMoveOrientation">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="p"/>
-            <input_port required="true" name="r"/>
-            <input_port required="true" name="timeout" default="15"/>
-            <input_port required="true" name="y"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="p" required="true"/>
+            <input_port name="r" required="true"/>
+            <input_port default="15" name="timeout" required="true"/>
+            <input_port name="y" required="true"/>
         </SubTree>
         <SubTree ID="PrimitiveMovePosition">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="timeout" default="60"/>
-            <input_port required="true" name="x"/>
-            <input_port required="true" name="y"/>
-            <input_port required="true" name="z"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="60" name="timeout" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <Action ID="PublishEKFPose">
-            <input_port required="false" name="pitch" default="0"/>
-            <input_port required="false" name="roll" default="0"/>
-            <input_port required="true" name="setOrientation"/>
-            <input_port required="true" name="setX"/>
-            <input_port required="true" name="setY"/>
-            <input_port required="true" name="setZ"/>
-            <input_port required="false" name="x" default="0"/>
-            <input_port required="false" name="y" default="0"/>
-            <input_port required="false" name="yaw" default="0"/>
-            <input_port required="false" name="z" default="0"/>
+            <input_port default="0" name="pitch" required="false"/>
+            <input_port default="0" name="roll" required="false"/>
+            <input_port name="setOrientation" required="true"/>
+            <input_port name="setX" required="true"/>
+            <input_port name="setY" required="true"/>
+            <input_port name="setZ" required="true"/>
+            <input_port default="0" name="x" required="false"/>
+            <input_port default="0" name="y" required="false"/>
+            <input_port default="0" name="yaw" required="false"/>
+            <input_port default="0" name="z" required="false"/>
         </Action>
         <Action ID="PublishFloat32">
-            <input_port required="false" name="data"/>
-            <input_port required="false" name="topic"/>
+            <input_port name="data" required="false"/>
+            <input_port name="topic" required="false"/>
         </Action>
         <Action ID="PublishInt8">
-            <input_port required="true" name="data"/>
-            <input_port required="true" name="topic"/>
+            <input_port name="data" required="true"/>
+            <input_port name="topic" required="true"/>
         </Action>
         <Action ID="PublishToController">
-            <input_port required="true" name="isOrientation"/>
-            <input_port required="true" name="mode"/>
-            <input_port required="true" name="x"/>
-            <input_port required="true" name="y"/>
-            <input_port required="true" name="z"/>
+            <input_port name="isOrientation" required="true"/>
+            <input_port name="mode" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </Action>
         <SubTree ID="RandomPingerTree">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <output_port required="false" name="is_table"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <output_port name="is_table" required="false"/>
         </SubTree>
         <SubTree ID="RecoverTrackingAtHeading">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="relative_yaw"/>
-            <input_port required="true" name="target_obj_frame"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="relative_yaw" required="true"/>
+            <input_port name="target_obj_frame" required="true"/>
         </SubTree>
         <SubTree ID="RelativeMove">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="frame_name">the frame to move relative to</input_port>
-            <input_port required="true" name="op"/>
-            <input_port required="true" name="or"/>
-            <input_port required="true" name="oy"/>
-            <input_port required="true" name="x"/>
-            <input_port required="true" name="y"/>
-            <input_port required="true" name="z"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true">the frame to move relative to</input_port>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <SubTree ID="ReloadActuators"/>
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
-            <input_port required="true" name="num_seconds">number of seconds until abandonment.</input_port>
+            <input_port name="num_seconds" required="true">number of seconds until abandonment.</input_port>
         </Decorator>
         <SubTree ID="ReturnHomeTree"/>
         <SubTree ID="RotateToFrame">
-            <inout_port required="true" name="__shared_blackboard"/>
-            <inout_port required="true" name="relative_yaw"/>
-            <inout_port required="true" name="target_frame"/>
+            <inout_port name="__shared_blackboard" required="true"/>
+            <inout_port name="relative_yaw" required="true"/>
+            <inout_port name="target_frame" required="true"/>
         </SubTree>
         <SubTree ID="Search">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="false" name="max_dist" default="4.0"/>
-            <input_port required="false" name="min_dist" default="1.75"/>
-            <input_port required="false" name="object_name">Frame to search for</input_port>
-            <input_port required="false" name="target_cov" default="1.25">Target covariance to end search</input_port>
-            <input_port required="false" name="timeout_secs" default="120">Timeout for search</input_port>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="4.0" name="max_dist" required="false"/>
+            <input_port default="1.75" name="min_dist" required="false"/>
+            <input_port name="object_name" required="false">Frame to search for</input_port>
+            <input_port default="1.25" name="target_cov" required="false">Target covariance to end search</input_port>
+            <input_port default="120" name="timeout_secs" required="false">Timeout for search</input_port>
         </SubTree>
         <SubTree ID="SetActiveCamera">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="is_dfc">1 for dfc, 0 otherwise</input_port>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="is_dfc" required="true">1 for dfc, 0 otherwise</input_port>
         </SubTree>
         <SubTree ID="SetActuatorsArmed">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="armed"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="armed" required="true"/>
         </SubTree>
         <SubTree ID="SetClawState">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="claw_opened"/>
-            <input_port required="true" name="claw_raised"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="claw_opened" required="true"/>
+            <input_port name="claw_raised" required="true"/>
         </SubTree>
         <Action ID="SetControllerSafeMode">
-            <input_port required="true" name="safe"/>
-            <input_port required="true" name="timeout_secs"/>
+            <input_port name="safe" required="true"/>
+            <input_port name="timeout_secs" required="true"/>
         </Action>
         <Action ID="SetMappingTarget">
-            <input_port required="true" name="lock_map"/>
-            <input_port required="false" name="target_object"/>
-            <input_port required="true" name="time_limit_secs"/>
+            <input_port name="lock_map" required="true"/>
+            <input_port name="target_object" required="false"/>
+            <input_port name="time_limit_secs" required="true"/>
         </Action>
         <Action ID="SetStatus">
-            <input_port required="true" name="status"/>
+            <input_port name="status" required="true"/>
         </Action>
         <SubTree ID="SetWinchState">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="winch_extended"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="winch_extended" required="true"/>
         </SubTree>
         <SubTree ID="ShootDownwardObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -2111,117 +2111,92 @@
             <input_port default="torpedo" name="torpedo_name" required="true"/>
         </SubTree>
         <SubTree ID="SingleSlalom">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="pass_on_left">Whether to pass on the left side of the red slalom pole</input_port>
-            <input_port required="true" name="slalom_type">The mapping type of slalom to search for</input_port>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="pass_on_left" required="true">Whether to pass on the left side of the red slalom pole</input_port>
+            <input_port name="slalom_type" required="true">The mapping type of slalom to search for</input_port>
         </SubTree>
         <SubTree ID="SlalomTree">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="pass_on_left"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="pass_on_left" required="true"/>
         </SubTree>
         <SubTree ID="SmartMovePosition">
-            <inout_port required="true" name="__shared_blackboard"/>
-            <input_port required="true" name="x"/>
-            <input_port required="true" name="y"/>
-            <input_port required="true" name="z"/>
+            <inout_port name="__shared_blackboard" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <SubTree ID="SmartMoveSurge">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="timeout" default="60"/>
-            <input_port required="true" name="x"/>
-            <input_port required="true" name="z"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="60" name="timeout" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <SubTree ID="SpinTree">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="num_cycles"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="num_cycles" required="true"/>
         </SubTree>
         <SubTree ID="SurfaceTree"/>
         <SubTree ID="SurgeMove">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="timeout" default="30"/>
-            <input_port required="true" name="x"/>
-            <input_port required="true" name="z"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="30" name="timeout" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <SubTree ID="TableTree"/>
         <SubTree ID="TankLongitudinalFF">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="duration"/>
-            <input_port required="true" name="power"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="duration" required="true"/>
+            <input_port name="power" required="true"/>
         </SubTree>
-        <SubTree ID="TorpedoTree">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="false" name="repair_mission"/>
-        </SubTree>
+        <SubTree ID="TorpedoTree"/>
         <Action ID="TransformPose">
-            <input_port required="true" name="from_frame"/>
-            <input_port required="true" name="op"/>
-            <input_port required="true" name="or"/>
-            <output_port required="false" name="out_op"/>
-            <output_port required="false" name="out_or"/>
-            <output_port required="false" name="out_oy"/>
-            <output_port required="false" name="out_x"/>
-            <output_port required="false" name="out_y"/>
-            <output_port required="false" name="out_z"/>
-            <input_port required="true" name="oy"/>
-            <input_port required="true" name="to_frame"/>
-            <input_port required="true" name="x"/>
-            <input_port required="true" name="y"/>
-            <input_port required="true" name="z"/>
+            <input_port name="from_frame" required="true"/>
+            <input_port name="op" required="true"/>
+            <input_port name="or" required="true"/>
+            <output_port name="out_op" required="false"/>
+            <output_port name="out_or" required="false"/>
+            <output_port name="out_oy" required="false"/>
+            <output_port name="out_x" required="false"/>
+            <output_port name="out_y" required="false"/>
+            <output_port name="out_z" required="false"/>
+            <input_port name="oy" required="true"/>
+            <input_port name="to_frame" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </Action>
         <Action ID="TriggerControllerStunt">
-            <input_port required="true" name="targetStuntState"/>
+            <input_port name="targetStuntState" required="true"/>
         </Action>
         <Action ID="Wait">
-            <input_port required="true" name="seconds">number of seconds to wait.</input_port>
+            <input_port name="seconds" required="true">number of seconds to wait.</input_port>
         </Action>
         <SubTree ID="WaitForActuators">
-            <inout_port required="true" name="__shared_blackboard"/>
-            <inout_port required="true" name="timeout_secs"/>
+            <inout_port name="__shared_blackboard" required="true"/>
+            <inout_port name="timeout_secs" required="true"/>
         </SubTree>
         <SubTree ID="WaitForController">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="true" name="dist"/>
-            <input_port required="true" name="link_frame"/>
-            <input_port required="true" name="target_frame"/>
-            <input_port required="true" name="timeout">max time to wait in seconds</input_port>
-            <input_port required="true" name="trust">minimum controller scale trust threshold</input_port>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="dist" required="true"/>
+            <input_port name="link_frame" required="true"/>
+            <input_port name="target_frame" required="true"/>
+            <input_port name="timeout" required="true">max time to wait in seconds</input_port>
+            <input_port name="trust" required="true">minimum controller scale trust threshold</input_port>
         </SubTree>
         <Action ID="WaitForDetection">
-            <input_port required="true" name="object_name"/>
-            <input_port required="true" name="timeout_secs"/>
+            <input_port name="object_name" required="true"/>
+            <input_port name="timeout_secs" required="true"/>
         </Action>
         <SubTree ID="WaitForKillSwitch"/>
         <SubTree ID="WaitForTalos">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <output_port required="false" name="bin_heading"/>
-        </SubTree>
-        <SubTree ID="dropObject">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="false" name="claw_close_s"/>
-            <input_port required="false" name="claw_drop_s"/>
-            <input_port required="false" name="claw_link"/>
-            <input_port required="false" name="claw_open_s"/>
-            <input_port required="false" name="claw_topic"/>
-            <input_port required="false" name="dropoff_frame"/>
-            <input_port required="false" name="dropoff_name"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <output_port name="bin_heading" required="false"/>
         </SubTree>
         <Action ID="getCovariance">
-            <output_port required="false" name="Covariance">Covariance of frame</output_port>
-            <input_port required="true" name="Target">Frame to get covariance of</input_port>
+            <output_port name="Covariance" required="false">Covariance of frame</output_port>
+            <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
-        <SubTree ID="newTableTree">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="false" name="repair_mission"/>
-        </SubTree>
-        <SubTree ID="pickupObject">
-            <input_port required="false" name="__shared_blackboard" default="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port required="false" name="claw_close_s"/>
-            <input_port required="false" name="claw_link"/>
-            <input_port required="false" name="claw_open_s"/>
-            <input_port required="false" name="claw_topic"/>
-            <input_port required="false" name="object_frame"/>
-            <input_port required="false" name="object_name"/>
-        </SubTree>
     </TreeNodesModel>
+    <!-- ////////// -->
 </root>
 
