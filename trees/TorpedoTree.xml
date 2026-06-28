@@ -1,5 +1,21 @@
 <?xml version="1.0"?>
 <root main_tree_to_execute="BehaviorTree">
+    <BehaviorTree ID="ActivateMagnet">
+        <Sequence>
+            <SetBlackboard output_key="magnet_activation_s" value="2"/>
+            <SetBlackboard output_key="magnet_align_dist" value="0.1"/>
+            <SetBlackboard output_key="magnet_pre_align_height" value="0.7"/>
+            <SetBlackboard output_key="magnet_pre_align_dist" value="{magnet_align_dist}"/>
+            <SetBlackboard output_key="magnet_link" value="talos/claw_link"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="magnet_frame" link_name="magnet_link" prox_x="magnet_pre_align_dist" prox_z="magnet_pre_align_height"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="magnet_frame" link_name="magnet_link" prox_x="magnet_align_dist" prox_z="0"/>
+            <Action ID="SetStatus" status="performing"/>
+            <Action ID="Wait" seconds="{magnet_activation_s}"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="magnet_frame" link_name="magnet_link" prox_x="magnet_pre_align_dist" prox_z="magnet_pre_align_height"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="AlignLink">
         <Sequence name="align robot link">
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_name}" op="0" or="0" out_op="gop" out_or="gor" out_oy="goy" out_x="gx" out_y="gy" out_z="gz" oy="3.1415" reference_frame="{frame_name}" x="{prox_x}" y="0" z="{prox_z}"/>
@@ -59,6 +75,7 @@
             </ForceSuccess>
             <Action ID="CallTriggerService" srv_name="/talos/mapping/stop_binary_classifier" time_limit_secs="1"/>
             <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            <SubTree ID="MagnetTree" __shared_blackboard="false" bin_object_vision_class="object_vision_class"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BumpObject">
@@ -707,6 +724,15 @@
             </ForceSuccess>
             <Action ID="Format" format="{object}_frame" out="object_frame"/>
             <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="object_frame"/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="MagnetTree">
+        <Sequence>
+            <SetBlackboard output_key="magnet1_frame" value="magnet1_frame"/>
+            <SetBlackboard output_key="magnet2_frame" value="magnet2_frame"/>
+            <Action ID="CallSetStringService" data="{bin_object_vision_class}" srv_name="/talos/mapping/fit_bin_geometry" time_limit_secs="1"/>
+            <SubTree ID="ActivateMagnet" __shared_blackboard="false" magnet_frame="magnet1_frame"/>
+            <SubTree ID="ActivateMagnet" __shared_blackboard="false" magnet_frame="magnet2_frame"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="MiniSearch">
@@ -1607,8 +1633,8 @@
                 <Sequence name="torpedo">
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
                     <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
-                    <SetBlackboard output_key="torpedo_first" value="fire_hole_large"/>
-                    <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
+                    <SetBlackboard output_key="torpedo_first" value="fire_hole_small"/>
+                    <SetBlackboard output_key="torpedo_second" value="fire_hole_large"/>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
                     <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_first" torpedo_link_name="talos/torpedo_0_link" torpedo_name="torpedo"/>
                     <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_second" torpedo_link_name="talos/torpedo_1_link" torpedo_name="torpedo"/>
@@ -1710,6 +1736,10 @@
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
+        <SubTree ID="ActivateMagnet">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="magnet_frame" required="true"/>
+        </SubTree>
         <SubTree ID="AlignLink">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="frame_name" required="true">frame to align to</input_port>
@@ -1962,6 +1992,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object" required="true"/>
             <input_port name="target_error" required="true"/>
+        </SubTree>
+        <SubTree ID="MagnetTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="bin_object_vision_class" required="true">Class used in binary classifier</input_port>
         </SubTree>
         <Action ID="Math">
             <input_port name="a" required="true"/>

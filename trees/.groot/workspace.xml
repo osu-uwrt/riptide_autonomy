@@ -1145,7 +1145,7 @@
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.4"/>
-            <SetBlackboard output_key="ms_prox" value="2"/>
+            <SetBlackboard output_key="ms_prox" value="0.75"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
@@ -1622,8 +1622,8 @@
                 <Sequence name="torpedo">
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
                     <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
-                    <SetBlackboard output_key="torpedo_first" value="fire_hole_large"/>
-                    <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
+                    <SetBlackboard output_key="torpedo_first" value="fire_hole_small"/>
+                    <SetBlackboard output_key="torpedo_second" value="fire_hole_large"/>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
                     <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_first" torpedo_link_name="talos/torpedo_0_link" torpedo_name="torpedo"/>
                     <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_second" torpedo_link_name="talos/torpedo_1_link" torpedo_name="torpedo"/>
