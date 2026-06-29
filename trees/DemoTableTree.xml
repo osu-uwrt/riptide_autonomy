@@ -227,7 +227,7 @@
             <SetBlackboard output_key="ctrlr_timeout" value="30"/>
             <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
-            <SetBlackboard output_key="overtable" value="0.1"/>
+            <SetBlackboard output_key="overtable" value="0.15"/>
             <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
             <SetBlackboard output_key="frame" value="nut_and_bolt_frame"/>
             <SetBlackboard output_key="table_target" value="nut_and_bolt"/>
