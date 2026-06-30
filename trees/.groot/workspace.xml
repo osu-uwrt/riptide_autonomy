@@ -590,10 +590,19 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="target_cov" value="0.1"/>
             <SetBlackboard output_key="undergate_depth" value="-1.0"/>
-            <SetBlackboard output_key="subprop" value="gate_rescue"/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
+                <Sequence name="Rescue is primary">
+                    <SetBlackboard output_key="subprop" value="gate_rescue"/>
+                    <SetBlackboard output_key="alt_subprop" value="gate_repair"/>
+                </Sequence>
+                <Sequence name="Repair is primary">
+                    <SetBlackboard output_key="subprop" value="gate_repair"/>
+                    <SetBlackboard output_key="alt_subprop" value="gate_rescue"/>
+                </Sequence>
+            </IfThenElse>
             <SetBlackboard output_key="prop" value="{subprop}"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
-            <SetBlackboard name="Non-primary prop for slalom purposes" output_key="alt_subprop" value="gate_repair"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Format" format="{alt_subprop}_frame" out="alt_subprop_frame"/>
             <Action ID="Info" message="GATE TIME"/>
@@ -613,7 +622,7 @@
                 <IfThenElse>
                     <Condition ID="CompareNums" a="{dist_prim_to_alt}" b="0" name="If is positive" test="&gt;"/>
                     <Sequence name="Should pass on left">
-                        <SetBlackboard output_key="sla_pass_on_left" value="0"/>
+                        <SetBlackboard output_key="sla_pass_on_left" value="1"/>
                         <Action ID="Info" message="Slaom should pass on LEFT"/>
                     </Sequence>
                     <Sequence name="Should pass on right">
