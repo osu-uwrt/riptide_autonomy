@@ -252,7 +252,7 @@
                         <SubTree ID="BinTree"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission=""/>
+                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                 </Sequence>
                 <Sequence name="torpedo then table">
@@ -260,7 +260,7 @@
                         <SubTree ID="BinTree"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission=""/>
+                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                 </Sequence>
             </IfThenElse>
