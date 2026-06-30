@@ -1631,8 +1631,17 @@
                 <Sequence name="torpedo">
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
                     <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
-                    <SetBlackboard output_key="torpedo_first" value="fire_hole_small"/>
-                    <SetBlackboard output_key="torpedo_second" value="fire_hole_large"/>
+                    <IfThenElse>
+                        <Condition ID="CompareNums" a="{repair_mission|" b="0" test="=="/>
+                        <Sequence>
+                            <SetBlackboard output_key="torpedo_first" value="blood_hole_big"/>
+                            <SetBlackboard output_key="torpedo_second" value="blood_hole_small"/>
+                        </Sequence>
+                        <Sequence>
+                            <SetBlackboard output_key="torpedo_first" value="fire_hole_big"/>
+                            <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
+                        </Sequence>
+                    </IfThenElse>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
                     <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_first" torpedo_link_name="talos/torpedo_0_link" torpedo_name="torpedo"/>
                     <SubTree ID="ShootObject" __shared_blackboard="false" object_name="torpedo_second" torpedo_link_name="talos/torpedo_1_link" torpedo_name="torpedo"/>
@@ -2192,7 +2201,10 @@
             <input_port name="duration" required="true"/>
             <input_port name="power" required="true"/>
         </SubTree>
-        <SubTree ID="TorpedoTree"/>
+        <SubTree ID="TorpedoTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false"/>
+        </SubTree>
         <Action ID="TransformPose">
             <input_port name="from_frame" required="true"/>
             <input_port name="op" required="true"/>
