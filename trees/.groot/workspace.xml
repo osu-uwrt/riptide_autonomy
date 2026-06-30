@@ -1902,6 +1902,7 @@
         </Action>
         <SubTree ID="GateTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false"/>
             <output_port name="sla_pass_on_left" required="false"/>
         </SubTree>
         <Action ID="GetActuatorStatus">

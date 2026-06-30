@@ -31,58 +31,21 @@
         </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
-        <Sequence name="COMP">
+        <Sequence name="MISSION">
+            <SetBlackboard output_key="repair_mission" value="0"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="3" value="3"/>
-            <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
-            <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="depth" value="-0.56"/>
-            <SubTree ID="PrepForRun"/>
-            <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <ForceSuccess>
-                <SubTree ID="GateTree" __shared_blackboard="false" sla_pass_on_left="sla_pass_on_left"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="DeployTankTree"/>
-            </ForceSuccess>
-            <IfThenElse name="Torpedo/bin tasks + table notify">
-                <Inverter name="is table?">
-                    <Condition ID="CompareNums" a="{pinger_is_table}" b="0" name="is not table?" test="=="/>
-                </Inverter>
-                <Sequence name="table then torpedo">
-                    <ForceSuccess>
-                        <AlwaysSuccess name="Notify tank table start"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="BinTree"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="TorpedoTree"/>
-                    </ForceSuccess>
+            <SetBlackboard output_key="1" value="1"/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
+                <Sequence>
+                    <Action ID="Info" message="MISSION: RESCUE"/>
+                    <SubTree ID="CompMissionTree" __shared_blackboard="false" repair_mission="0"/>
                 </Sequence>
-                <Sequence name="torpedo then table">
-                    <ForceSuccess>
-                        <SubTree ID="TorpedoTree"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <AlwaysSuccess name="Notify tank table start"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="BinTree"/>
-                    </ForceSuccess>
+                <Sequence>
+                    <Action ID="Info" message="MISSION: REPAIR"/>
+                    <SubTree ID="CompMissionTree" __shared_blackboard="false" repair_mission="1"/>
                 </Sequence>
             </IfThenElse>
-            <ForceSuccess>
-                <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="ReturnHomeTree"/>
-            </ForceSuccess>
-            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
@@ -272,7 +235,7 @@
             <SubTree ID="WaitForKillSwitch"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <ForceSuccess>
-                <SubTree ID="GateTree" __shared_blackboard="false" sla_pass_on_left="sla_pass_on_left"/>
+                <SubTree ID="GateTree" __shared_blackboard="false" repair_mission="repair_mission" sla_pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
@@ -2008,6 +1971,7 @@
         </Action>
         <SubTree ID="GateTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false"/>
             <output_port name="sla_pass_on_left" required="false"/>
         </SubTree>
         <Action ID="GetActuatorStatus">
