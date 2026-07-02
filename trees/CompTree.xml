@@ -865,6 +865,12 @@
             <Sequence name="Set Object stuff and frames">
                 <SetBlackboard output_key="table" value="table"/>
             </Sequence>
+            <Sequence name="find table">
+                <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="120"/>
+                <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+            </Sequence>
+            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="NotifyTankStartTable">
@@ -1844,6 +1850,15 @@
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
+            <Action ID="PublishFloat32" data="{claw_open_s}" topic="{claw_topic}"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/claw_link" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/claw_link" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{over_table}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="boy" x="bx" y="by" z="bz"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="object_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="performing"/>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
