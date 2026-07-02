@@ -845,6 +845,18 @@
             <Action ID="Info" message="Move Complete."/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="NewTableTree">
+        <Sequence name="set blackboards">
+            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+            <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="claw_drop_s" value="0.3"/>
+            <SetBlackboard output_key="claw_open_s" value="2.0"/>
+            <SetBlackboard output_key="claw_close_s" value="-2.0"/>
+            <SetBlackboard output_key="ctrlr_timeout" value="30"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="NotifyTankStartTable">
         <Sequence>
             <AlwaysSuccess/>
@@ -2097,6 +2109,10 @@
             <input_port name="x" required="true"/>
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
+        </SubTree>
+        <SubTree ID="NewTableTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false"/>
         </SubTree>
         <SubTree ID="NotifyTankStartTable"/>
         <SubTree ID="OptionallyCollectDetsAtAngle">
