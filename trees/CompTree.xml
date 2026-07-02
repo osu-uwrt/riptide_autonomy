@@ -855,6 +855,16 @@
             <SetBlackboard output_key="claw_open_s" value="2.0"/>
             <SetBlackboard output_key="claw_close_s" value="-2.0"/>
             <SetBlackboard output_key="ctrlr_timeout" value="30"/>
+            <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
+            <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
+            <SetBlackboard output_key="overtable" value="0.1"/>
+            <SetBlackboard output_key="search_prox" value="2"/>
+            <SetBlackboard output_key="target_err" value="0.2"/>
+            <SetBlackboard output_key="search_timeout" value="180"/>
+            <SetBlackboard output_key="num_sorted" value="0"/>
+            <Sequence name="Set Object stuff and frames">
+                <SetBlackboard output_key="table" value="table"/>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="NotifyTankStartTable">
@@ -1817,6 +1827,25 @@
             <AlwaysSuccess name="Wait for start queue"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="pickupObject">
+        <Sequence>
+            <Sequence name="set blackboards">
+                <SetBlackboard output_key="0" value="0"/>
+                <SetBlackboard output_key="1" value="1"/>
+            </Sequence>
+            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+            <ForceSuccess>
+                <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="object_frame" gx="0" gy="0" gz="minisearch_prox" object_name="object_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
+                </Decorator>
+            </ForceSuccess>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            <Action ID="SetStatus" status="aligning"/>
+        </Sequence>
+    </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
         <SubTree ID="ActivateMagnet">
@@ -2337,6 +2366,24 @@
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
+        <SubTree ID="pickupObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="claw_close_s" required="false"/>
+            <input_port name="claw_link" required="false"/>
+            <input_port name="claw_open_s" required="false"/>
+            <input_port name="claw_topic" required="false"/>
+            <input_port name="ctrlr_dist" required="false"/>
+            <input_port name="ctrlr_timeout" required="false"/>
+            <input_port name="ctrlr_trust" required="false"/>
+            <input_port name="minisearch_prox" required="false"/>
+            <inout_port name="object_frame" required="false"/>
+            <input_port name="object_name" required="false"/>
+            <input_port name="overtable" required="false"/>
+            <input_port name="reset_threshold" required="false"/>
+            <input_port name="search_prox" required="false"/>
+            <input_port name="search_timeout" required="false"/>
+            <input_port name="target_err" required="false"/>
+        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
