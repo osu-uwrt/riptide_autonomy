@@ -240,6 +240,7 @@
             <ForceSuccess>
                 <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
+            <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
             <ForceSuccess>
                 <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
             </ForceSuccess>
@@ -882,12 +883,16 @@
                 </Sequence>
                 <SetBlackboard output_key="compass" value="compass"/>
             </Sequence>
-            <Sequence name="find table">
-                <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
-                <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="120"/>
-                <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
-            </Sequence>
-            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+            <ForceSuccess>
+                <Sequence name="find table">
+                    <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="80"/>
+                    <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+            </ForceSuccess>
             <ForceSuccess name="First Object Cycle">
                 <Sequence>
                     <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object1_frame" object_name="object1_name" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
@@ -899,7 +904,9 @@
             <ForceSuccess>
                 <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
             </ForceSuccess>
-            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            <ForceSuccess>
+                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            </ForceSuccess>
             <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
         </Sequence>
     </BehaviorTree>
