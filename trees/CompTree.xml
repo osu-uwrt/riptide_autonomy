@@ -893,14 +893,16 @@
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             </ForceSuccess>
-            <ForceSuccess name="First Object Cycle">
-                <Sequence>
-                    <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object1_frame" object_name="object1_name" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                    <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
-                    <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="dropoff_frame" dropoff_name="dropoff_name" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                    <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
-                </Sequence>
-            </ForceSuccess>
+            <Sequence name="object cycles">
+                <ForceSuccess name="First Object Cycle">
+                    <Sequence>
+                        <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object1_frame" object_name="object1_name" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
+                        <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                        <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
+                    </Sequence>
+                </ForceSuccess>
+            </Sequence>
             <ForceSuccess>
                 <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
             </ForceSuccess>
