@@ -22,7 +22,51 @@
 using namespace tinyxml2;
 using namespace BT;
 
-bool yta = false;
+bool yta = false; //-y: answer yes to every prompt (applies all autofixes)
+bool nta = true; //-n: answer no to every prompt (non-interactive; issues go to the end-of-run summaries)
+
+/**
+ * @brief Reads the answer to a Y/n prompt from the user, honoring the -y and -n flags.
+ */
+bool userSaysYes() {
+    if(yta) {
+        return true;
+    }
+    else if(nta) {
+        return false;
+    }
+    std::string ans;
+    std::cin >> ans;
+    return std::tolower(ans[0]) == 'y';
+}
+
+//collects hard errors (not interactive warnings) so they can be reprinted as a summary at the end of the run
+std::list<std::string> errorSummary;
+
+//collects heuristic warnings (e.g. blackboard entries that *may* not exist). Reprinted at the end
+//of the run like errors, but never fail the check.
+std::list<std::string> warningSummary;
+
+/**
+ * @brief Logs a hard error immediately and stores it so it is reprinted in the end-of-run summary.
+ */
+void reportError(const std::string& message) {
+    RCLCPP_ERROR(log, "%s", message.c_str());
+    errorSummary.push_back(message);
+}
+
+/**
+ * @brief Returns true if value is a plain numeric literal (e.g. "0", "-1", "3.1415").
+ * Such values are passed to ports intentionally and are not blackboard references.
+ */
+bool isNumericLiteral(const char *value) {
+    if(value == nullptr || value[0] == '\0') {
+        return false;
+    }
+    char *end = nullptr;
+    std::strtod(value, &end);
+    return *end == '\0'; //whole string consumed by strtod -> it is a number
+}
 
 const char *nodeId(XMLElement *node) {
     if(node->Attribute("ID")) {
@@ -172,10 +216,7 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
             if(!portFoundInCpp) {
                 //port of correct name and type not found in c++ implementation
                 RCLCPP_WARN(log, "%s Port %s in groot was not found in c++ implementation. Would you like to remove it? (Y/n): ", portVal, port->Attribute("name"));
-                std::string ans;
-                std::cin>>ans;
-
-                if(std::tolower(ans[0]) == 'y' || yta) {
+                if(userSaysYes()) {
                     XMLElement *tmp = port;
                     port = port->NextSiblingElement();
                     tmp->Parent()->DeleteChild(tmp);
@@ -183,6 +224,8 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
                     continue; //already advanced port to next value, just continue loop
                 }
                 else{
+                    errorSummary.push_back("Node " + std::string(nodeId(node)) + ": " + portVal + " " + port->Attribute("name")
+                        + " exists in Groot but not in the c++ implementation.");
                     port_match = false;
                 }
             }
@@ -195,23 +238,21 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
     for(auto srcPair : src_ports) {
         if(ports_found.find(srcPair.first) == ports_found.end()) {
             RCLCPP_WARN(log, "Port %s was not found in groot workspace for node %s. Would you like to add it? (Y/n)", srcPair.first.c_str(), nodeId(node));
-            std::string ans;
-            std::cin>>ans;
-
-            if(std::tolower(ans[0]) == 'y' || yta){
+            if(userSaysYes()){
                 addPortToWorkspace(srcPair.first, srcPair.second, node);
             }
             else{
+                errorSummary.push_back("Node " + std::string(nodeId(node)) + ": port " + srcPair.first
+                    + " exists in the c++ implementation but is missing from the Groot workspace.");
                 port_match = false;
             }
-            
+
         } else {
             //port exists, check direction
             if(srcPair.second.direction() != ports_found[srcPair.first]) {
-                std::string 
+                std::string
                     srcDirectionStr = portDirectionToString(srcPair.second.direction()),
-                    grootDirectionStr = portDirectionToString(ports_found[srcPair.first]),
-                    ans;
+                    grootDirectionStr = portDirectionToString(ports_found[srcPair.first]);
 
                 RCLCPP_WARN(log,
                     "Port %s for node %s listed as an %s port in the c++ implementation, but as a %s port in Groot. Would you like to change the Groot type to %s (Y/n)?", 
@@ -222,8 +263,7 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
                     srcDirectionStr.c_str()
                 );
 
-                std::cin >> ans;
-                if(std::tolower(ans[0]) == 'y' || yta) {
+                if(userSaysYes()) {
                     //change the value of the port to srcDirectionStr
                     //need to find the node first
                     XMLElement *p = node->FirstChildElement();
@@ -237,6 +277,9 @@ bool checkPorts(XMLElement *node, PortsList src_ports){
                         p = p->NextSiblingElement();
                     }
                 } else {
+                    errorSummary.push_back("Node " + std::string(nodeId(node)) + ": port " + srcPair.first
+                        + " has a different direction (" + grootDirectionStr + ") in Groot than in the c++ implementation ("
+                        + srcDirectionStr + ").");
                     port_match = false;
                 }
             }
@@ -353,15 +396,13 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
             }
             else{
                 RCLCPP_WARN(log,"Riptide_autonomy does not have a valid c++ file for %s. Would you like to remove it from the workspace? (Y/n): ", nodeId(node));
-                std::string ans;
-                std::cin >> ans;
-
-                if(std::tolower(ans[0]) == 'y' || yta){
+                if(userSaysYes()){
                     //delete from the model we are iterating through
                     node->Parent()->DeleteChild(node);
                     removed = true;
                 } else {
                     RCLCPP_ERROR(log, "Not removing %s from the workspace. To fix this issue, use the BT assistant tool to create a proper C++ file for the node.", nodeId(node));
+                    errorSummary.push_back("Node " + std::string(nodeId(node)) + " exists in the Groot workspace but has no valid c++ implementation.");
                 }
             }
             
@@ -381,14 +422,12 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
         //check if node exists in the workspace
         if(std::find(nodesfound.begin(), nodesfound.end(), nodeName) == nodesfound.end()){
             RCLCPP_WARN(log, "%s was not found in groot workspace. Would you like to add it? (Y/n)", nodeName.c_str());
-            std::string ans;
-            std::cin >> ans;
-
-            if(std::tolower(ans[0]) == 'y' || yta){
+            if(userSaysYes()){
                 auto node_info = implementations->manifests().at(nodeName);
                 addNodeToWorkspace(tree, nodeName.c_str(), node_info.ports, node_info.type);
             }
             else{
+                errorSummary.push_back("Node " + nodeName + " has a c++ implementation but is missing from the Groot workspace.");
                 has_errors = true;
             }
         }
@@ -398,6 +437,31 @@ bool CheckManifest(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocu
     }
 
     return !has_errors;
+}
+
+/**
+ * @brief Checks a port value for unbalanced blackboard braces (e.g. "{key|" instead of "{key}").
+ * BT.CPP only treats a well-formed "{key}" as a blackboard pointer; a typoed brace silently
+ * becomes a literal string and blows up at tick time when the port is converted (e.g. stod).
+ * @param value the attribute value to check
+ * @return true if the braces in value are unbalanced
+ */
+bool hasUnbalancedBraces(const char *value) {
+    bool inBrace = false;
+    for(const char *c = value; *c != '\0'; c++) {
+        if(*c == '{') {
+            if(inBrace) {
+                return true;
+            }
+            inBrace = true;
+        } else if(*c == '}') {
+            if(!inBrace) {
+                return true;
+            }
+            inBrace = false;
+        }
+    }
+    return inBrace;
 }
 
 /**
@@ -417,6 +481,15 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesM
 
     bool noErrors = true;
     while(tree != nullptr){
+        //check every port value for malformed blackboard references like "{key|" or "{key"
+        for(const XMLAttribute *attr = tree->FirstAttribute(); attr != nullptr; attr = attr->Next()) {
+            if(hasUnbalancedBraces(attr->Value())) {
+                reportError("Node " + std::string(nodeId(tree)) + " has a malformed blackboard reference in port \""
+                    + attr->Name() + "\": " + attr->Value() + ". Check that every '{' has a matching '}'.");
+                noErrors = false;
+            }
+        }
+
         //add any output or inout ports to the blackboard
         if(const char *treeId = tree->Attribute("ID")) {
             //if the tree has an ID, try to find it in the node model
@@ -473,21 +546,25 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesM
             auto attribute = tree->FirstAttribute()->Next();
             while(attribute){
                 //TODO: we do want to take this into account but thats gonna kinda be an edge case ngl
-                if(std::strcmp(attribute->Name(), "__shared_blackboard") != 0) { //name != __shared_blackboard
+                //empty strings are intentional "unused slot" markers and numeric literals are constants,
+                //not blackboard references, so don't nag about either
+                bool skipAttr = std::strcmp(attribute->Name(), "__shared_blackboard") == 0
+                    || attribute->Value()[0] == '\0'
+                    || isNumericLiteral(attribute->Value());
+                if(!skipAttr) {
                     // RCLCPP_INFO(log, "%s", attribute->Name());
                     if(!(std::find(blackboard.begin(), blackboard.end(), attribute->Value()) != blackboard.end())){
                         RCLCPP_WARN(log, "%s is listed as a port value for %s but may not exist.", attribute->Value(), nodeId(tree));
                         RCLCPP_WARN(log,"Would you like to make one? (Y/n)");
-                        std::string ans;
-                        std::cin >> ans;
-                        if(std::tolower(ans[0]) == 'y' || yta){
+                        if(userSaysYes()){
                             XMLElement *newNode = doc.NewElement("SetBlackboard");
                             newNode->SetAttribute("output_key", attribute->Value());
                             newNode->SetAttribute("value", attribute->Value());
                             tree->Parent()->InsertFirstChild(newNode);
                             blackboard.push_back(attribute->Value());
                         } else {
-                            noErrors = false;
+                            warningSummary.push_back("Node " + std::string(nodeId(tree)) + ": port value \""
+                                + attribute->Value() + "\" may not exist as a blackboard entry.");
                         }
                     }
                 }
@@ -509,9 +586,12 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesM
  * @brief Checks a specific behavior tree. Performs the standard manifest check as well as checks for issues relating to the actual tree (like blackboard)
  * @param implementations riptide_autonomy node implementations.
  * @param fileName Name of the file containing the behavior tree to check.
+ * @param checkManifest If false, skip the TreeNodesModel-vs-c++ manifest check and only lint the tree itself.
+ * Used when sweeping the trees directory, where every file carries a stale copy of the workspace model and
+ * checking each one just repeats the workspace's manifest complaints once per file.
  * @return true if the check succeeded. false if there are outstanding issues.
  */
-bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument& doc, const std::string& fileName) {
+bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument& doc, const std::string& fileName, bool checkManifest = true) {
     bool noErrors = true;
     XMLElement *tree = doc.RootElement()->FirstChildElement();
     XMLElement *treeNodesModel = findFirstChildByName(doc.RootElement(), "TreeNodesModel");
@@ -553,7 +633,9 @@ bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument
         tree = tree->NextSiblingElement();
     }
 
-    noErrors = noErrors || CheckManifest(implementations, doc, fileName);
+    if(checkManifest) {
+        noErrors = CheckManifest(implementations, doc, fileName) && noErrors; //CheckManifest FIRST so it always runs (avoid short-circuit)
+    }
     return noErrors;
 }
 
@@ -657,6 +739,8 @@ int main(int argc, char **argv) {
     for(int i = 1; i < argc; i++){
         if(strcmp(argv[i], "-y") == 0){
             yta = true;
+        } else if(strcmp(argv[i], "-a") == 0){
+            nta = false;
         } else if(strcmp(argv[i], "--apply-workspace") == 0) {
             treePath = AUTONOMY_WORKSPACE;
             tree.LoadFile(treePath.c_str());
@@ -695,7 +779,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    //tree did not load. load the workspace and check that.
+    //no tree files were given on the command line. check the workspace and every tree in the trees directory.
     if(!tree.RootElement()){
         treePath = AUTONOMY_WORKSPACE;
         tree.LoadFile(treePath.c_str());
@@ -706,7 +790,31 @@ int main(int argc, char **argv) {
         }
 
         RCLCPP_INFO(log, "Loaded workspace (%s)", treePath.c_str());
-        noErrors = CheckManifest(factory, tree, treePath) && noErrors;
+        noErrors = CheckTree(factory, tree, treePath) && noErrors; //CheckTree runs traverseTree (brace/blackboard lint) AND CheckManifest
+
+        for(const auto& entry : std::filesystem::directory_iterator(AUTONOMY_TREES)) {
+            std::string path = entry.path().string();
+            if(path.find(".xml") == std::string::npos) {
+                continue; //skips non-tree entries like the .groot directory
+            }
+
+            XMLDocument treeDoc;
+            treeDoc.LoadFile(path.c_str());
+            if(!treeDoc.RootElement()) {
+                reportError("Could not load tree file " + path + ".");
+                noErrors = false;
+                continue;
+            }
+
+            RCLCPP_INFO(log, "Loaded tree %s", path.c_str());
+            noErrors = CheckTree(factory, treeDoc, path, false) && noErrors; //lint only; manifest already checked against workspace
+
+            //save so any user-approved autofixes persist (same behavior as passing the file explicitly)
+            if(treeDoc.SaveFile(path.c_str()) != XML_SUCCESS) {
+                reportError("Error saving tree file " + path + "!");
+                noErrors = false;
+            }
+        }
     }
 
     //attempt to save the file after checks are complete
@@ -716,6 +824,23 @@ int main(int argc, char **argv) {
     } else {
         RCLCPP_ERROR(log, "Error saving to file %s!", treePath.c_str());
         noErrors = false;
+    }
+
+    //reprint all collected issues together at the very end so they aren't lost in the scroll
+    if(!warningSummary.empty()) {
+        RCLCPP_WARN(log, "================ %zu WARNING(S) ================", warningSummary.size());
+        for(const std::string& warn : warningSummary) {
+            RCLCPP_WARN(log, "%s", warn.c_str());
+        }
+        RCLCPP_WARN(log, "================================================");
+    }
+
+    if(!errorSummary.empty()) {
+        RCLCPP_ERROR(log, "================ %zu UNRESOLVED ISSUE(S) ================", errorSummary.size());
+        for(const std::string& err : errorSummary) {
+            RCLCPP_ERROR(log, "%s", err.c_str());
+        }
+        RCLCPP_ERROR(log, "========================================================");
     }
 
     if(!noErrors) {
