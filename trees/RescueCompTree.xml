@@ -229,7 +229,6 @@
             <ForceSuccess>
                 <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
-            <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
             <ForceSuccess>
                 <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
             </ForceSuccess>
@@ -238,6 +237,9 @@
                     <Condition ID="CompareNums" a="{pinger_is_table}" b="0" test="=="/>
                 </Inverter>
                 <Sequence name="Table then torpedo">
+                    <ForceSuccess>
+                        <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                    </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="BinTree"/>
                     </ForceSuccess>
@@ -251,6 +253,9 @@
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                 </Sequence>
             </IfThenElse>
