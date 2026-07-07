@@ -32,7 +32,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="MISSION">
-            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="1" value="1"/>
             <Action ID="Info" message="MISSION: REPAIR"/>
             <SubTree ID="CompMissionTree" __shared_blackboard="false" repair_mission="1"/>
         </Sequence>
