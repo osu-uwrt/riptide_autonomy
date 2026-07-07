@@ -1637,7 +1637,7 @@
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
                     <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
                     <IfThenElse>
-                        <Condition ID="CompareNums" a="{repair_mission|" b="0" test="=="/>
+                        <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
                         <Sequence>
                             <SetBlackboard output_key="torpedo_first" value="blood_hole_big"/>
                             <SetBlackboard output_key="torpedo_second" value="blood_hole_small"/>
