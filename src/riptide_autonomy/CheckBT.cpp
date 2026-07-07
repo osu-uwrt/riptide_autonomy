@@ -470,9 +470,10 @@ bool hasUnbalancedBraces(const char *value) {
  * @param testTree The tree to check for issues.
  * @param treeNodesModel a pointer to the TreeNodesModel element tag
  * @param blackboard A list containing the names of known blackboard entries in the tree.
+ * @param location Human-readable location of the tree being checked (tree name and file), used in issue messages.
  * @return true if the check was a success. false if there are outstanding issues.
  */
-bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesModel, std::list<std::string>& blackboard){
+bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesModel, std::list<std::string>& blackboard, const std::string& location){
     XMLElement *tree = testTree;    
     
     if(tree == nullptr){
@@ -484,7 +485,7 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesM
         //check every port value for malformed blackboard references like "{key|" or "{key"
         for(const XMLAttribute *attr = tree->FirstAttribute(); attr != nullptr; attr = attr->Next()) {
             if(hasUnbalancedBraces(attr->Value())) {
-                reportError("Node " + std::string(nodeId(tree)) + " has a malformed blackboard reference in port \""
+                reportError("Node " + std::string(nodeId(tree)) + " in " + location + " has a malformed blackboard reference in port \""
                     + attr->Name() + "\": " + attr->Value() + ". Check that every '{' has a matching '}'.");
                 noErrors = false;
             }
@@ -563,7 +564,7 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesM
                             tree->Parent()->InsertFirstChild(newNode);
                             blackboard.push_back(attribute->Value());
                         } else {
-                            warningSummary.push_back("Node " + std::string(nodeId(tree)) + ": port value \""
+                            warningSummary.push_back("Node " + std::string(nodeId(tree)) + " in " + location + ": port value \""
                                 + attribute->Value() + "\" may not exist as a blackboard entry.");
                         }
                     }
@@ -575,7 +576,7 @@ bool traverseTree(XMLDocument& doc, XMLElement *testTree, XMLElement *treeNodesM
         //can add more checks here as needed
 
         //if node has children, check them here
-        noErrors = traverseTree(doc, tree->FirstChildElement(), treeNodesModel, blackboard) && noErrors;
+        noErrors = traverseTree(doc, tree->FirstChildElement(), treeNodesModel, blackboard, location) && noErrors;
         tree = tree->NextSiblingElement();
     }
 
@@ -600,6 +601,9 @@ bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument
     while(tree != nullptr) {
         RCLCPP_INFO(log, "Check subtree %s", nodeId(tree));
         std::list<std::string> blackboard;
+
+        //identifies which tree an issue came from in the end-of-run summaries
+        std::string location = "tree " + std::string(nodeId(tree)) + " (" + fileName + ")";
 
         //if the node is a subtree, add its ports to the blackboard
         if(const char *name = tree->Attribute("ID")) {
@@ -629,7 +633,7 @@ bool CheckTree(std::shared_ptr<BehaviorTreeFactory> implementations, XMLDocument
             }
         }
 
-        noErrors = traverseTree(doc, tree->FirstChildElement(), treeNodesModel, blackboard) && noErrors; //noErrors LAST because short-circuit logic
+        noErrors = traverseTree(doc, tree->FirstChildElement(), treeNodesModel, blackboard, location) && noErrors; //noErrors LAST because short-circuit logic
         tree = tree->NextSiblingElement();
     }
 
