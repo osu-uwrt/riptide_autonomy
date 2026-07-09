@@ -891,13 +891,17 @@
                 <SetBlackboard output_key="buoy" value="buoy"/>
                 <SetBlackboard output_key="sos" value="sos"/>
             </Sequence>
-            <ForceSuccess>
-                <Sequence name="find table">
+            <Sequence name="find table">
+                <ForceSuccess>
                     <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                </ForceSuccess>
+                <ForceSuccess>
                     <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="80"/>
+                </ForceSuccess>
+                <ForceSuccess>
                     <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
-                </Sequence>
-            </ForceSuccess>
+                </ForceSuccess>
+            </Sequence>
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             </ForceSuccess>
