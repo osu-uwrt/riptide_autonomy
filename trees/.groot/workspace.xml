@@ -1784,11 +1784,11 @@
                     <IfThenElse>
                         <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
                         <Sequence>
-                            <SetBlackboard output_key="torpedo_first" value="blood_hole_big"/>
+                            <SetBlackboard output_key="torpedo_first" value="blood_hole_large"/>
                             <SetBlackboard output_key="torpedo_second" value="blood_hole_small"/>
                         </Sequence>
                         <Sequence>
-                            <SetBlackboard output_key="torpedo_first" value="fire_hole_big"/>
+                            <SetBlackboard output_key="torpedo_first" value="fire_hole_large"/>
                             <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
                         </Sequence>
                     </IfThenElse>
