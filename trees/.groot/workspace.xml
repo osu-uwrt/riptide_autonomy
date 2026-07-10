@@ -35,7 +35,11 @@
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
             <SetBlackboard output_key="search_prox" value="1"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
-            <SetBlackboard output_key="object_vision_class" value="blood"/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
+                <SetBlackboard output_key="object_vision_class" value="blood"/>
+                <SetBlackboard output_key="object_vision_class" value="fire"/>
+            </IfThenElse>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="object1" value="bin_target1"/>
@@ -234,7 +238,7 @@
                         <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="BinTree"/>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission=""/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
@@ -242,7 +246,7 @@
                 </Sequence>
                 <Sequence name="torpedo then table">
                     <ForceSuccess>
-                        <SubTree ID="BinTree"/>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission=""/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
@@ -1990,7 +1994,10 @@
             <input_port name="b" required="true"/>
             <input_port name="test" required="true">Same as CompareNums</input_port>
         </SubTree>
-        <SubTree ID="BinTree"/>
+        <SubTree ID="BinTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false"/>
+        </SubTree>
         <SubTree ID="BumpObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_frame" required="true"/>
