@@ -238,7 +238,7 @@
                         <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission=""/>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
@@ -246,7 +246,7 @@
                 </Sequence>
                 <Sequence name="torpedo then table">
                     <ForceSuccess>
-                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission=""/>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>

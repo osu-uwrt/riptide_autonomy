@@ -42,7 +42,11 @@
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
             <SetBlackboard output_key="search_prox" value="1"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
-            <SetBlackboard output_key="object_vision_class" value="blood"/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
+                <SetBlackboard output_key="object_vision_class" value="blood"/>
+                <SetBlackboard output_key="object_vision_class" value="fire"/>
+            </IfThenElse>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="object1" value="bin_target1"/>
@@ -241,7 +245,7 @@
                         <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="BinTree"/>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
@@ -249,7 +253,7 @@
                 </Sequence>
                 <Sequence name="torpedo then table">
                     <ForceSuccess>
-                        <SubTree ID="BinTree"/>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
@@ -875,18 +879,29 @@
                     <Action ID="Format" format="{rescue_drop}_frame" out="rescue_drop_frame"/>
                     <Action ID="Format" format="{repair_drop}_frame" out="repair_drop_frame"/>
                 </Sequence>
-                <SetBlackboard output_key="compass" value="compass"/>
-                <SetBlackboard output_key="hammer_and_wrench" value="hammer_and_wrench"/>
-                <SetBlackboard output_key="buoy" value="buoy"/>
-                <SetBlackboard output_key="sos" value="sos"/>
             </Sequence>
-            <ForceSuccess>
-                <Sequence name="find table">
-                    <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
-                    <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="80"/>
-                    <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
+                <Sequence name="Rescue misison">
+                    <SetBlackboard output_key="first_image" value="buoy"/>
+                    <SetBlackboard output_key="second_image" value="sos"/>
                 </Sequence>
-            </ForceSuccess>
+                <Sequence name="repair mission">
+                    <SetBlackboard output_key="first_image" value="compass"/>
+                    <SetBlackboard output_key="second_image" value="hammer_and_wrench"/>
+                </Sequence>
+            </IfThenElse>
+            <Sequence name="find table">
+                <ForceSuccess>
+                    <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="80"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                </ForceSuccess>
+            </Sequence>
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
             </ForceSuccess>
@@ -894,7 +909,7 @@
                 <ForceSuccess name="First Object Cycle">
                     <Sequence>
                         <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object1_frame" object_name="object1" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="buoy"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="first_image"/>
                         <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                         <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                     </Sequence>
@@ -902,7 +917,7 @@
                 <ForceSuccess name="Second Object Cycle">
                     <Sequence>
                         <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object2_frame" object_name="object2" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="sos"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="second_image"/>
                         <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                         <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                     </Sequence>
@@ -910,7 +925,7 @@
                 <ForceSuccess name="Third Object Cycle">
                     <Sequence>
                         <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object3_frame" object_name="object3" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="compass"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="second_image"/>
                         <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                         <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                     </Sequence>
@@ -918,7 +933,7 @@
                 <ForceSuccess name="Fourth Object Cycle">
                     <Sequence>
                         <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object4_frame" object_name="object4" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="hammer_and_wrench"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="second_image"/>
                         <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                         <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                     </Sequence>
@@ -1791,11 +1806,11 @@
                     <IfThenElse>
                         <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
                         <Sequence>
-                            <SetBlackboard output_key="torpedo_first" value="blood_hole_big"/>
+                            <SetBlackboard output_key="torpedo_first" value="blood_hole_large"/>
                             <SetBlackboard output_key="torpedo_second" value="blood_hole_small"/>
                         </Sequence>
                         <Sequence>
-                            <SetBlackboard output_key="torpedo_first" value="fire_hole_big"/>
+                            <SetBlackboard output_key="torpedo_first" value="fire_hole_large"/>
                             <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
                         </Sequence>
                     </IfThenElse>
@@ -1994,7 +2009,10 @@
             <input_port name="b" required="true"/>
             <input_port name="test" required="true">Same as CompareNums</input_port>
         </SubTree>
-        <SubTree ID="BinTree"/>
+        <SubTree ID="BinTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false"/>
+        </SubTree>
         <SubTree ID="BumpObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_frame" required="true"/>
