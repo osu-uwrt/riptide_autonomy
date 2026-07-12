@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<root>
+<root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="ActivateMagnet">
         <Sequence>
             <SetBlackboard output_key="magnet_activation_s" value="2"/>
@@ -29,6 +29,18 @@
                 <Action ID="Info" message="Assertion {aname} ({a} {test} {b}) failed"/>
             </ForceFailure>
         </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence>
+            <SetBlackboard output_key="repair_mission" value="0"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="depth" value="-0.75"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            <SubTree ID="GateTree" __shared_blackboard="false" repair_mission="repair_mission" sla_pass_on_left="pass_on_left"/>
+            <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="pass_on_left"/>
+            <SubTree ID="KillController"/>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
         <Sequence name="BINS">
@@ -656,7 +668,7 @@
                     <SetBlackboard output_key="alt_subprop" value="gate_rescue"/>
                 </Sequence>
             </IfThenElse>
-            <SetBlackboard output_key="prop" value="gate"/>
+            <SetBlackboard output_key="prop" value="{subprop}"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Format" format="{alt_subprop}_frame" out="alt_subprop_frame"/>
@@ -667,7 +679,7 @@
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
                     <Action ID="Info" message="Mini-searching for primary prop"/>
                     <ForceSuccess>
-                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                     </ForceSuccess>
                     <Action ID="Info" message="Mini-searching for alternate prop"/>
                     <ForceSuccess>
@@ -695,7 +707,7 @@
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate_depth"/>
-            <SubTree ID="FlipTree"/>
+            <SubTree ID="FlipTree" __shared_blackboard="false" undergate_depth="undergate_depth"/>
             <Action ID="Wait" seconds="2"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="undergate_depth"/>
         </Sequence>
@@ -1133,7 +1145,7 @@
             <Action ID="Info" message="WINNING TIME"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate"/>
-            <SubTree ID="FlipTree"/>
+            <SubTree ID="FlipTree" __shared_blackboard="false" undergate_depth="undergate"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="-1.5" y="0" z="undergate"/>
         </Sequence>
     </BehaviorTree>
@@ -1975,6 +1987,7 @@
             </Delay>
         </Sequence>
     </BehaviorTree>
+    <!-- ////////// -->
     <TreeNodesModel>
         <SubTree ID="ActivateMagnet">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -2062,11 +2075,11 @@
             <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="CollectDetsOnSlalom">
-            <inout_port name="__shared_blackboard" required="true"/>
-            <inout_port name="frame" required="true"/>
-            <inout_port name="rel_yaw" required="true"/>
-            <inout_port name="target" required="true"/>
-            <inout_port name="target_error" required="true"/>
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="true"/>
+            <input_port name="rel_yaw" required="true"/>
+            <input_port name="target" required="true"/>
+            <input_port name="target_error" required="true"/>
         </SubTree>
         <SubTree ID="CompMissionTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
