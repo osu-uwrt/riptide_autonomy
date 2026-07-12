@@ -42,10 +42,10 @@
                 <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
             </ForceSuccess>
             <SubTree ID="KillController"/>
         </Sequence>
