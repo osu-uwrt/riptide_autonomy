@@ -665,13 +665,13 @@
                 <Sequence name="Set camera and search">
                     <Action ID="Info" message="Setting correct active camera"/>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
-                    <Action ID="Info" message="Mini-searching for primary prop"/>
-                    <ForceSuccess>
-                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
-                    </ForceSuccess>
                     <Action ID="Info" message="Mini-searching for alternate prop"/>
                     <ForceSuccess>
-                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="alt_subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="alt_subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    </ForceSuccess>
+                    <Action ID="Info" message="Mini-searching for primary prop"/>
+                    <ForceSuccess>
+                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                     </ForceSuccess>
                 </Sequence>
             </ForceSuccess>
