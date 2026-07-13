@@ -227,10 +227,10 @@
                 <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
+                <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
             </ForceSuccess>
             <IfThenElse name="Torpedo/bin/table tasks">
                 <Inverter name="is table?">
