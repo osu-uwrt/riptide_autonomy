@@ -237,11 +237,11 @@
             <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
             <SetBlackboard output_key="60" value="60"/>
             <SetBlackboard output_key="depth" value="-0.56"/>
-            <SubTree ID="PrepForRun"/>
             <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="PrepForRun"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <ForceSuccess>
-                <SubTree ID="GateTree" __shared_blackboard="false" repair_mission="repair_mission" sla_pass_on_left="sla_pass_on_left"/>
+                <SubTree ID="GateTree" __shared_blackboard="false" repair_mission="" sla_pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
@@ -258,18 +258,18 @@
                         <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission=""/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission=""/>
                     </ForceSuccess>
                 </Sequence>
                 <Sequence name="torpedo then table">
                     <ForceSuccess>
-                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission=""/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission=""/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
@@ -638,7 +638,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
             <Action ID="SetControllerSafeMode" safe="false" timeout_secs="10.0"/>
-            <Action ID="GetOdometry" op="" or="" oy="{pre_flip_yaw}" x="{pre_flip_x}" y="{pre_flip_y}" z="{pre_flip_z}"/>
+            <Action ID="GetOdometry" op="{pre_flip_op}" or="{pre_flip_or}" oy="{pre_flip_yaw}" x="{pre_flip_x}" y="{pre_flip_y}" z="{pre_flip_z}"/>
             <Action ID="GetImuOrientation" op="" or="" oy="pre_imu_y" topic="vectornav/imu"/>
             <Action ID="Info" message="Pre yaw: {pre_imu_y}"/>
             <Action ID="TriggerControllerStunt" targetStuntState="1"/>
@@ -649,9 +649,8 @@
             <Action ID="Info" message="Post imu: {final_imu_y}"/>
             <Action ID="Math" a="{final_imu_y}" b="{pre_imu_y}" operator="-" out="imu_delta"/>
             <Action ID="Math" a="{pre_flip_yaw}" b="{imu_delta}" operator="+" out="post_flip_yaw"/>
-            <Action ID="GetOdometry" op="op" or="or" oy="" x="" y="" z="z"/>
-            <Action ID="PublishEKFPose" pitch="{op}" roll="{or}" setOrientation="true" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="pre_flip_z"/>
+            <Action ID="PublishEKFPose" pitch="{pre_flip_op}" roll="{pre_flip_or}" setOrientation="true" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{pre_flip_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="undergate_depth"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GateTree">
@@ -659,13 +658,13 @@
             <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="search_timeout" value="20"/>
-            <SetBlackboard output_key="max_dist" value="1.5"/>
+            <SetBlackboard output_key="max_dist" value="2.5"/>
             <SetBlackboard output_key="search_prox_z" value="0"/>
             <SetBlackboard output_key="min_dist" value="1.5"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="target_cov" value="0.1"/>
-            <SetBlackboard output_key="undergate_depth" value="-1.0"/>
+            <SetBlackboard output_key="undergate_depth" value="-0.8"/>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
                 <Sequence name="Rescue is primary">
@@ -677,7 +676,7 @@
                     <SetBlackboard output_key="alt_subprop" value="gate_rescue"/>
                 </Sequence>
             </IfThenElse>
-            <SetBlackboard output_key="prop" value="{subprop}"/>
+            <SetBlackboard output_key="prop" value="gate"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Format" format="{alt_subprop}_frame" out="alt_subprop_frame"/>
@@ -686,10 +685,14 @@
                 <Sequence name="Set camera and search">
                     <Action ID="Info" message="Setting correct active camera"/>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
-                    <Action ID="Info" message="Mini-searching for primary prop"/>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                     <Action ID="Info" message="Mini-searching for alternate prop"/>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="prop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    <ForceSuccess>
+                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="alt_subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    </ForceSuccess>
+                    <Action ID="Info" message="Mini-searching for primary prop"/>
+                    <ForceSuccess>
+                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    </ForceSuccess>
                 </Sequence>
             </ForceSuccess>
             <Sequence name="Determine pass_on_left for slalom">
@@ -922,7 +925,7 @@
                 <ForceSuccess name="First Object Cycle">
                     <Sequence>
                         <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object1_frame" object_name="object1" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="first_image"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
                         <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                         <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                     </Sequence>
@@ -930,7 +933,7 @@
                 <ForceSuccess name="Second Object Cycle">
                     <Sequence>
                         <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object2_frame" object_name="object2" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="second_image"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
                         <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="rescue_drop_frame" dropoff_name="rescue_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                         <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                     </Sequence>
@@ -938,7 +941,7 @@
                 <ForceSuccess name="Third Object Cycle">
                     <Sequence>
                         <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object3_frame" object_name="object3" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="second_image"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
                         <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                         <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                     </Sequence>
@@ -946,7 +949,7 @@
                 <ForceSuccess name="Fourth Object Cycle">
                     <Sequence>
                         <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_frame="object4_frame" object_name="object4" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="second_image"/>
+                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
                         <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_frame="repair_drop_frame" dropoff_name="repair_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                         <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                     </Sequence>
@@ -1301,7 +1304,7 @@
     <BehaviorTree ID="ShootDownwardObject">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="overbin" value="0.6"/>
+            <SetBlackboard output_key="overbin" value="1"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="ctrler_trust" value="0.95"/>
             <SetBlackboard output_key="ctrler_timeout" value="30"/>
@@ -1330,11 +1333,11 @@
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
-            <SetBlackboard output_key="scale_trust" value="0.99"/>
+            <SetBlackboard output_key="scale_trust" value="0.98"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.4"/>
-            <SetBlackboard output_key="ms_prox" value="0.75"/>
+            <SetBlackboard output_key="ms_prox" value="1.5"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
