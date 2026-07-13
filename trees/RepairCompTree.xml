@@ -236,6 +236,9 @@
             <ForceSuccess>
                 <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
             </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+            </ForceSuccess>
             <IfThenElse name="Torpedo/bin/table tasks">
                 <Inverter name="is table?">
                     <Condition ID="CompareNums" a="{pinger_is_table}" b="0" test="=="/>
@@ -245,16 +248,10 @@
                         <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                 </Sequence>
                 <Sequence name="torpedo then table">
-                    <ForceSuccess>
-                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-                    </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
