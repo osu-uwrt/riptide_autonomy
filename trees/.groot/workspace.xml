@@ -33,7 +33,7 @@
     <BehaviorTree ID="BinTree">
         <Sequence name="BINS">
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
-            <SetBlackboard output_key="search_prox" value="1"/>
+            <SetBlackboard output_key="search_prox" value="2.15"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
@@ -637,14 +637,14 @@
         <Sequence>
             <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="search_timeout" value="20"/>
+            <SetBlackboard output_key="search_timeout" value="10"/>
             <SetBlackboard output_key="max_dist" value="3.0"/>
             <SetBlackboard output_key="search_prox_z" value="0"/>
             <SetBlackboard output_key="min_dist" value="1.5"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="target_cov" value="0.1"/>
-            <SetBlackboard output_key="undergate_depth" value="-1.3"/>
+            <SetBlackboard output_key="undergate_depth" value="-0.8"/>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
                 <Sequence name="Rescue is primary">
@@ -1006,7 +1006,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -1015,8 +1015,8 @@
     </BehaviorTree>
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
-            <SetBlackboard output_key="min_depth" value="-0.5"/>
-            <SetBlackboard output_key="max_depth" value="-4"/>
+            <SetBlackboard output_key="min_depth" value="-0.75"/>
+            <SetBlackboard output_key="max_depth" value="-2.5"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
@@ -1275,7 +1275,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="overbin" value="1"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
-            <SetBlackboard output_key="ctrler_trust" value="0.95"/>
+            <SetBlackboard output_key="ctrler_trust" value="0.90"/>
             <SetBlackboard output_key="ctrler_timeout" value="30"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="Info" message="Attempting to shoot {object_frame}"/>
@@ -1287,7 +1287,6 @@
                         </ForceSuccess>
                         <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
                         <Action ID="SetStatus" status="aligning"/>
-                        <Action ID="CallTriggerService" srv_name="/talos/controller_overseer/update_complete_controller_params" time_limit_secs="1"/>
                         <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dropper_link_name}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{overbin}"/>
                         <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="dropper_link_name" target_frame="object_frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
@@ -1306,7 +1305,7 @@
             <SetBlackboard output_key="scale_trust" value="0.98"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.4"/>
+            <SetBlackboard output_key="shoot_prox" value="0.6"/>
             <SetBlackboard output_key="ms_prox" value="1.5"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
@@ -1325,7 +1324,6 @@
                         <Action ID="SetStatus" status="aligning"/>
                         <Action ID="Math" a="{shoot_prox}" b="0.5" operator="+" out="shoot_prox_plus"/>
                         <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox_plus" prox_z="0"/>
-                        <Action ID="CallTriggerService" srv_name="/talos/controller_overseer/update_complete_controller_params" time_limit_secs="1"/>
                         <Action ID="Wait" name="REMOVE ME" seconds="10"/>
                         <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="torpedo_link_name" target_frame="frame_to_shoot" timeout="ctrler_timeout" trust="scale_trust"/>
@@ -1346,14 +1344,16 @@
             <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="slalom_frame"/>
             <Action ID="CallSetStringService" data="{slalom_type}" srv_name="set_slalom_type" time_limit_secs="1"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{slalom_type}" time_limit_secs="3"/>
-            <Fallback>
-                <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_type" target_error="target_srch_err"/>
-                <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="slalom_frame" rel_yaw="srch_angle" target="slalom_type" target_error="target_srch_err"/>
-                <Sequence>
-                    <Action ID="Math" a="{srch_angle}" b="-1" operator="*" out="neg_srch_angle"/>
-                    <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="slalom_frame" rel_yaw="neg_srch_angle" target="slalom_type" target_error="target_srch_err"/>
-                </Sequence>
-            </Fallback>
+            <ForceSuccess>
+                <Fallback>
+                    <SubTree ID="CollectDets" __shared_blackboard="false" target="slalom_type" target_error="target_srch_err"/>
+                    <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="slalom_frame" rel_yaw="srch_angle" target="slalom_type" target_error="target_srch_err"/>
+                    <Sequence>
+                        <Action ID="Math" a="{srch_angle}" b="-1" operator="*" out="neg_srch_angle"/>
+                        <SubTree ID="CollectDetsAtAngle" __shared_blackboard="false" frame="slalom_frame" rel_yaw="neg_srch_angle" target="slalom_type" target_error="target_srch_err"/>
+                    </Sequence>
+                </Fallback>
+            </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_frame"/>
         </Sequence>
@@ -1368,12 +1368,14 @@
             <SetBlackboard output_key="slalom_middle" value="slalom_middle"/>
             <SetBlackboard output_key="slalom_back_frame" value="slalom_back_frame"/>
             <SetBlackboard output_key="slalom_back" value="slalom_back"/>
-            <SetBlackboard output_key="target_srch_err" value="0.2"/>
+            <SetBlackboard output_key="target_srch_err" value="0.3"/>
             <SetBlackboard output_key="msrch_prox" value="2.5"/>
-            <SetBlackboard output_key="msrch_timeout" value="60"/>
+            <SetBlackboard output_key="msrch_timeout" value="15"/>
             <Action ID="Info" message="SALMONI TIME"/>
             <Action ID="CallSetStringService" data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="1"/>
-            <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_parent" parent_object="slalom_parent" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+            <ForceSuccess>
+                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_parent" parent_object="slalom_parent" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+            </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <SubTree ID="PassThroughSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_object="slalom_front_frame"/>
             <SubTree ID="SingleSlalom" __shared_blackboard="false" pass_on_left="pass_on_left" slalom_type="slalom_middle"/>
@@ -1633,7 +1635,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -2068,7 +2070,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -2244,7 +2246,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -2534,4 +2536,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
