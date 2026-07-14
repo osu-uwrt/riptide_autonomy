@@ -32,7 +32,7 @@
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="TORPEDO">
-            <SetBlackboard output_key="repair_mission" value="0"/>
+            <SetBlackboard output_key="repair_mission" value="1"/>
             <SetBlackboard output_key="-1" value="-0.56"/>
             <SubTree ID="ReloadActuators"/>
             <SubTree ID="WaitForKillSwitch"/>
@@ -1018,7 +1018,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -1314,7 +1314,7 @@
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
-            <SetBlackboard output_key="scale_trust" value="0.98"/>
+            <SetBlackboard output_key="scale_trust" value="0.985"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.6"/>
@@ -1328,6 +1328,7 @@
             <ForceSuccess>
                 <RetryUntilSuccessful num_attempts="2">
                     <Sequence>
+                        <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="torpedo_frame" link_name="torpedo_link_name" prox_x="ms_prox" prox_z="0"/>
                         <ForceSuccess>
                             <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_name" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
                         </ForceSuccess>
@@ -1336,7 +1337,7 @@
                         <Action ID="SetStatus" status="aligning"/>
                         <Action ID="Math" a="{shoot_prox}" b="0.5" operator="+" out="shoot_prox_plus"/>
                         <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox_plus" prox_z="0"/>
-                        <Action ID="Wait" name="REMOVE ME" seconds="10"/>
+                        <Action ID="Wait" name="REMOVE ME" seconds="0"/>
                         <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="torpedo_link_name" target_frame="frame_to_shoot" timeout="ctrler_timeout" trust="scale_trust"/>
                     </Sequence>
@@ -1647,7 +1648,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -2083,7 +2084,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
+            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -2259,7 +2260,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -2549,3 +2550,4 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
+
