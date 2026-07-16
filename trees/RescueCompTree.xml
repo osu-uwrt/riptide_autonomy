@@ -57,6 +57,7 @@
         <Sequence>
             <ForceSuccess>
                 <Sequence name="BINS">
+                    <SetBlackboard output_key="3" value="3"/>
                     <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
                     <SetBlackboard output_key="search_prox" value="2.15"/>
                     <SetBlackboard output_key="search_timeout" value="120"/>
@@ -76,12 +77,14 @@
                     <SetBlackboard output_key="post_bin_pose_frame" value="post_bin_pose_frame"/>
                     <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_bin_pose_frame" x="0" y="0" z="0"/>
                     <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_bin_pose_frame" x="0" y="0" z="0"/>
+                    <Sequence>
+                        <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+                        <RetryUntilSuccessful num_attempts="3">
+                            <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{object1}" object2_name="{object2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="3"/>
+                        </RetryUntilSuccessful>
+                    </Sequence>
                     <ForceSuccess>
-                        <Sequence>
-                            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
-                            <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{object1}" object2_name="{object2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="1"/>
-                            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object1" target_cov="target_err" timeout_sec="search_timeout"/>
-                        </Sequence>
+                        <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object1" target_cov="target_err" timeout_sec="search_timeout"/>
                     </ForceSuccess>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
                     <ForceSuccess>
