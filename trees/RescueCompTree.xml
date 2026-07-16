@@ -54,46 +54,54 @@
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
-        <Sequence name="BINS">
-            <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
-            <SetBlackboard output_key="search_prox" value="2.15"/>
-            <SetBlackboard output_key="search_timeout" value="120"/>
-            <IfThenElse>
-                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
-                <SetBlackboard output_key="object_vision_class" value="blood"/>
-                <SetBlackboard output_key="object_vision_class" value="fire"/>
-            </IfThenElse>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="object1" value="bin_target1"/>
-            <SetBlackboard output_key="object2" value="bin_target2"/>
-            <SetBlackboard output_key="target_err" value="0.02"/>
-            <SetBlackboard output_key="search_timeout" value="120"/>
-            <Action ID="Info" message="BIN TIME"/>
-            <SetBlackboard output_key="pre_bin_pose_frame" value="pre_bin_pose_frame"/>
-            <SetBlackboard output_key="post_bin_pose_frame" value="post_bin_pose_frame"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_bin_pose_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_bin_pose_frame" x="0" y="0" z="0"/>
+        <Sequence>
             <ForceSuccess>
-                <Sequence>
-                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
-                    <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{object1}" object2_name="{object2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="1"/>
-                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object1" target_cov="target_err" timeout_sec="search_timeout"/>
+                <Sequence name="BINS">
+                    <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
+                    <SetBlackboard output_key="search_prox" value="2.15"/>
+                    <SetBlackboard output_key="search_timeout" value="120"/>
+                    <IfThenElse>
+                        <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
+                        <SetBlackboard output_key="object_vision_class" value="blood"/>
+                        <SetBlackboard output_key="object_vision_class" value="fire"/>
+                    </IfThenElse>
+                    <SetBlackboard output_key="0" value="0"/>
+                    <SetBlackboard output_key="1" value="1"/>
+                    <SetBlackboard output_key="object1" value="bin_target1"/>
+                    <SetBlackboard output_key="object2" value="bin_target2"/>
+                    <SetBlackboard output_key="target_err" value="0.02"/>
+                    <SetBlackboard output_key="search_timeout" value="120"/>
+                    <Action ID="Info" message="BIN TIME"/>
+                    <SetBlackboard output_key="pre_bin_pose_frame" value="pre_bin_pose_frame"/>
+                    <SetBlackboard output_key="post_bin_pose_frame" value="post_bin_pose_frame"/>
+                    <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_bin_pose_frame" x="0" y="0" z="0"/>
+                    <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_bin_pose_frame" x="0" y="0" z="0"/>
+                    <ForceSuccess>
+                        <Sequence>
+                            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+                            <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{object1}" object2_name="{object2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="1"/>
+                            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object1" target_cov="target_err" timeout_sec="search_timeout"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+                    <ForceSuccess>
+                        <SubTree ID="ShootDownwardObject" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object1" search_prox="search_prox"/>
+                    </ForceSuccess>
+                    <RetryUntilSuccessful num_attempts="3">
+                        <Action ID="CallTriggerService" srv_name="/talos/mapping/start_binary_classifier_second" time_limit_secs="3"/>
+                    </RetryUntilSuccessful>
+                    <ForceSuccess>
+                        <Sequence>
+                            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object2" target_cov="target_err" timeout_sec="search_timeout"/>
+                            <SubTree ID="ShootDownwardObject" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object2" search_prox="search_prox"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <RetryUntilSuccessful num_attempts="3">
+                        <Action ID="CallTriggerService" srv_name="/talos/mapping/stop_binary_classifier" time_limit_secs="3"/>
+                    </RetryUntilSuccessful>
+                    <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
                 </Sequence>
             </ForceSuccess>
-            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-            <ForceSuccess>
-                <SubTree ID="ShootDownwardObject" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object1" search_prox="search_prox"/>
-            </ForceSuccess>
-            <Action ID="CallTriggerService" srv_name="/talos/mapping/start_binary_classifier_second" time_limit_secs="1"/>
-            <ForceSuccess>
-                <Sequence>
-                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object2" target_cov="target_err" timeout_sec="search_timeout"/>
-                    <SubTree ID="ShootDownwardObject" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object2" search_prox="search_prox"/>
-                </Sequence>
-            </ForceSuccess>
-            <Action ID="CallTriggerService" srv_name="/talos/mapping/stop_binary_classifier" time_limit_secs="1"/>
-            <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
             <SubTree ID="MagnetTree" __shared_blackboard="false" bin_object_vision_class="{object_vision_class}"/>
             <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_bin_pose_frame" x="0" y="0" z="0"/>
             <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_bin_pose_frame" x="0" y="0" z="0"/>
@@ -1111,7 +1119,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -1783,7 +1791,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -2226,7 +2234,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
+            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -2402,7 +2410,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -2699,3 +2707,4 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
+
