@@ -868,9 +868,9 @@
             <SetBlackboard output_key="magnet1_frame" value="magnet_target1_frame"/>
             <SetBlackboard output_key="magnet2_frame" value="magnet_target2_frame"/>
             <ForceSuccess>
-                <Action ID="CallSetStringService" data="{bin_object_vision_class}" srv_name="/talos/mapping/fit_bin_geometry" time_limit_secs="1"/>
+                <Action ID="CallSetStringService" data="{bin_object_vision_class}" srv_name="/talos/mapping/fit_bin_geometry" time_limit_secs="3"/>
             </ForceSuccess>
-            <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{magnet1}" object2_name="{magnet2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="1"/>
+            <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{magnet1}" object2_name="{magnet2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="3"/>
             <ForceSuccess>
                 <Sequence>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
@@ -879,10 +879,10 @@
                     <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="magnet1" parent_object="magnet1" prox_x="search_prox_x" prox_y="0" prox_z="search_prox_z" target_cov="search_target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
-            <Action ID="CallTriggerService" srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="1"/>
+            <Action ID="CallTriggerService" srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="3"/>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <SubTree ID="ActivateMagnet" __shared_blackboard="false" magnet_frame="magnet1_frame"/>
-            <Action ID="CallTriggerService" srv_name="/talos/mapping/start_binary_classifier_second" time_limit_secs="1"/>
+            <Action ID="CallTriggerService" srv_name="/talos/mapping/start_binary_classifier_second" time_limit_secs="3"/>
             <ForceSuccess>
                 <Sequence>
                     <Action ID="TransformPose" from_frame="{magnet2_frame}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
@@ -1480,7 +1480,7 @@
                 </Sequence>
             </ForceSuccess>
             <ForceSuccess>
-                <Action ID="CallSetStringService" data="{slalom_type}" srv_name="set_slalom_type" time_limit_secs="1"/>
+                <Action ID="CallSetStringService" data="{slalom_type}" srv_name="set_slalom_type" time_limit_secs="3"/>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{slalom_type}" time_limit_secs="3"/>
             <ForceSuccess>
