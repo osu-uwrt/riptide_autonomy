@@ -32,6 +32,7 @@ const std::string
     DROPPER_SERVER_NAME = "command/actuator/dropper",
     TORPEDO_SERVER_NAME = "command/actuator/torpedo",
     MAPPING_SERVER_NAME = "mapping_target",
+    MAPPING_SEED_POSE_SERVER_NAME = "mapping/seed_object_pose",
     SET_POSE_SERVER_NAME = "set_pose";
 
 

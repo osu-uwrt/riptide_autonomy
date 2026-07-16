@@ -951,6 +951,7 @@
     </BehaviorTree>
     <BehaviorTree ID="NewTableTree">
         <Sequence name="set blackboards">
+            <SetBlackboard output_key="3" value="3"/>
             <SetBlackboard output_key="minisearch_prox" value="1.5"/>
             <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
@@ -962,9 +963,10 @@
             <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
             <SetBlackboard output_key="overtable" value="0.1"/>
-            <SetBlackboard output_key="search_prox" value="2"/>
-            <SetBlackboard output_key="target_err" value="0.2"/>
-            <SetBlackboard output_key="search_timeout" value="180"/>
+            <SetBlackboard output_key="search_prox" value="1.5"/>
+            <SetBlackboard output_key="target_err" value="0.8"/>
+            <SetBlackboard output_key="90" value="search_timeout"/>
+            <SetBlackboard output_key="min_search_timeout" value="60"/>
             <SetBlackboard output_key="reset_threshold" value="1000"/>
             <SetBlackboard output_key="num_sorts" value="0"/>
             <SetBlackboard output_key="cycles" value="1"/>
@@ -1006,10 +1008,19 @@
                 </ForceSuccess>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="2" value="2"/>
-                <Action ID="TransformPose" from_frame="{curr_drop}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop}" x="0" y="0" z="0"/>
+                <Action ID="Format" format="{curr_drop}_frame" out="curr_drop_frame"/>
+                <Action ID="Format" format="{secondary_drop}_frame" out="secondary_drop_frame"/>
+                <Action ID="TransformPose" from_frame="{curr_drop_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
                 <Action ID="Math" a="{ax}" b="2" operator="/" out="ax"/>
                 <Action ID="Math" a="{ay}" b="2" operator="/" out="ay"/>
                 <Action ID="Math" a="{az}" b="2" operator="/" out="az"/>
+                <Action ID="TransformPose" from_frame="{secondary_drop_frame}" op="0" or="0" out_op="junk_p" out_or="junk_r" out_oy="junk_y" out_x="table_mx" out_y="table_my" out_z="table_mz" oy="0" to_frame="map" x="{ax}" y="{ay}" z="{az}"/>
+                <Action ID="TransformPose" from_frame="{secondary_drop_frame}" op="0" or="0" out_op="junk_p" out_or="junk_r" out_oy="junk_y" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="world" x="{ax}" y="{ay}" z="{az}"/>
+                <ForceSuccess>
+                    <RetryUntilSuccessful num_attempts="3">
+                        <Action ID="SeedMappingObject" object_name="{table}" time_limit_secs="3" x="{table_mx}" y="{table_my}" z="{table_mz}"/>
+                    </RetryUntilSuccessful>
+                </ForceSuccess>
             </Sequence>
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
@@ -1018,9 +1029,9 @@
                 <Sequence name="object cycles">
                     <ForceSuccess name="Object pickup and dropoff">
                         <Sequence>
-                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="mini_search_timeout" target_err="target_err"/>
                             <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="curr_image"/>
-                            <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_name="curr_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                            <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_name="curr_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="mini_search_timeout" target_err="target_err"/>
                             <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                         </Sequence>
                     </ForceSuccess>
@@ -1717,8 +1728,6 @@
             <ForceSuccess>
                 <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
             </ForceSuccess>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
             <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="table_w" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <Action ID="GetOdometry" op="" or="" oy="cur_yaw" x="" y="" z=""/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="cur_yaw" x="table_x" y="table_y" z="depth"/>
@@ -2081,12 +2090,14 @@
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="1" value="1"/>
             </Sequence>
-            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+            <ForceSuccess>
+                <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+            </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="dropoff_name" target_cov="target_err" timeout_sec="search_timeout"/>
             </ForceSuccess>
             <ForceSuccess>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
                     <SubTree ID="DownwardMove" __shared_blackboard="false" frame="dropoff_frame" gx="0" gy="0" gz="minisearch_prox" object_name="dropoff_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
                 </Decorator>
             </ForceSuccess>
@@ -2102,7 +2113,7 @@
             <Action ID="SetStatus" status="performing"/>
             <Action ID="PublishFloat32" data="{claw_drop_s}" topic="{claw_topic}"/>
             <Action ID="Math" a="{claw_open_s}" b="1000" operator="*" out="claw_open_ms"/>
-            <Delay delay_msec="20">
+            <Delay delay_msec="{claw_open_ms}">
                 <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
             </Delay>
             <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
@@ -2111,9 +2122,15 @@
     <BehaviorTree ID="pickupObject">
         <Sequence>
             <Sequence name="set blackboards">
+                <SetBlackboard output_key="pre_grab_height" value="1.3"/>
+                <SetBlackboard output_key="loose_align_dist" value="0.01"/>
+                <SetBlackboard output_key="loose_align_timeout" value="10"/>
+                <SetBlackboard output_key="loose_align_trust" value="0.5"/>
+                <SetBlackboard output_key="2" value="2"/>
                 <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="1" value="1"/>
+                <SetBlackboard output_key="min_line_dist" value="0.1"/>
             </Sequence>
             <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
             <ForceSuccess>
@@ -2127,9 +2144,23 @@
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <Action ID="PublishFloat32" data="{claw_open_s}" topic="{claw_topic}"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
+            <Action ID="TransformPose" from_frame="{object_frame}" op="0" or="0" out_op="obj_wp" out_or="obj_wr" out_oy="obj_wyaw" out_x="obj_wx" out_y="obj_wy" out_z="obj_wz" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <Action ID="CalculateDistance" dist="center_dist" x1="{pickup_center_x}" x2="{obj_wx}" y1="{pickup_center_y}" y2="{obj_wy}" z1="0" z2="0"/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{center_dist}" b="{min_line_dist}" test="&gt;"/>
+                <Sequence>
+                    <Action ID="HeadingToPoint" currX="{pickup_center_x}" currY="{pickup_center_y}" heading="line_yaw" targX="{obj_wx}" targY="{obj_wy}"/>
+                    <Action ID="Math" a="{line_yaw}" b="{obj_wyaw}" operator="-" out="rel_yaw"/>
+                </Sequence>
+                <SetBlackboard output_key="rel_yaw" value="0"/>
+            </IfThenElse>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{rel_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{over_table}"/>
+            <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="object_frame" link_name="claw_link" prox_x="0" prox_z="pre_grab_height"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" __shared_blackboard="false" dist="{loose_align_dist}" link_frame="{claw_link}" target_frame="{object_frame}" timeout="{loose_align_timeout}" trust="{losse_align_trust}"/>
+            </ForceSuccess>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="{rel_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{overtable}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="boy" x="bx" y="by" z="bz"/>
             <ForceSuccess>
                 <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="object_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
@@ -2548,6 +2579,13 @@
             <input_port default="1.25" name="target_cov" required="false">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="false">Timeout for search</input_port>
         </SubTree>
+        <Action ID="SeedMappingObject">
+            <input_port name="object_name" required="true"/>
+            <input_port name="time_limit_secs" required="true"/>
+            <input_port name="x" required="true">object position x in the map frame</input_port>
+            <input_port name="y" required="true">object position y in the map frame</input_port>
+            <input_port name="z" required="true">object position z in the map frame</input_port>
+        </Action>
         <SubTree ID="SetActiveCamera">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="is_dfc" required="true">1 for dfc, 0 otherwise</input_port>

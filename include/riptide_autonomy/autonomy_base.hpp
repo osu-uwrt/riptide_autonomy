@@ -41,3 +41,4 @@
 #include <robot_localization/srv/set_pose.hpp>
 
 #include <riptide_msgs2/srv/mapping_target.hpp>
+#include <riptide_msgs2/srv/seed_object_pose.hpp>
