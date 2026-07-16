@@ -989,15 +989,27 @@
                 </ForceSuccess>
                 <ForceSuccess>
                     <Sequence>
+                        <SetBlackboard output_key="secondary_drop" value="warning"/>
                         <SetBlackboard output_key="table_timeout" value="60"/>
-                        <SetBlackboard output_key="table_dist" value="2.0"/>
+                        <SetBlackboard output_key="table_dist" value="1.5"/>
                         <SetBlackboard output_key="table_cov" value="0.8"/>
-                        <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="table_dist" object_name="table" target_cov="table_cov" timeout_sec="table_timeout"/>
+                        <ForceSuccess>
+                            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="table_dist" object_name="curr_drop" target_cov="table_cov" timeout_sec="table_timeout"/>
+                        </ForceSuccess>
+                        <ForceSuccess>
+                            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="table_dist" object_name="secondary_drop" target_cov="table_cov" timeout_sec="table_timeout"/>
+                        </ForceSuccess>
                     </Sequence>
                 </ForceSuccess>
                 <ForceSuccess>
                     <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
                 </ForceSuccess>
+                <SetBlackboard output_key="0" value="0"/>
+                <SetBlackboard output_key="2" value="2"/>
+                <Action ID="TransformPose" from_frame="{curr_drop}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop}" x="0" y="0" z="0"/>
+                <Action ID="Math" a="{ax}" b="2" operator="/" out="ax"/>
+                <Action ID="Math" a="{ay}" b="2" operator="/" out="ay"/>
+                <Action ID="Math" a="{az}" b="2" operator="/" out="az"/>
             </Sequence>
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
@@ -1006,7 +1018,7 @@
                 <Sequence name="object cycles">
                     <ForceSuccess name="Object pickup and dropoff">
                         <Sequence>
-                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                             <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="curr_image"/>
                             <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_name="curr_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                             <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
@@ -2108,7 +2120,7 @@
                 <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
             </ForceSuccess>
             <ForceSuccess>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
                     <SubTree ID="DownwardMove" __shared_blackboard="false" frame="object_frame" gx="0" gy="0" gz="minisearch_prox" object_name="object_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
                 </Decorator>
             </ForceSuccess>
@@ -2699,10 +2711,13 @@
             <input_port name="minisearch_prox" required="false"/>
             <input_port name="object_name" required="false"/>
             <input_port name="overtable" required="false"/>
+            <input_port name="pickup_center_x" required="false"/>
+            <input_port name="pickup_center_y" required="false"/>
+            <input_port name="pickup_center_z" required="false"/>
             <input_port name="reset_threshold" required="false"/>
             <input_port name="search_prox" required="false"/>
             <input_port name="search_timeout" required="false"/>
-            <input_port name="target_err" required="false"/>
+            <inout_port name="target_err" required="false"/>
         </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
