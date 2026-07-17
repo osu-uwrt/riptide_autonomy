@@ -868,8 +868,8 @@
             <SetBlackboard output_key="object_vision_class" value="magnet"/>
             <SetBlackboard output_key="search_timeout" value="20"/>
             <SetBlackboard output_key="search_target_cov" value="1.25"/>
-            <SetBlackboard output_key="search_prox_x" value="1.25"/>
-            <SetBlackboard output_key="search_prox_z" value="0.4"/>
+            <SetBlackboard output_key="search_prox_x" value="1.75"/>
+            <SetBlackboard output_key="search_prox_z" value="0.2"/>
             <SetBlackboard output_key="magnet1" value="magnet_target1"/>
             <SetBlackboard output_key="magnet2" value="magnet_target2"/>
             <SetBlackboard output_key="magnet1_frame" value="magnet_target1_frame"/>
@@ -1194,16 +1194,24 @@
             <Action ID="TransformPose" from_frame="pre_torpedo_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="tx" out_y="ty" out_z="tz" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="yaw" x="tx" y="ty" z="tz"/>
             <Sequence>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
                 <Action ID="Wait" seconds="{sample_time}"/>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
             </Sequence>
             <Action ID="TransformPose" from_frame="pre_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="tx" out_y="ty" out_z="tz" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="yaw" x="tx" y="ty" z="tz"/>
             <Sequence>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
                 <Action ID="Wait" seconds="{sample_time}"/>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
             </Sequence>
             <Action ID="GetBoolTopic" topic="/talos/acoustics/buffer_0_closer" value="is_table"/>
         </Sequence>
@@ -1259,6 +1267,7 @@
     </BehaviorTree>
     <BehaviorTree ID="ReturnHomeTree">
         <Sequence>
+            <SetBlackboard output_key="gate_align_dist" value="-1"/>
             <SetBlackboard output_key="-1.5" value="-1.5"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -1273,9 +1282,9 @@
             <SetBlackboard output_key="target_err" value="0.01"/>
             <Action ID="Info" message="WINNING TIME"/>
             <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_return_home_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="-1.5" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="gate_align_dist" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="0" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="1" y="0" z="undergate"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="RotateToFrame">
@@ -1538,7 +1547,11 @@
             <SetBlackboard output_key="msrch_prox" value="2.5"/>
             <SetBlackboard output_key="msrch_timeout" value="15"/>
             <Action ID="Info" message="SALMONI TIME"/>
-            <Action ID="CallSetStringService" data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="1"/>
+            <ForceSuccess>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallSetStringService" data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+            </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_parent" parent_object="slalom_parent" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
             </ForceSuccess>
