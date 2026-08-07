@@ -72,6 +72,7 @@ set(deps
   tf2_ros
   tf2_geometry_msgs
   tinyxml2_vendor
+  ament_index_cpp
 )
 
 #
