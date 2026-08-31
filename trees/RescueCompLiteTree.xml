@@ -47,40 +47,9 @@
         </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
-        <Sequence name="MISSION">
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <Action ID="Info" message="MISSION: RESCUE"/>
-            <ForceSuccess>
-                <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="{pinger_is_table}"/>
-            </ForceSuccess>
-            <SetBlackboard output_key="target_image" value="buoy"/>
-            <IfThenElse>
-                <Inverter>
-                    <Condition ID="CompareNums" a="{pinger_is_table}" b="0" test="=="/>
-                </Inverter>
-                <Sequence>
-                    <ForceSuccess>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="target_image"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="0"/>
-                    </ForceSuccess>
-                </Sequence>
-                <Sequence>
-                    <ForceSuccess>
-                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="0"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="target_image"/>
-                    </ForceSuccess>
-                </Sequence>
-            </IfThenElse>
-            <ForceSuccess>
-                <Sequence>
-                    <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="0"/>
-                </Sequence>
-            </ForceSuccess>
+        <Sequence>
+            <SetBlackboard output_key="repair_mission" value="0"/>
+            <SubTree ID="CompLiteMissionTree" __shared_blackboard="false" repair_mission="repair_mission"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
