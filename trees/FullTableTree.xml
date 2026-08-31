@@ -237,9 +237,6 @@
                 <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-            </ForceSuccess>
-            <ForceSuccess>
                 <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
             </ForceSuccess>
             <IfThenElse name="Torpedo/bin/table tasks">
@@ -251,10 +248,16 @@
                         <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                 </Sequence>
                 <Sequence name="torpedo then table">
+                    <ForceSuccess>
+                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+                    </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
@@ -779,7 +782,7 @@
                     <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
                 </ForceSuccess>
                 <ForceSuccess>
-                    <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="table" target_cov="target_err" timeout_sec="search_timeout"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="80"/>
                 </ForceSuccess>
                 <ForceSuccess>
                     <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
@@ -901,7 +904,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -1472,7 +1475,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -1776,7 +1779,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -1933,7 +1936,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -2210,4 +2213,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
