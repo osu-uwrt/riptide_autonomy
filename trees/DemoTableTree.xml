@@ -44,11 +44,7 @@
             <SetBlackboard output_key="dropper_link" value="talos/droppers_link"/>
             <SetBlackboard output_key="search_prox" value="1"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
-            <IfThenElse>
-                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
-                <SetBlackboard output_key="object_vision_class" value="blood"/>
-                <SetBlackboard output_key="object_vision_class" value="fire"/>
-            </IfThenElse>
+            <SetBlackboard output_key="object_vision_class" value="blood"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="object1" value="bin_target1"/>
@@ -217,58 +213,6 @@
             <Action ID="TransformPose" from_frame="slalom_close_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="dx" out_y="dy" out_z="dz" oy="0" to_frame="talos/base_link" x="0" y="0" z="0"/>
             <Action ID="CalculateDistance" dist="d" x1="0" x2="{dx}" y1="0" y2="{dy}" z1="0" z2="{dz}"/>
             <Condition ID="CompareNums" a="{d}" b="2.6" test="&lt;"/>
-        </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="CompMissionTree">
-        <Sequence name="COMP">
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="3" value="3"/>
-            <SetBlackboard output_key="talos/base_link" value="talos/base_link"/>
-            <SetBlackboard output_key="60" value="60"/>
-            <SetBlackboard output_key="depth" value="-0.56"/>
-            <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="PrepForRun"/>
-            <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <ForceSuccess>
-                <SubTree ID="GateTree" __shared_blackboard="false" repair_mission="repair_mission" sla_pass_on_left="sla_pass_on_left"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="SlalomTree" __shared_blackboard="false" pass_on_left="sla_pass_on_left"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="RandomPingerTree" __shared_blackboard="false" is_table="pinger_is_table"/>
-            </ForceSuccess>
-            <IfThenElse name="Torpedo/bin/table tasks">
-                <Inverter name="is table?">
-                    <Condition ID="CompareNums" a="{pinger_is_table}" b="0" test="=="/>
-                </Inverter>
-                <Sequence name="Table then torpedo">
-                    <ForceSuccess>
-                        <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-                    </ForceSuccess>
-                </Sequence>
-                <Sequence name="torpedo then table">
-                    <ForceSuccess>
-                        <SubTree ID="BinTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-                    </ForceSuccess>
-                    <ForceSuccess>
-                        <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
-                    </ForceSuccess>
-                </Sequence>
-            </IfThenElse>
-            <ForceSuccess>
-                <SubTree ID="ReturnHomeTree"/>
-            </ForceSuccess>
-            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="DemoTableTree">
@@ -627,7 +571,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="PublishToController" isOrientation="0" mode="0" x="0" y="0" z="0"/>
             <Action ID="SetControllerSafeMode" safe="false" timeout_secs="10.0"/>
-            <Action ID="GetOdometry" op="{pre_flip_op}" or="{pre_flip_or}" oy="{pre_flip_yaw}" x="{pre_flip_x}" y="{pre_flip_y}" z="{pre_flip_z}"/>
+            <Action ID="GetOdometry" op="" or="" oy="{pre_flip_yaw}" x="{pre_flip_x}" y="{pre_flip_y}" z="{pre_flip_z}"/>
             <Action ID="GetImuOrientation" op="" or="" oy="pre_imu_y" topic="vectornav/imu"/>
             <Action ID="Info" message="Pre yaw: {pre_imu_y}"/>
             <Action ID="TriggerControllerStunt" targetStuntState="1"/>
@@ -638,8 +582,9 @@
             <Action ID="Info" message="Post imu: {final_imu_y}"/>
             <Action ID="Math" a="{final_imu_y}" b="{pre_imu_y}" operator="-" out="imu_delta"/>
             <Action ID="Math" a="{pre_flip_yaw}" b="{imu_delta}" operator="+" out="post_flip_yaw"/>
-            <Action ID="PublishEKFPose" pitch="{pre_flip_op}" roll="{pre_flip_or}" setOrientation="true" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{pre_flip_z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="undergate_depth"/>
+            <Action ID="GetOdometry" op="op" or="or" oy="" x="" y="" z="z"/>
+            <Action ID="PublishEKFPose" pitch="{op}" roll="{or}" setOrientation="true" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="pre_flip_z"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GateTree">
@@ -647,13 +592,13 @@
             <SetBlackboard output_key="-1" value="-1"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="search_timeout" value="20"/>
-            <SetBlackboard output_key="max_dist" value="3.0"/>
+            <SetBlackboard output_key="max_dist" value="1.5"/>
             <SetBlackboard output_key="search_prox_z" value="0"/>
             <SetBlackboard output_key="min_dist" value="1.5"/>
             <SetBlackboard output_key="3.1415" value="3.1415"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="target_cov" value="0.1"/>
-            <SetBlackboard output_key="undergate_depth" value="-1.3"/>
+            <SetBlackboard output_key="undergate_depth" value="-1.0"/>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
                 <Sequence name="Rescue is primary">
@@ -665,7 +610,7 @@
                     <SetBlackboard output_key="alt_subprop" value="gate_rescue"/>
                 </Sequence>
             </IfThenElse>
-            <SetBlackboard output_key="prop" value="gate"/>
+            <SetBlackboard output_key="prop" value="{subprop}"/>
             <Action ID="Format" format="{prop}_frame" out="prop_frame"/>
             <Action ID="Format" format="{subprop}_frame" out="subprop_frame"/>
             <Action ID="Format" format="{alt_subprop}_frame" out="alt_subprop_frame"/>
@@ -674,14 +619,10 @@
                 <Sequence name="Set camera and search">
                     <Action ID="Info" message="Setting correct active camera"/>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
-                    <Action ID="Info" message="Mini-searching for alternate prop"/>
-                    <ForceSuccess>
-                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="alt_subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
-                    </ForceSuccess>
                     <Action ID="Info" message="Mini-searching for primary prop"/>
-                    <ForceSuccess>
-                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
-                    </ForceSuccess>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="prop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    <Action ID="Info" message="Mini-searching for alternate prop"/>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="prop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
             <Sequence name="Determine pass_on_left for slalom">
@@ -704,7 +645,7 @@
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate_depth"/>
             <Action ID="SetStatus" status="performing"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate_depth"/>
-            <SubTree ID="FlipTree" __shared_blackboard="false" undergate_depth="undergate_depth"/>
+            <SubTree ID="FlipTree"/>
             <Action ID="Wait" seconds="2"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="undergate_depth"/>
         </Sequence>
@@ -849,99 +790,6 @@
             <Action ID="Info" message="Move Complete."/>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="NewTableTree">
-        <Sequence name="set blackboards">
-            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
-            <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
-            <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="claw_drop_s" value="0.3"/>
-            <SetBlackboard output_key="claw_open_s" value="2.0"/>
-            <SetBlackboard output_key="claw_close_s" value="-2.0"/>
-            <SetBlackboard output_key="ctrlr_timeout" value="30"/>
-            <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
-            <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
-            <SetBlackboard output_key="overtable" value="0.1"/>
-            <SetBlackboard output_key="search_prox" value="2"/>
-            <SetBlackboard output_key="target_err" value="0.2"/>
-            <SetBlackboard output_key="search_timeout" value="180"/>
-            <SetBlackboard output_key="reset_threshold" value="1000"/>
-            <SetBlackboard output_key="num_sorts" value="0"/>
-            <SetBlackboard output_key="cycles" value="1"/>
-            <Sequence name="Set Object stuff and frames">
-                <SetBlackboard output_key="table" value="table"/>
-                <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
-                <SetBlackboard output_key="base_link" value="talos/base_link"/>
-                <SetBlackboard output_key="curr_object" value="bandage"/>
-                <SetBlackboard output_key="curr_drop" value="helmet"/>
-            </Sequence>
-            <IfThenElse>
-                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
-                <SetBlackboard output_key="curr_image" value="buoy"/>
-                <SetBlackboard output_key="curr_image" value="compass"/>
-            </IfThenElse>
-            <Sequence name="find table">
-                <ForceSuccess>
-                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
-                </ForceSuccess>
-                <ForceSuccess>
-                    <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
-                </ForceSuccess>
-                <ForceSuccess>
-                    <SubTree ID="Search" __shared_blackboard="false" max_dist="4.0" min_dist="1.75" object_name="table" target_cov="1.25" timeout_secs="80"/>
-                </ForceSuccess>
-                <ForceSuccess>
-                    <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
-                </ForceSuccess>
-            </Sequence>
-            <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
-            </ForceSuccess>
-            <Repeat num_cycles="4">
-                <Sequence name="object cycles">
-                    <ForceSuccess name="Object pickup and dropoff">
-                        <Sequence>
-                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                            <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="curr_image"/>
-                            <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_name="curr_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                            <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
-                        </Sequence>
-                    </ForceSuccess>
-                    <ForceSuccess name="Update target">
-                        <Sequence>
-                            <Action ID="Math" a="{cycles}" b="1" operator="+" out="cycles"/>
-                            <IfThenElse>
-                                <Condition ID="CompareNums" a="{cycles}" b="2" test="=="/>
-                                <Sequence>
-                                    <SetBlackboard output_key="curr_object" value="pill"/>
-                                    <IfThenElse>
-                                        <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
-                                        <SetBlackboard output_key="curr_image" value="sos"/>
-                                        <SetBlackboard output_key="curr_image" value="hammer_and_wrench"/>
-                                    </IfThenElse>
-                                </Sequence>
-                                <IfThenElse>
-                                    <Condition ID="CompareNums" a="{cycles}" b="3" test="=="/>
-                                    <Sequence>
-                                        <SetBlackboard output_key="curr_object" value="nut_and_bolt"/>
-                                        <SetBlackboard output_key="curr_drop" value="warning"/>
-                                    </Sequence>
-                                    <SetBlackboard output_key="curr_object" value="plug"/>
-                                </IfThenElse>
-                            </IfThenElse>
-                        </Sequence>
-                    </ForceSuccess>
-                </Sequence>
-            </Repeat>
-            <ForceSuccess>
-                <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
-            </ForceSuccess>
-            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
-        </Sequence>
-    </BehaviorTree>
     <BehaviorTree ID="NotifyTankStartTable">
         <Sequence>
             <AlwaysSuccess/>
@@ -1015,7 +863,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -1131,7 +979,7 @@
             <Action ID="Info" message="WINNING TIME"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate"/>
-            <SubTree ID="FlipTree" __shared_blackboard="false" undergate_depth="undergate"/>
+            <SubTree ID="FlipTree"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="-1.5" y="0" z="undergate"/>
         </Sequence>
     </BehaviorTree>
@@ -1282,7 +1130,7 @@
     <BehaviorTree ID="ShootDownwardObject">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="overbin" value="1"/>
+            <SetBlackboard output_key="overbin" value="0.6"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="ctrler_trust" value="0.95"/>
             <SetBlackboard output_key="ctrler_timeout" value="30"/>
@@ -1296,7 +1144,6 @@
                         </ForceSuccess>
                         <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
                         <Action ID="SetStatus" status="aligning"/>
-                        <Action ID="CallTriggerService" srv_name="/talos/controller_overseer/update_complete_controller_params" time_limit_secs="1"/>
                         <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dropper_link_name}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{overbin}"/>
                         <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="dropper_link_name" target_frame="object_frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
@@ -1312,11 +1159,11 @@
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
-            <SetBlackboard output_key="scale_trust" value="0.98"/>
+            <SetBlackboard output_key="scale_trust" value="0.99"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="shoot_prox" value="0.4"/>
-            <SetBlackboard output_key="ms_prox" value="1.5"/>
+            <SetBlackboard output_key="ms_prox" value="0.75"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
@@ -1334,7 +1181,6 @@
                         <Action ID="SetStatus" status="aligning"/>
                         <Action ID="Math" a="{shoot_prox}" b="0.5" operator="+" out="shoot_prox_plus"/>
                         <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox_plus" prox_z="0"/>
-                        <Action ID="CallTriggerService" srv_name="/talos/controller_overseer/update_complete_controller_params" time_limit_secs="1"/>
                         <Action ID="Wait" name="REMOVE ME" seconds="10"/>
                         <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="torpedo_link_name" target_frame="frame_to_shoot" timeout="ctrler_timeout" trust="scale_trust"/>
@@ -1560,13 +1406,8 @@
             <SetBlackboard output_key="180" value="180"/>
             <SetBlackboard output_key="table_frame" value="table_frame"/>
             <SetBlackboard output_key="target_cov" value="1"/>
-            <ForceSuccess>
-                <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
-            </ForceSuccess>
             <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="table_w" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="table_w" x="table_x" y="table_y" z="depth"/>
-            <Action ID="Format" format="{target_image}_frame" out="target_image_frame"/>
-            <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_image_frame"/>
             <Repeat num_cycles="5">
                 <Action ID="PublishToController" isOrientation="0" mode="3" x="{table_x}" y="{table_y}" z="1"/>
             </Repeat>
@@ -1642,7 +1483,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -1800,13 +1641,13 @@
                     <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
                     <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
                     <IfThenElse>
-                        <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
+                        <Condition ID="CompareNums" a="{repair_mission|" b="0" test="=="/>
                         <Sequence>
-                            <SetBlackboard output_key="torpedo_first" value="blood_hole_large"/>
+                            <SetBlackboard output_key="torpedo_first" value="blood_hole_big"/>
                             <SetBlackboard output_key="torpedo_second" value="blood_hole_small"/>
                         </Sequence>
                         <Sequence>
-                            <SetBlackboard output_key="torpedo_first" value="fire_hole_large"/>
+                            <SetBlackboard output_key="torpedo_first" value="fire_hole_big"/>
                             <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
                         </Sequence>
                     </IfThenElse>
@@ -1909,74 +1750,6 @@
             <AlwaysSuccess name="Wait for start queue"/>
         </Sequence>
     </BehaviorTree>
-    <BehaviorTree ID="dropObject">
-        <Sequence>
-            <Sequence name="set blackboards">
-                <Action ID="Format" format="{dropoff_name}_frame" out="dropoff_frame"/>
-                <SetBlackboard output_key="0" value="0"/>
-                <SetBlackboard output_key="1" value="1"/>
-            </Sequence>
-            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
-            <ForceSuccess>
-                <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="dropoff_name" target_cov="target_err" timeout_sec="search_timeout"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="dropoff_frame" gx="0" gy="0" gz="minisearch_prox" object_name="dropoff_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
-                </Decorator>
-            </ForceSuccess>
-            <Action ID="SetStatus" status="aligning"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{dropoff_frame}" x="0" y="0" z="{search_prox}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{dropoff_frame}" x="0" y="0" z="{overtable}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="bop" or="bor" oy="boy" x="bx" y="by" z="bz"/>
-            <ForceSuccess>
-                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="dropoff_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
-            </ForceSuccess>
-            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <Action ID="SetStatus" status="performing"/>
-            <Action ID="PublishFloat32" data="{claw_drop_s}" topic="{claw_topic}"/>
-            <Action ID="Math" a="{claw_open_s}" b="1000" operator="*" out="claw_open_ms"/>
-            <Delay delay_msec="20">
-                <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
-            </Delay>
-            <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
-        </Sequence>
-    </BehaviorTree>
-    <BehaviorTree ID="pickupObject">
-        <Sequence>
-            <Sequence name="set blackboards">
-                <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
-                <SetBlackboard output_key="0" value="0"/>
-                <SetBlackboard output_key="1" value="1"/>
-            </Sequence>
-            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
-            <ForceSuccess>
-                <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="object_frame" gx="0" gy="0" gz="minisearch_prox" object_name="object_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
-                </Decorator>
-            </ForceSuccess>
-            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <Action ID="SetStatus" status="aligning"/>
-            <Action ID="PublishFloat32" data="{claw_open_s}" topic="{claw_topic}"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{over_table}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="boy" x="bx" y="by" z="bz"/>
-            <ForceSuccess>
-                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="object_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
-            </ForceSuccess>
-            <Action ID="SetStatus" status="performing"/>
-            <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
-            <Action ID="Math" a="{claw_close_s}" b="-1000" operator="*" out="claw_close_ms_neg"/>
-            <Delay delay_msec="{claw_close_ms_neg}">
-                <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
-            </Delay>
-        </Sequence>
-    </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
         <SubTree ID="ActivateMagnet">
@@ -2007,10 +1780,7 @@
             <input_port name="b" required="true"/>
             <input_port name="test" required="true">Same as CompareNums</input_port>
         </SubTree>
-        <SubTree ID="BinTree">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="repair_mission" required="false"/>
-        </SubTree>
+        <SubTree ID="BinTree"/>
         <SubTree ID="BumpObject">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="object_frame" required="true"/>
@@ -2071,14 +1841,10 @@
             <inout_port name="target" required="true"/>
             <inout_port name="target_error" required="true"/>
         </SubTree>
-        <SubTree ID="CompMissionTree">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="repair_mission" required="false"/>
-        </SubTree>
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -2148,10 +1914,7 @@
         </Action>
         <SubTree ID="FireDropper"/>
         <SubTree ID="FireTorpedo"/>
-        <SubTree ID="FlipTree">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="undergate_depth" required="true"/>
-        </SubTree>
+        <SubTree ID="FlipTree"/>
         <Action ID="Format">
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
@@ -2254,7 +2017,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -2275,10 +2038,6 @@
             <input_port name="x" required="true"/>
             <input_port name="y" required="true"/>
             <input_port name="z" required="true"/>
-        </SubTree>
-        <SubTree ID="NewTableTree">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="repair_mission" required="false"/>
         </SubTree>
         <SubTree ID="NotifyTankStartTable"/>
         <SubTree ID="OptionallyCollectDetsAtAngle">
@@ -2439,10 +2198,7 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="num_cycles" required="true"/>
         </SubTree>
-        <SubTree ID="SurfaceTree">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="target_image" required="false"/>
-        </SubTree>
+        <SubTree ID="SurfaceTree"/>
         <SubTree ID="SurgeMove">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port default="30" name="timeout" required="true"/>
@@ -2502,46 +2258,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <output_port name="bin_heading" required="false"/>
         </SubTree>
-        <SubTree ID="dropObject">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="claw_close_s" required="false"/>
-            <input_port name="claw_drop_s" required="false"/>
-            <input_port name="claw_link" required="false"/>
-            <input_port name="claw_open_s" required="false"/>
-            <input_port name="claw_topic" required="false"/>
-            <input_port name="ctrlr_dist" required="false"/>
-            <input_port name="ctrlr_timeout" required="false"/>
-            <input_port name="ctrlr_trust" required="false"/>
-            <input_port name="dropoff_name" required="false"/>
-            <input_port name="minisearch_prox" required="false"/>
-            <input_port name="overtable" required="false"/>
-            <input_port name="reset_threshold" required="false"/>
-            <input_port name="search_prox" required="false"/>
-            <input_port name="search_timeout" required="false"/>
-            <input_port name="target_err" required="false"/>
-        </SubTree>
         <Action ID="getCovariance">
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
-        <SubTree ID="pickupObject">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="claw_close_s" required="false"/>
-            <input_port name="claw_link" required="false"/>
-            <input_port name="claw_open_s" required="false"/>
-            <input_port name="claw_topic" required="false"/>
-            <input_port name="ctrlr_dist" required="false"/>
-            <input_port name="ctrlr_timeout" required="false"/>
-            <input_port name="ctrlr_trust" required="false"/>
-            <input_port name="minisearch_prox" required="false"/>
-            <input_port name="object_name" required="false"/>
-            <input_port name="overtable" required="false"/>
-            <input_port name="reset_threshold" required="false"/>
-            <input_port name="search_prox" required="false"/>
-            <input_port name="search_timeout" required="false"/>
-            <input_port name="target_err" required="false"/>
-        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
