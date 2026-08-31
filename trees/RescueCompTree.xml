@@ -662,6 +662,111 @@
             <Action ID="Format" format="{out}_frame" out="out_frame"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="GoToObject">
+        <Sequence name="Find bin-based discovery position">
+            <SetBlackboard output_key="base_link" value="liltank/base_link"/>
+            <SetBlackboard output_key="discov_basket_prox" value="0.15"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="15" value="15"/>
+            <RetryUntilSuccessful num_attempts="4">
+                <SubTree ID="DiscoverObjects" __shared_blackboard="false" base_link="base_link" discovered_object="discovered_object" target_1="object_1" target_2="object_2" target_3="object_3" target_4="object_4" target_error="target_error"/>
+            </RetryUntilSuccessful>
+            <Action ID="Info" message="DISCOVERED GO-ABLE OBJECT: {discovered_object}. Attempting to lock in"/>
+            <SubTree ID="LockInObject" __shared_blackboard="false" object="discovered_object" target_error="target_error"/>
+            <Action ID="GetOdometry" op="" or="" oy="" x="" y="" z="z"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout}">
+                <Sequence>
+                    <SetBlackboard output_key="liltank/base_link" value="liltank/base_link"/>
+                    <SetBlackboard output_key="0" value="0"/>
+                    <SetBlackboard output_key="1" value="1"/>
+                    <SetBlackboard output_key="1.5707" value="1.5707"/>
+                    <SetBlackboard output_key="-1.5707" value="-1.5707"/>
+                    <SetBlackboard output_key="30" value="30"/>
+                    <Fallback>
+                        <SubTree ID="SurgeMove" __shared_blackboard="false" timeout="30" x="x" z="z"/>
+                        <ForceFailure>
+                            <Sequence name="Attempt to fix surge move failure">
+                                <Action ID="Info" message="Detected surge move failure!"/>
+                                <Action ID="GetBoolTopic" topic="controller/surge/tracking" value="surge_tracking"/>
+                                <Action ID="Info" message="Surge tracking state is currently {surge_tracking}"/>
+                                <IfThenElse name="Fix surge failure">
+                                    <Condition ID="IsTrue" value="{surge_tracking}"/>
+                                    <Sequence name="Fix impedance issue">
+                                        <SetBlackboard output_key="imp_pwr" value="0.3"/>
+                                        <Action ID="Info" message="Detected impedance issue. Attempting to move out of the way"/>
+                                        <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="liltank/base_link" op="0" or="0" oy="1.5707" x="0" y="0" z="0"/>
+                                        <Sequence>
+                                            <Action ID="Info" message="Surging with power {power} for duration {duration}"/>
+                                            <SetBlackboard output_key="0" value="0"/>
+                                            <Inverter>
+                                                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{duration}">
+                                                    <Inverter>
+                                                        <Sequence>
+                                                            <Action ID="PublishToController" isOrientation="0" mode="1" x="{power}" y="0" z="0"/>
+                                                            <Action ID="Wait" seconds="0.1"/>
+                                                        </Sequence>
+                                                    </Inverter>
+                                                </Decorator>
+                                            </Inverter>
+                                            <Repeat name="Reset to 0" num_cycles="5">
+                                                <Action ID="PublishToController" isOrientation="0" mode="1" x="0" y="0" z="0"/>
+                                            </Repeat>
+                                            <Action ID="Info" message="Done surging."/>
+                                        </Sequence>
+                                        <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="liltank/base_link" op="0" or="0" oy="-1.5707" x="0" y="0" z="0"/>
+                                    </Sequence>
+                                    <Sequence name="Fix tracking issue">
+                                        <SetBlackboard output_key="right_angle" value="0.785"/>
+                                        <Action ID="Math" a="{right_angle}" b="-1" operator="*" out="left_angle"/>
+                                        <SetBlackboard output_key="1" value="1"/>
+                                        <SetBlackboard name="Must be negative so vehicle moves backwards" output_key="long_pwr" value="-0.3"/>
+                                        <Action ID="Info" message="Detected surge tracking issue. Attempting to recover it"/>
+                                        <Sequence>
+                                            <Action ID="Info" message="Surging with power {power} for duration {duration}"/>
+                                            <SetBlackboard output_key="0" value="0"/>
+                                            <Inverter>
+                                                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{duration}">
+                                                    <Inverter>
+                                                        <Sequence>
+                                                            <Action ID="PublishToController" isOrientation="0" mode="1" x="{power}" y="0" z="0"/>
+                                                            <Action ID="Wait" seconds="0.1"/>
+                                                        </Sequence>
+                                                    </Inverter>
+                                                </Decorator>
+                                            </Inverter>
+                                            <Repeat name="Reset to 0" num_cycles="5">
+                                                <Action ID="PublishToController" isOrientation="0" mode="1" x="0" y="0" z="0"/>
+                                            </Repeat>
+                                            <Action ID="Info" message="Done surging."/>
+                                        </Sequence>
+                                        <Action ID="GetMappingState" map_locked="" target_name="target_obj"/>
+                                        <Action ID="Format" format="{target_obj}_frame" out="target_obj_frame"/>
+                                        <Repeat num_cycles="5">
+                                            <Action ID="PublishToController" isOrientation="0" mode="0" name="Disable linear" x="0" y="0" z="0"/>
+                                        </Repeat>
+                                        <Fallback>
+                                            <SubTree ID="RecoverTrackingAtHeading" __shared_blackboard="false" relative_yaw="0" target_obj_frame="target_obj_frame"/>
+                                            <SubTree ID="RecoverTrackingAtHeading" __shared_blackboard="false" relative_yaw="right_angle" target_obj_frame="target_obj_frame"/>
+                                            <SubTree ID="RecoverTrackingAtHeading" __shared_blackboard="false" relative_yaw="left_angle" target_obj_frame="target_obj_frame"/>
+                                            <ForceFailure>
+                                                <Sequence>
+                                                    <Action ID="Info" message="Unable to recover tracking. Resetting map target"/>
+                                                    <Action ID="SetMappingTarget" lock_map="0" target_object="{target_obj}" time_limit_secs="3"/>
+                                                </Sequence>
+                                            </ForceFailure>
+                                        </Fallback>
+                                    </Sequence>
+                                </IfThenElse>
+                            </Sequence>
+                        </ForceFailure>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+            <Repeat num_cycles="5">
+                <Action ID="PublishToController" isOrientation="0" mode="0" name="Disable position control" x="0" y="0" z="0"/>
+            </Repeat>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="KillController">
         <Repeat num_cycles="5">
             <Sequence>
@@ -901,7 +1006,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -1472,7 +1577,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -1776,7 +1881,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -1907,6 +2012,15 @@
             <output_port name="vel_yaw" required="false"/>
             <output_port name="vel_z" required="false"/>
         </Action>
+        <SubTree ID="GoToObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <output_port name="discovered_object" required="false"/>
+            <input_port name="object_1" required="true"/>
+            <input_port name="object_2" required="false"/>
+            <input_port name="object_3" required="false"/>
+            <input_port name="object_4" required="false"/>
+            <input_port name="target_error" required="true"/>
+        </SubTree>
         <Action ID="HeadingToPoint">
             <input_port name="currX" required="true"/>
             <input_port name="currY" required="true"/>
@@ -1933,7 +2047,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -2210,4 +2324,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
