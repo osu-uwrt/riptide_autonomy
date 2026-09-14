@@ -871,8 +871,8 @@
             <SetBlackboard output_key="object_vision_class" value="magnet"/>
             <SetBlackboard output_key="search_timeout" value="20"/>
             <SetBlackboard output_key="search_target_cov" value="1.25"/>
-            <SetBlackboard output_key="search_prox_x" value="1.25"/>
-            <SetBlackboard output_key="search_prox_z" value="0.4"/>
+            <SetBlackboard output_key="search_prox_x" value="1.75"/>
+            <SetBlackboard output_key="search_prox_z" value="0.2"/>
             <SetBlackboard output_key="magnet1" value="magnet_target1"/>
             <SetBlackboard output_key="magnet2" value="magnet_target2"/>
             <SetBlackboard output_key="magnet1_frame" value="magnet_target1_frame"/>
@@ -984,6 +984,9 @@
                 <SetBlackboard output_key="base_link" value="talos/base_link"/>
                 <SetBlackboard output_key="curr_object" value="bandage"/>
                 <SetBlackboard output_key="curr_drop" value="helmet"/>
+                <SetBlackboard output_key="curr_drop_frame" value="helmet_frame"/>
+                <SetBlackboard output_key="secondary_drop" value="warning"/>
+                <SetBlackboard output_key="secondary_drop_frame" value="warning_frame"/>
             </Sequence>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
@@ -999,7 +1002,6 @@
                 </ForceSuccess>
                 <ForceSuccess>
                     <Sequence>
-                        <SetBlackboard output_key="secondary_drop" value="warning"/>
                         <SetBlackboard output_key="table_timeout" value="60"/>
                         <SetBlackboard output_key="table_dist" value="1.5"/>
                         <SetBlackboard output_key="table_cov" value="0.8"/>
@@ -1016,7 +1018,7 @@
                 </ForceSuccess>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="2" value="2"/>
-                <Action ID="TransformPose" from_frame="{curr_drop}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop}" x="0" y="0" z="0"/>
+                <Action ID="TransformPose" from_frame="{curr_drop_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
                 <Action ID="Math" a="{ax}" b="2" operator="/" out="ax"/>
                 <Action ID="Math" a="{ay}" b="2" operator="/" out="ay"/>
                 <Action ID="Math" a="{az}" b="2" operator="/" out="az"/>
@@ -1142,7 +1144,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -1197,16 +1199,24 @@
             <Action ID="TransformPose" from_frame="pre_torpedo_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="tx" out_y="ty" out_z="tz" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="yaw" x="tx" y="ty" z="tz"/>
             <Sequence>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
                 <Action ID="Wait" seconds="{sample_time}"/>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
             </Sequence>
             <Action ID="TransformPose" from_frame="pre_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="tx" out_y="ty" out_z="tz" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="yaw" x="tx" y="ty" z="tz"/>
             <Sequence>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
                 <Action ID="Wait" seconds="{sample_time}"/>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
             </Sequence>
             <Action ID="GetBoolTopic" topic="/talos/acoustics/buffer_0_closer" value="is_table"/>
         </Sequence>
@@ -1262,6 +1272,7 @@
     </BehaviorTree>
     <BehaviorTree ID="ReturnHomeTree">
         <Sequence>
+            <SetBlackboard output_key="gate_align_dist" value="-1"/>
             <SetBlackboard output_key="-1.5" value="-1.5"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -1276,9 +1287,9 @@
             <SetBlackboard output_key="target_err" value="0.01"/>
             <Action ID="Info" message="WINNING TIME"/>
             <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_return_home_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="-1.5" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="gate_align_dist" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="0" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="1" y="0" z="undergate"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="RotateToFrame">
@@ -1541,7 +1552,11 @@
             <SetBlackboard output_key="msrch_prox" value="2.5"/>
             <SetBlackboard output_key="msrch_timeout" value="15"/>
             <Action ID="Info" message="SALMONI TIME"/>
-            <Action ID="CallSetStringService" data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="1"/>
+            <ForceSuccess>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallSetStringService" data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+            </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_parent" parent_object="slalom_parent" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
             </ForceSuccess>
@@ -1814,7 +1829,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -2257,7 +2272,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
+            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -2433,7 +2448,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -2733,3 +2748,4 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
+

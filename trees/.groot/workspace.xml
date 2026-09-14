@@ -974,6 +974,9 @@
                 <SetBlackboard output_key="base_link" value="talos/base_link"/>
                 <SetBlackboard output_key="curr_object" value="bandage"/>
                 <SetBlackboard output_key="curr_drop" value="helmet"/>
+                <SetBlackboard output_key="curr_drop_frame" value="helmet_frame"/>
+                <SetBlackboard output_key="secondary_drop" value="warning"/>
+                <SetBlackboard output_key="secondary_drop_frame" value="warning_frame"/>
             </Sequence>
             <IfThenElse>
                 <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
@@ -989,7 +992,6 @@
                 </ForceSuccess>
                 <ForceSuccess>
                     <Sequence>
-                        <SetBlackboard output_key="secondary_drop" value="warning"/>
                         <SetBlackboard output_key="table_timeout" value="60"/>
                         <SetBlackboard output_key="table_dist" value="1.5"/>
                         <SetBlackboard output_key="table_cov" value="0.8"/>
@@ -1006,7 +1008,7 @@
                 </ForceSuccess>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="2" value="2"/>
-                <Action ID="TransformPose" from_frame="{curr_drop}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop}" x="0" y="0" z="0"/>
+                <Action ID="TransformPose" from_frame="{curr_drop_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
                 <Action ID="Math" a="{ax}" b="2" operator="/" out="ax"/>
                 <Action ID="Math" a="{ay}" b="2" operator="/" out="ay"/>
                 <Action ID="Math" a="{az}" b="2" operator="/" out="az"/>
