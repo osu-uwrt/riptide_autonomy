@@ -30,6 +30,26 @@ Behavior trees can also be run from UWRTs MissionPanel RViz plugin (see riptide_
 ### Using the headless interface
 TODO
 
+### Service response scheduling
+
+`doTask` ticks the behavior tree on a worker thread and processes ROS callbacks
+with `rclcpp::executors::SingleThreadedExecutor`. The tree's ROS callbacks
+share a mutually exclusive callback group. Extra executor threads cannot run
+those callbacks concurrently, and Humble's multithreaded executor can starve
+service responses under sustained subscription traffic. Large expanded mission
+trees create subscriptions even for inactive behavior nodes, which amplifies
+this load. See the [upstream starvation investigation](https://github.com/ros2/rclcpp/pull/2702).
+
+The standalone `service_executor` regression checks three service endpoints
+while the client's callback group is busy with odometry subscriptions. With
+`BUILD_TESTING` enabled, run it from the workspace after building:
+
+```bash
+ctest --test-dir build/riptide_autonomy2 -R '^service_executor$' --output-on-failure
+```
+
+CTest runs the fixture locally in ROS domain 177, separately from the robot.
+
 ### LED Status Patterns
 UWRT's AUV has strips of LEDs in both cages to indicate robot status to swimmers and operators on the surface. riptide_autonomy commands these LEDs to display colors and patterns to indicate what the behavior is commanding the robot to do. States are set using the SetStatus action. The following table matches status names (which go into the "name" port on the SetStatus node) to their LED behaviors and descriptions.
 

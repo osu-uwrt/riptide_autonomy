@@ -3,7 +3,7 @@
 #include <behaviortree_cpp_v3/loggers/bt_file_logger.h>
 
 #include <rclcpp/rclcpp.hpp>
-#include <rclcpp/executors/multi_threaded_executor.hpp>
+#include <rclcpp/executors/single_threaded_executor.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
@@ -418,10 +418,12 @@ int main(int argc, char *argv[])
     std::string treeDir = AUTONOMY_TREE_DIR;
     RCLCPP_INFO(node->get_logger(), "Using tree directory at %s", treeDir.c_str());
 
-    rclcpp::executors::MultiThreadedExecutor executor;
+    // Tree ticking has its own thread. ROS callbacks share a mutually exclusive
+    // group, so extra executor threads cannot run them concurrently. Use a single
+    // executor thread to avoid service-response starvation under subscription load.
+    rclcpp::executors::SingleThreadedExecutor executor;
     executor.add_node(node);
     executor.spin();
 
-    // rclcpp::spin(node);
     rclcpp::shutdown();
 }

@@ -232,6 +232,26 @@ install(DIRECTORY src/riptide_autonomy/assistant/actions
 install(DIRECTORY trees
   DESTINATION share/${PROJECT_NAME})
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(publish_ekf_pose_test
+    test/riptide_autonomy/bt_actions/TestPublishEKFPose.cpp)
+  ament_target_dependencies(publish_ekf_pose_test ${deps})
+  target_link_libraries(publish_ekf_pose_test autonomy_utils)
+  set_tests_properties(publish_ekf_pose_test PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=178;ROS_LOCALHOST_ONLY=1;RMW_IMPLEMENTATION=rmw_fastrtps_cpp"
+    TIMEOUT 60)
+
+  add_executable(service_executor_test test/riptide_autonomy/service_executor.cpp)
+  target_compile_features(service_executor_test PRIVATE cxx_std_17)
+  target_include_directories(service_executor_test PRIVATE include)
+  ament_target_dependencies(service_executor_test rclcpp nav_msgs std_srvs)
+  add_test(NAME service_executor COMMAND service_executor_test)
+  set_tests_properties(service_executor PROPERTIES
+    ENVIRONMENT "ROS_DOMAIN_ID=177;ROS_LOCALHOST_ONLY=1"
+    TIMEOUT 60)
+endif()
+
 if(AUTONOMY_BUILD_TESTS)
   #set up GTest
   find_package(ament_cmake_gtest QUIET)
