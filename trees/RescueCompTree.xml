@@ -38,6 +38,19 @@
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="AlignLinkPositionOnly">
+        <Sequence name="Position link while holding current orientation">
+            <SetBlackboard output_key="15" value="15"/>
+            <!-- Express the link's current orientation in the target frame so its mounting offset is preserved. -->
+            <Action ID="TransformPose" from_frame="{link_name}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame_name}" x="0" y="0" z="0"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_name}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame_name}" x="{x}" y="{y}" z="{z}"/>
+            <Action ID="PublishToController" isOrientation="1" mode="3" x="{aor}" y="{aop}" z="{aoy}"/>
+            <!-- Keep the depth-first approach, then translate without an orientation-alignment wait. -->
+            <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z=""/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="15" x="cx" y="cy" z="az"/>
+            <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="ax" y="ay" z="az"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="AssertTree">
         <Fallback>
             <Condition ID="CompareNums" a="{a}" b="{b}" test="{test}"/>
@@ -567,8 +580,8 @@
             <Action Covariance="Icov" ID="getCovariance" Target="{object_name}"/>
             <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
             <Action ID="Info" message="{object_name} error at {Icov}"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/dfc_base_link" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="{gx}" y="{gy}" z="{gz}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="ax" y="ay" z="az"/>
+            <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+            <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="frame" link_name="dfc_link" x="gx" y="gy" z="gz"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
             <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
             <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" name="Did we move the object significantly?" test="&gt;"/>
@@ -1038,7 +1051,8 @@
                 <Sequence name="object cycles">
                     <ForceSuccess name="Object pickup and dropoff">
                         <Sequence>
-                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" pre_overtable="pre_overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                            <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
                             <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_name="curr_drop" minisearch_prox="minisearch_prox" overtable="pre_overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                             <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                         </Sequence>
@@ -1070,7 +1084,7 @@
                 </Sequence>
             </Repeat>
             <ForceSuccess>
-                <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
+                <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts" target_image="curr_image"/>
             </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
@@ -1465,8 +1479,7 @@
                         </ForceSuccess>
                         <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
                         <Action ID="SetStatus" status="aligning"/>
-                        <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dropper_link_name}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{overbin}"/>
-                        <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+                        <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="object_frame" link_name="dropper_link_name" x="0" y="0" z="overbin"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="dropper_link_name" target_frame="object_frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
                     </Sequence>
                 </RetryUntilSuccessful>
@@ -1702,37 +1715,10 @@
     </BehaviorTree>
     <BehaviorTree ID="SpinTree">
         <Sequence>
-            <SetBlackboard output_key="15" value="15"/>
             <SetBlackboard output_key="0" value="0"/>
-            <Action ID="GetOdometry" op="" or="" oy="orig_y" x="" y="" z=""/>
-            <Action ID="Math" a="{num_cycles}" b="6" operator="*" out="{num_repeats}"/>
-            <ForceSuccess>
-                <Sequence name="Clamp num_repeats">
-                    <Condition ID="CompareNums" a="{num_repeats}" b="0" test="&gt;"/>
-                    <Action ID="Math" a="{num_repeats}" b="1" operator="-" out="num_repeats"/>
-                </Sequence>
-            </ForceSuccess>
-            <Action ID="Info" message="Rotating through {num_cycles} in {num_repeats} segments"/>
-            <Repeat num_cycles="{num_repeats}">
-                <Sequence name="spin_pi/3">
-                    <Action ID="Info" message="Turning one segment"/>
-                    <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
-                    <Action ID="Math" a="{curr_yaw}" b="2.09" operator="+" out="new_yaw"/>
-                    <Fallback>
-                        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
-                            <Sequence>
-                                <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{new_yaw}"/>
-                                <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
-                                <Condition ID="ApproxEqualToAngle" a="{curr_yaw}" b="{new_yaw}" range="1.04"/>
-                            </Sequence>
-                        </Decorator>
-                        <ForceFailure>
-                            <Action ID="Error" message="Failed to spin: current yaw is {curr_yaw}, but desired is {new_yaw}"/>
-                        </ForceFailure>
-                    </Fallback>
-                </Sequence>
-            </Repeat>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="orig_y"/>
+            <Action ID="Format" format="{target_image}_frame" out="target_frame"/>
+            <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
+            <Action ID="ContinuousSpin" num_cycles="{num_cycles}" yaw_rate="2.0" timeout_secs="90" odom_timeout_secs="1"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurfaceTree">
@@ -1748,11 +1734,6 @@
             <SetBlackboard output_key="pre_table_pose_frame" value="pre_table_pose_frame"/>
             <SetBlackboard output_key="post_table_pose_frame" value="post_table_pose_frame"/>
             <SetBlackboard output_key="target_cov" value="1"/>
-            <ForceSuccess>
-                <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
-            </ForceSuccess>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
             <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="table_w" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <Action ID="GetOdometry" op="" or="" oy="cur_yaw" x="" y="" z=""/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="cur_yaw" x="table_x" y="table_y" z="depth"/>
@@ -1763,11 +1744,9 @@
             <Repeat num_cycles="5">
                 <Action ID="PublishToController" isOrientation="0" mode="3" x="{table_x}" y="{table_y}" z="1"/>
             </Repeat>
-            <Action ID="Wait" seconds="5"/>
+            <Action ID="Wait" seconds="3"/>
             <Action ID="GetOdometry" op="" or="" oy="cur_yaw" x="" y="" z=""/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="cur_yaw" x="table_x" y="table_y" z="depth"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurgeMove">
@@ -1952,7 +1931,6 @@
                 </Repeat>
             </ForceSuccess>
             <Action ID="Info" message="Sorted {num_sorts} items."/>
-            <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="TankLongitudinalFF">
@@ -2125,9 +2103,10 @@
                 </Decorator>
             </ForceSuccess>
             <Action ID="SetStatus" status="aligning"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{dropoff_frame}" x="0" y="0" z="{search_prox}"/>
+            <Action ID="GetOdometry" op="" or="" oy="current_yaw" x="" y="" z=""/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{current_yaw}" reference_frame="{dropoff_frame}" x="0" y="0" z="{search_prox}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{dropoff_frame}" x="0" y="0" z="{overtable}"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="{current_yaw}" reference_frame="{dropoff_frame}" x="0" y="0" z="{overtable}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="bop" or="bor" oy="boy" x="bx" y="by" z="bz"/>
             <ForceSuccess>
                 <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="dropoff_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
@@ -2194,6 +2173,14 @@
             <input_port name="link_name" required="true">link to align</input_port>
             <input_port default="1" name="prox_x" required="true">default x promity</input_port>
             <input_port default="0" name="prox_z" required="true">default z proximity</input_port>
+        </SubTree>
+        <SubTree ID="AlignLinkPositionOnly">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true"/>
+            <input_port name="link_name" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="true"/>
@@ -2305,6 +2292,12 @@
             <input_port name="x" required="true">target x-pos of frameName in world frame</input_port>
             <input_port name="y" required="true">target y-pos of frameName in world frame</input_port>
             <input_port name="z" required="true">target z-pos of frameName in world frame</input_port>
+        </Action>
+        <Action ID="ContinuousSpin">
+            <input_port name="num_cycles" required="true"/>
+            <input_port default="0.5" name="yaw_rate" required="false"/>
+            <input_port default="90" name="timeout_secs" required="false"/>
+            <input_port default="1" name="odom_timeout_secs" required="false"/>
         </Action>
         <SubTree ID="DemoTableTree"/>
         <SubTree ID="DeployTankTree"/>
@@ -2654,6 +2647,7 @@
         <SubTree ID="SpinTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="num_cycles" required="true"/>
+            <input_port name="target_image" required="true"/>
         </SubTree>
         <SubTree ID="SurfaceTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -2755,6 +2749,7 @@
             <input_port name="pickup_center_x" required="false"/>
             <input_port name="pickup_center_y" required="false"/>
             <input_port name="pickup_center_z" required="false"/>
+            <input_port name="pre_overtable" required="false"/>
             <input_port name="reset_threshold" required="false"/>
             <input_port name="search_prox" required="false"/>
             <input_port name="search_timeout" required="false"/>
