@@ -41,11 +41,9 @@
     <BehaviorTree ID="AlignLinkPositionOnly">
         <Sequence name="Position link while holding current orientation">
             <SetBlackboard output_key="15" value="15"/>
-            <!-- Express the link's current orientation in the target frame so its mounting offset is preserved. -->
             <Action ID="TransformPose" from_frame="{link_name}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame_name}" x="0" y="0" z="0"/>
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_name}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame_name}" x="{x}" y="{y}" z="{z}"/>
             <Action ID="PublishToController" isOrientation="1" mode="3" x="{aor}" y="{aop}" z="{aoy}"/>
-            <!-- Keep the depth-first approach, then translate without an orientation-alignment wait. -->
             <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z=""/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="15" x="cx" y="cy" z="az"/>
             <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="ax" y="ay" z="az"/>
@@ -722,8 +720,8 @@
             <Action ID="Info" message="Post imu: {final_imu_y}"/>
             <Action ID="Math" a="{final_imu_y}" b="{pre_imu_y}" operator="-" out="imu_delta"/>
             <Action ID="Math" a="{pre_flip_yaw}" b="{imu_delta}" operator="+" out="post_flip_yaw"/>
-            <Action ID="PublishEKFPose" pitch="{pre_flip_op}" roll="{pre_flip_or}" setOrientation="true" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{pre_flip_z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="undergate_depth"/>
+            <Action ID="PublishEKFPose" orientation_tolerance="0.1" pitch="{pre_flip_op}" position_tolerance="0.1" roll="{pre_flip_or}" setOrientation="true" setX="true" setY="true" setZ="false" timeout_secs="5" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{pre_flip_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="pre_flip_op" or="pre_flip_or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="undergate_depth"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GateTree">
@@ -1004,6 +1002,8 @@
             <SetBlackboard output_key="cycles" value="1"/>
             <Sequence name="Set Object stuff and frames">
                 <SetBlackboard output_key="table" value="table"/>
+                <SetBlackboard output_key="pre_table_pose_frame" value="pre_table_pose_frame"/>
+                <SetBlackboard output_key="post_table_pose_frame" value="post_table_pose_frame"/>
                 <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
                 <SetBlackboard output_key="base_link" value="talos/base_link"/>
                 <SetBlackboard output_key="curr_object" value="bandage"/>
@@ -1014,6 +1014,10 @@
                 <SetBlackboard output_key="curr_image" value="buoy"/>
                 <SetBlackboard output_key="curr_image" value="compass"/>
             </IfThenElse>
+            <Sequence name="Go To Table">
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
+            </Sequence>
             <Sequence name="find table">
                 <ForceSuccess>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
@@ -1093,6 +1097,10 @@
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
             </ForceSuccess>
             <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+            <Sequence name="Leave Table">
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="NotifyTankStartTable">
@@ -1133,7 +1141,7 @@
                 <SetBlackboard name="Positive is right bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_pos}"/>
             </IfThenElse>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_pos" y="slalom_lat_offset" z="0"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="x" y="slalom_lat_offset" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="0" y="slalom_lat_offset" z="0"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_neg" y="slalom_lat_offset" z="0"/>
         </Sequence>
     </BehaviorTree>
@@ -1721,7 +1729,7 @@
             <SetBlackboard output_key="0" value="0"/>
             <Action ID="Format" format="{target_image}_frame" out="target_frame"/>
             <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
-            <Action ID="ContinuousSpin" num_cycles="{num_cycles}" yaw_rate="2.0" timeout_secs="90" odom_timeout_secs="1"/>
+            <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="90" yaw_rate="2.0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurfaceTree">
@@ -2106,11 +2114,8 @@
                 </Decorator>
             </ForceSuccess>
             <Action ID="SetStatus" status="aligning"/>
-            <Action ID="GetOdometry" op="" or="" oy="current_yaw" x="" y="" z=""/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{current_yaw}" reference_frame="{dropoff_frame}" x="0" y="0" z="{search_prox}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="{current_yaw}" reference_frame="{dropoff_frame}" x="0" y="0" z="{overtable}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="bop" or="bor" oy="boy" x="bx" y="by" z="bz"/>
+            <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="dropoff_frame" link_name="claw_link" x="0" y="0" z="search_prox"/>
+            <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="dropoff_frame" link_name="claw_link" x="0" y="0" z="overtable"/>
             <ForceSuccess>
                 <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="dropoff_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
             </ForceSuccess>
@@ -2119,7 +2124,7 @@
             <Action ID="PublishFloat32" data="{claw_drop_s}" topic="{claw_topic}"/>
             <Action ID="Math" a="{claw_open_s}" b="1000" operator="*" out="claw_open_ms"/>
             <Delay delay_msec="20">
-                <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+                <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="dropoff_frame" link_name="claw_link" x="0" y="0" z="search_prox"/>
             </Delay>
             <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
         </Sequence>
@@ -2298,9 +2303,9 @@
         </Action>
         <Action ID="ContinuousSpin">
             <input_port name="num_cycles" required="true"/>
-            <input_port default="0.5" name="yaw_rate" required="false"/>
-            <input_port default="90" name="timeout_secs" required="false"/>
             <input_port default="1" name="odom_timeout_secs" required="false"/>
+            <input_port default="90" name="timeout_secs" required="false"/>
+            <input_port default="0.5" name="yaw_rate" required="false"/>
         </Action>
         <SubTree ID="DemoTableTree"/>
         <SubTree ID="DeployTankTree"/>
@@ -2515,12 +2520,15 @@
             <input_port name="z" required="true"/>
         </SubTree>
         <Action ID="PublishEKFPose">
+            <input_port default="0.1" name="orientation_tolerance" required="false">Reset confirmation tolerance in radians</input_port>
             <input_port default="0" name="pitch" required="false"/>
+            <input_port default="0.1" name="position_tolerance" required="false">Reset confirmation tolerance in meters</input_port>
             <input_port default="0" name="roll" required="false"/>
             <input_port name="setOrientation" required="true"/>
             <input_port name="setX" required="true"/>
             <input_port name="setY" required="true"/>
             <input_port name="setZ" required="true"/>
+            <input_port default="5" name="timeout_secs" required="false">Reset and odometry confirmation timeout in seconds</input_port>
             <input_port default="0" name="x" required="false"/>
             <input_port default="0" name="y" required="false"/>
             <input_port default="0" name="yaw" required="false"/>

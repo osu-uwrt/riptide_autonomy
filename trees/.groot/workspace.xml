@@ -710,7 +710,7 @@
             <Action ID="Info" message="Post imu: {final_imu_y}"/>
             <Action ID="Math" a="{final_imu_y}" b="{pre_imu_y}" operator="-" out="imu_delta"/>
             <Action ID="Math" a="{pre_flip_yaw}" b="{imu_delta}" operator="+" out="post_flip_yaw"/>
-            <Action ID="PublishEKFPose" pitch="{pre_flip_op}" roll="{pre_flip_or}" setOrientation="true" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{pre_flip_z}"/>
+            <Action ID="PublishEKFPose" orientation_tolerance="0.1" pitch="{pre_flip_op}" position_tolerance="0.1" roll="{pre_flip_or}" setOrientation="true" setX="true" setY="true" setZ="false" timeout_secs="5" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{pre_flip_z}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="pre_flip_op" or="pre_flip_or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="undergate_depth"/>
         </Sequence>
     </BehaviorTree>
@@ -1002,6 +1002,10 @@
                 <SetBlackboard output_key="curr_image" value="buoy"/>
                 <SetBlackboard output_key="curr_image" value="compass"/>
             </IfThenElse>
+            <Sequence name="Go To Table">
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
+            </Sequence>
             <Sequence name="find table">
                 <ForceSuccess>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
@@ -1081,6 +1085,10 @@
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
             </ForceSuccess>
             <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+            <Sequence name="Leave Table">
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="NotifyTankStartTable">
@@ -2098,7 +2106,7 @@
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{current_yaw}" reference_frame="{dropoff_frame}" x="0" y="0" z="{search_prox}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="{current_yaw}" reference_frame="{dropoff_frame}" x="0" y="0" z="{overtable}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="bop" or="bor" oy="boy" x="bx" y="by" z="bz"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="bop" or="bor" oy="{current_yaw}" x="bx" y="by" z="bz"/>
             <ForceSuccess>
                 <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="dropoff_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
             </ForceSuccess>
@@ -2502,19 +2510,19 @@
             <input_port name="z" required="true"/>
         </SubTree>
         <Action ID="PublishEKFPose">
+            <input_port default="0.1" name="orientation_tolerance" required="false">Reset confirmation tolerance in radians</input_port>
             <input_port default="0" name="pitch" required="false"/>
+            <input_port default="0.1" name="position_tolerance" required="false">Reset confirmation tolerance in meters</input_port>
             <input_port default="0" name="roll" required="false"/>
             <input_port name="setOrientation" required="true"/>
             <input_port name="setX" required="true"/>
             <input_port name="setY" required="true"/>
             <input_port name="setZ" required="true"/>
+            <input_port default="5" name="timeout_secs" required="false">Reset and odometry confirmation timeout in seconds</input_port>
             <input_port default="0" name="x" required="false"/>
             <input_port default="0" name="y" required="false"/>
             <input_port default="0" name="yaw" required="false"/>
             <input_port default="0" name="z" required="false"/>
-            <input_port default="5" name="timeout_secs" required="false">Reset and odometry confirmation timeout in seconds</input_port>
-            <input_port default="0.1" name="position_tolerance" required="false">Reset confirmation tolerance in meters</input_port>
-            <input_port default="0.1" name="orientation_tolerance" required="false">Reset confirmation tolerance in radians</input_port>
         </Action>
         <Action ID="PublishFloat32">
             <input_port name="data" required="false"/>
