@@ -2109,7 +2109,7 @@
                 <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="dropoff_name" target_cov="target_err" timeout_sec="search_timeout"/>
             </ForceSuccess>
             <ForceSuccess>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="0">
                     <SubTree ID="DownwardMove" __shared_blackboard="false" frame="dropoff_frame" gx="0" gy="0" gz="minisearch_prox" object_name="dropoff_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
                 </Decorator>
             </ForceSuccess>
