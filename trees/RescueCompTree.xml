@@ -1087,9 +1087,12 @@
                     </ForceSuccess>
                 </Sequence>
             </Repeat>
+            <Action ID="Math" a="{az}" b="{minisearch_prox}" operator="+" out="midpoint_move_z"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="secondary_drop_frame" x="ax" y="ay" z="midpoint_move_z"/>
             <ForceSuccess>
                 <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts" target_image="curr_image"/>
             </ForceSuccess>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="secondary_drop_frame" x="ax" y="ay" z="midpoint_move_z"/>
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
             </ForceSuccess>
@@ -1727,6 +1730,8 @@
             <Action ID="Format" format="{target_image}_frame" out="target_frame"/>
             <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
             <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="90" yaw_rate="2.0"/>
+            <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
+            <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="target_image"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurfaceTree">
