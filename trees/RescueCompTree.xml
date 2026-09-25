@@ -1041,6 +1041,9 @@
                 <ForceSuccess>
                     <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
                 </ForceSuccess>
+                <ForceSuccess>
+                    <Action ID="CallTriggerService" srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
+                </ForceSuccess>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="2" value="2"/>
                 <Action ID="TransformPose" from_frame="{curr_drop_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
@@ -1727,10 +1730,17 @@
     <BehaviorTree ID="SpinTree">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="2" value="2"/>
             <Action ID="Format" format="{target_image}_frame" out="target_frame"/>
-            <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
+            <ForceSuccess>
+                <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
+            </ForceSuccess>
+            <Action ID="Wait" seconds="2"/>
             <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="90" yaw_rate="2.0"/>
-            <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
+            <ForceSuccess>
+                <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
+            </ForceSuccess>
+            <Action ID="Wait" seconds="2"/>
             <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="target_image"/>
         </Sequence>
     </BehaviorTree>
