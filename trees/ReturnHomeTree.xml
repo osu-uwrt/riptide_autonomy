@@ -356,8 +356,18 @@
                 <Action ID="GetOdometry" op="" or="" oy="abs_yaw" x="" y="" z=""/>
                 <Action ID="TransformPose" from_frame="odom" op="0" or="0" out_op="" out_or="" out_oy="rel_yaw" out_x="" out_y="" out_z="" oy="{abs_yaw}" to_frame="{frame}" x="0" y="0" z="0"/>
                 <ForceSuccess>
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                    <ReactiveSequence name="go to the initial guess until the object is in view">
+                        <Inverter>
+                            <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                        </Inverter>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                    </ReactiveSequence>
                 </ForceSuccess>
+                <IfThenElse name="object in view: follow it now">
+                    <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                    <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
+                    <AlwaysSuccess/>
+                </IfThenElse>
                 <SetBlackboard name="half the distance you want" output_key="dist" value="{radius_step}"/>
                 <SetBlackboard output_key="link" value="talos/dropper_link"/>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
@@ -367,13 +377,23 @@
                             <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
                             <Action ID="Math" a="{dist}" b="-1" operator="*" out="{ndist}"/>
                             <ForceSuccess>
-                                <Fallback>
-                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                </Fallback>
+                                <ReactiveSequence name="spiral leg until the object is in view">
+                                    <Inverter>
+                                        <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                    </Inverter>
+                                    <Fallback>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    </Fallback>
+                                </ReactiveSequence>
                             </ForceSuccess>
+                            <IfThenElse name="object in view: follow it now">
+                                <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                                <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
+                                <AlwaysSuccess/>
+                            </IfThenElse>
                             <Sequence>
                                 <Action ID="Math" a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
                                 <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
@@ -1577,6 +1597,32 @@
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
+    <BehaviorTree ID="DownwardTrack">
+        <Sequence name="Follow the detection until the estimate converges or it is lost">
+            <Action ID="Info" message="{object_name} in view: following the detection"/>
+            <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+            <SetBlackboard output_key="step_secs" value="0.5"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="30">
+                <Sequence name="re-aim at the latest estimate">
+                    <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                    <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                    <ForceSuccess>
+                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="step_secs" x="ax" y="ay" z="az"/>
+                    </ForceSuccess>
+                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                    <Fallback name="done?">
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="estimate converged" test="&lt;"/>
+                        <Sequence name="lost it">
+                            <Inverter>
+                                <Condition ID="SeenRecently" max_age_secs="3.0" min_score="0.2" object_name="{object_name}"/>
+                            </Inverter>
+                            <Action ID="Info" message="Lost sight of {object_name}; resuming the search"/>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+        </Sequence>
+    </BehaviorTree>
     <TreeNodesModel>
         <SubTree ID="AlignLink">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -2032,6 +2078,18 @@
             <output_port name="Covariance" required="false">Covariance of frame</output_port>
             <input_port name="Target" required="true">Frame to get covariance of</input_port>
         </Action>
+        <SubTree ID="DownwardTrack">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="true"/>
+            <input_port name="min_dist" required="true"/>
+            <input_port name="object_name" required="true"/>
+            <input_port name="target_cov" required="true"/>
+        </SubTree>
+        <Condition ID="SeenRecently">
+            <input_port name="max_age_secs" required="true">Seconds a detection stays fresh</input_port>
+            <input_port name="min_score" required="false">Minimum detection confidence (mapping cutoff 0.2)</input_port>
+            <input_port name="object_name" required="true"/>
+        </Condition>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
