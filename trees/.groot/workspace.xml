@@ -951,7 +951,7 @@
     </BehaviorTree>
     <BehaviorTree ID="NewTableTree">
         <Sequence name="set blackboards">
-            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+            <SetBlackboard output_key="minisearch_prox" value="1.0"/>
             <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -1144,7 +1144,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-2.5"/>
+            <SetBlackboard output_key="max_depth" value="-8"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
@@ -1732,8 +1732,6 @@
             <ForceSuccess>
                 <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
             </ForceSuccess>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
             <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="table_w" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <Action ID="GetOdometry" op="" or="" oy="cur_yaw" x="" y="" z=""/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="cur_yaw" x="table_x" y="table_y" z="depth"/>
@@ -1747,8 +1745,6 @@
             <Action ID="Wait" seconds="5"/>
             <Action ID="GetOdometry" op="" or="" oy="cur_yaw" x="" y="" z=""/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="cur_yaw" x="table_x" y="table_y" z="depth"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurgeMove">
