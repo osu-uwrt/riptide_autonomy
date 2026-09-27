@@ -1184,7 +1184,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-2.5"/>
+            <SetBlackboard output_key="max_depth" value="-6.0"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
