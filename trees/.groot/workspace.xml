@@ -972,7 +972,7 @@
     </BehaviorTree>
     <BehaviorTree ID="NewTableTree">
         <Sequence name="set blackboards">
-            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+            <SetBlackboard output_key="minisearch_prox" value="1.0"/>
             <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -982,9 +982,9 @@
             <SetBlackboard output_key="ctrlr_timeout" value="30"/>
             <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
-            <SetBlackboard output_key="overtable" value="0.0"/>
-            <SetBlackboard output_key="pre_overtable" value="0.15"/>
-            <SetBlackboard output_key="search_prox" value="2"/>
+            <SetBlackboard output_key="overtable" value="0.1"/>
+            <SetBlackboard output_key="pre_overtable" value="0.25"/>
+            <SetBlackboard output_key="search_prox" value="1.0"/>
             <SetBlackboard output_key="target_err" value="0.5"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="reset_threshold" value="1000"/>
