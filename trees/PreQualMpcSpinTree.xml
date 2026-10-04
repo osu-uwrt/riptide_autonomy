@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<root>
+<root main_tree_to_execute="BehaviorTree">
     <BehaviorTree ID="ActivateMagnet">
         <Sequence>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
@@ -56,6 +56,32 @@
                 <Action ID="Info" message="Assertion {aname} ({a} {test} {b}) failed"/>
             </ForceFailure>
         </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence name="PREQUAL MPC SPIN">
+            <SetBlackboard output_key="-1" value="-1"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="SetStatus" status="moving"/>
+            <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
+            <Sequence name="PREQUAL PATH">
+                <SetBlackboard output_key="pole_radius" value="3"/>
+                <SetBlackboard output_key="gate_offset" value="1"/>
+                <SetBlackboard name="Steady spin, rad per metre (x 0.5 m/s cruise = rad/s)" output_key="spin_rate" value="2.5"/>
+                <SetBlackboard output_key="gate_frame" value="prequal_gate_frame"/>
+                <SetBlackboard output_key="pole_frame" value="prequal_pole_frame"/>
+                <Action ID="Info" message="Spinning prequal path in the gate frame (+x toward the start, yaw 3.1415 faces the pole); only the pole position is used"/>
+                <Action ID="TransformPose" from_frame="{pole_frame}" name="pole in gate frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pole_x" out_y="pole_y" out_z="pole_z" oy="0" to_frame="{gate_frame}" x="0" y="0" z="0"/>
+                <Action ID="Math" a="{gate_offset}" b="-1" operator="*" out="neg_gate_offset"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="1 behind gate" out="prequal_path" path="" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="3.1415" yaw_offset="" z="0"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="2 through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="3.1415" yaw_offset="" z="0"/>
+                <Action ID="AddArc" approach="" cx="{pole_x}" cy="{pole_y}" end_radius="" frame="{gate_frame}" heading="look_at" look_x="" look_y="" look_z="" name="3 right of the pole, round behind it to its left, facing it" out="prequal_path" path="{prequal_path}" radius="{pole_radius}" spin="" spin_rate="" start_angle="1.5708" sweep="3.1416" yaw="" yaw_offset="" z="{pole_z}"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_x="" look_y="" look_z="" name="4 front of gate, nose first" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_x="" look_y="" look_z="" name="5 back through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
+                <Action ID="SetStatus" status="performing"/>
+                <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="{spin_rate}" timeout="300" waypoints="{prequal_path}"/>
+            </Sequence>
+            <SubTree ID="KillController"/>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
         <Sequence>
@@ -1018,7 +1044,7 @@
     </BehaviorTree>
     <BehaviorTree ID="NewTableTree">
         <Sequence name="set blackboards">
-            <SetBlackboard output_key="minisearch_prox" value="1.0"/>
+            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
             <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -1028,9 +1054,9 @@
             <SetBlackboard output_key="ctrlr_timeout" value="30"/>
             <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
-            <SetBlackboard output_key="overtable" value="0.1"/>
-            <SetBlackboard output_key="pre_overtable" value="0.25"/>
-            <SetBlackboard output_key="search_prox" value="1.0"/>
+            <SetBlackboard output_key="overtable" value="0.0"/>
+            <SetBlackboard output_key="pre_overtable" value="0.15"/>
+            <SetBlackboard output_key="search_prox" value="2"/>
             <SetBlackboard output_key="target_err" value="0.5"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="reset_threshold" value="1000"/>
@@ -1230,7 +1256,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-6.0"/>
+            <SetBlackboard output_key="max_depth" value="-2.5"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
@@ -2237,11 +2263,49 @@
             </Delay>
         </Sequence>
     </BehaviorTree>
+    <!-- ////////// -->
     <TreeNodesModel>
         <SubTree ID="ActivateMagnet">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="magnet_frame" required="true"/>
         </SubTree>
+        <Action ID="AddArc">
+            <input_port name="approach" required="false"/>
+            <input_port name="cx" required="false"/>
+            <input_port name="cy" required="false"/>
+            <input_port name="end_radius" required="false"/>
+            <input_port name="frame" required="false"/>
+            <input_port name="heading" required="false"/>
+            <input_port name="look_x" required="false"/>
+            <input_port name="look_y" required="false"/>
+            <input_port name="look_z" required="false"/>
+            <output_port name="out" required="false"/>
+            <input_port name="path" required="false"/>
+            <input_port name="radius" required="false"/>
+            <input_port name="spin" required="false"/>
+            <input_port name="spin_rate" required="false"/>
+            <input_port name="start_angle" required="false"/>
+            <input_port name="sweep" required="false"/>
+            <input_port name="yaw" required="false"/>
+            <input_port name="yaw_offset" required="false"/>
+            <input_port name="z" required="false"/>
+        </Action>
+        <Action ID="AddWaypoint">
+            <input_port name="frame" required="false"/>
+            <input_port name="heading" required="false"/>
+            <input_port name="look_x" required="false"/>
+            <input_port name="look_y" required="false"/>
+            <input_port name="look_z" required="false"/>
+            <output_port name="out" required="false"/>
+            <input_port name="path" required="false"/>
+            <input_port name="spin" required="false"/>
+            <input_port name="spin_rate" required="false"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="yaw" required="false"/>
+            <input_port name="yaw_offset" required="false"/>
+            <input_port name="z" required="false"/>
+        </Action>
         <SubTree ID="AlignLink">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="frame_name" required="true">frame to align to</input_port>
@@ -2436,6 +2500,14 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="undergate_depth" required="true"/>
         </SubTree>
+        <Action ID="FollowPath">
+            <input_port name="frame" required="false"/>
+            <input_port name="max_depth" required="false"/>
+            <input_port name="min_depth" required="false"/>
+            <input_port name="spin_rate" required="false"/>
+            <input_port name="timeout" required="false"/>
+            <input_port name="waypoints" required="true"/>
+        </Action>
         <Action ID="Format">
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
@@ -2668,9 +2740,9 @@
             <input_port default="120" name="timeout_secs" required="false">Timeout for search</input_port>
         </SubTree>
         <Condition ID="SeenRecently">
-            <inout_port name="max_age_secs" required="true"/>
-            <inout_port name="min_score" required="true"/>
-            <inout_port name="object_name" required="true"/>
+            <input_port name="max_age_secs" required="true">Seconds a detection stays fresh</input_port>
+            <input_port name="min_score" required="false">Minimum detection confidence (mapping cutoff 0.2)</input_port>
+            <input_port name="object_name" required="true"/>
         </Condition>
         <SubTree ID="SetActiveCamera">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>

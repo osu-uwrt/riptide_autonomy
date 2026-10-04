@@ -14,6 +14,14 @@
  * instead, so one path can span several objects. {blackboard} references are
  * filled in. Depth is clamped to [max_depth, min_depth] in world like
  * PrimitiveMovePosition.
+ *
+ * Options after a waypoint, each "| key=value" (riptide_msgs2/PathSegment; points
+ * in the waypoint's frame), say how the path gets there:
+ *   arc=cx,cy,sweep       round (cx, cy) by sweep rad (+ = counterclockwise from above)
+ *   heading=path|look_at  face the direction of travel / look_at (default: blend to yaw)
+ *   look_at=x,y,z         yaw_offset=rad          spin=rad (extra yaw over the leg)
+ *   spin_rate=rad/m       steady spin per metre (the spin_rate port sets it for every leg)
+ * AddWaypoint and AddArc write these.
  */
 class FollowPath : public UWRTActionNode {
     using Action = riptide_msgs2::action::FollowPath;
@@ -32,10 +40,11 @@ class FollowPath : public UWRTActionNode {
     static BT::PortsList providedPorts() {
         return {
             UwrtInput("frame", "Frame of waypoints without their own (default world)"),
-            UwrtInput("waypoints", "\"x,y,z,yaw; frame: x,y,z,yaw; ...\" (or x,y,z,roll,pitch,yaw); {blackboard} references allowed"),
+            UwrtInput("waypoints", "\"x,y,z,yaw; frame: x,y,z,yaw | arc=cx,cy,sweep; ...\" (or x,y,z,roll,pitch,yaw); {blackboard} references allowed"),
             UwrtInput("min_depth", "Shallowest allowed z in world (default -0.55)"),
             UwrtInput("max_depth", "Deepest allowed z in world (default -4)"),
-            UwrtInput("timeout", "Seconds before giving up (default 60)")
+            UwrtInput("timeout", "Seconds before giving up (default 60)"),
+            UwrtInput("spin_rate", "Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)")
         };
     }
 
@@ -64,6 +73,7 @@ class FollowPath : public UWRTActionNode {
         const std::string text = formatStringWithBlackboard(tryGetRequiredInput<std::string>(this, "waypoints", ""), this);
         minDepth = tryGetOptionalInput<double>(this, "min_depth", -0.55);
         maxDepth = tryGetOptionalInput<double>(this, "max_depth", -4);
+        const double spinRate = tryGetOptionalInput<double>(this, "spin_rate", 0);
         waypointsInFrames.clear();
 
         std::stringstream waypoints(text);
@@ -77,19 +87,16 @@ class FollowPath : public UWRTActionNode {
                 pointFrame.erase(pointFrame.find_last_not_of(" \t\n") + 1);
                 item = item.substr(colon + 1);
             }
+            std::vector<std::string> options;
+            std::stringstream fields(item);
+            std::string field;
+            std::getline(fields, item, '|');
+            while(std::getline(fields, field, '|')) {
+                options.push_back(field);
+            }
             std::vector<double> v;
-            std::stringstream numbers(item);
-            std::string number;
-            while(std::getline(numbers, number, ',')) {
-                if(number.find_first_not_of(" \t\n") == std::string::npos) {
-                    continue;
-                }
-                try {
-                    v.push_back(std::stod(number));
-                } catch(const std::exception&) {
-                    RCLCPP_ERROR(rosnode->get_logger(), "FollowPath: \"%s\" is not a number in \"%s\"", number.c_str(), text.c_str());
-                    return BT::NodeStatus::FAILURE;
-                }
+            if(!parseNumbers(item, v, text)) {
+                return BT::NodeStatus::FAILURE;
             }
             if(v.empty()) {
                 continue;
@@ -108,7 +115,54 @@ class FollowPath : public UWRTActionNode {
             rpy.y = v.size() == 6 ? v[4] : 0;
             rpy.z = v.back();
             pose.orientation = toQuat(rpy);
-            waypointsInFrames.emplace_back(pointFrame, pose);
+
+            Segment segment;
+            segment.msg.spin_rate = spinRate;
+            for(const std::string& option : options) {
+                const size_t equals = option.find('=');
+                std::string key = option.substr(0, equals), value = equals == std::string::npos ? "" : option.substr(equals + 1);
+                key.erase(0, key.find_first_not_of(" \t\n"));
+                key.erase(key.find_last_not_of(" \t\n") + 1);
+                value.erase(0, value.find_first_not_of(" \t\n"));
+                value.erase(value.find_last_not_of(" \t\n") + 1);
+                std::vector<double> numbers;
+                if(key == "heading") {
+                    if(value == "waypoint") {
+                        segment.msg.heading = riptide_msgs2::msg::PathSegment::HEADING_WAYPOINT;
+                    } else if(value == "path") {
+                        segment.msg.heading = riptide_msgs2::msg::PathSegment::HEADING_PATH;
+                    } else if(value == "look_at") {
+                        segment.msg.heading = riptide_msgs2::msg::PathSegment::HEADING_LOOK_AT;
+                    } else {
+                        RCLCPP_ERROR(rosnode->get_logger(), "FollowPath: unknown heading \"%s\"", value.c_str());
+                        return BT::NodeStatus::FAILURE;
+                    }
+                    continue;
+                }
+                if(!parseNumbers(value, numbers, text)) {
+                    return BT::NodeStatus::FAILURE;
+                }
+                if(key == "arc" && numbers.size() == 3) {
+                    segment.msg.shape = riptide_msgs2::msg::PathSegment::ARC;
+                    segment.center.x = numbers[0];
+                    segment.center.y = numbers[1];
+                    segment.msg.sweep = numbers[2];
+                } else if(key == "look_at" && numbers.size() == 3) {
+                    segment.lookAt.x = numbers[0];
+                    segment.lookAt.y = numbers[1];
+                    segment.lookAt.z = numbers[2];
+                } else if(key == "yaw_offset" && numbers.size() == 1) {
+                    segment.msg.yaw_offset = numbers[0];
+                } else if(key == "spin" && numbers.size() == 1) {
+                    segment.msg.spin = numbers[0];
+                } else if(key == "spin_rate" && numbers.size() == 1) {
+                    segment.msg.spin_rate = numbers[0];
+                } else {
+                    RCLCPP_ERROR(rosnode->get_logger(), "FollowPath: bad option \"%s\" in \"%s\"", option.c_str(), text.c_str());
+                    return BT::NodeStatus::FAILURE;
+                }
+            }
+            waypointsInFrames.push_back({pointFrame, pose, segment});
         }
 
         if(waypointsInFrames.empty()) {
@@ -182,26 +236,47 @@ class FollowPath : public UWRTActionNode {
     // Puts every waypoint into world (depth-clamped) once all their frames resolve.
     bool resolveWaypoints() {
         std::vector<geometry_msgs::msg::PoseStamped> points;
-        for(const auto& [frame, local] : waypointsInFrames) {
+        std::vector<riptide_msgs2::msg::PathSegment> segments;
+        for(const auto& [frame, local, segment] : waypointsInFrames) {
             geometry_msgs::msg::Pose pose = local;
+            riptide_msgs2::msg::PathSegment msg = segment.msg;
+            msg.center = segment.center;
+            msg.look_at = segment.lookAt;
             if(frame != "world") {
                 geometry_msgs::msg::TransformStamped transform;
                 if(!lookupTransform(frame, "world", transform)) {
                     return false; // lookupTransform warns (throttled)
                 }
                 pose = doTransform(pose, transform);
+                const auto point = [&](const geometry_msgs::msg::Point& p) {
+                    geometry_msgs::msg::Pose in;
+                    in.position = p;
+                    in.orientation.w = 1;
+                    return doTransform(in, transform).position;
+                };
+                msg.center = point(segment.center);
+                msg.look_at = point(segment.lookAt);
+                // sweep is about the frame's +z; turn it the other way if that points down in world
+                const auto& q = transform.transform.rotation;
+                if(1 - 2 * (q.x * q.x + q.y * q.y) < 0) {
+                    msg.sweep = -msg.sweep;
+                }
             }
             pose.position.z = std::clamp(pose.position.z, maxDepth, minDepth);
+            segments.push_back(msg);
 
             geometry_msgs::msg::PoseStamped point;
             point.header.frame_id = "world";
             point.header.stamp = rosnode->get_clock()->now();
             point.pose = pose;
             points.push_back(point);
-            RCLCPP_INFO(rosnode->get_logger(), "FollowPath waypoint %zu (%s): XYZ %.2f, %.2f, %.2f in world",
-                points.size(), frame.c_str(), pose.position.x, pose.position.y, pose.position.z);
+            static const char* headings[] = {"", ", heading path", ", looking at"};
+            RCLCPP_INFO(rosnode->get_logger(), "FollowPath waypoint %zu (%s): XYZ %.2f, %.2f, %.2f in world%s%s",
+                points.size(), frame.c_str(), pose.position.x, pose.position.y, pose.position.z,
+                msg.shape == riptide_msgs2::msg::PathSegment::ARC ? ", arc" : "", headings[std::min<int>(msg.heading, 2)]);
         }
         goal.path_points = points;
+        goal.segments = segments;
         return true;
     }
 
@@ -218,6 +293,33 @@ class FollowPath : public UWRTActionNode {
         goalFuture = {};
     }
 
+    bool parseNumbers(const std::string& item, std::vector<double>& v, const std::string& text) {
+        std::stringstream numbers(item);
+        std::string number;
+        while(std::getline(numbers, number, ',')) {
+            if(number.find_first_not_of(" \t\n") == std::string::npos) {
+                continue;
+            }
+            try {
+                v.push_back(std::stod(number));
+            } catch(const std::exception&) {
+                RCLCPP_ERROR(rosnode->get_logger(), "FollowPath: \"%s\" is not a number in \"%s\"", number.c_str(), text.c_str());
+                return false;
+            }
+        }
+        return true;
+    }
+
+    struct Segment {
+        riptide_msgs2::msg::PathSegment msg; // points filled in once resolved into world
+        geometry_msgs::msg::Point center, lookAt; // in the waypoint's frame
+    };
+    struct WaypointInFrame {
+        std::string frame;
+        geometry_msgs::msg::Pose pose;
+        Segment segment;
+    };
+
     rclcpp_action::Client<Action>::SharedPtr client;
     Action::Goal goal;
     std::shared_future<GoalHandle::SharedPtr> goalFuture;
@@ -225,5 +327,5 @@ class FollowPath : public UWRTActionNode {
     std::shared_future<GoalHandle::WrappedResult> resultFuture;
     rclcpp::Time startTime;
     double timeout = 60, minDepth = -0.55, maxDepth = -4;
-    std::vector<std::pair<std::string, geometry_msgs::msg::Pose>> waypointsInFrames;
+    std::vector<WaypointInFrame> waypointsInFrames;
 };
