@@ -604,8 +604,18 @@
                 <Action ID="TransformPose" from_frame="odom" op="0" or="0" out_op="" out_or="" out_oy="rel_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
                 <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="before_x" out_y="before_y" out_z="before_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
                 <ForceSuccess>
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                    <ReactiveSequence name="go to the initial guess until the object is in view">
+                        <Inverter>
+                            <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                        </Inverter>
+                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                    </ReactiveSequence>
                 </ForceSuccess>
+                <IfThenElse name="object in view: follow it now">
+                    <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                    <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
+                    <AlwaysSuccess/>
+                </IfThenElse>
                 <SetBlackboard name="half the distance you want" output_key="dist" value="{radius_step}"/>
                 <SetBlackboard output_key="link" value="talos/dropper_link"/>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
@@ -614,13 +624,23 @@
                             <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
                             <Action ID="Math" a="{dist}" b="-1" operator="*" out="{ndist}"/>
                             <ForceSuccess>
-                                <Fallback>
-                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                </Fallback>
+                                <ReactiveSequence name="spiral leg until the object is in view">
+                                    <Inverter>
+                                        <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                    </Inverter>
+                                    <Fallback>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    </Fallback>
+                                </ReactiveSequence>
                             </ForceSuccess>
+                            <IfThenElse name="object in view: follow it now">
+                                <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                                <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
+                                <AlwaysSuccess/>
+                            </IfThenElse>
                             <Sequence>
                                 <Action ID="Math" a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
                                 <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
