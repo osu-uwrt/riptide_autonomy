@@ -98,3 +98,34 @@ TEST_F(BtTest, test_AddWaypoint_empty_ports_are_defaults) {
     ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
     ASSERT_EQ(out, "1,2,-1,0;");
 }
+
+// look_frame: faces that frame's origin (followed live by the controller), heading look_at implied.
+TEST_F(BtTest, test_AddArc_look_frame_defaults_to_its_origin) {
+    BT::NodeConfiguration cfg;
+    cfg.input_ports["frame"] = "g";
+    cfg.input_ports["cx"] = "-10";
+    cfg.input_ports["cy"] = "0";
+    cfg.input_ports["radius"] = "3";
+    cfg.input_ports["start_angle"] = "0";
+    cfg.input_ports["sweep"] = "1.5707963267948966";
+    cfg.input_ports["z"] = "-1.5";
+    cfg.input_ports["look_frame"] = "pole_frame";
+    auto node = toolNode->createLeafNodeFromConfig("AddArc", cfg);
+    ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
+    std::string out;
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    const std::string look = " | heading=look_at | look_at=0,0,0 | look_frame=pole_frame;";
+    ASSERT_EQ(out.find("g: -7,0,-1.5,0" + look), 0u) << out;
+    ASSERT_NE(out.find("| arc=-10,0,1.570796327" + look), std::string::npos) << out;
+}
+
+TEST_F(BtTest, test_AddWaypoint_look_frame_needs_look_at) {
+    BT::NodeConfiguration cfg;
+    cfg.input_ports["x"] = "1";
+    cfg.input_ports["y"] = "2";
+    cfg.input_ports["z"] = "-1";
+    cfg.input_ports["heading"] = "path";
+    cfg.input_ports["look_frame"] = "pole_frame";
+    auto node = toolNode->createLeafNodeFromConfig("AddWaypoint", cfg);
+    ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::FAILURE);
+}

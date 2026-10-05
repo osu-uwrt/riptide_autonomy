@@ -128,11 +128,17 @@ void beginWaypoint(UwrtBtNode& n, std::ostringstream& out, const std::string& fr
 }
 
 // The heading options (" | heading=..."), from the node's heading ports. look_x/y/z
-// default to `look` (the arc centre for AddArc).
+// default to `look` (the arc centre for AddArc), or to look_frame's origin when set.
 bool appendHeading(UwrtBtNode& n, std::ostringstream& out, const double look[3]) {
-    const std::string heading = tryGetOptionalInput<std::string>(&n, "heading", "waypoint");
+    const std::string lookFrame = tryGetOptionalInput<std::string>(&n, "look_frame", "");
+    const std::string heading = tryGetOptionalInput<std::string>(&n, "heading", lookFrame.empty() ? "waypoint" : "look_at");
     if(heading != "waypoint" && heading != "path" && heading != "look_at") {
         RCLCPP_ERROR(n.rosNode()->get_logger(), "%s: heading must be waypoint, path or look_at, not \"%s\"",
+            n.treeNode()->name().c_str(), heading.c_str());
+        return false;
+    }
+    if(!lookFrame.empty() && heading != "look_at") {
+        RCLCPP_ERROR(n.rosNode()->get_logger(), "%s: look_frame needs heading look_at, not \"%s\"",
             n.treeNode()->name().c_str(), heading.c_str());
         return false;
     }
@@ -140,9 +146,14 @@ bool appendHeading(UwrtBtNode& n, std::ostringstream& out, const double look[3])
         out << " | heading=" << heading;
     }
     if(heading == "look_at") {
-        out << " | look_at=" << tryGetOptionalInput<double>(&n, "look_x", look[0]) << ","
-            << tryGetOptionalInput<double>(&n, "look_y", look[1]) << ","
-            << tryGetOptionalInput<double>(&n, "look_z", look[2]);
+        const double origin[3] = {0, 0, 0};
+        const double* at = lookFrame.empty() ? look : origin;
+        out << " | look_at=" << tryGetOptionalInput<double>(&n, "look_x", at[0]) << ","
+            << tryGetOptionalInput<double>(&n, "look_y", at[1]) << ","
+            << tryGetOptionalInput<double>(&n, "look_z", at[2]);
+        if(!lookFrame.empty()) {
+            out << " | look_frame=" << lookFrame;
+        }
     }
     const double yawOffset = tryGetOptionalInput<double>(&n, "yaw_offset", 0), spin = tryGetOptionalInput<double>(&n, "spin", 0);
     if(yawOffset != 0) {
@@ -315,9 +326,10 @@ void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
             UwrtInput("z"),
             UwrtInput("yaw", "End yaw for heading waypoint (default 0)"),
             UwrtInput("heading", "waypoint (default: blend to yaw), path (face travel) or look_at"),
-            UwrtInput("look_x", "look_at point in frame (default 0)"),
-            UwrtInput("look_y", "look_at point in frame (default 0)"),
-            UwrtInput("look_z", "look_at point in frame (default 0)"),
+            UwrtInput("look_frame", "Face this TF frame, followed live as it moves (sets heading look_at)"),
+            UwrtInput("look_x", "look_at point in frame, or in look_frame (default 0)"),
+            UwrtInput("look_y", "look_at point in frame, or in look_frame (default 0)"),
+            UwrtInput("look_z", "look_at point in frame, or in look_frame (default 0)"),
             UwrtInput("yaw_offset", "Added to path / look_at yaw (default 0)"),
             UwrtInput("spin", "Extra yaw over this leg, 6.283 = one turn (default 0)"),
             UwrtInput("spin_rate", "Steady spin on this leg, rad per metre (default 0)"),
@@ -341,10 +353,11 @@ void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
             UwrtInput("end_radius", "Radius at the end (default radius; differs = spiral)"),
             UwrtInput("approach", "false: start from the previous point, no line to the arc (default true)"),
             UwrtInput("yaw", "End yaw for heading waypoint (default 0)"),
-            UwrtInput("heading", "waypoint (default), path (face travel) or look_at"),
-            UwrtInput("look_x", "look_at point in frame (default: the centre)"),
-            UwrtInput("look_y", "look_at point in frame (default: the centre)"),
-            UwrtInput("look_z", "look_at point in frame (default: z)"),
+            UwrtInput("heading", "waypoint (default), path (face travel) or look_at; also the approach line's"),
+            UwrtInput("look_frame", "Face this TF frame, followed live as it moves (sets heading look_at)"),
+            UwrtInput("look_x", "look_at point in frame (default: the centre), or in look_frame (default 0)"),
+            UwrtInput("look_y", "look_at point in frame (default: the centre), or in look_frame (default 0)"),
+            UwrtInput("look_z", "look_at point in frame (default: z), or in look_frame (default 0)"),
             UwrtInput("yaw_offset", "Added to path / look_at yaw (default 0)"),
             UwrtInput("spin", "Extra yaw over the arc, 6.283 = one turn (default 0)"),
             UwrtInput("spin_rate", "Steady spin on the arc, rad per metre (default 0)"),

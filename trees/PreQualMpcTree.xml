@@ -61,23 +61,27 @@
         <Sequence name="PREQUAL MPC">
             <SetBlackboard output_key="-1" value="-1"/>
             <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="SetMappingTarget" lock_map="1" name="Lock the map" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="moving"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
             <Sequence name="PREQUAL PATH">
                 <SetBlackboard output_key="pole_radius" value="3"/>
                 <SetBlackboard output_key="gate_offset" value="1"/>
+                <SetBlackboard output_key="spin_rate" value="2.0"/>
                 <SetBlackboard output_key="gate_frame" value="prequal_gate_frame"/>
                 <SetBlackboard output_key="pole_frame" value="prequal_pole_frame"/>
                 <Action ID="Info" message="Prequal path in the gate frame (+x toward the start, yaw 3.1415 faces the pole); only the pole position is used"/>
-                <Action ID="TransformPose" name="pole in gate frame" from_frame="{pole_frame}" to_frame="{gate_frame}" x="0" y="0" z="0" or="0" op="0" oy="0" out_x="pole_x" out_y="pole_y" out_z="pole_z" out_or="" out_op="" out_oy=""/>
+                <Action ID="TransformPose" from_frame="{pole_frame}" name="pole in gate frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pole_x" out_y="pole_y" out_z="pole_z" oy="0" to_frame="{gate_frame}" x="0" y="0" z="0"/>
                 <Action ID="Math" a="{gate_offset}" b="-1" operator="*" out="neg_gate_offset"/>
-                <Action ID="AddWaypoint" name="1 behind gate" frame="{gate_frame}" x="{gate_offset}" y="0" z="0" yaw="3.1415" out="prequal_path"/>
-                <Action ID="AddWaypoint" name="2 through gate" frame="{gate_frame}" path="{prequal_path}" x="{neg_gate_offset}" y="0" z="0" yaw="3.1415" out="prequal_path"/>
-                <Action ID="AddArc" name="3 right of the pole, round behind it to its left, facing it" frame="{gate_frame}" path="{prequal_path}" cx="{pole_x}" cy="{pole_y}" radius="{pole_radius}" start_angle="1.5708" sweep="3.1416" z="{pole_z}" heading="look_at" out="prequal_path"/>
-                <Action ID="AddWaypoint" name="4 front of gate, nose first" frame="{gate_frame}" path="{prequal_path}" x="{neg_gate_offset}" y="0" z="0" heading="path" out="prequal_path"/>
-                <Action ID="AddWaypoint" name="5 back through gate" frame="{gate_frame}" path="{prequal_path}" x="{gate_offset}" y="0" z="0" heading="path" out="prequal_path"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 behind gate" out="prequal_path" path="" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="3.1415" yaw_offset="" z="0"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="2 through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="3.1415" yaw_offset="" z="0"/>
+                <Action ID="Math" a="{pole_y}" b="{pole_radius}" operator="+" out="arc_start_y"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="3 out to the pole's right, same heading as the gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="{spin_rate}" x="{pole_x}" y="{arc_start_y}" yaw="3.1415" yaw_offset="" z="{pole_z}"/>
+                <Action ID="AddArc" approach="false" cx="{pole_x}" cy="{pole_y}" end_radius="" frame="{gate_frame}" heading="" look_frame="{pole_frame}" look_x="" look_y="" look_z="" name="4 round behind the pole to its left, facing it" out="prequal_path" path="{prequal_path}" radius="{pole_radius}" spin="" spin_rate="" start_angle="1.5708" sweep="3.1416" yaw="" yaw_offset="" z="{pole_z}"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="5 front of gate, nose first" out="prequal_path" path="{prequal_path}" spin="" spin_rate="{spin_rate}" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="6 back through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="SetStatus" status="performing"/>
-                <Action ID="FollowPath" timeout="300" waypoints="{prequal_path}"/>
+                <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="300" waypoints="{prequal_path}"/>
             </Sequence>
             <SubTree ID="KillController"/>
         </Sequence>
@@ -1043,7 +1047,7 @@
     </BehaviorTree>
     <BehaviorTree ID="NewTableTree">
         <Sequence name="set blackboards">
-            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+            <SetBlackboard output_key="minisearch_prox" value="1.0"/>
             <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -1053,9 +1057,9 @@
             <SetBlackboard output_key="ctrlr_timeout" value="30"/>
             <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
-            <SetBlackboard output_key="overtable" value="0.0"/>
-            <SetBlackboard output_key="pre_overtable" value="0.15"/>
-            <SetBlackboard output_key="search_prox" value="2"/>
+            <SetBlackboard output_key="overtable" value="0.1"/>
+            <SetBlackboard output_key="pre_overtable" value="0.25"/>
+            <SetBlackboard output_key="search_prox" value="1.0"/>
             <SetBlackboard output_key="target_err" value="0.5"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="reset_threshold" value="1000"/>
@@ -1255,7 +1259,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-2.5"/>
+            <SetBlackboard output_key="max_depth" value="-6.0"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
@@ -2270,40 +2274,42 @@
         </SubTree>
         <Action ID="AddArc">
             <input_port name="approach" required="false"/>
-            <input_port name="cx"/>
-            <input_port name="cy"/>
+            <input_port name="cx" required="false"/>
+            <input_port name="cy" required="false"/>
             <input_port name="end_radius" required="false"/>
             <input_port name="frame" required="false"/>
             <input_port name="heading" required="false"/>
+            <input_port name="look_frame" required="false"/>
             <input_port name="look_x" required="false"/>
             <input_port name="look_y" required="false"/>
             <input_port name="look_z" required="false"/>
-            <output_port name="out"/>
+            <output_port name="out" required="false"/>
             <input_port name="path" required="false"/>
-            <input_port name="radius"/>
+            <input_port name="radius" required="false"/>
             <input_port name="spin" required="false"/>
             <input_port name="spin_rate" required="false"/>
-            <input_port name="start_angle"/>
-            <input_port name="sweep"/>
+            <input_port name="start_angle" required="false"/>
+            <input_port name="sweep" required="false"/>
             <input_port name="yaw" required="false"/>
             <input_port name="yaw_offset" required="false"/>
-            <input_port name="z"/>
+            <input_port name="z" required="false"/>
         </Action>
         <Action ID="AddWaypoint">
             <input_port name="frame" required="false"/>
             <input_port name="heading" required="false"/>
+            <input_port name="look_frame" required="false"/>
             <input_port name="look_x" required="false"/>
             <input_port name="look_y" required="false"/>
             <input_port name="look_z" required="false"/>
-            <output_port name="out"/>
+            <output_port name="out" required="false"/>
             <input_port name="path" required="false"/>
             <input_port name="spin" required="false"/>
             <input_port name="spin_rate" required="false"/>
-            <input_port name="x"/>
-            <input_port name="y"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
             <input_port name="yaw" required="false"/>
             <input_port name="yaw_offset" required="false"/>
-            <input_port name="z"/>
+            <input_port name="z" required="false"/>
         </Action>
         <SubTree ID="AlignLink">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>

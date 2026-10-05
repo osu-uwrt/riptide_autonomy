@@ -20,6 +20,8 @@
  *   arc=cx,cy,sweep       round (cx, cy) by sweep rad (+ = counterclockwise from above)
  *   heading=path|look_at  face the direction of travel / look_at (default: blend to yaw)
  *   look_at=x,y,z         yaw_offset=rad          spin=rad (extra yaw over the leg)
+ *   look_frame=frame      look_at is in this TF frame (default its origin) and the
+ *                         controller keeps facing it as it moves; implies heading=look_at
  *   spin_rate=rad/m       steady spin per metre (the spin_rate port sets it for every leg)
  * AddWaypoint and AddArc write these.
  */
@@ -118,6 +120,7 @@ class FollowPath : public UWRTActionNode {
 
             Segment segment;
             segment.msg.spin_rate = spinRate;
+            bool headingSet = false;
             for(const std::string& option : options) {
                 const size_t equals = option.find('=');
                 std::string key = option.substr(0, equals), value = equals == std::string::npos ? "" : option.substr(equals + 1);
@@ -126,7 +129,12 @@ class FollowPath : public UWRTActionNode {
                 value.erase(0, value.find_first_not_of(" \t\n"));
                 value.erase(value.find_last_not_of(" \t\n") + 1);
                 std::vector<double> numbers;
+                if(key == "look_frame") {
+                    segment.lookFrame = value;
+                    continue;
+                }
                 if(key == "heading") {
+                    headingSet = true;
                     if(value == "waypoint") {
                         segment.msg.heading = riptide_msgs2::msg::PathSegment::HEADING_WAYPOINT;
                     } else if(value == "path") {
@@ -159,6 +167,14 @@ class FollowPath : public UWRTActionNode {
                     segment.msg.spin_rate = numbers[0];
                 } else {
                     RCLCPP_ERROR(rosnode->get_logger(), "FollowPath: bad option \"%s\" in \"%s\"", option.c_str(), text.c_str());
+                    return BT::NodeStatus::FAILURE;
+                }
+            }
+            if(!segment.lookFrame.empty()) {
+                if(!headingSet) {
+                    segment.msg.heading = riptide_msgs2::msg::PathSegment::HEADING_LOOK_AT;
+                } else if(segment.msg.heading != riptide_msgs2::msg::PathSegment::HEADING_LOOK_AT) {
+                    RCLCPP_ERROR(rosnode->get_logger(), "FollowPath: look_frame needs heading=look_at in \"%s\"", text.c_str());
                     return BT::NodeStatus::FAILURE;
                 }
             }
@@ -242,6 +258,7 @@ class FollowPath : public UWRTActionNode {
             riptide_msgs2::msg::PathSegment msg = segment.msg;
             msg.center = segment.center;
             msg.look_at = segment.lookAt;
+            msg.look_at_frame = segment.lookFrame; // the controller resolves it, live
             if(frame != "world") {
                 geometry_msgs::msg::TransformStamped transform;
                 if(!lookupTransform(frame, "world", transform)) {
@@ -255,7 +272,9 @@ class FollowPath : public UWRTActionNode {
                     return doTransform(in, transform).position;
                 };
                 msg.center = point(segment.center);
-                msg.look_at = point(segment.lookAt);
+                if(segment.lookFrame.empty()) {
+                    msg.look_at = point(segment.lookAt);
+                }
                 // sweep is about the frame's +z; turn it the other way if that points down in world
                 const auto& q = transform.transform.rotation;
                 if(1 - 2 * (q.x * q.x + q.y * q.y) < 0) {
@@ -271,9 +290,10 @@ class FollowPath : public UWRTActionNode {
             point.pose = pose;
             points.push_back(point);
             static const char* headings[] = {"", ", heading path", ", looking at"};
-            RCLCPP_INFO(rosnode->get_logger(), "FollowPath waypoint %zu (%s): XYZ %.2f, %.2f, %.2f in world%s%s",
+            RCLCPP_INFO(rosnode->get_logger(), "FollowPath waypoint %zu (%s): XYZ %.2f, %.2f, %.2f in world%s%s%s%s",
                 points.size(), frame.c_str(), pose.position.x, pose.position.y, pose.position.z,
-                msg.shape == riptide_msgs2::msg::PathSegment::ARC ? ", arc" : "", headings[std::min<int>(msg.heading, 2)]);
+                msg.shape == riptide_msgs2::msg::PathSegment::ARC ? ", arc" : "", headings[std::min<int>(msg.heading, 2)],
+                msg.look_at_frame.empty() ? "" : " ", msg.look_at_frame.c_str());
         }
         goal.path_points = points;
         goal.segments = segments;
@@ -312,7 +332,8 @@ class FollowPath : public UWRTActionNode {
 
     struct Segment {
         riptide_msgs2::msg::PathSegment msg; // points filled in once resolved into world
-        geometry_msgs::msg::Point center, lookAt; // in the waypoint's frame
+        geometry_msgs::msg::Point center, lookAt; // in the waypoint's frame (lookAt: in lookFrame if set)
+        std::string lookFrame;
     };
     struct WaypointInFrame {
         std::string frame;

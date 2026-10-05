@@ -61,6 +61,7 @@
         <Sequence name="PREQUAL MPC SPIN">
             <SetBlackboard output_key="-1" value="-1"/>
             <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="SetMappingTarget" name="Lock the map" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="moving"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="-1"/>
             <Sequence name="PREQUAL PATH">
@@ -2276,6 +2277,7 @@
             <input_port name="end_radius" required="false"/>
             <input_port name="frame" required="false"/>
             <input_port name="heading" required="false"/>
+            <input_port name="look_frame" required="false"/>
             <input_port name="look_x" required="false"/>
             <input_port name="look_y" required="false"/>
             <input_port name="look_z" required="false"/>
@@ -2293,6 +2295,7 @@
         <Action ID="AddWaypoint">
             <input_port name="frame" required="false"/>
             <input_port name="heading" required="false"/>
+            <input_port name="look_frame" required="false"/>
             <input_port name="look_x" required="false"/>
             <input_port name="look_y" required="false"/>
             <input_port name="look_z" required="false"/>
