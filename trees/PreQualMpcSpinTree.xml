@@ -66,7 +66,7 @@
             <Sequence name="PREQUAL PATH">
                 <SetBlackboard output_key="pole_radius" value="3"/>
                 <SetBlackboard output_key="gate_offset" value="1"/>
-                <SetBlackboard name="Steady spin, rad per metre (x 0.5 m/s cruise = rad/s)" output_key="spin_rate" value="2.5"/>
+                <SetBlackboard name="Steady spin, rad per metre (x 0.5 m/s cruise = rad/s)" output_key="spin_rate" value="2.0"/>
                 <SetBlackboard output_key="gate_frame" value="prequal_gate_frame"/>
                 <SetBlackboard output_key="pole_frame" value="prequal_pole_frame"/>
                 <Action ID="Info" message="Spinning prequal path in the gate frame (+x toward the start, yaw 3.1415 faces the pole); only the pole position is used"/>
@@ -74,9 +74,9 @@
                 <Action ID="Math" a="{gate_offset}" b="-1" operator="*" out="neg_gate_offset"/>
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="1 behind gate" out="prequal_path" path="" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="3.1415" yaw_offset="" z="0"/>
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="2 through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="3.1415" yaw_offset="" z="0"/>
-                <Action ID="AddArc" approach="" cx="{pole_x}" cy="{pole_y}" end_radius="" frame="{gate_frame}" heading="look_at" look_x="" look_y="" look_z="" name="3 right of the pole, round behind it to its left, facing it" out="prequal_path" path="{prequal_path}" radius="{pole_radius}" spin="" spin_rate="" start_angle="1.5708" sweep="3.1416" yaw="" yaw_offset="" z="{pole_z}"/>
-                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_x="" look_y="" look_z="" name="4 front of gate, nose first" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
-                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_x="" look_y="" look_z="" name="5 back through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
+                <Action ID="AddArc" approach="" cx="{pole_x}" cy="{pole_y}" end_radius="" frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="3 right of the pole, round behind it to its left, facing it" out="prequal_path" path="{prequal_path}" radius="{pole_radius}" spin="" spin_rate="" start_angle="1.5708" sweep="3.1416" yaw="" yaw_offset="" z="{pole_z}"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="4 front of gate, nose first" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="5 back through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="SetStatus" status="performing"/>
                 <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="{spin_rate}" timeout="300" waypoints="{prequal_path}"/>
             </Sequence>
@@ -1044,7 +1044,7 @@
     </BehaviorTree>
     <BehaviorTree ID="NewTableTree">
         <Sequence name="set blackboards">
-            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+            <SetBlackboard output_key="minisearch_prox" value="1.0"/>
             <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -1054,9 +1054,9 @@
             <SetBlackboard output_key="ctrlr_timeout" value="30"/>
             <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
-            <SetBlackboard output_key="overtable" value="0.0"/>
-            <SetBlackboard output_key="pre_overtable" value="0.15"/>
-            <SetBlackboard output_key="search_prox" value="2"/>
+            <SetBlackboard output_key="overtable" value="0.1"/>
+            <SetBlackboard output_key="pre_overtable" value="0.25"/>
+            <SetBlackboard output_key="search_prox" value="1.0"/>
             <SetBlackboard output_key="target_err" value="0.5"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="reset_threshold" value="1000"/>
@@ -1256,7 +1256,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-2.5"/>
+            <SetBlackboard output_key="max_depth" value="-6.0"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
