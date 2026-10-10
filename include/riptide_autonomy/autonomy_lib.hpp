@@ -197,14 +197,15 @@ void postOutput(UwrtBtNode *n, const std::string& key, T value) {
  * @tparam T The type of the port value to get.
  * @param n The node to get the port value of.
  * @param key The key of the port.
- * @param defaultValue The value to return if the key does not have a value
+ * @param defaultValue The value to return if the key does not have a value (or it is empty)
  * @param warnIfUndefined True if a warning should be printed if the key doesn't exist
  * @return T The value of the port or the default if there is none.
  */
 template<typename T> 
 T tryGetInput(UwrtBtNode *n, const std::string& key, const T defaultValue, bool warnIfUndefined) {
     auto op = n->treeNode()->getInput<std::string>(key);
-    if(op.has_value()) {
+    // Groot saves every port, unset ones as "": empty means use the default too.
+    if(op.has_value() && !op.value().empty()) {
         return BT::convertFromString<T>(op.value());
     } else if(warnIfUndefined) {
         RCLCPP_WARN(n->rosNode()->get_logger(), "Node %s does not have a value for required port with name %s!", n->treeNode()->name().c_str(), key.c_str());

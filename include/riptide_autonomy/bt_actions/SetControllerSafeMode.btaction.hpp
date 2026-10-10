@@ -40,6 +40,16 @@ class SetControllerSafeMode : public UWRTActionNode {
             }
         }
 
+        // The MPC controller takes the same safe-mode parameter
+        if(controllerNodeName == ""){
+            const std::string mpcSuffix = "/mpc_controller";
+            for(const std::string& name : nodeNames) {
+                if(name.size() >= mpcSuffix.size() && name.compare(name.size() - mpcSuffix.size(), mpcSuffix.size(), mpcSuffix) == 0) {
+                    controllerNodeName = name;
+                }
+            }
+        }
+
         if(controllerNodeName != ""){
             asyncclient = std::make_shared<rclcpp::AsyncParametersClient>(rosnode, controllerNodeName);
         }else{
