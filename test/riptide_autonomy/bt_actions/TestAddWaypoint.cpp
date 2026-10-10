@@ -69,6 +69,22 @@ TEST_F(BtTest, test_AddWaypoint_heading_options) {
     ASSERT_EQ(out, "g: 1,2,-1,0 | heading=look_at | look_at=4,0,0 | spin=6.283;");
 }
 
+// yaw_frame: the point follows pre_bin_pose_frame, the heading is held in world.
+TEST_F(BtTest, test_AddWaypoint_yaw_frame) {
+    BT::NodeConfiguration cfg;
+    cfg.input_ports["frame"] = "pre_bin_pose_frame";
+    cfg.input_ports["x"] = "0";
+    cfg.input_ports["y"] = "0";
+    cfg.input_ports["z"] = "0";
+    cfg.input_ports["yaw"] = "1.5";
+    cfg.input_ports["yaw_frame"] = "world";
+    auto node = toolNode->createLeafNodeFromConfig("AddWaypoint", cfg);
+    ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
+    std::string out;
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_EQ(out, "pre_bin_pose_frame: 0,0,0,1.5 | yaw_frame=world;");
+}
+
 TEST_F(BtTest, test_AddWaypoint_bad_heading) {
     BT::NodeConfiguration cfg;
     cfg.input_ports["x"] = "1";
@@ -103,7 +119,7 @@ TEST_F(BtTest, test_AddArc_approach_then_arc_looking_at_centre) {
 // Groot saves unset ports as "": they must mean the defaults.
 TEST_F(BtTest, test_AddWaypoint_empty_ports_are_defaults) {
     BT::NodeConfiguration cfg;
-    for (const char *port : {"path", "frame", "yaw", "heading", "look_x", "look_y", "look_z", "yaw_offset", "spin", "spin_rate"})
+    for (const char *port : {"path", "frame", "yaw", "heading", "look_x", "look_y", "look_z", "yaw_offset", "spin", "spin_rate", "yaw_frame"})
         cfg.input_ports[port] = "";
     cfg.input_ports["x"] = "1";
     cfg.input_ports["y"] = "2";

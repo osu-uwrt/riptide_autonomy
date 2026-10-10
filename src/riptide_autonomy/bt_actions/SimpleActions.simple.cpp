@@ -166,6 +166,10 @@ bool appendHeading(UwrtBtNode& n, std::ostringstream& out, const double look[3])
     if(spinRate != 0) {
         out << " | spin_rate=" << spinRate;
     }
+    const std::string yawFrame = tryGetOptionalInput<std::string>(&n, "yaw_frame", "");
+    if(!yawFrame.empty()) {
+        out << " | yaw_frame=" << yawFrame;
+    }
     return true;
 }
 } // namespace
@@ -342,6 +346,7 @@ void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
             UwrtInput("yaw_offset", "Added to path / look_at yaw (default 0)"),
             UwrtInput("spin", "Extra yaw over this leg, 6.283 = one turn (default 0)"),
             UwrtInput("spin_rate", "Steady spin on this leg, rad per metre (default 0)"),
+            UwrtInput("yaw_frame", "roll/pitch/yaw are in this frame instead of frame (e.g. world: hold a world heading)"),
             UwrtOutput("out", "Path with this waypoint appended")
         }
     );
@@ -370,6 +375,7 @@ void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
             UwrtInput("yaw_offset", "Added to path / look_at yaw (default 0)"),
             UwrtInput("spin", "Extra yaw over the arc, 6.283 = one turn (default 0)"),
             UwrtInput("spin_rate", "Steady spin on the arc, rad per metre (default 0)"),
+            UwrtInput("yaw_frame", "End yaw is in this frame instead of frame (e.g. world)"),
             UwrtOutput("out", "Path with the arc appended")
         }
     );
