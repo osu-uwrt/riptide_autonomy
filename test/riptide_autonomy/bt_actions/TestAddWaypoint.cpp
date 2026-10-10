@@ -37,6 +37,22 @@ TEST_F(BtTest, test_AddWaypoint_append_without_semicolon) {
     ASSERT_EQ(addWaypointTest(toolNode, "0,0,0,0", ""), "0,0,0,0; 1,-2.5,0,3.1415;");
 }
 
+TEST_F(BtTest, test_AddWaypoint_roll_pitch) {
+    BT::NodeConfiguration cfg;
+    cfg.input_ports["frame"] = "talos/base_link";
+    cfg.input_ports["x"] = "0";
+    cfg.input_ports["y"] = "0";
+    cfg.input_ports["z"] = "0";
+    cfg.input_ports["roll"] = "3.1416";
+    cfg.input_ports["pitch"] = "-0.7854";
+    cfg.input_ports["yaw"] = "1.5708";
+    auto node = toolNode->createLeafNodeFromConfig("AddWaypoint", cfg);
+    ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
+    std::string out;
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_EQ(out, "talos/base_link: 0,0,0,3.1416,-0.7854,1.5708;");
+}
+
 TEST_F(BtTest, test_AddWaypoint_heading_options) {
     BT::NodeConfiguration cfg;
     cfg.input_ports["frame"] = "g";

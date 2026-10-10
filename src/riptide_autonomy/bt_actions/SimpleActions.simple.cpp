@@ -173,7 +173,8 @@ bool appendHeading(UwrtBtNode& n, std::ostringstream& out, const double look[3])
 /**
  * @brief Appends one "frame: x,y,z,yaw;" waypoint to a FollowPath waypoint string, so a long
  * path can be built one readable node per waypoint. Optional heading ports choose how the
- * vehicle faces on the way there (see riptide_msgs2/PathSegment).
+ * vehicle faces on the way there (see riptide_msgs2/PathSegment). A nonzero roll or pitch
+ * writes "x,y,z,roll,pitch,yaw" instead.
  *
  * @param n The BehaviorTree node.
  * @return BT::NodeStatus return status
@@ -184,11 +185,17 @@ BT::NodeStatus addWaypoint(UwrtBtNode& n) {
         x = tryGetRequiredInput<double>(&n, "x", 0),
         y = tryGetRequiredInput<double>(&n, "y", 0),
         z = tryGetRequiredInput<double>(&n, "z", 0),
+        roll = tryGetOptionalInput<double>(&n, "roll", 0),
+        pitch = tryGetOptionalInput<double>(&n, "pitch", 0),
         yaw = tryGetOptionalInput<double>(&n, "yaw", 0);
 
     std::ostringstream waypoint;
     beginWaypoint(n, waypoint, frame);
-    waypoint << x << "," << y << "," << z << "," << yaw;
+    waypoint << x << "," << y << "," << z << ",";
+    if(roll != 0 || pitch != 0) {
+        waypoint << roll << "," << pitch << ",";
+    }
+    waypoint << yaw;
     const double noLook[3] = {0, 0, 0};
     if(!appendHeading(n, waypoint, noLook)) {
         return BT::NodeStatus::FAILURE;
@@ -324,6 +331,8 @@ void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
             UwrtInput("x"),
             UwrtInput("y"),
             UwrtInput("z"),
+            UwrtInput("roll", "Roll at this waypoint (default 0)"),
+            UwrtInput("pitch", "Pitch at this waypoint (default 0)"),
             UwrtInput("yaw", "End yaw for heading waypoint (default 0)"),
             UwrtInput("heading", "waypoint (default: blend to yaw), path (face travel) or look_at"),
             UwrtInput("look_frame", "Face this TF frame, followed live as it moves (sets heading look_at)"),

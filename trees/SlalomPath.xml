@@ -1379,7 +1379,16 @@
                 <SetBlackboard name="Positive is right bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_pos}"/>
             </IfThenElse>
             <Action ID="Info" message="Slalom as one path through the front, middle and back gates"/>
-            <Action ID="FollowPath" timeout="120" waypoints="slalom_front_frame: {slalom_long_offset_pos},{slalom_lat_offset},0,3.1415; slalom_front_frame: 0,{slalom_lat_offset},0,3.1415; slalom_front_frame: {slalom_long_offset_neg},{slalom_lat_offset},0,3.1415; slalom_middle_frame: {slalom_long_offset_pos},{slalom_lat_offset},0,3.1415; slalom_middle_frame: 0,{slalom_lat_offset},0,3.1415; slalom_middle_frame: {slalom_long_offset_neg},{slalom_lat_offset},0,3.1415; slalom_back_frame: {slalom_long_offset_pos},{slalom_lat_offset},0,3.1415; slalom_back_frame: 0,{slalom_lat_offset},0,3.1415; slalom_back_frame: {slalom_long_offset_neg},{slalom_lat_offset},0,3.1415"/>
+            <Action ID="AddWaypoint" frame="slalom_front_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="front gate: before" out="slalom_path" path="" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_pos}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="AddWaypoint" frame="slalom_front_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="front gate: through" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="AddWaypoint" frame="slalom_front_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="front gate: after" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_neg}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="AddWaypoint" frame="slalom_middle_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="middle gate: before" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_pos}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="AddWaypoint" frame="slalom_middle_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="middle gate: through" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="AddWaypoint" frame="slalom_middle_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="middle gate: after" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_neg}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: before" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_pos}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: through" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: after" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_neg}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
+            <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="120" waypoints="{slalom_path}"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">
@@ -1998,10 +2007,30 @@
         </Sequence>
     </BehaviorTree>
     <TreeNodesModel>
+        <Action ID="AddWaypoint">
+            <input_port name="frame" required="false"/>
+            <input_port name="heading" required="false"/>
+            <input_port name="look_frame" required="false"/>
+            <input_port name="look_x" required="false"/>
+            <input_port name="look_y" required="false"/>
+            <input_port name="look_z" required="false"/>
+            <output_port name="out" required="false"/>
+            <input_port name="path" required="false"/>
+            <input_port name="pitch" required="false"/>
+            <input_port name="roll" required="false"/>
+            <input_port name="spin" required="false"/>
+            <input_port name="spin_rate" required="false"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="yaw" required="false"/>
+            <input_port name="yaw_offset" required="false"/>
+            <input_port name="z" required="false"/>
+        </Action>
         <Action ID="FollowPath">
             <input_port name="frame" required="false"/>
             <input_port name="max_depth" required="false"/>
             <input_port name="min_depth" required="false"/>
+            <input_port name="spin_rate" required="false"/>
             <input_port name="timeout" required="false"/>
             <input_port name="waypoints" required="true"/>
         </Action>
