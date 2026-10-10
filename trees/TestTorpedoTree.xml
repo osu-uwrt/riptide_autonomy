@@ -58,13 +58,15 @@
         </Fallback>
     </BehaviorTree>
     <BehaviorTree ID="BehaviorTree">
-        <Sequence name="TABLE">
+        <Sequence name="TEST TORPEDO">
             <SetBlackboard output_key="repair_mission" value="0"/>
-            <SetBlackboard output_key="depth" value="-0.50"/>
+            <SetBlackboard output_key="depth" value="-0.56"/>
+            <SubTree ID="ReloadActuators"/>
             <SubTree ID="WaitForKillSwitch"/>
             <Action ID="SetStatus" status="moving"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
-            <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+            <SubTree ID="TestTorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
+            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="BinTree">
@@ -1571,6 +1573,32 @@
             </RetryUntilSuccessful>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="ShootSearchedObject">
+        <Sequence name="shoot already refined object">
+            <SetBlackboard output_key="ctrler_timeout" value="60"/>
+            <SetBlackboard output_key="scale_trust" value="0.99"/>
+            <SetBlackboard output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboard output_key="shoot_prox" value="0.35"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <Action ID="Format" format="{object_name}_frame" out="frame_to_shoot"/>
+            <Action ID="Info" message="Attempting to shoot object {object_name}"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <ForceSuccess>
+                <RetryUntilSuccessful num_attempts="2">
+                    <Sequence>
+                        <Action ID="Math" a="{shoot_prox}" b="0.5" operator="+" out="shoot_prox_plus"/>
+                        <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox_plus" prox_z="0"/>
+                        <SubTree ID="AlignLink" __shared_blackboard="false" frame_name="frame_to_shoot" link_name="torpedo_link_name" prox_x="shoot_prox" prox_z="0"/>
+                        <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="torpedo_link_name" target_frame="frame_to_shoot" timeout="ctrler_timeout" trust="scale_trust"/>
+                    </Sequence>
+                </RetryUntilSuccessful>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="performing"/>
+            <RetryUntilSuccessful num_attempts="3">
+                <SubTree ID="FireTorpedo"/>
+            </RetryUntilSuccessful>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="SingleSlalom">
         <Sequence>
             <SetBlackboard output_key="srch_angle" value="0.348"/>
@@ -2003,6 +2031,65 @@
                 <Action ID="PublishToController" isOrientation="0" mode="1" x="0" y="0" z="0"/>
             </Repeat>
             <Action ID="Info" message="Done surging."/>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="TestTorpedoTree">
+        <Sequence name="TEST TORPEDO">
+            <SetBlackboard output_key="torpedo" value="torpedo"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="search_timeout" value="60"/>
+            <SetBlackboard output_key="target_cov" value="0.0025"/>
+            <SetBlackboard output_key="min_dist" value="1"/>
+            <SetBlackboard output_key="max_dist" value="2"/>
+            <SetBlackboard output_key="ms_prox" value="1.5"/>
+            <SetBlackboard output_key="ms_timeout" value="30"/>
+            <SetBlackboard output_key="hole_cov" value="0.0005"/>
+            <SetBlackboard output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
+            <SetBlackboard output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
+            <IfThenElse>
+                <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
+                <Sequence>
+                    <SetBlackboard output_key="torpedo_first" value="blood_hole_large"/>
+                    <SetBlackboard output_key="torpedo_second" value="blood_hole_small"/>
+                </Sequence>
+                <Sequence>
+                    <SetBlackboard output_key="torpedo_first" value="fire_hole_large"/>
+                    <SetBlackboard output_key="torpedo_second" value="fire_hole_small"/>
+                </Sequence>
+            </IfThenElse>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+                    <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="torpedo" target_cov="target_cov" timeout_secs="search_timeout"/>
+                </Sequence>
+            </ForceSuccess>
+            <Sequence name="Refine both holes before shooting">
+                <ForceSuccess>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="torpedo_first" parent_object="torpedo" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="hole_cov" timeout_secs="ms_timeout"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="torpedo_second" parent_object="torpedo" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="hole_cov" timeout_secs="ms_timeout"/>
+                </ForceSuccess>
+                <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            </Sequence>
+            <Fallback name="Try run while armed">
+                <Sequence name="torpedo">
+                    <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
+                    <SubTree ID="ShootSearchedObject" __shared_blackboard="false" object_name="torpedo_first" torpedo_link_name="talos/torpedo_0_link"/>
+                    <SubTree ID="ShootSearchedObject" __shared_blackboard="false" object_name="torpedo_second" torpedo_link_name="talos/torpedo_1_link"/>
+                </Sequence>
+                <ForceFailure>
+                    <Sequence name="handle fail">
+                        <Action ID="Error" message="Torpedo tree failed, disarming actuators"/>
+                        <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+                    </Sequence>
+                </ForceFailure>
+            </Fallback>
+            <Sequence name="handle success">
+                <Action ID="Info" message="Torpedo tree succeeded, disarming torpedos"/>
+                <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="TorpedoTree">
@@ -2687,6 +2774,11 @@
             <input_port default="talos/torpedo_link" name="torpedo_link_name" required="true"/>
             <input_port default="torpedo" name="torpedo_name" required="true"/>
         </SubTree>
+        <SubTree ID="ShootSearchedObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_name" required="true"/>
+            <input_port default="talos/torpedo_link" name="torpedo_link_name" required="true"/>
+        </SubTree>
         <SubTree ID="SingleSlalom">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="pass_on_left" required="true">Whether to pass on the left side of the red slalom pole</input_port>
@@ -2728,6 +2820,10 @@
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="duration" required="true"/>
             <input_port name="power" required="true"/>
+        </SubTree>
+        <SubTree ID="TestTorpedoTree">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="repair_mission" required="false"/>
         </SubTree>
         <SubTree ID="TorpedoTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
