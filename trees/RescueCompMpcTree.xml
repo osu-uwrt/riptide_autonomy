@@ -2130,11 +2130,17 @@
                     <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{board_path}"/>
                 </Sequence>
             </ForceSuccess>
+            <Action ID="SetStatus" status="searching"/>
+            <Action ID="Format" format="{object_1},{object_2}," name="Both holes (the trailing comma keeps it a string, not one blackboard key)" out="both_holes"/>
+            <Action ID="SetMappingTarget" lock_map="0" name="Map both holes at once" target_object="{both_holes}" time_limit_secs="3"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_1" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_2" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hold at the standoff until both holes converge" num_seconds="{ms_timeout}">
+                    <Sequence>
+                        <Action ID="Wait" seconds="0.25"/>
+                        <Condition ID="MapConverged" object="{object_1}" target_cov="{target_cov}"/>
+                        <Condition ID="MapConverged" object="{object_2}" target_cov="{target_cov}"/>
+                    </Sequence>
+                </Decorator>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
