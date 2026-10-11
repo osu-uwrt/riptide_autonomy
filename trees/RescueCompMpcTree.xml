@@ -2569,7 +2569,7 @@
             <ForceSuccess>
                 <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
             </ForceSuccess>
-            <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="120" yaw_rate="8.0"/>
+            <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="120" yaw_rate=""/>
             <ForceSuccess>
                 <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
             </ForceSuccess>
@@ -3365,7 +3365,7 @@
             <input_port name="num_cycles" required="true"/>
             <input_port default="1" name="odom_timeout_secs" required="false"/>
             <input_port default="90" name="timeout_secs" required="false"/>
-            <input_port default="0.5" name="yaw_rate" required="false"/>
+            <input_port name="yaw_rate" required="false">Target ramp speed (rad/s); unset: as fast as the controller follows</input_port>
         </Action>
         <SubTree ID="DemoTableTree"/>
         <SubTree ID="DeployTankTree"/>
