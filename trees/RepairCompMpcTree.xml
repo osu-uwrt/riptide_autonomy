@@ -1210,7 +1210,7 @@
                     <Action ID="Wait" seconds="2"/>
                 </Sequence>
             </ForceSuccess>
-            <SetBlackboard name="How far past the gate to go before turning for the slalom (m)" output_key="behind_gate" value="-1.5"/>
+            <SetBlackboard name="How far past the gate to go before turning for the slalom (m)" output_key="behind_gate" value="-1.0"/>
             <Action ID="AddWaypoint" frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="behind the gate" out="exit_path" path="" pitch="" roll="" spin="" spin_rate="" x="{behind_gate}" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Straight out the back of the gate, clear of its sides" spin_rate="" timeout="30" waypoints="{exit_path}"/>
         </Sequence>
