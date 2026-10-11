@@ -2062,7 +2062,7 @@
                             <Sequence name="Seen: chase it, then hold it centered until the map has it, or it is lost">
                                 <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
                                 <ForceSuccess>
-                                    <Action ID="CenterDetection" base_frame="" center_depth="" depth_tolerance="" max_age_secs="" max_depth="-2.5" min_depth="-0.75" min_score="" name="Chase: center it in the camera (yaw onto it, depth level with it); edge detections are cut off and their centers are off" object_name="{object_name}" timeout_secs="6" yaw_tolerance=""/>
+                                    <Action ID="CenterDetection" align_tolerance="" align_yaw="" base_frame="" center_depth="" depth_tolerance="" max_age_secs="" max_depth="-2.5" min_depth="-0.75" min_score="" name="Chase: move square on to it (+x along its yaw) at the range it was seen from, keeping it centered; edge detections are cut off and their centers are off" object_frame="" object_name="{object_name}" position_tolerance="" standoff="" timeout_secs="10" yaw_tolerance=""/>
                                 </ForceSuccess>
                                 <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hold it centered until the map has it, or it is lost" num_seconds="{hold_secs}">
                                     <Sequence>
@@ -3349,6 +3349,11 @@
             <input_port default="-0.75" name="min_depth" required="false">Shallowest depth to move to</input_port>
             <input_port default="-2.5" name="max_depth" required="false">Deepest depth to move to</input_port>
             <input_port default="talos/base_link" name="base_frame" required="false">Vehicle frame</input_port>
+            <input_port default="true" name="align_yaw" required="false">Move square on to the object (its frame's yaw); false: turn in place</input_port>
+            <input_port name="object_frame" required="false">Frame whose yaw to align with; default &lt;object_name&gt;_frame</input_port>
+            <input_port name="standoff" required="false">Camera distance in front of it (m); default the range it was seen from</input_port>
+            <input_port default="0.1" name="position_tolerance" required="false">There within this (m)</input_port>
+            <input_port default="0.08" name="align_tolerance" required="false">Square on within this (rad)</input_port>
         </Action>
         <Action ID="CallTriggerService">
             <input_port name="srv_name" required="true"/>
