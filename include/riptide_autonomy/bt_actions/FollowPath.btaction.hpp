@@ -50,7 +50,8 @@ class FollowPath : public UWRTActionNode {
             UwrtInput("min_depth", "Shallowest allowed z in world (default -0.55)"),
             UwrtInput("max_depth", "Deepest allowed z in world (default -4)"),
             UwrtInput("timeout", "Seconds before giving up (default 60)"),
-            UwrtInput("spin_rate", "Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)")
+            UwrtInput("spin_rate", "Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)"),
+            UwrtInput("max_speed", "Cruise speed cap for this path, m/s (default 0: the controller's own limit)")
         };
     }
 
@@ -80,6 +81,7 @@ class FollowPath : public UWRTActionNode {
         minDepth = tryGetOptionalInput<double>(this, "min_depth", -0.55);
         maxDepth = tryGetOptionalInput<double>(this, "max_depth", -4);
         const double spinRate = tryGetOptionalInput<double>(this, "spin_rate", 0);
+        goal.max_speed = tryGetOptionalInput<double>(this, "max_speed", 0);
         waypointsInFrames.clear();
 
         std::stringstream waypoints(text);
