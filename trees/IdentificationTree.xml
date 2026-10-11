@@ -18,10 +18,13 @@
         <Sequence name="POOL IDENTIFICATION">
             <!-- Untethered MPC identification. Before unplugging, start on the robot:
                  ros2 launch riptide_mpc pool_identify.launch.py wait_for_trigger:=true max_iterations:=1
-                 Point the robot with 1.5 m of clear water ahead (+x) and to port (+y), and room below for heave. -->
+                 After the dive it goes to the mapping origin facing map +x, so leave 1.5 m of clear water
+                 ahead (map +x) and to port (map +y) of the origin, and room below for heave. -->
             <SetBlackboard output_key="depth" value="-0.85"/>
             <SubTree ID="WaitForKillSwitch"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
+            <Action ID="AddWaypoint" frame="map" heading="" look_frame="" look_x="" look_y="" look_z="" name="mapping origin, facing its +x" out="origin_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="{depth}"/>
+            <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="120" waypoints="{origin_path}"/>
             <ForceSuccess>
                 <Sequence name="identify">
                     <Action ID="Info" message="Starting pool identification"/>
@@ -1710,6 +1713,25 @@
         </Sequence>
     </BehaviorTree>
     <TreeNodesModel>
+        <Action ID="AddWaypoint">
+            <input_port name="frame" required="false"/>
+            <input_port name="heading" required="false"/>
+            <input_port name="look_frame" required="false"/>
+            <input_port name="look_x" required="false"/>
+            <input_port name="look_y" required="false"/>
+            <input_port name="look_z" required="false"/>
+            <output_port name="out" required="false"/>
+            <input_port name="path" required="false"/>
+            <input_port name="pitch" required="false"/>
+            <input_port name="roll" required="false"/>
+            <input_port name="spin" required="false"/>
+            <input_port name="spin_rate" required="false"/>
+            <input_port name="x" required="false"/>
+            <input_port name="y" required="false"/>
+            <input_port name="yaw" required="false"/>
+            <input_port name="yaw_offset" required="false"/>
+            <input_port name="z" required="false"/>
+        </Action>
         <SubTree ID="AlignLink">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="frame_name" required="true">frame to align to</input_port>
@@ -1850,6 +1872,14 @@
         <SubTree ID="FireDropper"/>
         <SubTree ID="FireTorpedo"/>
         <SubTree ID="FlipTree"/>
+        <Action ID="FollowPath">
+            <input_port name="frame" required="false"/>
+            <input_port name="max_depth" required="false"/>
+            <input_port name="min_depth" required="false"/>
+            <input_port name="spin_rate" required="false"/>
+            <input_port name="timeout" required="false"/>
+            <input_port name="waypoints" required="true"/>
+        </Action>
         <Action ID="Format">
             <input_port name="format" required="true"/>
             <output_port name="out" required="false"/>
