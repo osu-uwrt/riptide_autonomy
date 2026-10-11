@@ -2059,17 +2059,23 @@
                             </ReactiveSequence>
                         </ForceSuccess>
                         <ForceSuccess>
-                            <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Seen: hold there (it stays in view) until the map has it, or it is lost" num_seconds="{hold_secs}">
-                                <Sequence>
-                                    <Action ID="Wait" seconds="0.2"/>
-                                    <Fallback>
-                                        <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
-                                        <Inverter>
-                                            <Condition ID="SeenRecently" max_age_secs="2.0" min_score="0.2" object_name="{object_name}"/>
-                                        </Inverter>
-                                    </Fallback>
-                                </Sequence>
-                            </Decorator>
+                            <Sequence name="Seen: chase it, then hold it centered until the map has it, or it is lost">
+                                <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                                <ForceSuccess>
+                                    <Action ID="CenterDetection" base_frame="" center_depth="" depth_tolerance="" max_age_secs="" max_depth="-2.5" min_depth="-0.75" min_score="" name="Chase: center it in the camera (yaw onto it, depth level with it); edge detections are cut off and their centers are off" object_name="{object_name}" timeout_secs="6" yaw_tolerance=""/>
+                                </ForceSuccess>
+                                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hold it centered until the map has it, or it is lost" num_seconds="{hold_secs}">
+                                    <Sequence>
+                                        <Action ID="Wait" seconds="0.2"/>
+                                        <Fallback>
+                                            <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
+                                            <Inverter>
+                                                <Condition ID="SeenRecently" max_age_secs="2.0" min_score="0.2" object_name="{object_name}"/>
+                                            </Inverter>
+                                        </Fallback>
+                                    </Sequence>
+                                </Decorator>
+                            </Sequence>
                         </ForceSuccess>
                         <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
                         <Fallback>
@@ -3331,6 +3337,18 @@
             <input_port name="object2_name" required="true">Second mapping object</input_port>
             <input_port name="srv_name" required="true">Name of the service</input_port>
             <input_port name="time_limit_secs" required="true">How long to wait before failure</input_port>
+        </Action>
+        <Action ID="CenterDetection">
+            <input_port name="object_name" required="true">Detector class to center</input_port>
+            <input_port default="0.2" name="min_score" required="false">Ignore weaker detections</input_port>
+            <input_port default="1.5" name="max_age_secs" required="false">Lost once no detection is this old</input_port>
+            <input_port default="8" name="timeout_secs" required="false">Give up after</input_port>
+            <input_port default="0.05" name="yaw_tolerance" required="false">Centered within this (rad)</input_port>
+            <input_port default="0.1" name="depth_tolerance" required="false">Level within this (m)</input_port>
+            <input_port default="true" name="center_depth" required="false">false: yaw only</input_port>
+            <input_port default="-0.75" name="min_depth" required="false">Shallowest depth to move to</input_port>
+            <input_port default="-2.5" name="max_depth" required="false">Deepest depth to move to</input_port>
+            <input_port default="talos/base_link" name="base_frame" required="false">Vehicle frame</input_port>
         </Action>
         <Action ID="CallTriggerService">
             <input_port name="srv_name" required="true"/>
