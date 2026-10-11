@@ -56,3 +56,19 @@ TEST_F(BtTest, test_MapConverged_ignores_estimates_from_before_the_check) {
     toolNode->spinForTime(0.2s);
     ASSERT_EQ(node->executeTick(), BT::NodeStatus::SUCCESS);
 }
+
+TEST_F(BtTest, test_MapConverged_list_needs_every_object) {
+    auto node = mapConverged(toolNode, "helmet, warning,", 0.01);
+    auto helmet = toolNode->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("mapping/helmet", 10);
+    auto warning = toolNode->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("mapping/warning", 10);
+    node->executeTick(); // subscribes both
+    toolNode->spinForTime(0.3s);
+    node->executeTick();
+    helmet->publish(estimate(0.001));
+    warning->publish(estimate(0.5));
+    toolNode->spinForTime(0.2s);
+    ASSERT_EQ(node->executeTick(), BT::NodeStatus::FAILURE); // warning not yet
+    warning->publish(estimate(0.001));
+    toolNode->spinForTime(0.2s);
+    ASSERT_EQ(node->executeTick(), BT::NodeStatus::SUCCESS);
+}

@@ -4,11 +4,13 @@
 
 #include <cmath>
 #include <optional>
+#include <sstream>
 #include <unordered_map>
+#include <vector>
 
 /**
- * @brief SUCCESS once mapping's estimate of `object` is better than `target_cov`, the
- * same error getCovariance reports. It answers immediately, so it can guard a running
+ * @brief SUCCESS once mapping's estimate of `object` (or of every object in a comma list,
+ * "helmet,warning,pill,") is better than `target_cov`, the same error getCovariance reports. It answers immediately, so it can guard a running
  * move in a ReactiveSequence (look around until the map has the object) and stop it
  * the moment the estimate converges. Only estimates published after the condition
  * started being ticked count, so one from before a SetMappingTarget reset can't pass it.
@@ -24,7 +26,7 @@ class MapConverged : public UWRTConditionNode {
 
     static BT::PortsList providedPorts() {
         return {
-            UwrtInput("object", "Mapping object (mapping/<object>)"),
+            UwrtInput("object", "Mapping object (mapping/<object>), or a comma list that must all converge"),
             UwrtInput("target_cov", "Converged below this error (getCovariance's)")
         };
     }
@@ -43,15 +45,26 @@ class MapConverged : public UWRTConditionNode {
             checking = object;
         }
         lastTick = now;
-        if(object.empty()) {
+        std::vector<std::string> objects;
+        std::stringstream list(object);
+        std::string name;
+        while(std::getline(list, name, ',')) {
+            name.erase(0, name.find_first_not_of(" \t"));
+            name.erase(name.find_last_not_of(" \t") + 1);
+            if(!name.empty()) {
+                objects.push_back(name);
+            }
+        }
+        if(objects.empty()) {
             return BT::NodeStatus::FAILURE;
         }
-        subscribe(object);
-        const auto found = latest.find(object);
-        if(found == latest.end() || found->second.stamp < since) {
-            return BT::NodeStatus::FAILURE;
+        bool converged = true;
+        for(const auto& name : objects) {
+            subscribe(name);
+            const auto found = latest.find(name);
+            converged = converged && found != latest.end() && found->second.stamp >= since && found->second.error < target;
         }
-        return found->second.error < target ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+        return converged ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
     }
 
     // getCovariance's error: root of the summed squared variances, the angular ones over 2 pi

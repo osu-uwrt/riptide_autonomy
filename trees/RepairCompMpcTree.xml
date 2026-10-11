@@ -1571,6 +1571,12 @@
                         <SetBlackboard output_key="table_cov" value="0.8"/>
                         <Action ID="Format" format="{curr_drop}_frame" out="curr_drop_frame"/>
                         <Action ID="Format" format="{secondary_drop}_frame" out="secondary_drop_frame"/>
+                        <SetBlackboard name="Every table prop (ends in a comma: a list, not one blackboard key)" output_key="table_props" value="helmet,warning,bandage,pill,nut_and_bolt,plug,"/>
+                        <SetBlackboard output_key="table_frame" value="table_frame"/>
+                        <SetBlackboard name="The pickups' target error" output_key="props_cov" value="0.5"/>
+                        <ForceSuccess>
+                            <SubTree ID="DownwardSearchAllMpc" __shared_blackboard="false" frame="table_frame" min_dist="table_dist" objects="table_props" target_cov="props_cov" timeout_sec="table_timeout"/>
+                        </ForceSuccess>
                         <ForceSuccess>
                             <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="table_dist" object_name="curr_drop" target_cov="table_cov" timeout_sec="table_timeout"/>
                         </ForceSuccess>
@@ -2972,6 +2978,51 @@
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
+    <BehaviorTree ID="DownwardSearchAllMpc">
+        <Sequence name="Search for every object at once">
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+            <SetBlackboard name="How much wider each circle gets (m)" output_key="radius_step" value="0.4"/>
+            <SetBlackboard output_key="radius" value="{radius_step}"/>
+            <Action ID="Info" message="Searching for {objects} at once, target covariance {target_cov}"/>
+            <Action ID="SetMappingTarget" lock_map="0" name="Map them all" target_object="{objects}" time_limit_secs="3"/>
+            <Action ID="SetStatus" status="searching"/>
+            <ForceSuccess>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hover over it, then circle wider, until the map has them all" num_seconds="{timeout_sec}">
+                    <Fallback>
+                        <Inverter name="All converged (or a move failed): done">
+                            <ReactiveSequence name="Look while the map does not have them all">
+                                <Inverter>
+                                    <Condition ID="MapConverged" object="{objects}" target_cov="{target_cov}"/>
+                                </Inverter>
+                                <Sequence name="Downward camera over the middle, hold, then once round">
+                                    <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                                    <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="hover_yaw" out_x="hover_x" out_y="hover_y" out_z="hover_z" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="downward camera over the middle" out="look_path" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
+                                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{look_path}"/>
+                                    <Action ID="Wait" seconds="2"/>
+                                    <Action ID="AddArc" approach="true" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="once round, wider each time" out="round_path" path="" radius="{radius}" spin="" spin_rate="" start_angle="0" sweep="6.2832" yaw="{hover_yaw}" yaw_frame="world" yaw_offset="" z="{min_dist}"/>
+                                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="90" waypoints="{round_path}"/>
+                                </Sequence>
+                            </ReactiveSequence>
+                        </Inverter>
+                        <ForceFailure name="Went round without them all: wider">
+                            <Sequence>
+                                <Action ID="Math" a="{radius}" b="{radius_step}" operator="+" out="radius"/>
+                                <IfThenElse name="Too wide: start small again">
+                                    <Condition ID="CompareNums" a="{radius}" b="1.6" test="&gt;"/>
+                                    <SetBlackboard output_key="radius" value="{radius_step}"/>
+                                    <AlwaysSuccess/>
+                                </IfThenElse>
+                            </Sequence>
+                        </ForceFailure>
+                    </Fallback>
+                </Decorator>
+            </ForceSuccess>
+            <Action ID="Info" message="Done searching for {objects} at once; any still missing are searched for one at a time"/>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
     <BehaviorTree ID="DownwardTrack">
         <Sequence name="Follow the detection until the estimate converges or it is lost">
             <Action ID="Info" message="{object_name} in view: following the detection"/>
@@ -3728,6 +3779,14 @@
             <input_port name="yaw_offset" required="false"/>
             <input_port name="z" required="false"/>
         </Action>
+        <SubTree ID="DownwardSearchAllMpc">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="true">Frame to search around (the downward camera hovers over its origin)</input_port>
+            <input_port name="min_dist" required="true">Height of the downward camera over the frame</input_port>
+            <input_port name="objects" required="true">Mapping objects to find, a comma list ending in a comma</input_port>
+            <input_port name="target_cov" required="true"/>
+            <input_port name="timeout_sec" required="true"/>
+        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
