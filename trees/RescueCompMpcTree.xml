@@ -2647,6 +2647,7 @@
             <ForceSuccess>
                 <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
             </ForceSuccess>
+            <Action ID="Wait" name="Hold facing it 1 s: the turn reports done within 14 deg, and the spin starts (and ends) where it is" seconds="1"/>
             <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="120" yaw_rate=""/>
             <ForceSuccess>
                 <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
