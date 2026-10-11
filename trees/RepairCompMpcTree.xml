@@ -924,70 +924,76 @@
                 <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
                 <SetBlackboard name="Search lap speed (m/s); the chase stays at full speed" output_key="search_speed" value="0.2"/>
                 <SetBlackboard output_key="link" value="talos/dropper_link"/>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
-                    <Fallback>
-                        <Sequence>
-                            <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
-                            <Action ID="Math" a="{dist}" b="-1" operator="*" out="{ndist}"/>
-                            <ForceSuccess>
-                                <ReactiveSequence name="spiral leg until the object is in view">
-                                    <Inverter>
-                                        <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
-                                    </Inverter>
-                                    <Sequence name="one lap round the guess as a path, at the search speed">
-                                        <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
-                                        <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over corner 1" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="c1_yaw" out_x="c1_x" out_y="c1_y" out_z="c1_z" oy="{link_yaw}" reference_frame="{frame}" x="{dist}" y="{ndist}" z="{min_dist}"/>
-                                        <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over corner 2" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="c2_yaw" out_x="c2_x" out_y="c2_y" out_z="c2_z" oy="{link_yaw}" reference_frame="{frame}" x="{ndist}" y="{ndist}" z="{min_dist}"/>
-                                        <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over corner 3" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="c3_yaw" out_x="c3_x" out_y="c3_y" out_z="c3_z" oy="{link_yaw}" reference_frame="{frame}" x="{ndist}" y="{dist}" z="{min_dist}"/>
-                                        <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over corner 4" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="c4_yaw" out_x="c4_x" out_y="c4_y" out_z="c4_z" oy="{link_yaw}" reference_frame="{frame}" x="{dist}" y="{dist}" z="{min_dist}"/>
-                                        <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="corner 1" out="lap" path="" pitch="" roll="" spin="" spin_rate="" x="{c1_x}" y="{c1_y}" yaw="{c1_yaw}" yaw_frame="" yaw_offset="" z="{c1_z}"/>
-                                        <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="corner 2" out="lap" path="{lap}" pitch="" roll="" spin="" spin_rate="" x="{c2_x}" y="{c2_y}" yaw="{c2_yaw}" yaw_frame="" yaw_offset="" z="{c2_z}"/>
-                                        <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="corner 3" out="lap" path="{lap}" pitch="" roll="" spin="" spin_rate="" x="{c3_x}" y="{c3_y}" yaw="{c3_yaw}" yaw_frame="" yaw_offset="" z="{c3_z}"/>
-                                        <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="corner 4" out="lap" path="{lap}" pitch="" roll="" spin="" spin_rate="" x="{c4_x}" y="{c4_y}" yaw="{c4_yaw}" yaw_frame="" yaw_offset="" z="{c4_z}"/>
-                                        <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="{search_speed}" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{lap}"/>
-                                    </Sequence>
-                                </ReactiveSequence>
-                            </ForceSuccess>
-                            <IfThenElse name="object in view: follow it now">
-                                <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
-                                <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
-                                <AlwaysSuccess/>
-                            </IfThenElse>
+                <Fallback name="already converged by the first chase: skip the laps">
+                    <Sequence>
+                        <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                    </Sequence>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
+                        <Fallback>
                             <Sequence>
-                                <Action ID="Math" a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
-                                <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
-                                <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
-                                <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
-                                <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
-                                <Action ID="Info" message="{frame} moved {amount_adjusted} meters during last loop."/>
-                                <IfThenElse name="should we reset dist">
-                                    <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" test="&gt;"/>
-                                    <Sequence name="reset dist">
-                                        <Action ID="Info" message="Detected object enough to sufficiently move. Resetting search"/>
-                                        <SetBlackboard output_key="dist" value="{radius_step}"/>
-                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    </Sequence>
+                                <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
+                                <Action ID="Math" a="{dist}" b="-1" operator="*" out="{ndist}"/>
+                                <ForceSuccess>
+                                    <ReactiveSequence name="spiral leg until the object is in view">
+                                        <Inverter>
+                                            <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                        </Inverter>
+                                        <Sequence name="one lap round the guess as a path, at the search speed">
+                                            <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over corner 1" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="c1_yaw" out_x="c1_x" out_y="c1_y" out_z="c1_z" oy="{link_yaw}" reference_frame="{frame}" x="{dist}" y="{ndist}" z="{min_dist}"/>
+                                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over corner 2" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="c2_yaw" out_x="c2_x" out_y="c2_y" out_z="c2_z" oy="{link_yaw}" reference_frame="{frame}" x="{ndist}" y="{ndist}" z="{min_dist}"/>
+                                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over corner 3" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="c3_yaw" out_x="c3_x" out_y="c3_y" out_z="c3_z" oy="{link_yaw}" reference_frame="{frame}" x="{ndist}" y="{dist}" z="{min_dist}"/>
+                                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over corner 4" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="c4_yaw" out_x="c4_x" out_y="c4_y" out_z="c4_z" oy="{link_yaw}" reference_frame="{frame}" x="{dist}" y="{dist}" z="{min_dist}"/>
+                                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="corner 1" out="lap" path="" pitch="" roll="" spin="" spin_rate="" x="{c1_x}" y="{c1_y}" yaw="{c1_yaw}" yaw_frame="" yaw_offset="" z="{c1_z}"/>
+                                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="corner 2" out="lap" path="{lap}" pitch="" roll="" spin="" spin_rate="" x="{c2_x}" y="{c2_y}" yaw="{c2_yaw}" yaw_frame="" yaw_offset="" z="{c2_z}"/>
+                                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="corner 3" out="lap" path="{lap}" pitch="" roll="" spin="" spin_rate="" x="{c3_x}" y="{c3_y}" yaw="{c3_yaw}" yaw_frame="" yaw_offset="" z="{c3_z}"/>
+                                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="corner 4" out="lap" path="{lap}" pitch="" roll="" spin="" spin_rate="" x="{c4_x}" y="{c4_y}" yaw="{c4_yaw}" yaw_frame="" yaw_offset="" z="{c4_z}"/>
+                                            <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="{search_speed}" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{lap}"/>
+                                        </Sequence>
+                                    </ReactiveSequence>
+                                </ForceSuccess>
+                                <IfThenElse name="object in view: follow it now">
+                                    <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                                    <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
                                     <AlwaysSuccess/>
                                 </IfThenElse>
-                                <IfThenElse>
-                                    <Condition ID="CompareNums" a="{dist}" b="3" test="&gt;"/>
-                                    <Sequence>
-                                        <Action ID="Info" message="Got too far away from object estimate. Resetting search"/>
-                                        <SetBlackboard output_key="dist" value="{radius_step}"/>
-                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    </Sequence>
-                                    <AlwaysSuccess/>
-                                </IfThenElse>
-                                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="Check that covariance is good" test="&lt;"/>
+                                <Sequence>
+                                    <Action ID="Math" a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
+                                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                                    <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
+                                    <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
+                                    <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
+                                    <Action ID="Info" message="{frame} moved {amount_adjusted} meters during last loop."/>
+                                    <IfThenElse name="should we reset dist">
+                                        <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" test="&gt;"/>
+                                        <Sequence name="reset dist">
+                                            <Action ID="Info" message="Detected object enough to sufficiently move. Resetting search"/>
+                                            <SetBlackboard output_key="dist" value="{radius_step}"/>
+                                            <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                        </Sequence>
+                                        <AlwaysSuccess/>
+                                    </IfThenElse>
+                                    <IfThenElse>
+                                        <Condition ID="CompareNums" a="{dist}" b="3" test="&gt;"/>
+                                        <Sequence>
+                                            <Action ID="Info" message="Got too far away from object estimate. Resetting search"/>
+                                            <SetBlackboard output_key="dist" value="{radius_step}"/>
+                                            <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                        </Sequence>
+                                        <AlwaysSuccess/>
+                                    </IfThenElse>
+                                    <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="Check that covariance is good" test="&lt;"/>
+                                </Sequence>
                             </Sequence>
-                        </Sequence>
-                        <Sequence>
-                            <Action Covariance="final_cov" ID="getCovariance" Target="{object_name}"/>
-                            <Action ID="Info" message="error is {final_cov}"/>
-                            <Condition ID="CompareNums" a="{final_cov}" b="{target_cov}" test="&lt;"/>
-                        </Sequence>
-                    </Fallback>
-                </Decorator>
+                            <Sequence>
+                                <Action Covariance="final_cov" ID="getCovariance" Target="{object_name}"/>
+                                <Action ID="Info" message="error is {final_cov}"/>
+                                <Condition ID="CompareNums" a="{final_cov}" b="{target_cov}" test="&lt;"/>
+                            </Sequence>
+                        </Fallback>
+                    </Decorator>
+                </Fallback>
                 <Action ID="Info" message="{object_name} found"/>
             </Sequence>
             <Sequence>
@@ -3103,9 +3109,20 @@
                 <SubTree ID="DownwardSearchMpc" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
             </ForceSuccess>
             <ForceSuccess>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="10">
-                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="object_frame" gx="0" gy="0" gz="minisearch_prox" object_name="object_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
-                </Decorator>
+                <Sequence name="Downward camera over it, then until its estimate is tight (at most 3 s)">
+                    <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+                    <SetBlackboard name="Tight enough to line the claw up on" output_key="hover_cov" value="0.0005"/>
+                    <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{object_frame}" x="0" y="0" z="0"/>
+                    <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the object" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="hover_yaw" out_x="hover_x" out_y="hover_y" out_z="hover_z" oy="{link_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{minisearch_prox}"/>
+                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the object" out="hover_path" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Until the estimate is tight" num_seconds="3">
+                        <Sequence>
+                            <Action ID="Wait" seconds="0.2"/>
+                            <Condition ID="MapConverged" object="{object_name}" target_cov="{hover_cov}"/>
+                        </Sequence>
+                    </Decorator>
+                </Sequence>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
