@@ -1,4 +1,5 @@
 #include "autonomy_test/autonomy_testing.hpp"
+#include <cmath>
 
 std::string addWaypointTest(std::shared_ptr<BtTestTool> toolNode, const std::string& path, const std::string& frame) {
     BT::NodeConfiguration cfg;
@@ -159,5 +160,48 @@ TEST_F(BtTest, test_AddWaypoint_look_frame_needs_look_at) {
     cfg.input_ports["heading"] = "path";
     cfg.input_ports["look_frame"] = "pole_frame";
     auto node = toolNode->createLeafNodeFromConfig("AddWaypoint", cfg);
+    ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::FAILURE);
+}
+
+// pan: an even number of pieces about pan_step apart, yaw_offset alternating +pan, -pan.
+TEST_F(BtTest, test_AddArc_pan_alternates_yaw_offset) {
+    BT::NodeConfiguration cfg;
+    cfg.input_ports["frame"] = "g";
+    cfg.input_ports["cx"] = "0";
+    cfg.input_ports["cy"] = "0";
+    cfg.input_ports["radius"] = "2";
+    cfg.input_ports["start_angle"] = "0";
+    cfg.input_ports["sweep"] = "1";
+    cfg.input_ports["z"] = "0";
+    cfg.input_ports["approach"] = "false";
+    cfg.input_ports["look_frame"] = "g";
+    cfg.input_ports["pan"] = "0.5";
+    cfg.input_ports["pan_step"] = "0.3";
+    auto node = toolNode->createLeafNodeFromConfig("AddArc", cfg);
+    ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
+    std::string out;
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    // ceil(1 / 0.6) = 2 pairs: four quarter-radian pieces, the last ending 1 rad round
+    const std::string piece = " | arc=0,0,0.25 | heading=look_at | look_at=0,0,0 | look_frame=g | yaw_offset=";
+    std::size_t at = 0;
+    for (const char *offset : {"0.5;", "-0.5;", "0.5;", "-0.5;"}) {
+        at = out.find(piece + offset, at);
+        ASSERT_NE(at, std::string::npos) << out;
+        at += piece.size();
+    }
+    ASSERT_EQ(out.find(piece, at), std::string::npos) << out;
+    ASSERT_NE(out.find("g: " + std::to_string(2 * std::cos(1.0)).substr(0, 6)), std::string::npos) << out;
+}
+
+TEST_F(BtTest, test_AddArc_pan_needs_a_heading_that_takes_offsets) {
+    BT::NodeConfiguration cfg;
+    cfg.input_ports["cx"] = "0";
+    cfg.input_ports["cy"] = "0";
+    cfg.input_ports["radius"] = "2";
+    cfg.input_ports["start_angle"] = "0";
+    cfg.input_ports["sweep"] = "1";
+    cfg.input_ports["z"] = "0";
+    cfg.input_ports["pan"] = "0.5";
+    auto node = toolNode->createLeafNodeFromConfig("AddArc", cfg);
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::FAILURE);
 }

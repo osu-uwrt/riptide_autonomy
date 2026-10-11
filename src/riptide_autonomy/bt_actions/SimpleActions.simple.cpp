@@ -129,7 +129,8 @@ void beginWaypoint(UwrtBtNode& n, std::ostringstream& out, const std::string& fr
 
 // The heading options (" | heading=..."), from the node's heading ports. look_x/y/z
 // default to `look` (the arc centre for AddArc), or to look_frame's origin when set.
-bool appendHeading(UwrtBtNode& n, std::ostringstream& out, const double look[3]) {
+// extraYawOffset is added to yaw_offset and spin is scaled by spinScale (AddArc's pan pieces).
+bool appendHeading(UwrtBtNode& n, std::ostringstream& out, const double look[3], double extraYawOffset = 0, double spinScale = 1) {
     const std::string lookFrame = tryGetOptionalInput<std::string>(&n, "look_frame", "");
     const std::string heading = tryGetOptionalInput<std::string>(&n, "heading", lookFrame.empty() ? "waypoint" : "look_at");
     if(heading != "waypoint" && heading != "path" && heading != "look_at") {
@@ -155,7 +156,8 @@ bool appendHeading(UwrtBtNode& n, std::ostringstream& out, const double look[3])
             out << " | look_frame=" << lookFrame;
         }
     }
-    const double yawOffset = tryGetOptionalInput<double>(&n, "yaw_offset", 0), spin = tryGetOptionalInput<double>(&n, "spin", 0);
+    const double yawOffset = tryGetOptionalInput<double>(&n, "yaw_offset", 0) + extraYawOffset,
+        spin = tryGetOptionalInput<double>(&n, "spin", 0) * spinScale;
     if(yawOffset != 0) {
         out << " | yaw_offset=" << yawOffset;
     }
@@ -214,7 +216,9 @@ BT::NodeStatus addWaypoint(UwrtBtNode& n) {
  * @brief Appends an arc about (cx, cy) to a FollowPath waypoint string: a straight line to the
  * point `radius` from the centre at `start_angle`, then `sweep` radians round (+ = counterclockwise
  * seen from above), ending at `end_radius` (a spiral if it differs) and depth z. Angles are from
- * the frame's +x axis.
+ * the frame's +x axis. With `pan` the arc is split into pieces of about `pan_step` radians whose
+ * yaw_offset alternates +pan, -pan, so the heading (path or look_at) swings side to side along it;
+ * the piece count is even, so consecutive panned arcs keep alternating.
  *
  * @param n The BehaviorTree node.
  * @return BT::NodeStatus return status
@@ -232,6 +236,17 @@ BT::NodeStatus addArc(UwrtBtNode& n) {
         yaw = tryGetOptionalInput<double>(&n, "yaw", 0);
     const bool approach = tryGetOptionalInput<std::string>(&n, "approach", "true") != "false";
     const double look[3] = {cx, cy, z};
+    const double pan = tryGetOptionalInput<double>(&n, "pan", 0), panStep = tryGetOptionalInput<double>(&n, "pan_step", 0.25);
+    if(pan != 0) {
+        const std::string lookFrame = tryGetOptionalInput<std::string>(&n, "look_frame", "");
+        const std::string heading = tryGetOptionalInput<std::string>(&n, "heading", lookFrame.empty() ? "waypoint" : "look_at");
+        if(heading == "waypoint" || !(panStep > 0) || !std::isfinite(pan)) {
+            RCLCPP_ERROR(n.rosNode()->get_logger(), "%s: pan needs heading path or look_at and a positive pan_step",
+                n.treeNode()->name().c_str());
+            return BT::NodeStatus::FAILURE;
+        }
+    }
+    const int pieces = pan != 0 ? 2 * std::max(1, static_cast<int>(std::ceil(std::abs(sweep) / (2 * panStep) - 1e-9))) : 1;
 
     std::ostringstream arc;
     beginWaypoint(n, arc, frame);
@@ -245,13 +260,22 @@ BT::NodeStatus addArc(UwrtBtNode& n) {
             arc << frame << ": ";
         }
     }
-    const double endAngle = startAngle + sweep;
-    arc << cx + endRadius * cos(endAngle) << "," << cy + endRadius * sin(endAngle) << "," << z << "," << yaw
-        << " | arc=" << cx << "," << cy << "," << sweep;
-    if(!appendHeading(n, arc, look)) {
-        return BT::NodeStatus::FAILURE;
+    for(int k = 0; k < pieces; k++) {
+        if(k > 0) {
+            arc << " ";
+            if(!frame.empty()) {
+                arc << frame << ": ";
+            }
+        }
+        const double f = static_cast<double>(k + 1) / pieces, angle = startAngle + sweep * f,
+            r = radius + (endRadius - radius) * f;
+        arc << cx + r * cos(angle) << "," << cy + r * sin(angle) << "," << z << "," << yaw
+            << " | arc=" << cx << "," << cy << "," << sweep / pieces;
+        if(!appendHeading(n, arc, look, pan == 0 ? 0 : (k % 2 == 0 ? pan : -pan), 1.0 / pieces)) {
+            return BT::NodeStatus::FAILURE;
+        }
+        arc << ";";
     }
-    arc << ";";
 
     postOutput<std::string>(&n, "out", arc.str());
     return BT::NodeStatus::SUCCESS;
@@ -376,6 +400,8 @@ void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
             UwrtInput("spin", "Extra yaw over the arc, 6.283 = one turn (default 0)"),
             UwrtInput("spin_rate", "Steady spin on the arc, rad per metre (default 0)"),
             UwrtInput("yaw_frame", "End yaw is in this frame instead of frame (e.g. world)"),
+            UwrtInput("pan", "Swing the heading this far each way along the arc (rad, needs heading path or look_at; default 0)"),
+            UwrtInput("pan_step", "Arc per pan piece (rad, default 0.25)"),
             UwrtOutput("out", "Path with the arc appended")
         }
     );

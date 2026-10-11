@@ -482,7 +482,7 @@
                             <Action ID="GetOdometry" op="" or="" oy="path_yaw" x="" y="" z=""/>
                             <Action ID="AddWaypoint" frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
-                            <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
                             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
@@ -503,7 +503,7 @@
                     <ForceSuccess>
                         <Sequence name="Path: to torpedo">
                             <Action ID="SetMappingTarget" lock_map="0" name="Map the torpedo as it comes into view" target_object="torpedo" time_limit_secs="3"/>
-                            <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
                             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
@@ -2029,10 +2029,14 @@
     <BehaviorTree ID="SearchMpc">
         <Sequence name="Search while moving">
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard name="Sweep each way (rad)" output_key="sweep" value="0.5"/>
+            <SetBlackboard name="Arc each way round the estimate (rad)" output_key="sweep" value="0.5"/>
+            <SetBlackboard name="Pan each way along the arc (rad): the forward camera's +-27 deg then sees +-dist*tan(27 deg + pan) round the estimate, +-3 m at 2 m" output_key="pan" value="0.5"/>
+            <SetBlackboard name="Arc per pan (rad)" output_key="pan_step" value="0.25"/>
+            <SetBlackboard name="Once seen, hold there at most this long for the map to converge (s)" output_key="hold_secs" value="8"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <SetBlackboard output_key="dist" value="{max_dist}"/>
+            <Action ID="Math" a="{max_dist}" b="2" name="Sweeps that saw nothing back off up to here" operator="*" out="far_dist"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
             <ForceSuccess>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Sweep until the map has it" num_seconds="{timeout_secs}">
@@ -2040,27 +2044,51 @@
                         <Action ID="Math" a="{sweep}" b="-1" operator="*" out="neg_sweep"/>
                         <Action ID="Math" a="{sweep}" b="-2" operator="*" out="back_sweep"/>
                         <Action ID="AddWaypoint" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="in front, facing it" out="sweep_path" path="" pitch="" roll="" spin="" spin_rate="" x="{dist}" y="0" yaw="" yaw_frame="" yaw_offset="" z="0"/>
-                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="round it one way" out="sweep_path" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="0" sweep="{sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
-                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="across to the other side" out="sweep_path" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="{sweep}" sweep="{back_sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
-                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="back to the middle" out="sweep_path" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="{neg_sweep}" sweep="{sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
-                        <Fallback>
-                            <Inverter name="Converged (or the path failed): done">
-                                <ReactiveSequence name="Sweep while the map does not have it">
-                                    <Inverter>
-                                        <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
-                                    </Inverter>
-                                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="90" waypoints="{sweep_path}"/>
-                                </ReactiveSequence>
-                            </Inverter>
-                            <ForceFailure name="Swept without converging: again, closer">
+                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="round it one way" out="sweep_path" pan="{pan}" pan_step="{pan_step}" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="0" sweep="{sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
+                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="across to the other side" out="sweep_path" pan="{pan}" pan_step="{pan_step}" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="{sweep}" sweep="{back_sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
+                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="back to the middle" out="sweep_path" pan="{pan}" pan_step="{pan_step}" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="{neg_sweep}" sweep="{sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
+                        <ForceSuccess>
+                            <ReactiveSequence name="Sweep, panning, until it is seen (or the map has it)">
+                                <Inverter>
+                                    <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                </Inverter>
+                                <Inverter>
+                                    <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
+                                </Inverter>
+                                <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="90" waypoints="{sweep_path}"/>
+                            </ReactiveSequence>
+                        </ForceSuccess>
+                        <ForceSuccess>
+                            <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Seen: hold there (it stays in view) until the map has it, or it is lost" num_seconds="{hold_secs}">
                                 <Sequence>
-                                    <Action ID="Math" a="{dist}" b="0.67" operator="*" out="dist"/>
-                                    <IfThenElse name="Too close: back out to max_dist">
-                                        <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&lt;"/>
-                                        <SetBlackboard output_key="dist" value="{max_dist}"/>
-                                        <AlwaysSuccess/>
-                                    </IfThenElse>
+                                    <Action ID="Wait" seconds="0.2"/>
+                                    <Fallback>
+                                        <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
+                                        <Inverter>
+                                            <Condition ID="SeenRecently" max_age_secs="2.0" min_score="0.2" object_name="{object_name}"/>
+                                        </Inverter>
+                                    </Fallback>
                                 </Sequence>
+                            </Decorator>
+                        </ForceSuccess>
+                        <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+                        <Fallback>
+                            <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="The map has it: done" test="&lt;"/>
+                            <ForceFailure name="Not yet: sweep again round the estimate (it moves to what was seen)">
+                                <IfThenElse name="Saw nothing: back off to see more round it (closer only narrows the view)">
+                                    <Inverter>
+                                        <Condition ID="SeenRecently" max_age_secs="20" min_score="0.2" object_name="{object_name}"/>
+                                    </Inverter>
+                                    <Sequence>
+                                        <Action ID="Math" a="{dist}" b="1.5" operator="*" out="dist"/>
+                                        <IfThenElse name="Past far_dist: start over at max_dist">
+                                            <Condition ID="CompareNums" a="{dist}" b="{far_dist}" test="&gt;"/>
+                                            <SetBlackboard output_key="dist" value="{max_dist}"/>
+                                            <AlwaysSuccess/>
+                                        </IfThenElse>
+                                    </Sequence>
+                                    <AlwaysSuccess/>
+                                </IfThenElse>
                             </ForceFailure>
                         </Fallback>
                     </Sequence>
@@ -3930,6 +3958,8 @@
             <input_port name="yaw_frame" required="false"/>
             <input_port name="yaw_offset" required="false"/>
             <input_port name="z" required="false"/>
+            <input_port name="pan" required="false">Swing the heading this far each way along the arc (rad, needs heading path or look_at; default 0)</input_port>
+            <input_port name="pan_step" required="false">Arc per pan piece (rad, default 0.25)</input_port>
         </Action>
         <SubTree ID="DownwardSearchMpc">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
