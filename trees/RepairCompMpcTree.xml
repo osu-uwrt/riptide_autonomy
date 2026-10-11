@@ -2067,18 +2067,50 @@
     <BehaviorTree ID="SearchMpc">
         <Sequence name="Search while moving">
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard name="Arc each way round the estimate (rad)" output_key="sweep" value="0.5"/>
-            <SetBlackboard name="Pan each way along the arc (rad): the forward camera's +-27 deg then sees +-dist*tan(27 deg + pan) round the estimate, +-3 m at 2 m" output_key="pan" value="0.5"/>
-            <SetBlackboard name="Arc per pan (rad)" output_key="pan_step" value="0.25"/>
+            <SetBlackboard name="First sweep: arc each way round the estimate (rad), at max_dist" output_key="sweep_first" value="0.5"/>
+            <SetBlackboard name="First sweep: pan each way along the arc (rad); the forward camera's +-27 deg then sees +-dist*tan(27 deg + pan) round the estimate, +-3 m at 2 m" output_key="pan_first" value="0.5"/>
+            <SetBlackboard name="Wider sweeps after one that saw nothing: arc (rad), new viewing angles for a board facing another way or hidden from one side" output_key="sweep_wide" value="1.0"/>
+            <SetBlackboard name="Wider sweeps: pan (rad)" output_key="pan_wide" value="0.7"/>
+            <SetBlackboard name="First sweep: arc per pan (rad); each pan is yaw-rate limited, so fewer pans are faster" output_key="pan_step_first" value="0.25"/>
+            <SetBlackboard name="Wider sweeps: arc per pan (rad)" output_key="pan_step_wide" value="0.5"/>
             <SetBlackboard name="Once seen, hold there at most this long for the map to converge (s)" output_key="hold_secs" value="8"/>
+            <SetBlackboard name="0: first sweep, 1: wider and further, 2: wider and closer, then round again; moves on only after a sweep that saw nothing" output_key="stage" value="0"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
-            <SetBlackboard output_key="dist" value="{max_dist}"/>
-            <Action ID="Math" a="{max_dist}" b="2" name="Sweeps that saw nothing back off up to here" operator="*" out="far_dist"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
             <ForceSuccess>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Sweep until the map has it" num_seconds="{timeout_secs}">
                     <Sequence name="One sweep">
+                        <IfThenElse name="This sweep's arc, pan and distance">
+                            <Condition ID="CompareNums" a="{stage}" b="0" test="=="/>
+                            <Sequence name="first sweep">
+                                <SetBlackboard output_key="sweep" value="{sweep_first}"/>
+                                <SetBlackboard output_key="pan" value="{pan_first}"/>
+                                <SetBlackboard output_key="pan_step" value="{pan_step_first}"/>
+                                <SetBlackboard output_key="dist" value="{max_dist}"/>
+                            </Sequence>
+                            <IfThenElse>
+                                <Condition ID="CompareNums" a="{stage}" b="1" test="=="/>
+                                <Sequence name="wider and further: more of the sides in view">
+                                    <SetBlackboard output_key="sweep" value="{sweep_wide}"/>
+                                    <SetBlackboard output_key="pan" value="{pan_wide}"/>
+                                    <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
+                                    <Action ID="Math" a="{max_dist}" b="1.5" operator="*" out="dist"/>
+                                </Sequence>
+                                <Sequence name="wider and closer: a small or hard to see target, or one beyond the estimate">
+                                    <SetBlackboard output_key="sweep" value="{sweep_wide}"/>
+                                    <SetBlackboard output_key="pan" value="{pan_first}"/>
+                                    <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
+                                    <Action ID="Math" a="{max_dist}" b="0.75" operator="*" out="dist"/>
+                                    <IfThenElse>
+                                        <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&lt;"/>
+                                        <SetBlackboard output_key="dist" value="{min_dist}"/>
+                                        <AlwaysSuccess/>
+                                    </IfThenElse>
+                                </Sequence>
+                            </IfThenElse>
+                        </IfThenElse>
+                        <Action ID="Info" message="Sweeping {sweep} rad each way round {object_name}'s estimate at {dist} m, panning {pan} rad (stage {stage})"/>
                         <Action ID="Math" a="{sweep}" b="-1" operator="*" out="neg_sweep"/>
                         <Action ID="Math" a="{sweep}" b="-2" operator="*" out="back_sweep"/>
                         <Action ID="AddWaypoint" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="in front, facing it" out="sweep_path" path="" pitch="" roll="" spin="" spin_rate="" x="{dist}" y="0" yaw="" yaw_frame="" yaw_offset="" z="0"/>
@@ -2119,19 +2151,19 @@
                         <Fallback>
                             <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="The map has it: done" test="&lt;"/>
                             <ForceFailure name="Not yet: sweep again round the estimate (it moves to what was seen)">
-                                <IfThenElse name="Saw nothing: back off to see more round it (closer only narrows the view)">
+                                <IfThenElse name="Saw nothing: widen the next sweep (moving it would be a guess which way)">
                                     <Inverter>
                                         <Condition ID="SeenRecently" max_age_secs="20" min_score="0.2" object_name="{object_name}"/>
                                     </Inverter>
                                     <Sequence>
-                                        <Action ID="Math" a="{dist}" b="1.5" operator="*" out="dist"/>
-                                        <IfThenElse name="Past far_dist: start over at max_dist">
-                                            <Condition ID="CompareNums" a="{dist}" b="{far_dist}" test="&gt;"/>
-                                            <SetBlackboard output_key="dist" value="{max_dist}"/>
+                                        <Action ID="Math" a="{stage}" b="1" operator="+" out="stage"/>
+                                        <IfThenElse name="After the closer sweep, round again">
+                                            <Condition ID="CompareNums" a="{stage}" b="2" test="&gt;"/>
+                                            <SetBlackboard output_key="stage" value="0"/>
                                             <AlwaysSuccess/>
                                         </IfThenElse>
                                     </Sequence>
-                                    <AlwaysSuccess/>
+                                    <AlwaysSuccess name="seen but not converged: again round where the map has it now"/>
                                 </IfThenElse>
                             </ForceFailure>
                         </Fallback>
@@ -2958,7 +2990,7 @@
             <SetBlackboard output_key="torpedo" value="torpedo"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="search_timeout" value="60"/>
+            <SetBlackboard name="One full SearchMpc cycle (first, wider, closer sweeps) is about 100 s" output_key="search_timeout" value="100"/>
             <SetBlackboard output_key="target_cov" value="0.0025"/>
             <SetBlackboard output_key="min_dist" value="1"/>
             <SetBlackboard output_key="max_dist" value="2"/>
