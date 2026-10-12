@@ -67,18 +67,17 @@
             <Sequence name="PREQUAL PATH">
                 <SetBlackboard output_key="pole_radius" value="3"/>
                 <SetBlackboard output_key="gate_offset" value="1"/>
-                <SetBlackboard output_key="spin_rate" value="2.0"/>
                 <SetBlackboard output_key="gate_frame" value="prequal_gate_frame"/>
                 <SetBlackboard output_key="pole_frame" value="prequal_pole_frame"/>
-                <Action ID="Info" message="Prequal path in the gate frame (+x toward the start, yaw 3.1415 faces the pole); only the pole position is used"/>
+                <Action ID="Info" message="Prequal path in the gate frame (+x toward the start): faces travel, except round the pole where it faces the pole; only the pole position is used"/>
                 <Action ID="TransformPose" from_frame="{pole_frame}" name="pole in gate frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pole_x" out_y="pole_y" out_z="pole_z" oy="0" to_frame="{gate_frame}" x="0" y="0" z="0"/>
                 <Action ID="Math" a="{gate_offset}" b="-1" operator="*" out="neg_gate_offset"/>
-                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 behind gate" out="prequal_path" path="" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="3.1415" yaw_offset="" z="0"/>
-                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="2 through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="3.1415" yaw_offset="" z="0"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="1 behind gate" out="prequal_path" path="" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="2 through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="Math" a="{pole_y}" b="{pole_radius}" operator="+" out="arc_start_y"/>
-                <Action ID="AddWaypoint" frame="{gate_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="3 out to the pole's right, same heading as the gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="{spin_rate}" x="{pole_x}" y="{arc_start_y}" yaw="3.1415" yaw_offset="" z="{pole_z}"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="3 out to the pole's right" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{pole_x}" y="{arc_start_y}" yaw="" yaw_offset="" z="{pole_z}"/>
                 <Action ID="AddArc" approach="false" cx="{pole_x}" cy="{pole_y}" end_radius="" frame="{gate_frame}" heading="" look_frame="{pole_frame}" look_x="" look_y="" look_z="" name="4 round behind the pole to its left, facing it" out="prequal_path" path="{prequal_path}" radius="{pole_radius}" spin="" spin_rate="" start_angle="1.5708" sweep="3.1416" yaw="" yaw_offset="" z="{pole_z}"/>
-                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="5 front of gate, nose first" out="prequal_path" path="{prequal_path}" spin="" spin_rate="{spin_rate}" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="5 front of gate, nose first" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="6 back through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="SetStatus" status="performing"/>
                 <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="300" waypoints="{prequal_path}"/>

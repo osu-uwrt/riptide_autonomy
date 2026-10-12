@@ -38,6 +38,17 @@
             <SubTree ID="Move" __shared_blackboard="false" op="gop" or="gor" oy="goy" x="gx" y="gy" z="gz"/>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="AlignLinkPositionOnly">
+        <Sequence name="Position link while holding current orientation">
+            <SetBlackboard output_key="15" value="15"/>
+            <Action ID="TransformPose" from_frame="{link_name}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame_name}" x="0" y="0" z="0"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_name}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame_name}" x="{x}" y="{y}" z="{z}"/>
+            <Action ID="PublishToController" isOrientation="1" mode="3" x="{aor}" y="{aop}" z="{aoy}"/>
+            <Action ID="GetOdometry" op="" or="" oy="" x="cx" y="cy" z=""/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="15" x="cx" y="cy" z="az"/>
+            <SubTree ID="SmartMovePosition" __shared_blackboard="false" x="ax" y="ay" z="az"/>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="AssertTree">
         <Fallback>
             <Condition ID="CompareNums" a="{a}" b="{b}" test="{test}"/>
@@ -68,8 +79,8 @@
                     <SetBlackboard output_key="search_timeout" value="120"/>
                     <IfThenElse>
                         <Condition ID="CompareNums" a="{repair_mission}" b="0" test="=="/>
-                        <SetBlackboard output_key="object_vision_class" value="blood"/>
-                        <SetBlackboard output_key="object_vision_class" value="fire"/>
+                        <SetBlackboard output_key="bin_object_vision_class" value="blood"/>
+                        <SetBlackboard output_key="bin_object_vision_class" value="fire"/>
                     </IfThenElse>
                     <SetBlackboard output_key="0" value="0"/>
                     <SetBlackboard output_key="1" value="1"/>
@@ -85,7 +96,7 @@
                     <Sequence>
                         <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
                         <RetryUntilSuccessful num_attempts="3">
-                            <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{object1}" object2_name="{object2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="3"/>
+                            <Action ID="CallStartBinaryClassifierService" class_name="{bin_object_vision_class}" object1_name="{object1}" object2_name="{object2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="3"/>
                         </RetryUntilSuccessful>
                     </Sequence>
                     <ForceSuccess>
@@ -110,7 +121,7 @@
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
                 </Sequence>
             </ForceSuccess>
-            <SubTree ID="MagnetTree" __shared_blackboard="false" bin_object_vision_class="{object_vision_class}"/>
+            <SubTree ID="MagnetTree" __shared_blackboard="false" bin_object_vision_class="bin_object_vision_class"/>
             <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_bin_pose_frame" x="0" y="0" z="0"/>
             <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_bin_pose_frame" x="0" y="0" z="0"/>
         </Sequence>
@@ -320,7 +331,7 @@
                 </Inverter>
                 <Sequence name="Table then torpedo">
                     <ForceSuccess>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="target_image"/>
+                        <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
@@ -331,7 +342,7 @@
                         <SubTree ID="TorpedoTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="target_image"/>
+                        <SubTree ID="NewTableTree" __shared_blackboard="false" repair_mission="repair_mission"/>
                     </ForceSuccess>
                 </Sequence>
             </IfThenElse>
@@ -572,8 +583,8 @@
             <Action Covariance="Icov" ID="getCovariance" Target="{object_name}"/>
             <Condition ID="CompareNums" a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
             <Action ID="Info" message="{object_name} error at {Icov}"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="talos/dfc_base_link" op="1.5707" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{frame}" x="{gx}" y="{gy}" z="{gz}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="0" x="ax" y="ay" z="az"/>
+            <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+            <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="frame" link_name="dfc_link" x="gx" y="gy" z="gz"/>
             <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="after_x" out_y="after_y" out_z="after_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
             <Action ID="CalculateDistance" dist="amount_adjusted" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
             <Condition ID="CompareNums" a="{amount_adjusted}" b="{reset_adjust_threshold}" name="Did we move the object significantly?" test="&gt;"/>
@@ -585,7 +596,7 @@
                 <Action ID="Info" message="Searching for {object_name} with target covarience {target_cov}"/>
                 <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
                 <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&gt;"/>
-                <SetBlackboard output_key="reset_adjust_threshold" value="0.05"/>
+                <SetBlackboard output_key="reset_adjust_threshold" value="0.1"/>
                 <SetBlackboard output_key="0" value="0"/>
                 <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
                 <SetBlackboard output_key="radius_step" value="0.25"/>
@@ -595,18 +606,8 @@
                 <Action ID="TransformPose" from_frame="odom" op="0" or="0" out_op="" out_or="" out_oy="rel_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
                 <Action ID="TransformPose" from_frame="{frame}" op="0" or="0" out_op="" out_or="" out_oy="" out_x="before_x" out_y="before_y" out_z="before_z" oy="0" to_frame="map" x="0" y="0" z="0"/>
                 <ForceSuccess>
-                    <ReactiveSequence name="go to the initial guess until the object is in view">
-                        <Inverter>
-                            <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
-                        </Inverter>
-                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                    </ReactiveSequence>
+                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="0" gy="0" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
                 </ForceSuccess>
-                <IfThenElse name="object in view: follow it now">
-                    <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
-                    <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
-                    <AlwaysSuccess/>
-                </IfThenElse>
                 <SetBlackboard name="half the distance you want" output_key="dist" value="{radius_step}"/>
                 <SetBlackboard output_key="link" value="talos/dropper_link"/>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
@@ -615,23 +616,13 @@
                             <Action ID="Info" message="searching within a {dist} radius of the initial guess"/>
                             <Action ID="Math" a="{dist}" b="-1" operator="*" out="{ndist}"/>
                             <ForceSuccess>
-                                <ReactiveSequence name="spiral leg until the object is in view">
-                                    <Inverter>
-                                        <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
-                                    </Inverter>
-                                    <Fallback>
-                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                        <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
-                                    </Fallback>
-                                </ReactiveSequence>
+                                <Fallback>
+                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="ndist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="ndist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                    <SubTree ID="DownwardMove" __shared_blackboard="false" frame="frame" gx="dist" gy="dist" gz="min_dist" object_name="object_name" reset_adjust_threshold="reset_adjust_threshold" target_Cov="target_cov"/>
+                                </Fallback>
                             </ForceSuccess>
-                            <IfThenElse name="object in view: follow it now">
-                                <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
-                                <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
-                                <AlwaysSuccess/>
-                            </IfThenElse>
                             <Sequence>
                                 <Action ID="Math" a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
                                 <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
@@ -675,6 +666,32 @@
                 <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
             </Sequence>
         </Fallback>
+    </BehaviorTree>
+    <BehaviorTree ID="DownwardTrack">
+        <Sequence name="Follow the detection until the estimate converges or it is lost">
+            <Action ID="Info" message="{object_name} in view: following the detection"/>
+            <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+            <SetBlackboard output_key="step_secs" value="0.5"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="30">
+                <Sequence name="re-aim at the latest estimate">
+                    <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                    <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                    <ForceSuccess>
+                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="step_secs" x="ax" y="ay" z="az"/>
+                    </ForceSuccess>
+                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                    <Fallback name="done?">
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="estimate converged" test="&lt;"/>
+                        <Sequence name="lost it">
+                            <Inverter>
+                                <Condition ID="SeenRecently" max_age_secs="3.0" min_score="0.2" object_name="{object_name}"/>
+                            </Inverter>
+                            <Action ID="Info" message="Lost sight of {object_name}; resuming the search"/>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </Decorator>
+        </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="FireDropper">
         <ForceSuccess name="REMOVE ME">
@@ -731,8 +748,8 @@
             <Action ID="Info" message="Post imu: {final_imu_y}"/>
             <Action ID="Math" a="{final_imu_y}" b="{pre_imu_y}" operator="-" out="imu_delta"/>
             <Action ID="Math" a="{pre_flip_yaw}" b="{imu_delta}" operator="+" out="post_flip_yaw"/>
-            <Action ID="PublishEKFPose" pitch="{pre_flip_op}" roll="{pre_flip_or}" setOrientation="true" setX="true" setY="true" setZ="false" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{pre_flip_z}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="op" or="or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="undergate_depth"/>
+            <Action ID="PublishEKFPose" orientation_tolerance="0.1" pitch="{pre_flip_op}" position_tolerance="0.1" roll="{pre_flip_or}" setOrientation="true" setX="true" setY="true" setZ="false" timeout_secs="5" x="{pre_flip_x}" y="{pre_flip_y}" yaw="{post_flip_yaw}" z="{pre_flip_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="pre_flip_op" or="pre_flip_or" oy="pre_flip_yaw" x="pre_flip_x" y="pre_flip_y" z="undergate_depth"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GateTree">
@@ -894,7 +911,7 @@
             <SetBlackboard output_key="search_timeout" value="20"/>
             <SetBlackboard output_key="search_target_cov" value="1.25"/>
             <SetBlackboard output_key="search_prox_x" value="1.25"/>
-            <SetBlackboard output_key="search_prox_z" value="0.4"/>
+            <SetBlackboard output_key="search_prox_z" value="0.2"/>
             <SetBlackboard output_key="magnet1" value="magnet_target1"/>
             <SetBlackboard output_key="magnet2" value="magnet_target2"/>
             <SetBlackboard output_key="magnet1_frame" value="magnet_target1_frame"/>
@@ -902,7 +919,9 @@
             <ForceSuccess>
                 <Action ID="CallSetStringService" data="{bin_object_vision_class}" srv_name="/talos/mapping/fit_bin_geometry" time_limit_secs="3"/>
             </ForceSuccess>
-            <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{magnet1}" object2_name="{magnet2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="3"/>
+            <RetryUntilSuccessful num_attempts="3">
+                <Action ID="CallStartBinaryClassifierService" class_name="{object_vision_class}" object1_name="{magnet1}" object2_name="{magnet2}" srv_name="/talos/mapping/start_binary_classifier" time_limit_secs="3"/>
+            </RetryUntilSuccessful>
             <ForceSuccess>
                 <Sequence>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
@@ -911,10 +930,18 @@
                     <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="magnet1" parent_object="magnet1" prox_x="search_prox_x" prox_y="0" prox_z="search_prox_z" target_cov="search_target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
-            <Action ID="CallTriggerService" srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="3"/>
+            <ForceSuccess>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+            </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <SubTree ID="ActivateMagnet" __shared_blackboard="false" magnet_frame="magnet1_frame"/>
-            <Action ID="CallTriggerService" srv_name="/talos/mapping/start_binary_classifier_second" time_limit_secs="3"/>
+            <ForceSuccess>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/mapping/start_binary_classifier_second" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+            </ForceSuccess>
             <ForceSuccess>
                 <Sequence>
                     <Action ID="TransformPose" from_frame="{magnet2_frame}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
@@ -983,7 +1010,7 @@
     </BehaviorTree>
     <BehaviorTree ID="NewTableTree">
         <Sequence name="set blackboards">
-            <SetBlackboard output_key="minisearch_prox" value="1.5"/>
+            <SetBlackboard output_key="minisearch_prox" value="1.0"/>
             <SetBlackboard output_key="claw_topic" value="command/actuator/claw_move_s"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -994,14 +1021,17 @@
             <SetBlackboard output_key="ctrlr_dist" value="0.01"/>
             <SetBlackboard output_key="ctrlr_trust" value="0.95"/>
             <SetBlackboard output_key="overtable" value="0.1"/>
-            <SetBlackboard output_key="search_prox" value="2"/>
-            <SetBlackboard output_key="target_err" value="0.2"/>
+            <SetBlackboard output_key="pre_overtable" value="0.25"/>
+            <SetBlackboard output_key="search_prox" value="1.0"/>
+            <SetBlackboard output_key="target_err" value="0.5"/>
             <SetBlackboard output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="reset_threshold" value="1000"/>
             <SetBlackboard output_key="num_sorts" value="0"/>
             <SetBlackboard output_key="cycles" value="1"/>
             <Sequence name="Set Object stuff and frames">
                 <SetBlackboard output_key="table" value="table"/>
+                <SetBlackboard output_key="pre_table_pose_frame" value="pre_table_pose_frame"/>
+                <SetBlackboard output_key="post_table_pose_frame" value="post_table_pose_frame"/>
                 <SetBlackboard output_key="claw_link" value="talos/claw_link"/>
                 <SetBlackboard output_key="base_link" value="talos/base_link"/>
                 <SetBlackboard output_key="curr_object" value="bandage"/>
@@ -1012,12 +1042,16 @@
                 <SetBlackboard output_key="curr_image" value="buoy"/>
                 <SetBlackboard output_key="curr_image" value="compass"/>
             </IfThenElse>
+            <Sequence name="Go To Table">
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
+            </Sequence>
             <Sequence name="find table">
                 <ForceSuccess>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
                 </ForceSuccess>
                 <ForceSuccess>
-                    <Action ID="CallSetBoolService" data="1" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                    <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
                 </ForceSuccess>
                 <ForceSuccess>
                     <Sequence>
@@ -1025,6 +1059,8 @@
                         <SetBlackboard output_key="table_timeout" value="60"/>
                         <SetBlackboard output_key="table_dist" value="1.5"/>
                         <SetBlackboard output_key="table_cov" value="0.8"/>
+                        <Action ID="Format" format="{curr_drop}_frame" out="curr_drop_frame"/>
+                        <Action ID="Format" format="{secondary_drop}_frame" out="secondary_drop_frame"/>
                         <ForceSuccess>
                             <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="table_dist" object_name="curr_drop" target_cov="table_cov" timeout_sec="table_timeout"/>
                         </ForceSuccess>
@@ -1036,9 +1072,12 @@
                 <ForceSuccess>
                     <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
                 </ForceSuccess>
+                <ForceSuccess>
+                    <Action ID="CallTriggerService" srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
+                </ForceSuccess>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="2" value="2"/>
-                <Action ID="TransformPose" from_frame="{curr_drop}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop}" x="0" y="0" z="0"/>
+                <Action ID="TransformPose" from_frame="{curr_drop_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
                 <Action ID="Math" a="{ax}" b="2" operator="/" out="ax"/>
                 <Action ID="Math" a="{ay}" b="2" operator="/" out="ay"/>
                 <Action ID="Math" a="{az}" b="2" operator="/" out="az"/>
@@ -1050,9 +1089,9 @@
                 <Sequence name="object cycles">
                     <ForceSuccess name="Object pickup and dropoff">
                         <Sequence>
-                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
-                            <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="curr_image"/>
-                            <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_name="curr_drop" minisearch_prox="minisearch_prox" overtable="overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" pre_overtable="pre_overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                            <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
+                            <SubTree ID="dropObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_name="curr_drop" minisearch_prox="minisearch_prox" overtable="pre_overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                             <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
                         </Sequence>
                     </ForceSuccess>
@@ -1082,13 +1121,20 @@
                     </ForceSuccess>
                 </Sequence>
             </Repeat>
+            <Action ID="Math" a="{az}" b="{minisearch_prox}" operator="+" out="midpoint_move_z"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="secondary_drop_frame" x="ax" y="ay" z="midpoint_move_z"/>
             <ForceSuccess>
-                <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
+                <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts" target_image="curr_image"/>
             </ForceSuccess>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="secondary_drop_frame" x="ax" y="ay" z="midpoint_move_z"/>
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
             </ForceSuccess>
             <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
+            <Sequence name="Leave Table">
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
+                <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="NotifyTankStartTable">
@@ -1129,15 +1175,17 @@
                 <SetBlackboard name="Positive is right bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_pos}"/>
             </IfThenElse>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_pos" y="slalom_lat_offset" z="0"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="x" y="slalom_lat_offset" z="0"/>
+            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="0" y="slalom_lat_offset" z="0"/>
             <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="slalom_object" op="0" or="0" oy="3.1415" x="slalom_long_offset_neg" y="slalom_lat_offset" z="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="PrepForRun">
         <Sequence>
             <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="time_limit_secs" value="3"/>
             <ForceSuccess>
-                <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+                <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="{time_limit_secs}"/>
             </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="ReloadActuators"/>
@@ -1174,7 +1222,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-2.5"/>
+            <SetBlackboard output_key="max_depth" value="-6.0"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
@@ -1219,16 +1267,24 @@
             <Action ID="TransformPose" from_frame="pre_torpedo_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="tx" out_y="ty" out_z="tz" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="yaw" x="tx" y="ty" z="tz"/>
             <Sequence>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
                 <Action ID="Wait" seconds="{sample_time}"/>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
             </Sequence>
             <Action ID="TransformPose" from_frame="pre_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="tx" out_y="ty" out_z="tz" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="yaw" x="tx" y="ty" z="tz"/>
             <Sequence>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
                 <Action ID="Wait" seconds="{sample_time}"/>
-                <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallTriggerService" srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
             </Sequence>
             <Action ID="GetBoolTopic" topic="/talos/acoustics/buffer_0_closer" value="is_table"/>
         </Sequence>
@@ -1284,6 +1340,7 @@
     </BehaviorTree>
     <BehaviorTree ID="ReturnHomeTree">
         <Sequence>
+            <SetBlackboard output_key="gate_align_dist" value="-1"/>
             <SetBlackboard output_key="-1.5" value="-1.5"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="1" value="1"/>
@@ -1298,9 +1355,9 @@
             <SetBlackboard output_key="target_err" value="0.01"/>
             <Action ID="Info" message="WINNING TIME"/>
             <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_return_home_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="1" y="0" z="undergate"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="0" y="0" z="undergate"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="gate_frame" op="0" or="0" oy="3.1415" x="-1.5" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="gate_align_dist" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="0" y="0" z="undergate"/>
+            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="gate_frame" x="1" y="0" z="undergate"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="RotateToFrame">
@@ -1467,8 +1524,7 @@
                         </ForceSuccess>
                         <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
                         <Action ID="SetStatus" status="aligning"/>
-                        <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dropper_link_name}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{overbin}"/>
-                        <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+                        <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="object_frame" link_name="dropper_link_name" x="0" y="0" z="overbin"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="dropper_link_name" target_frame="object_frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
                     </Sequence>
                 </RetryUntilSuccessful>
@@ -1482,10 +1538,10 @@
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
-            <SetBlackboard output_key="scale_trust" value="0.985"/>
+            <SetBlackboard output_key="scale_trust" value="0.99"/>
             <SetBlackboard output_key="ctrler_dist" value="0.01"/>
             <SetBlackboard output_key="1" value="1"/>
-            <SetBlackboard output_key="shoot_prox" value="0.6"/>
+            <SetBlackboard output_key="shoot_prox" value="0.35"/>
             <SetBlackboard output_key="ms_prox" value="1.5"/>
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard output_key="ms_timeout" value="30"/>
@@ -1563,7 +1619,11 @@
             <SetBlackboard output_key="msrch_prox" value="2.5"/>
             <SetBlackboard output_key="msrch_timeout" value="15"/>
             <Action ID="Info" message="SALMONI TIME"/>
-            <Action ID="CallSetStringService" data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="1"/>
+            <ForceSuccess>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Action ID="CallSetStringService" data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="3"/>
+                </RetryUntilSuccessful>
+            </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_parent" parent_object="slalom_parent" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
             </ForceSuccess>
@@ -1700,37 +1760,19 @@
     </BehaviorTree>
     <BehaviorTree ID="SpinTree">
         <Sequence>
-            <SetBlackboard output_key="15" value="15"/>
             <SetBlackboard output_key="0" value="0"/>
-            <Action ID="GetOdometry" op="" or="" oy="orig_y" x="" y="" z=""/>
-            <Action ID="Math" a="{num_cycles}" b="6" operator="*" out="{num_repeats}"/>
+            <SetBlackboard output_key="2" value="2"/>
+            <Action ID="Format" format="{target_image}_frame" out="target_frame"/>
             <ForceSuccess>
-                <Sequence name="Clamp num_repeats">
-                    <Condition ID="CompareNums" a="{num_repeats}" b="0" test="&gt;"/>
-                    <Action ID="Math" a="{num_repeats}" b="1" operator="-" out="num_repeats"/>
-                </Sequence>
+                <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
             </ForceSuccess>
-            <Action ID="Info" message="Rotating through {num_cycles} in {num_repeats} segments"/>
-            <Repeat num_cycles="{num_repeats}">
-                <Sequence name="spin_pi/3">
-                    <Action ID="Info" message="Turning one segment"/>
-                    <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
-                    <Action ID="Math" a="{curr_yaw}" b="2.09" operator="+" out="new_yaw"/>
-                    <Fallback>
-                        <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="5">
-                            <Sequence>
-                                <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{new_yaw}"/>
-                                <Action ID="GetOdometry" op="" or="" oy="curr_yaw" x="" y="" z=""/>
-                                <Condition ID="ApproxEqualToAngle" a="{curr_yaw}" b="{new_yaw}" range="1.04"/>
-                            </Sequence>
-                        </Decorator>
-                        <ForceFailure>
-                            <Action ID="Error" message="Failed to spin: current yaw is {curr_yaw}, but desired is {new_yaw}"/>
-                        </ForceFailure>
-                    </Fallback>
-                </Sequence>
-            </Repeat>
-            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="orig_y"/>
+            <Action ID="Wait" seconds="2"/>
+            <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="120" yaw_rate="4.0"/>
+            <ForceSuccess>
+                <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
+            </ForceSuccess>
+            <Action ID="Wait" seconds="2"/>
+            <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image="target_image"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurfaceTree">
@@ -1746,11 +1788,6 @@
             <SetBlackboard output_key="pre_table_pose_frame" value="pre_table_pose_frame"/>
             <SetBlackboard output_key="post_table_pose_frame" value="post_table_pose_frame"/>
             <SetBlackboard output_key="target_cov" value="1"/>
-            <ForceSuccess>
-                <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
-            </ForceSuccess>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
             <Action ID="TransformPose" from_frame="table_frame" op="0" or="0" out_op="" out_or="" out_oy="table_w" out_x="table_x" out_y="table_y" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
             <Action ID="GetOdometry" op="" or="" oy="cur_yaw" x="" y="" z=""/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="cur_yaw" x="table_x" y="table_y" z="depth"/>
@@ -1761,11 +1798,9 @@
             <Repeat num_cycles="5">
                 <Action ID="PublishToController" isOrientation="0" mode="3" x="{table_x}" y="{table_y}" z="1"/>
             </Repeat>
-            <Action ID="Wait" seconds="5"/>
+            <Action ID="Wait" seconds="3"/>
             <Action ID="GetOdometry" op="" or="" oy="cur_yaw" x="" y="" z=""/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="cur_yaw" x="table_x" y="table_y" z="depth"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SurgeMove">
@@ -1950,7 +1985,6 @@
                 </Repeat>
             </ForceSuccess>
             <Action ID="Info" message="Sorted {num_sorts} items."/>
-            <SubTree ID="SpinTree" __shared_blackboard="false" num_cycles="num_sorts"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="TankLongitudinalFF">
@@ -2118,15 +2152,13 @@
                 <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="dropoff_name" target_cov="target_err" timeout_sec="search_timeout"/>
             </ForceSuccess>
             <ForceSuccess>
-                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="20">
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="0">
                     <SubTree ID="DownwardMove" __shared_blackboard="false" frame="dropoff_frame" gx="0" gy="0" gz="minisearch_prox" object_name="dropoff_name" reset_adjust_threshold="reset_threshold" target_Cov="0"/>
                 </Decorator>
             </ForceSuccess>
             <Action ID="SetStatus" status="aligning"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{dropoff_frame}" x="0" y="0" z="{search_prox}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="aop" or="aor" oy="aoy" x="ax" y="ay" z="az"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{dropoff_frame}" x="0" y="0" z="{overtable}"/>
-            <SubTree ID="Move" __shared_blackboard="false" op="bop" or="bor" oy="boy" x="bx" y="by" z="bz"/>
+            <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="dropoff_frame" link_name="claw_link" x="0" y="0" z="search_prox"/>
+            <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="dropoff_frame" link_name="claw_link" x="0" y="0" z="overtable"/>
             <ForceSuccess>
                 <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="dropoff_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
             </ForceSuccess>
@@ -2135,13 +2167,14 @@
             <Action ID="PublishFloat32" data="{claw_drop_s}" topic="{claw_topic}"/>
             <Action ID="Math" a="{claw_open_s}" b="1000" operator="*" out="claw_open_ms"/>
             <Delay delay_msec="20">
-                <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+                <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="dropoff_frame" link_name="claw_link" x="0" y="0" z="search_prox"/>
             </Delay>
             <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="pickupObject">
         <Sequence>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
             <Sequence name="set blackboards">
                 <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
                 <SetBlackboard output_key="0" value="0"/>
@@ -2159,9 +2192,14 @@
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <Action ID="PublishFloat32" data="{claw_open_s}" topic="{claw_topic}"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
-            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{object_frame}" x="0" y="0" z="{over_table}"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="cop" out_or="cor" out_oy="coy" out_x="cx" out_y="cy" out_z="cz" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{pre_overtable}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="coy" x="cx" y="cy" z="cz"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="object_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
+            </ForceSuccess>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{overtable}"/>
             <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="boy" x="bx" y="by" z="bz"/>
             <ForceSuccess>
                 <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="object_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
@@ -2175,32 +2213,6 @@
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
-    <BehaviorTree ID="DownwardTrack">
-        <Sequence name="Follow the detection until the estimate converges or it is lost">
-            <Action ID="Info" message="{object_name} in view: following the detection"/>
-            <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
-            <SetBlackboard output_key="step_secs" value="0.5"/>
-            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="30">
-                <Sequence name="re-aim at the latest estimate">
-                    <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
-                    <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
-                    <ForceSuccess>
-                        <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="step_secs" x="ax" y="ay" z="az"/>
-                    </ForceSuccess>
-                    <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
-                    <Fallback name="done?">
-                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="estimate converged" test="&lt;"/>
-                        <Sequence name="lost it">
-                            <Inverter>
-                                <Condition ID="SeenRecently" max_age_secs="3.0" min_score="0.2" object_name="{object_name}"/>
-                            </Inverter>
-                            <Action ID="Info" message="Lost sight of {object_name}; resuming the search"/>
-                        </Sequence>
-                    </Fallback>
-                </Sequence>
-            </Decorator>
-        </Sequence>
-    </BehaviorTree>
     <TreeNodesModel>
         <SubTree ID="ActivateMagnet">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -2212,6 +2224,14 @@
             <input_port name="link_name" required="true">link to align</input_port>
             <input_port default="1" name="prox_x" required="true">default x promity</input_port>
             <input_port default="0" name="prox_z" required="true">default z proximity</input_port>
+        </SubTree>
+        <SubTree ID="AlignLinkPositionOnly">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame_name" required="true"/>
+            <input_port name="link_name" required="true"/>
+            <input_port name="x" required="true"/>
+            <input_port name="y" required="true"/>
+            <input_port name="z" required="true"/>
         </SubTree>
         <Condition ID="ApproxEqualTo">
             <input_port name="a" required="true"/>
@@ -2324,6 +2344,12 @@
             <input_port name="y" required="true">target y-pos of frameName in world frame</input_port>
             <input_port name="z" required="true">target z-pos of frameName in world frame</input_port>
         </Action>
+        <Action ID="ContinuousSpin">
+            <input_port name="num_cycles" required="true"/>
+            <input_port default="1" name="odom_timeout_secs" required="false"/>
+            <input_port default="90" name="timeout_secs" required="false"/>
+            <input_port default="0.5" name="yaw_rate" required="false"/>
+        </Action>
         <SubTree ID="DemoTableTree"/>
         <SubTree ID="DeployTankTree"/>
         <SubTree ID="DiscoverObjects">
@@ -2369,6 +2395,13 @@
             <input_port name="object_name" required="false"/>
             <input_port name="target_cov" required="true"/>
             <input_port name="timeout_sec" required="false"/>
+        </SubTree>
+        <SubTree ID="DownwardTrack">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="frame" required="true"/>
+            <input_port name="min_dist" required="true"/>
+            <input_port name="object_name" required="true"/>
+            <input_port name="target_cov" required="true"/>
         </SubTree>
         <Action ID="Error">
             <input_port name="message" required="true">The message to print.</input_port>
@@ -2537,12 +2570,15 @@
             <input_port name="z" required="true"/>
         </SubTree>
         <Action ID="PublishEKFPose">
+            <input_port default="0.1" name="orientation_tolerance" required="false">Reset confirmation tolerance in radians</input_port>
             <input_port default="0" name="pitch" required="false"/>
+            <input_port default="0.1" name="position_tolerance" required="false">Reset confirmation tolerance in meters</input_port>
             <input_port default="0" name="roll" required="false"/>
             <input_port name="setOrientation" required="true"/>
             <input_port name="setX" required="true"/>
             <input_port name="setY" required="true"/>
             <input_port name="setZ" required="true"/>
+            <input_port default="5" name="timeout_secs" required="false">Reset and odometry confirmation timeout in seconds</input_port>
             <input_port default="0" name="x" required="false"/>
             <input_port default="0" name="y" required="false"/>
             <input_port default="0" name="yaw" required="false"/>
@@ -2607,6 +2643,11 @@
             <input_port default="1.25" name="target_cov" required="false">Target covariance to end search</input_port>
             <input_port default="120" name="timeout_secs" required="false">Timeout for search</input_port>
         </SubTree>
+        <Condition ID="SeenRecently">
+            <input_port name="max_age_secs" required="true">Seconds a detection stays fresh</input_port>
+            <input_port name="min_score" required="false">Minimum detection confidence (mapping cutoff 0.2)</input_port>
+            <input_port name="object_name" required="true"/>
+        </Condition>
         <SubTree ID="SetActiveCamera">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="is_dfc" required="true">1 for dfc, 0 otherwise</input_port>
@@ -2672,6 +2713,7 @@
         <SubTree ID="SpinTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="num_cycles" required="true"/>
+            <input_port name="target_image" required="true"/>
         </SubTree>
         <SubTree ID="SurfaceTree">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
@@ -2773,23 +2815,12 @@
             <input_port name="pickup_center_x" required="false"/>
             <input_port name="pickup_center_y" required="false"/>
             <input_port name="pickup_center_z" required="false"/>
+            <input_port name="pre_overtable" required="false"/>
             <input_port name="reset_threshold" required="false"/>
             <input_port name="search_prox" required="false"/>
             <input_port name="search_timeout" required="false"/>
-            <inout_port name="target_err" required="false"/>
+            <input_port name="target_err" required="false"/>
         </SubTree>
-        <SubTree ID="DownwardTrack">
-            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
-            <input_port name="frame" required="true"/>
-            <input_port name="min_dist" required="true"/>
-            <input_port name="object_name" required="true"/>
-            <input_port name="target_cov" required="true"/>
-        </SubTree>
-        <Condition ID="SeenRecently">
-            <input_port name="max_age_secs" required="true">Seconds a detection stays fresh</input_port>
-            <input_port name="min_score" required="false">Minimum detection confidence (mapping cutoff 0.2)</input_port>
-            <input_port name="object_name" required="true"/>
-        </Condition>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
