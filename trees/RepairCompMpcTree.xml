@@ -44,7 +44,7 @@
             <SetBlackboard output_key="post_align_height" value="-0.8"/>
             <SetBlackboard output_key="magnet_link" value="talos/magnet_link"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SetBlackboard name="no retreat unless aligned" output_key="retreat_path" value=""/>
+            <SetBlackboard name="no retreat unless aligned" output_key="retreat_path" value=";"/>
             <ForceSuccess>
                 <Sequence name="To the magnet frame's +x side with yaw along its x in one move, then straight back into it">
                     <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{magnet_frame}" x="{magnet_pre_align_dist}" y="0" z="{magnet_align_height}"/>
@@ -1369,12 +1369,12 @@
             <SetBlackboard output_key="magnet2" value="magnet_target2"/>
             <SetBlackboard output_key="magnet1_frame" value="magnet_target1_frame"/>
             <SetBlackboard output_key="magnet2_frame" value="magnet_target2_frame"/>
-            <SetBlackboard output_key="m1_retreat" value=""/>
+            <SetBlackboard output_key="m1_retreat" value=";"/>
             <SetBlackboard output_key="base_link_frame" value="talos/base_link"/>
             <SetBlackboard output_key="still_dist" value="1"/>
             <SetBlackboard output_key="still_trust" value="0.8"/>
             <SetBlackboard output_key="still_timeout" value="15"/>
-            <SetBlackboard output_key="m2_retreat" value=""/>
+            <SetBlackboard output_key="m2_retreat" value=";"/>
             <ForceSuccess>
                 <Action ID="CallSetStringService" data="{bin_object_vision_class}" srv_name="/talos/mapping/fit_bin_geometry" time_limit_secs="3"/>
             </ForceSuccess>
@@ -1686,7 +1686,7 @@
                         <SetBlackboard output_key="secondary_drop" value="warning"/>
                         <SetBlackboard output_key="table_timeout" value="60"/>
                         <SetBlackboard output_key="table_dist" value="1.5"/>
-                        <SetBlackboard output_key="table_cov" value="0.8"/>
+                        <SetBlackboard name="Tight, like the claw hover: the table is fit to these" output_key="table_cov" value="0.0005"/>
                         <Action ID="Format" format="{curr_drop}_frame" out="curr_drop_frame"/>
                         <Action ID="Format" format="{secondary_drop}_frame" out="secondary_drop_frame"/>
                         <ForceSuccess>
@@ -1700,9 +1700,21 @@
                 <ForceSuccess>
                     <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
                 </ForceSuccess>
-                <ForceSuccess>
-                    <Action ID="CallTriggerService" srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
-                </ForceSuccess>
+                <Action ID="Format" format="{curr_drop},{secondary_drop}," name="trailing comma: a value that starts with { and ends with } is read as one key" out="baskets"/>
+                <Fallback name="Fit the table to the baskets, only once both estimates are tight">
+                    <Sequence>
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" name="both baskets converged" num_seconds="1">
+                            <Sequence>
+                                <Action ID="Wait" seconds="0.2"/>
+                                <Condition ID="MapConverged" object="{baskets}" target_cov="{table_cov}"/>
+                            </Sequence>
+                        </Decorator>
+                        <ForceSuccess>
+                            <Action ID="CallTriggerService" srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
+                        </ForceSuccess>
+                    </Sequence>
+                    <Action ID="Info" message="{baskets} not both converged below {table_cov}: the table keeps its prior"/>
+                </Fallback>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="2" value="2"/>
                 <Action ID="TransformPose" from_frame="{curr_drop_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
@@ -3217,14 +3229,14 @@
                 <SubTree ID="DownwardSearchMpc" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
             </ForceSuccess>
             <ForceSuccess>
-                <Sequence name="Downward camera over it, then until its estimate is tight (at most 3 s)">
+                <Sequence name="Downward camera over it, then until its estimate is tight (at most 5 s)">
                     <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
                     <SetBlackboard name="Tight enough to line the claw up on" output_key="hover_cov" value="0.0005"/>
                     <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{object_frame}" x="0" y="0" z="0"/>
                     <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the object" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="hover_yaw" out_x="hover_x" out_y="hover_y" out_z="hover_z" oy="{link_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{minisearch_prox}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the object" out="hover_path" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
                     <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
-                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Until the estimate is tight" num_seconds="3">
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Until the estimate is tight" num_seconds="5">
                         <Sequence>
                             <Action ID="Wait" seconds="0.2"/>
                             <Condition ID="MapConverged" object="{object_name}" target_cov="{hover_cov}"/>
