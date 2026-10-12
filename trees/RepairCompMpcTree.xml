@@ -44,16 +44,17 @@
             <SetBlackboard output_key="post_align_height" value="-0.8"/>
             <SetBlackboard output_key="magnet_link" value="talos/magnet_link"/>
             <Action ID="SetStatus" status="aligning"/>
-            <SetBlackboard name="no retreat unless aligned" output_key="retreat_path" value=""/>
+            <SetBlackboard name="no retreat unless aligned" output_key="retreat_path" value=";"/>
             <ForceSuccess>
-                <Sequence name="Pre-align and align as one path">
+                <Sequence name="To the magnet frame's +x side with yaw along its x in one move, then straight back into it">
                     <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{magnet_frame}" x="{magnet_pre_align_dist}" y="0" z="{magnet_align_height}"/>
                     <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{magnet_frame}" x="{magnet_align_dist}" y="0" z="{magnet_align_height}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="retreat: back to pre-align" out="retreat_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="retreat: then up" out="retreat_path" path="{retreat_path}" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{post_align_height}"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre-align" out="align_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="align" out="align_path" path="{align_path}" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bz}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{align_path}"/>
+                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre-align: magnet link out on the frame's +x, facing +x" out="pre_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="One move: there, turned and at depth" spin_rate="" timeout="60" waypoints="{pre_path}"/>
+                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="the magnet" out="in_path" path="" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bz}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="Straight back into it" spin_rate="" timeout="30" waypoints="{in_path}"/>
                     <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="magnet_link" target_frame="magnet_frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
                 </Sequence>
             </ForceSuccess>
@@ -180,19 +181,19 @@
                         </RetryUntilSuccessful>
                     </Sequence>
                     <ForceSuccess>
-                        <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object1" target_cov="target_err" timeout_sec="search_timeout"/>
+                        <SubTree ID="DownwardSearchMpc" __shared_blackboard="false" min_dist="search_prox" object_name="object1" target_cov="target_err" timeout_sec="search_timeout"/>
                     </ForceSuccess>
                     <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="1"/>
                     <ForceSuccess>
-                        <SubTree ID="ShootDownwardObject" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object1" search_prox="search_prox"/>
+                        <SubTree ID="ShootDownwardObjectMpc" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object1" search_prox="search_prox"/>
                     </ForceSuccess>
                     <RetryUntilSuccessful num_attempts="3">
                         <Action ID="CallTriggerService" srv_name="/talos/mapping/start_binary_classifier_second" time_limit_secs="3"/>
                     </RetryUntilSuccessful>
                     <ForceSuccess>
                         <Sequence>
-                            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="search_prox" object_name="object2" target_cov="target_err" timeout_sec="search_timeout"/>
-                            <SubTree ID="ShootDownwardObject" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object2" search_prox="search_prox"/>
+                            <SubTree ID="DownwardSearchMpc" __shared_blackboard="false" min_dist="search_prox" object_name="object2" target_cov="target_err" timeout_sec="search_timeout"/>
+                            <SubTree ID="ShootDownwardObjectMpc" __shared_blackboard="false" dropper_link_name="dropper_link" object_name="object2" search_prox="search_prox"/>
                         </Sequence>
                     </ForceSuccess>
                     <RetryUntilSuccessful num_attempts="3">
@@ -468,10 +469,8 @@
                     <ForceSuccess>
                         <Sequence name="Path: to the table">
                             <Action ID="GetOdometry" op="" or="" oy="path_yaw" x="" y="" z=""/>
-                            <Action ID="TransformPose" from_frame="pre_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pre_table_x" out_y="pre_table_y" out_z="pre_table_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="post_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="post_table_x" out_y="post_table_y" out_z="post_table_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="{pre_table_x}" y="{pre_table_y}" yaw="{path_yaw}" yaw_offset="" z="{pre_table_z}"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{post_table_x}" y="{post_table_y}" yaw="{path_yaw}" yaw_offset="" z="{post_table_z}"/>
+                            <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
@@ -480,12 +479,11 @@
                     </ForceSuccess>
                     <ForceSuccess>
                         <Sequence name="Path: leave the table, straight to torpedo">
+                            <Action ID="SetMappingTarget" lock_map="0" name="Map the torpedo as it comes into view" target_object="torpedo" time_limit_secs="3"/>
                             <Action ID="GetOdometry" op="" or="" oy="path_yaw" x="" y="" z=""/>
-                            <Action ID="TransformPose" from_frame="post_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="post_table_x" out_y="post_table_y" out_z="post_table_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="pre_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pre_table_x" out_y="pre_table_y" out_z="pre_table_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="{post_table_x}" y="{post_table_y}" yaw="{path_yaw}" yaw_offset="" z="{post_table_z}"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{pre_table_x}" y="{pre_table_y}" yaw="{path_yaw}" yaw_offset="" z="{pre_table_z}"/>
-                            <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
                             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
@@ -495,11 +493,9 @@
                     <ForceSuccess>
                         <Sequence name="Path: leave torpedo, straight to bins">
                             <Action ID="TransformPose" name="torpedo heading" from_frame="pre_torpedo_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="torp_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="pre_bin_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pre_bin_x" out_y="pre_bin_y" out_z="pre_bin_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="post_bin_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="post_bin_x" out_y="post_bin_y" out_z="post_bin_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
                             <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{pre_bin_x}" y="{pre_bin_y}" yaw="{torp_yaw}" yaw_offset="" z="{pre_bin_z}"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{post_bin_x}" y="{post_bin_y}" yaw="{torp_yaw}" yaw_offset="" z="{post_bin_z}"/>
+                            <Action ID="AddWaypoint" frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
@@ -507,7 +503,8 @@
                 <Sequence name="torpedo then table">
                     <ForceSuccess>
                         <Sequence name="Path: to torpedo">
-                            <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
+                            <Action ID="SetMappingTarget" lock_map="0" name="Map the torpedo as it comes into view" target_object="torpedo" time_limit_secs="3"/>
+                            <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
                             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
@@ -517,11 +514,9 @@
                     <ForceSuccess>
                         <Sequence name="Path: leave torpedo, straight to the table">
                             <Action ID="TransformPose" name="torpedo heading" from_frame="pre_torpedo_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="torp_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="pre_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pre_table_x" out_y="pre_table_y" out_z="pre_table_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="post_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="post_table_x" out_y="post_table_y" out_z="post_table_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
                             <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{pre_table_x}" y="{pre_table_y}" yaw="{torp_yaw}" yaw_offset="" z="{pre_table_z}"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{post_table_x}" y="{post_table_y}" yaw="{torp_yaw}" yaw_offset="" z="{post_table_z}"/>
+                            <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
@@ -531,14 +526,10 @@
                     <ForceSuccess>
                         <Sequence name="Path: leave the table, straight to bins">
                             <Action ID="GetOdometry" op="" or="" oy="path_yaw" x="" y="" z=""/>
-                            <Action ID="TransformPose" from_frame="post_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="post_table_x" out_y="post_table_y" out_z="post_table_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="pre_table_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pre_table_x" out_y="pre_table_y" out_z="pre_table_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="pre_bin_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pre_bin_x" out_y="pre_bin_y" out_z="pre_bin_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="TransformPose" from_frame="post_bin_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="post_bin_x" out_y="post_bin_y" out_z="post_bin_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="{post_table_x}" y="{post_table_y}" yaw="{path_yaw}" yaw_offset="" z="{post_table_z}"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{pre_table_x}" y="{pre_table_y}" yaw="{path_yaw}" yaw_offset="" z="{pre_table_z}"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{pre_bin_x}" y="{pre_bin_y}" yaw="{path_yaw}" yaw_offset="" z="{pre_bin_z}"/>
-                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{post_bin_x}" y="{post_bin_y}" yaw="{path_yaw}" yaw_offset="" z="{post_bin_z}"/>
+                            <Action ID="AddWaypoint" frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <Action ID="AddWaypoint" frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
@@ -551,18 +542,12 @@
             <ForceSuccess>
                 <Sequence name="Path: leave bins, straight home through the gate">
                     <Action ID="GetOdometry" op="" or="" oy="path_yaw" x="" y="" z=""/>
-                    <Action ID="TransformPose" from_frame="post_bin_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="post_bin_x" out_y="post_bin_y" out_z="post_bin_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                    <Action ID="TransformPose" from_frame="pre_bin_pose_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pre_bin_x" out_y="pre_bin_y" out_z="pre_bin_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                    <Action ID="TransformPose" from_frame="pre_return_home_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="pre_home_x" out_y="pre_home_y" out_z="pre_home_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
-                    <Action ID="TransformPose" from_frame="gate_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="gate_in_x" out_y="gate_in_y" out_z="gate_in_z" oy="0" to_frame="world" x="-1" y="0" z="-0.7"/>
-                    <Action ID="TransformPose" from_frame="gate_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="gate_mid_x" out_y="gate_mid_y" out_z="gate_mid_z" oy="0" to_frame="world" x="0" y="0" z="-0.7"/>
-                    <Action ID="TransformPose" from_frame="gate_frame" op="0" or="0" out_op="" out_or="" out_oy="" out_x="gate_out_x" out_y="gate_out_y" out_z="gate_out_z" oy="0" to_frame="world" x="1" y="0" z="-0.7"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="{post_bin_x}" y="{post_bin_y}" yaw="{path_yaw}" yaw_offset="" z="{post_bin_z}"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{pre_bin_x}" y="{pre_bin_y}" yaw="{path_yaw}" yaw_offset="" z="{pre_bin_z}"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre home" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{pre_home_x}" y="{pre_home_y}" yaw="{path_yaw}" yaw_offset="" z="{pre_home_z}"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m before the gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{gate_in_x}" y="{gate_in_y}" yaw="{path_yaw}" yaw_offset="" z="{gate_in_z}"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{gate_mid_x}" y="{gate_mid_y}" yaw="{path_yaw}" yaw_offset="" z="{gate_mid_z}"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m past the gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="{gate_out_x}" y="{gate_out_y}" yaw="{path_yaw}" yaw_offset="" z="{gate_out_z}"/>
+                    <Action ID="AddWaypoint" frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                    <Action ID="AddWaypoint" frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                    <Action ID="AddWaypoint" frame="pre_return_home_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre home" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                    <Action ID="AddWaypoint" frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m before the gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="-1" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
+                    <Action ID="AddWaypoint" frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
+                    <Action ID="AddWaypoint" frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m past the gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="1" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
                     <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="240" waypoints="{transit_path}"/>
                 </Sequence>
             </ForceSuccess>
@@ -901,6 +886,94 @@
             </Sequence>
         </Fallback>
     </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="DownwardSearchMpc">
+        <Fallback>
+            <Sequence>
+                <Action ID="Info" message="Searching for {object_name} with target covarience {target_cov}"/>
+                <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&gt;"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+                <SetBlackboard name="Spiral spacing (m per turn), also its start radius" output_key="radius_step" value="0.25"/>
+                <Action ID="SetStatus" status="searching"/>
+                <Action ID="Format" format="{object_name}_frame" out="frame"/>
+                <Action ID="GetOdometry" op="" or="" oy="abs_yaw" x="" y="" z=""/>
+                <Action ID="TransformPose" from_frame="odom" op="0" or="0" out_op="" out_or="" out_oy="rel_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+                <ForceSuccess>
+                    <ReactiveSequence name="go to the initial guess until the object is in view">
+                        <Inverter>
+                            <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                        </Inverter>
+                        <Sequence name="camera over the guess, as a path at full speed">
+                            <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the guess" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="guess_yaw" out_x="guess_x" out_y="guess_y" out_z="guess_z" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                            <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the guess" out="guess_path" path="" pitch="" roll="" spin="" spin_rate="" x="{guess_x}" y="{guess_y}" yaw="{guess_yaw}" yaw_frame="" yaw_offset="" z="{guess_z}"/>
+                            <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{guess_path}"/>
+                        </Sequence>
+                    </ReactiveSequence>
+                </ForceSuccess>
+                <IfThenElse name="object in view: follow it now">
+                    <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                    <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
+                    <AlwaysSuccess/>
+                </IfThenElse>
+                <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+                <SetBlackboard name="Search speed (m/s); the chase stays at full speed" output_key="search_speed" value="0.2"/>
+                <SetBlackboard name="Spiral's outer radius (m); timeout_sec usually ends it first" output_key="search_radius" value="2.0"/>
+                <Action ID="Math" a="{search_radius}" b="{radius_step}" operator="-" out="spiral_span"/>
+                <Action ID="Math" a="{spiral_span}" b="{radius_step}" operator="/" name="turns: one radius_step apart" out="spiral_turns"/>
+                <Action ID="Math" a="{spiral_turns}" b="6.283185" operator="*" out="spiral_sweep"/>
+                <Fallback name="already converged by the first chase: skip the spiral">
+                    <Sequence>
+                        <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+                        <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                    </Sequence>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
+                        <Fallback>
+                            <Sequence>
+                                <Action ID="Info" message="spiraling out to {search_radius} m round {object_name}'s estimate"/>
+                                <ForceSuccess>
+                                    <ReactiveSequence name="spiral until the object is in view">
+                                        <Inverter>
+                                            <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                        </Inverter>
+                                        <Sequence name="one spiral out from the guess as a single path, at the search speed">
+                                            <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the guess" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="spiral_yaw" out_x="spiral_wx" out_y="spiral_wy" out_z="spiral_wz" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                                            <Action ID="TransformPose" from_frame="world" name="spiral center in the object's frame, so the path moves with its estimate" op="0" or="0" out_op="" out_or="" out_oy="" out_x="spiral_x" out_y="spiral_y" out_z="spiral_z" oy="0" to_frame="{frame}" x="{spiral_wx}" y="{spiral_wy}" z="{spiral_wz}"/>
+                                            <Action ID="AddArc" approach="" cx="{spiral_x}" cy="{spiral_y}" end_radius="{search_radius}" frame="{frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="spiral out, heading held" out="spiral" path="" radius="{radius_step}" spin="" spin_rate="" start_angle="0" sweep="{spiral_sweep}" yaw="{spiral_yaw}" yaw_frame="world" yaw_offset="" z="{spiral_z}"/>
+                                            <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="{search_speed}" min_depth="-0.75" spin_rate="" timeout="600" waypoints="{spiral}"/>
+                                        </Sequence>
+                                    </ReactiveSequence>
+                                </ForceSuccess>
+                                <IfThenElse name="object in view: follow it now">
+                                    <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                                    <SubTree ID="DownwardTrack" __shared_blackboard="false" frame="frame" min_dist="min_dist" object_name="object_name" target_cov="target_cov"/>
+                                    <AlwaysSuccess/>
+                                </IfThenElse>
+                                <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                                <Action ID="Info" message="object {object_name} covariance at {cov}, target is {target_cov}"/>
+                                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="Converged? If not (lost it, or the spiral ran out), spiral again round the estimate" test="&lt;"/>
+                            </Sequence>
+                            <Sequence>
+                                <Action Covariance="final_cov" ID="getCovariance" Target="{object_name}"/>
+                                <Action ID="Info" message="error is {final_cov}"/>
+                                <Condition ID="CompareNums" a="{final_cov}" b="{target_cov}" test="&lt;"/>
+                            </Sequence>
+                        </Fallback>
+                    </Decorator>
+                </Fallback>
+                <Action ID="Info" message="{object_name} found"/>
+            </Sequence>
+            <Sequence>
+                <Action Covariance="cov" ID="getCovariance" Target="{object_name}"/>
+                <Action ID="Info" message="error {cov}, target: {target_cov}, tree ending"/>
+                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+            </Sequence>
+        </Fallback>
+    </BehaviorTree>
     <BehaviorTree ID="FireDropper">
         <ForceSuccess name="REMOVE ME">
             <Sequence>
@@ -1103,11 +1176,11 @@
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
                     <Action ID="Info" message="Mini-searching for alternate prop"/>
                     <ForceSuccess>
-                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="alt_subprop" parent_object="alt_subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                        <SubTree ID="MiniSearchMpc" __shared_blackboard="false" object_name="alt_subprop" parent_object="alt_subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                     </ForceSuccess>
                     <Action ID="Info" message="Mini-searching for primary prop"/>
                     <ForceSuccess>
-                        <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="subprop" parent_object="subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
+                        <SubTree ID="MiniSearchMpc" __shared_blackboard="false" object_name="subprop" parent_object="subprop" prox_x="max_dist" prox_y="0" prox_z="search_prox_z" target_cov="target_cov" timeout_secs="search_timeout"/>
                     </ForceSuccess>
                 </Sequence>
             </ForceSuccess>
@@ -1132,9 +1205,15 @@
             <Action ID="AddWaypoint" frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="gate_path" path="{gate_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Approach and enter the gate as one path" spin_rate="" timeout="60" waypoints="{gate_path}"/>
             <Action ID="SetStatus" status="performing"/>
-            <SubTree ID="FlipTree" __shared_blackboard="false" undergate_depth="undergate_depth"/>
-            <Action ID="Wait" seconds="2"/>
-            <SubTree ID="RelativeMove" __shared_blackboard="false" frame_name="subprop_frame" op="0" or="0" oy="3.1415" x="-1" y="0" z="undergate_depth"/>
+            <ForceSuccess name="Flip (under the MPC FlipTree can't set the stunt safe mode and fails); the gate exit runs either way">
+                <Sequence>
+                    <SubTree ID="FlipTree" __shared_blackboard="false" undergate_depth="undergate_depth"/>
+                    <Action ID="Wait" seconds="2"/>
+                </Sequence>
+            </ForceSuccess>
+            <SetBlackboard name="How far past the gate to go before turning for the slalom (m)" output_key="behind_gate" value="-1.0"/>
+            <Action ID="AddWaypoint" frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="behind the gate" out="exit_path" path="" pitch="" roll="" spin="" spin_rate="" x="{behind_gate}" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
+            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Straight out the back of the gate, clear of its sides" spin_rate="" timeout="30" waypoints="{exit_path}"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GetOppositeColorBasket">
@@ -1290,12 +1369,12 @@
             <SetBlackboard output_key="magnet2" value="magnet_target2"/>
             <SetBlackboard output_key="magnet1_frame" value="magnet_target1_frame"/>
             <SetBlackboard output_key="magnet2_frame" value="magnet_target2_frame"/>
-            <SetBlackboard output_key="m1_retreat" value=""/>
+            <SetBlackboard output_key="m1_retreat" value=";"/>
             <SetBlackboard output_key="base_link_frame" value="talos/base_link"/>
             <SetBlackboard output_key="still_dist" value="1"/>
             <SetBlackboard output_key="still_trust" value="0.8"/>
             <SetBlackboard output_key="still_timeout" value="15"/>
-            <SetBlackboard output_key="m2_retreat" value=""/>
+            <SetBlackboard output_key="m2_retreat" value=";"/>
             <ForceSuccess>
                 <Action ID="CallSetStringService" data="{bin_object_vision_class}" srv_name="/talos/mapping/fit_bin_geometry" time_limit_secs="3"/>
             </ForceSuccess>
@@ -1308,7 +1387,7 @@
                     <Action ID="TransformPose" from_frame="{magnet1_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="magnet 1 search spot" out="magnet_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{bin_move_height}"/>
                     <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="To magnet 1 search spot" spin_rate="" timeout="60" waypoints="{magnet_path}"/>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="magnet1" parent_object="magnet1" prox_x="search_prox_x" prox_y="0" prox_z="search_prox_z" target_cov="search_target_cov" timeout_secs="search_timeout"/>
+                    <SubTree ID="MiniSearchMpc" __shared_blackboard="false" object_name="magnet1" parent_object="magnet1" prox_x="search_prox_x" prox_y="0" prox_z="search_prox_z" target_cov="search_target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
             <ForceSuccess>
@@ -1317,15 +1396,6 @@
                 </RetryUntilSuccessful>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <ForceSuccess>
-                <Sequence name="Turn 180 in place and hold still before tapping magnet 1">
-                    <Action ID="GetOdometry" op="" or="" oy="turn_yaw" x="turn_x" y="turn_y" z="turn_z"/>
-                    <Action ID="Math" a="{turn_yaw}" b="3.14159" operator="+" out="turn_yaw"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="turned 180" out="turn_path" path="" pitch="" roll="" spin="" spin_rate="" x="{turn_x}" y="{turn_y}" yaw="{turn_yaw}" yaw_offset="" z="{turn_z}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{turn_path}"/>
-                    <SubTree ID="WaitForController" __shared_blackboard="false" dist="still_dist" link_frame="base_link_frame" target_frame="base_link_frame" timeout="still_timeout" trust="still_trust"/>
-                </Sequence>
-            </ForceSuccess>
             <SubTree ID="ActivateMagnetMpc" __shared_blackboard="false" magnet_frame="magnet1_frame" retreat_path="m1_retreat"/>
             <ForceSuccess>
                 <RetryUntilSuccessful num_attempts="3">
@@ -1337,19 +1407,10 @@
                     <Action ID="TransformPose" from_frame="{magnet2_frame}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="magnet 2 search spot" out="magnet_path" path="{m1_retreat}" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bin_move_height}"/>
                     <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Retreat from magnet 1, on to the magnet 2 search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
-                    <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="magnet2" parent_object="magnet2" prox_x="search_prox_x" prox_y="0" prox_z="search_prox_z" target_cov="search_target_cov" timeout_secs="search_timeout"/>
+                    <SubTree ID="MiniSearchMpc" __shared_blackboard="false" object_name="magnet2" parent_object="magnet2" prox_x="search_prox_x" prox_y="0" prox_z="search_prox_z" target_cov="search_target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
-            <ForceSuccess>
-                <Sequence name="Turn 180 in place and hold still before tapping magnet 2">
-                    <Action ID="GetOdometry" op="" or="" oy="turn_yaw" x="turn_x" y="turn_y" z="turn_z"/>
-                    <Action ID="Math" a="{turn_yaw}" b="3.14159" operator="+" out="turn_yaw"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="turned 180" out="turn_path" path="" pitch="" roll="" spin="" spin_rate="" x="{turn_x}" y="{turn_y}" yaw="{turn_yaw}" yaw_offset="" z="{turn_z}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{turn_path}"/>
-                    <SubTree ID="WaitForController" __shared_blackboard="false" dist="still_dist" link_frame="base_link_frame" target_frame="base_link_frame" timeout="still_timeout" trust="still_trust"/>
-                </Sequence>
-            </ForceSuccess>
             <SubTree ID="ActivateMagnetMpc" __shared_blackboard="false" magnet_frame="magnet2_frame" retreat_path="m2_retreat"/>
             <ForceSuccess>
                 <Sequence>
@@ -1385,6 +1446,44 @@
                         <Condition ID="CompareNums" a="{cov}" b="0.1" name="if error good enough" test="&lt;"/>
                         <Sequence name="move in front of object">
                             <Action ID="TransformPose" from_frame="{parent_frame}" op="0" or="0" out_op="" out_or="" out_oy="new_yaw" out_x="new_x" out_y="new_y" out_z="new_z" oy="3.1415" to_frame="world" x="{prox_x}" y="0" z="{prox_z}"/>
+                            <Action ID="PublishToController" isOrientation="0" mode="3" x="{new_x}" y="{new_y}" z="{new_z}"/>
+                            <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{new_yaw}"/>
+                        </Sequence>
+                        <AlwaysSuccess name="move in front of parent"/>
+                    </IfThenElse>
+                    <Action ID="Info" message="Object {object_name} has covariance {cov}"/>
+                    <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                </Sequence>
+            </Decorator>
+        </Sequence>
+    </BehaviorTree>
+    <BehaviorTree ID="MiniSearchMpc">
+        <Sequence name="minisearch with the forward camera, not base_link, at the search point">
+            <SetBlackboard output_key="15" value="15"/>
+            <SetBlackboard output_key="60" value="60"/>
+            <SetBlackboard output_key="1" value="1"/>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard name="Forward camera: it goes to the search point, facing the object" output_key="camera_link" value="talos/ffc_base_link"/>
+            <Action ID="Info" message="Refining esimate for object {object_name}"/>
+            <Action ID="Format" format="{parent_object}_frame" out="parent_frame"/>
+            <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
+            <Action ID="SetStatus" status="searching"/>
+            <Action ID="TransformPose" from_frame="{camera_link}" name="the camera's tilt now (kept, so the vehicle stays level)" op="0" or="0" out_op="cam_pitch" out_or="cam_roll" out_oy="" out_x="" out_y="" out_z="" oy="0" to_frame="{parent_frame}" x="0" y="0" z="0"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{camera_link}" name="camera at the search point, facing the object" op="{cam_pitch}" or="{cam_roll}" out_op="" out_or="" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="3.1415" reference_frame="{parent_frame}" x="{prox_x}" y="{prox_y}" z="{prox_z}"/>
+            <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="z"/>
+            <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="oy"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+            <Action ID="Wait" seconds="5"/>
+            <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_secs}">
+                <Sequence name="shrink cov">
+                    <Action ID="Wait" seconds="1"/>
+                    <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+                    <IfThenElse name="move in front of sub object if confident">
+                        <Condition ID="CompareNums" a="{cov}" b="0.1" name="if error good enough" test="&lt;"/>
+                        <Sequence name="move in front of object">
+                            <Action ID="TransformPose" from_frame="{camera_link}" name="the camera's tilt now (kept, so the vehicle stays level)" op="0" or="0" out_op="cam_pitch" out_or="cam_roll" out_oy="" out_x="" out_y="" out_z="" oy="0" to_frame="{parent_frame}" x="0" y="0" z="0"/>
+                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{camera_link}" name="camera straight in front of it" op="{cam_pitch}" or="{cam_roll}" out_op="" out_or="" out_oy="{new_yaw}" out_x="{new_x}" out_y="{new_y}" out_z="{new_z}" oy="3.1415" reference_frame="{parent_frame}" x="{prox_x}" y="0" z="{prox_z}"/>
                             <Action ID="PublishToController" isOrientation="0" mode="3" x="{new_x}" y="{new_y}" z="{new_z}"/>
                             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{new_yaw}"/>
                         </Sequence>
@@ -1580,27 +1679,42 @@
                     <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
                 </ForceSuccess>
                 <ForceSuccess>
+                    <Action ID="CallSetStringService" data="helmet,warning,bandage,pill,nut_and_bolt,plug" name="Map every table prop it sees while searching for each" srv_name="/talos/mapping/set_background_targets" time_limit_secs="3"/>
+                </ForceSuccess>
+                <ForceSuccess>
                     <Sequence>
                         <SetBlackboard output_key="secondary_drop" value="warning"/>
                         <SetBlackboard output_key="table_timeout" value="60"/>
                         <SetBlackboard output_key="table_dist" value="1.5"/>
-                        <SetBlackboard output_key="table_cov" value="0.8"/>
+                        <SetBlackboard name="Tight, like the claw hover: the table is fit to these" output_key="table_cov" value="0.0005"/>
                         <Action ID="Format" format="{curr_drop}_frame" out="curr_drop_frame"/>
                         <Action ID="Format" format="{secondary_drop}_frame" out="secondary_drop_frame"/>
                         <ForceSuccess>
-                            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="table_dist" object_name="curr_drop" target_cov="table_cov" timeout_sec="table_timeout"/>
+                            <SubTree ID="DownwardSearchMpc" __shared_blackboard="false" min_dist="table_dist" object_name="curr_drop" target_cov="table_cov" timeout_sec="table_timeout"/>
                         </ForceSuccess>
                         <ForceSuccess>
-                            <SubTree ID="DownwardSearch" __shared_blackboard="false" min_dist="table_dist" object_name="secondary_drop" target_cov="table_cov" timeout_sec="table_timeout"/>
+                            <SubTree ID="DownwardSearchMpc" __shared_blackboard="false" min_dist="table_dist" object_name="secondary_drop" target_cov="table_cov" timeout_sec="table_timeout"/>
                         </ForceSuccess>
                     </Sequence>
                 </ForceSuccess>
                 <ForceSuccess>
                     <Action ID="CallSetBoolService" data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
                 </ForceSuccess>
-                <ForceSuccess>
-                    <Action ID="CallTriggerService" srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
-                </ForceSuccess>
+                <Action ID="Format" format="{curr_drop},{secondary_drop}," name="trailing comma: a value that starts with { and ends with } is read as one key" out="baskets"/>
+                <Fallback name="Fit the table to the baskets, only once both estimates are tight">
+                    <Sequence>
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" name="both baskets converged" num_seconds="1">
+                            <Sequence>
+                                <Action ID="Wait" seconds="0.2"/>
+                                <Condition ID="MapConverged" object="{baskets}" target_cov="{table_cov}"/>
+                            </Sequence>
+                        </Decorator>
+                        <ForceSuccess>
+                            <Action ID="CallTriggerService" srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
+                        </ForceSuccess>
+                    </Sequence>
+                    <Action ID="Info" message="{baskets} not both converged below {table_cov}: the table keeps its prior"/>
+                </Fallback>
                 <SetBlackboard output_key="0" value="0"/>
                 <SetBlackboard output_key="2" value="2"/>
                 <Action ID="TransformPose" from_frame="{curr_drop_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
@@ -1615,7 +1729,7 @@
                 <Sequence name="object cycles">
                     <ForceSuccess name="Object pickup and dropoff">
                         <Sequence>
-                            <SubTree ID="pickupObject" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" pre_overtable="pre_overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
+                            <SubTree ID="pickupObjectMpc" __shared_blackboard="false" claw_close_s="claw_close_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" minisearch_prox="minisearch_prox" object_name="curr_object" overtable="overtable" pickup_center_x="ax" pickup_center_y="ay" pickup_center_z="az" pre_overtable="pre_overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                             <SubTree ID="SurfaceTree" __shared_blackboard="false" target_image=""/>
                             <SubTree ID="dropObjectMpc" __shared_blackboard="false" claw_close_s="claw_close_s" claw_drop_s="claw_drop_s" claw_link="claw_link" claw_open_s="claw_open_s" claw_topic="claw_topic" ctrlr_dist="ctrlr_dist" ctrlr_timeout="ctrlr_timeout" ctrlr_trust="ctrlr_trust" dropoff_name="curr_drop" minisearch_prox="minisearch_prox" overtable="pre_overtable" reset_threshold="reset_threshold" search_prox="search_prox" search_timeout="search_timeout" target_err="target_err"/>
                             <Action ID="Math" a="{num_sorts}" b="1" operator="+" out="num_sorts"/>
@@ -1655,6 +1769,9 @@
             <SubTree ID="RelativeMoveNoYaw" __shared_blackboard="false" frame_name="secondary_drop_frame" x="ax" y="ay" z="midpoint_move_z"/>
             <ForceSuccess>
                 <SubTree ID="SetActuatorsArmed" __shared_blackboard="false" armed="0"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <Action ID="CallSetStringService" data="," name="Stop mapping the table props in the background" srv_name="/talos/mapping/set_background_targets" time_limit_secs="3"/>
             </ForceSuccess>
             <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
         </Sequence>
@@ -1942,6 +2059,122 @@
             </Fallback>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="SearchMpc">
+        <Sequence name="Search while moving">
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard name="First sweep: arc each way round the estimate (rad), at max_dist" output_key="sweep_first" value="0.5"/>
+            <SetBlackboard name="First sweep: pan each way along the arc (rad); the forward camera's +-27 deg then sees +-dist*tan(27 deg + pan) round the estimate, +-3 m at 2 m" output_key="pan_first" value="0.5"/>
+            <SetBlackboard name="Wider sweeps after one that saw nothing: arc (rad), new viewing angles for a board facing another way or hidden from one side" output_key="sweep_wide" value="1.0"/>
+            <SetBlackboard name="Wider sweeps: pan (rad)" output_key="pan_wide" value="0.7"/>
+            <SetBlackboard name="First sweep: arc per pan (rad); each pan is yaw-rate limited, so fewer pans are faster" output_key="pan_step_first" value="0.25"/>
+            <SetBlackboard name="Wider sweeps: arc per pan (rad)" output_key="pan_step_wide" value="0.5"/>
+            <SetBlackboard name="Once seen, hold there at most this long for the map to converge (s)" output_key="hold_secs" value="8"/>
+            <SetBlackboard name="0: first sweep, 1: wider and further, 2: wider and closer, then round again; moves on only after a sweep that saw nothing" output_key="stage" value="0"/>
+            <Action ID="SetStatus" status="searching"/>
+            <Action ID="Format" format="{object_name}_frame" out="frame"/>
+            <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+            <ForceSuccess>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Sweep until the map has it" num_seconds="{timeout_secs}">
+                    <Sequence name="One sweep">
+                        <IfThenElse name="This sweep's arc, pan and distance">
+                            <Condition ID="CompareNums" a="{stage}" b="0" test="=="/>
+                            <Sequence name="first sweep">
+                                <SetBlackboard output_key="sweep" value="{sweep_first}"/>
+                                <SetBlackboard output_key="pan" value="{pan_first}"/>
+                                <SetBlackboard output_key="pan_step" value="{pan_step_first}"/>
+                                <SetBlackboard output_key="dist" value="{max_dist}"/>
+                            </Sequence>
+                            <IfThenElse>
+                                <Condition ID="CompareNums" a="{stage}" b="1" test="=="/>
+                                <Sequence name="wider and further: more of the sides in view">
+                                    <SetBlackboard output_key="sweep" value="{sweep_wide}"/>
+                                    <SetBlackboard output_key="pan" value="{pan_wide}"/>
+                                    <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
+                                    <Action ID="Math" a="{max_dist}" b="1.5" operator="*" out="dist"/>
+                                </Sequence>
+                                <Sequence name="wider and closer: a small or hard to see target, or one beyond the estimate">
+                                    <SetBlackboard output_key="sweep" value="{sweep_wide}"/>
+                                    <SetBlackboard output_key="pan" value="{pan_first}"/>
+                                    <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
+                                    <Action ID="Math" a="{max_dist}" b="0.75" operator="*" out="dist"/>
+                                    <IfThenElse>
+                                        <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&lt;"/>
+                                        <SetBlackboard output_key="dist" value="{min_dist}"/>
+                                        <AlwaysSuccess/>
+                                    </IfThenElse>
+                                </Sequence>
+                            </IfThenElse>
+                        </IfThenElse>
+                        <Action ID="Info" message="Sweeping {sweep} rad each way round {object_name}'s estimate at {dist} m, panning {pan} rad (stage {stage})"/>
+                        <Action ID="Math" a="{sweep}" b="-1" operator="*" out="neg_sweep"/>
+                        <Action ID="Math" a="{sweep}" b="-2" operator="*" out="back_sweep"/>
+                        <Action ID="AddWaypoint" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="in front, facing it" out="sweep_path" path="" pitch="" roll="" spin="" spin_rate="" x="{dist}" y="0" yaw="" yaw_frame="" yaw_offset="" z="0"/>
+                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="round it one way" out="sweep_path" pan="{pan}" pan_step="{pan_step}" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="0" sweep="{sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
+                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="across to the other side" out="sweep_path" pan="{pan}" pan_step="{pan_step}" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="{sweep}" sweep="{back_sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
+                        <Action ID="AddArc" approach="false" cx="0" cy="0" end_radius="" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="back to the middle" out="sweep_path" pan="{pan}" pan_step="{pan_step}" path="{sweep_path}" radius="{dist}" spin="" spin_rate="" start_angle="{neg_sweep}" sweep="{sweep}" yaw="" yaw_frame="" yaw_offset="" z="0"/>
+                        <ForceSuccess>
+                            <ReactiveSequence name="Sweep, panning, until it is seen (or the map has it)">
+                                <Inverter>
+                                    <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                </Inverter>
+                                <Inverter>
+                                    <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
+                                </Inverter>
+                                <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="90" waypoints="{sweep_path}"/>
+                            </ReactiveSequence>
+                        </ForceSuccess>
+                        <ForceSuccess>
+                            <Sequence name="Seen: chase it, then hold it centered until the map has it, or it is lost">
+                                <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                                <ForceSuccess>
+                                    <Action ID="CenterDetection" align_tolerance="" align_yaw="" base_frame="" center_depth="" depth_tolerance="" max_age_secs="" max_depth="-2.5" min_depth="-0.75" min_score="" name="Chase: move square on to it (+x along its yaw) at the range it was seen from, keeping it centered; edge detections are cut off and their centers are off" object_frame="" object_name="{object_name}" position_tolerance="" standoff="" timeout_secs="10" yaw_tolerance=""/>
+                                </ForceSuccess>
+                                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hold it centered until the map has it, or it is lost" num_seconds="{hold_secs}">
+                                    <Sequence>
+                                        <Action ID="Wait" seconds="0.2"/>
+                                        <Fallback>
+                                            <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
+                                            <Inverter>
+                                                <Condition ID="SeenRecently" max_age_secs="2.0" min_score="0.2" object_name="{object_name}"/>
+                                            </Inverter>
+                                        </Fallback>
+                                    </Sequence>
+                                </Decorator>
+                            </Sequence>
+                        </ForceSuccess>
+                        <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+                        <Fallback>
+                            <Condition ID="CompareNums" a="{cov}" b="{target_cov}" name="The map has it: done" test="&lt;"/>
+                            <ForceFailure name="Not yet: sweep again round the estimate (it moves to what was seen)">
+                                <IfThenElse name="Saw nothing: widen the next sweep (moving it would be a guess which way)">
+                                    <Inverter>
+                                        <Condition ID="SeenRecently" max_age_secs="20" min_score="0.2" object_name="{object_name}"/>
+                                    </Inverter>
+                                    <Sequence>
+                                        <Action ID="Math" a="{stage}" b="1" operator="+" out="stage"/>
+                                        <IfThenElse name="After the closer sweep, round again">
+                                            <Condition ID="CompareNums" a="{stage}" b="2" test="&gt;"/>
+                                            <SetBlackboard output_key="stage" value="0"/>
+                                            <AlwaysSuccess/>
+                                        </IfThenElse>
+                                    </Sequence>
+                                    <AlwaysSuccess name="seen but not converged: again round where the map has it now"/>
+                                </IfThenElse>
+                            </ForceFailure>
+                        </Fallback>
+                    </Sequence>
+                </Decorator>
+            </ForceSuccess>
+            <Action Covariance="{cov}" ID="getCovariance" Target="{object_name}"/>
+            <Fallback name="check covariance">
+                <Condition ID="CompareNums" a="{cov}" b="{target_cov}" test="&lt;"/>
+                <ForceFailure>
+                    <Action ID="Error" message="Could not find {object_name} after {timeout_secs} seconds."/>
+                </ForceFailure>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
     <BehaviorTree ID="SetActiveCamera">
         <Fallback>
             <Sequence>
@@ -2037,6 +2270,50 @@
             </RetryUntilSuccessful>
         </Sequence>
     </BehaviorTree>
+    <BehaviorTree ID="ShootDownwardObjectMpc">
+        <Sequence>
+            <SetBlackboard output_key="0" value="0"/>
+            <SetBlackboard output_key="overbin" value="1"/>
+            <SetBlackboard output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboard output_key="ctrler_trust" value="0.90"/>
+            <SetBlackboard output_key="ctrler_timeout" value="30"/>
+            <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
+            <Action ID="Info" message="Attempting to shoot {object_frame}"/>
+            <ForceSuccess>
+                <RetryUntilSuccessful num_attempts="1">
+                    <Sequence>
+                        <ForceSuccess>
+                            <Sequence name="Downward camera over it, then until its estimate is tight (at most 3 s)">
+                                <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+                                <SetBlackboard name="Tight enough to aim the dropper on" output_key="hover_cov" value="0.0005"/>
+                                <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{object_frame}" x="0" y="0" z="0"/>
+                                <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the object" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="hover_yaw" out_x="hover_x" out_y="hover_y" out_z="hover_z" oy="{link_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
+                                <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the object" out="hover_path" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
+                                <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
+                                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Until the estimate is tight" num_seconds="3">
+                                    <Sequence>
+                                        <Action ID="Wait" seconds="0.2"/>
+                                        <Condition ID="MapConverged" object="{object_name}" target_cov="{hover_cov}"/>
+                                    </Sequence>
+                                </Decorator>
+                            </Sequence>
+                        </ForceSuccess>
+                        <ForceSuccess>
+                            <Action ID="CallTriggerService" srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="1"/>
+                        </ForceSuccess>
+                        <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+                        <Action ID="SetStatus" status="aligning"/>
+                        <SubTree ID="AlignLinkPositionOnly" __shared_blackboard="false" frame_name="object_frame" link_name="dropper_link_name" x="0" y="0" z="overbin"/>
+                        <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="dropper_link_name" target_frame="object_frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
+                    </Sequence>
+                </RetryUntilSuccessful>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="performing"/>
+            <RetryUntilSuccessful num_attempts="3">
+                <SubTree ID="FireDropper"/>
+            </RetryUntilSuccessful>
+        </Sequence>
+    </BehaviorTree>
     <BehaviorTree ID="ShootObject">
         <Sequence name="shootobject">
             <SetBlackboard output_key="ctrler_timeout" value="60"/>
@@ -2096,11 +2373,17 @@
                     <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{board_path}"/>
                 </Sequence>
             </ForceSuccess>
+            <Action ID="SetStatus" status="searching"/>
+            <Action ID="Format" format="{object_1},{object_2}," name="Both holes (the trailing comma keeps it a string, not one blackboard key)" out="both_holes"/>
+            <Action ID="SetMappingTarget" lock_map="0" name="Map both holes at once" target_object="{both_holes}" time_limit_secs="3"/>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_1" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="object_2" parent_object="torpedo_name" prox_x="ms_prox" prox_y="0" prox_z="0" target_cov="target_cov" timeout_secs="ms_timeout"/>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hold at the standoff until both holes converge" num_seconds="{ms_timeout}">
+                    <Sequence>
+                        <Action ID="Wait" seconds="0.25"/>
+                        <Condition ID="MapConverged" object="{object_1}" target_cov="{target_cov}"/>
+                        <Condition ID="MapConverged" object="{object_2}" target_cov="{target_cov}"/>
+                    </Sequence>
+                </Decorator>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
@@ -2206,7 +2489,7 @@
                 </RetryUntilSuccessful>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="MiniSearch" __shared_blackboard="false" object_name="slalom_parent" parent_object="slalom_parent" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
+                <SubTree ID="MiniSearchMpc" __shared_blackboard="false" object_name="slalom_parent" parent_object="slalom_parent" prox_x="msrch_prox" prox_y="0" prox_z="0" target_cov="target_srch_err" timeout_secs="msrch_timeout"/>
             </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <SetBlackboard name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="3.2"/>
@@ -2391,7 +2674,8 @@
             <ForceSuccess>
                 <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
             </ForceSuccess>
-            <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="120" yaw_rate="8.0"/>
+            <Action ID="Wait" name="Hold facing it 1 s: the turn reports done within 14 deg, and the spin starts (and ends) where it is" seconds="1"/>
+            <Action ID="ContinuousSpin" num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="120" yaw_rate=""/>
             <ForceSuccess>
                 <SubTree ID="RotateToFrame" __shared_blackboard="false" relative_yaw="0" target_frame="target_frame"/>
             </ForceSuccess>
@@ -2701,7 +2985,7 @@
             <SetBlackboard output_key="torpedo" value="torpedo"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard output_key="search_timeout" value="60"/>
+            <SetBlackboard name="One full SearchMpc cycle (first, wider, closer sweeps) is about 100 s" output_key="search_timeout" value="100"/>
             <SetBlackboard output_key="target_cov" value="0.0025"/>
             <SetBlackboard output_key="min_dist" value="1"/>
             <SetBlackboard output_key="max_dist" value="2"/>
@@ -2710,7 +2994,7 @@
             <ForceSuccess>
                 <Sequence>
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
-                    <SubTree ID="Search" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="search_timeout"/>
+                    <SubTree ID="SearchMpc" __shared_blackboard="false" max_dist="max_dist" min_dist="min_dist" object_name="object_name" target_cov="target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
             <Fallback name="Try run while armed">
@@ -2932,6 +3216,66 @@
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
+    <BehaviorTree ID="pickupObjectMpc">
+        <Sequence>
+            <SetBlackboard output_key="3.1415" value="3.1415"/>
+            <Sequence name="set blackboards">
+                <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
+                <SetBlackboard output_key="0" value="0"/>
+                <SetBlackboard output_key="1" value="1"/>
+            </Sequence>
+            <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="1"/>
+            <ForceSuccess>
+                <SubTree ID="DownwardSearchMpc" __shared_blackboard="false" min_dist="search_prox" object_name="object_name" target_cov="target_err" timeout_sec="search_timeout"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <Sequence name="Downward camera over it, then until its estimate is tight (at most 5 s)">
+                    <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
+                    <SetBlackboard name="Tight enough to line the claw up on" output_key="hover_cov" value="0.0005"/>
+                    <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{object_frame}" x="0" y="0" z="0"/>
+                    <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the object" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="hover_yaw" out_x="hover_x" out_y="hover_y" out_z="hover_z" oy="{link_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{minisearch_prox}"/>
+                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the object" out="hover_path" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Until the estimate is tight" num_seconds="5">
+                        <Sequence>
+                            <Action ID="Wait" seconds="0.2"/>
+                            <Condition ID="MapConverged" object="{object_name}" target_cov="{hover_cov}"/>
+                        </Sequence>
+                    </Decorator>
+                </Sequence>
+            </ForceSuccess>
+            <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
+            <Action ID="SetStatus" status="aligning"/>
+            <SetBlackboard name="Extra grab height for this prop (m)" output_key="grab_raise" value="0"/>
+            <Switch2 name="The bandage and plug are 22 mm shorter than the pill and nut_and_bolt: grab them 22 mm higher" case_1="bandage" case_2="plug" variable="{object_name}">
+                <SetBlackboard output_key="grab_raise" value="0.022"/>
+                <SetBlackboard output_key="grab_raise" value="0.022"/>
+                <AlwaysSuccess name="the pill and nut_and_bolt grab where they are"/>
+            </Switch2>
+            <Action ID="Math" a="{pre_overtable}" b="{grab_raise}" operator="+" out="pre_grab_z"/>
+            <Action ID="Math" a="{overtable}" b="{grab_raise}" operator="+" out="grab_z"/>
+            <Action ID="PublishFloat32" data="{claw_open_s}" topic="{claw_topic}"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="cop" out_or="cor" out_oy="coy" out_x="cx" out_y="cy" out_z="cz" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{pre_grab_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="coy" x="cx" y="cy" z="cz"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="object_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
+            </ForceSuccess>
+            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{grab_z}"/>
+            <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="boy" x="bx" y="by" z="bz"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrlr_dist" link_frame="claw_link" target_frame="object_frame" timeout="ctrlr_timeout" trust="ctrlr_trust"/>
+            </ForceSuccess>
+            <Action ID="SetStatus" status="performing"/>
+            <Action ID="PublishFloat32" data="{claw_close_s}" topic="{claw_topic}"/>
+            <Action ID="Math" a="{claw_close_s}" b="-1000" operator="*" out="claw_close_ms_neg"/>
+            <Delay delay_msec="{claw_close_ms_neg}">
+                <SubTree ID="Move" __shared_blackboard="false" op="0" or="0" oy="aoy" x="ax" y="ay" z="az"/>
+            </Delay>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
     <BehaviorTree ID="DownwardTrack">
         <Sequence name="Follow the detection until the estimate converges or it is lost">
             <Action ID="Info" message="{object_name} in view: following the detection"/>
@@ -2975,12 +3319,14 @@
             <input_port name="x" required="false"/>
             <input_port name="y" required="false"/>
             <input_port name="yaw" required="false"/>
+            <input_port name="yaw_frame" required="false"/>
             <input_port name="yaw_offset" required="false"/>
             <input_port name="z" required="false"/>
         </Action>
         <Action ID="FollowPath">
             <input_port name="frame" required="false"/>
             <input_port name="max_depth" required="false"/>
+            <input_port name="max_speed" required="false">Cruise speed cap for this path, m/s (default 0: the controller's own limit)</input_port>
             <input_port name="min_depth" required="false"/>
             <input_port name="spin_rate" required="false"/>
             <input_port name="timeout" required="false"/>
@@ -3066,6 +3412,23 @@
             <input_port name="srv_name" required="true">Name of the service</input_port>
             <input_port name="time_limit_secs" required="true">How long to wait before failure</input_port>
         </Action>
+        <Action ID="CenterDetection">
+            <input_port name="object_name" required="true">Detector class to center</input_port>
+            <input_port default="0.2" name="min_score" required="false">Ignore weaker detections</input_port>
+            <input_port default="1.5" name="max_age_secs" required="false">Lost once no detection is this old</input_port>
+            <input_port default="8" name="timeout_secs" required="false">Give up after</input_port>
+            <input_port default="0.05" name="yaw_tolerance" required="false">Centered within this (rad)</input_port>
+            <input_port default="0.1" name="depth_tolerance" required="false">Level within this (m)</input_port>
+            <input_port default="true" name="center_depth" required="false">false: yaw only</input_port>
+            <input_port default="-0.75" name="min_depth" required="false">Shallowest depth to move to</input_port>
+            <input_port default="-2.5" name="max_depth" required="false">Deepest depth to move to</input_port>
+            <input_port default="talos/base_link" name="base_frame" required="false">Vehicle frame</input_port>
+            <input_port default="true" name="align_yaw" required="false">Move square on to the object (its frame's yaw); false: turn in place</input_port>
+            <input_port name="object_frame" required="false">Frame whose yaw to align with; default &lt;object_name&gt;_frame</input_port>
+            <input_port name="standoff" required="false">Camera distance in front of it (m); default the range it was seen from</input_port>
+            <input_port default="0.1" name="position_tolerance" required="false">There within this (m)</input_port>
+            <input_port default="0.08" name="align_tolerance" required="false">Square on within this (rad)</input_port>
+        </Action>
         <Action ID="CallTriggerService">
             <input_port name="srv_name" required="true"/>
             <input_port name="time_limit_secs" required="true"/>
@@ -3133,7 +3496,7 @@
             <input_port name="num_cycles" required="true"/>
             <input_port default="1" name="odom_timeout_secs" required="false"/>
             <input_port default="90" name="timeout_secs" required="false"/>
-            <input_port default="0.5" name="yaw_rate" required="false"/>
+            <input_port name="yaw_rate" required="false">Target ramp speed (rad/s); unset: as fast as the controller follows</input_port>
         </Action>
         <SubTree ID="DemoTableTree"/>
         <SubTree ID="DeployTankTree"/>
@@ -3317,6 +3680,16 @@
             <input_port default="1.25" name="target_cov" required="true"/>
             <input_port default="60" name="timeout_secs" required="true"/>
         </SubTree>
+        <SubTree ID="MiniSearchMpc">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="object_name" required="true"/>
+            <input_port name="parent_object" required="true"/>
+            <input_port default="1" name="prox_x" required="true"/>
+            <input_port default="0" name="prox_y" required="true"/>
+            <input_port default="0" name="prox_z" required="true"/>
+            <input_port default="1.25" name="target_cov" required="true"/>
+            <input_port default="60" name="timeout_secs" required="true"/>
+        </SubTree>
         <SubTree ID="Move">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="op" required="true"/>
@@ -3462,6 +3835,12 @@
             <input_port name="winch_extended" required="true"/>
         </SubTree>
         <SubTree ID="ShootDownwardObject">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="dropper_link_name" required="true"/>
+            <input_port name="object_name" required="true"/>
+            <input_port name="search_prox" required="true"/>
+        </SubTree>
+        <SubTree ID="ShootDownwardObjectMpc">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="dropper_link_name" required="true"/>
             <input_port name="object_name" required="true"/>
@@ -3652,6 +4031,71 @@
             <input_port name="min_score" required="false">Minimum detection confidence (mapping cutoff 0.2)</input_port>
             <input_port name="object_name" required="true"/>
         </Condition>
+        <Condition ID="MapConverged">
+            <input_port name="object" required="true">Mapping object (mapping/&lt;object&gt;)</input_port>
+            <input_port name="target_cov" required="true">Converged below this error (getCovariance's)</input_port>
+        </Condition>
+        <SubTree ID="SearchMpc">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="4.0" name="max_dist" required="false"/>
+            <input_port default="1.75" name="min_dist" required="false"/>
+            <input_port name="object_name" required="false">Frame to search for</input_port>
+            <input_port default="1.25" name="target_cov" required="false">Target covariance to end search</input_port>
+            <input_port default="120" name="timeout_secs" required="false">Timeout for search</input_port>
+        </SubTree>
+        <Action ID="AddArc">
+            <input_port name="approach" required="false"/>
+            <input_port name="cx" required="false"/>
+            <input_port name="cy" required="false"/>
+            <input_port name="end_radius" required="false"/>
+            <input_port name="frame" required="false"/>
+            <input_port name="heading" required="false"/>
+            <input_port name="look_frame" required="false"/>
+            <input_port name="look_x" required="false"/>
+            <input_port name="look_y" required="false"/>
+            <input_port name="look_z" required="false"/>
+            <output_port name="out" required="false"/>
+            <input_port name="path" required="false"/>
+            <input_port name="radius" required="false"/>
+            <input_port name="spin" required="false"/>
+            <input_port name="spin_rate" required="false"/>
+            <input_port name="start_angle" required="false"/>
+            <input_port name="sweep" required="false"/>
+            <input_port name="yaw" required="false"/>
+            <input_port name="yaw_frame" required="false"/>
+            <input_port name="yaw_offset" required="false"/>
+            <input_port name="z" required="false"/>
+            <input_port name="pan" required="false">Swing the heading this far each way along the arc (rad, needs heading path or look_at; default 0)</input_port>
+            <input_port name="pan_step" required="false">Arc per pan piece (rad, default 0.25)</input_port>
+        </Action>
+        <SubTree ID="DownwardSearchMpc">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="min_dist" required="false"/>
+            <input_port name="object_name" required="false"/>
+            <input_port name="target_cov" required="true"/>
+            <input_port name="timeout_sec" required="false"/>
+        </SubTree>
+        <SubTree ID="pickupObjectMpc">
+            <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="claw_close_s" required="false"/>
+            <input_port name="claw_link" required="false"/>
+            <input_port name="claw_open_s" required="false"/>
+            <input_port name="claw_topic" required="false"/>
+            <input_port name="ctrlr_dist" required="false"/>
+            <input_port name="ctrlr_timeout" required="false"/>
+            <input_port name="ctrlr_trust" required="false"/>
+            <input_port name="minisearch_prox" required="false"/>
+            <input_port name="object_name" required="false"/>
+            <input_port name="overtable" required="false"/>
+            <input_port name="pickup_center_x" required="false"/>
+            <input_port name="pickup_center_y" required="false"/>
+            <input_port name="pickup_center_z" required="false"/>
+            <input_port name="pre_overtable" required="false"/>
+            <input_port name="reset_threshold" required="false"/>
+            <input_port name="search_prox" required="false"/>
+            <input_port name="search_timeout" required="false"/>
+            <inout_port name="target_err" required="false"/>
+        </SubTree>
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
