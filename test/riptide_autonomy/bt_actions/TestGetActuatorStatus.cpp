@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
@@ -38,7 +39,7 @@ BT::NodeStatus testGetActuatorStatus(std::shared_ptr<BtTestTool> toolNode, GetAc
     BT::NodeStatus status = toolNode->tickUntilFinished(node, 5s);
     
     outputsSet = true;
-    auto blackboard = node->config().blackboard;
+    auto blackboard = std::as_const(*node).config().blackboard;
 
     outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "claw_state", out.clawState);
     outputsSet = outputsSet && getOutputFromBlackboard<int>(toolNode, blackboard, "torpedo_state", out.torpedoState);

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="DownwardSearchMpc.xml"/>
+    <include path="SetActuatorsArmed.xml"/>
+    <include path="pickupObjectMpc.xml"/>
+    <include path="SurfaceTree.xml"/>
+    <include path="dropObjectMpc.xml"/>
+    <include path="RelativeMoveNoYaw.xml"/>
+    <include path="SpinTreeMpc.xml"/>
+    <BehaviorTree ID="NewTableTreeMpc">
+        <Sequence name="set blackboards">
+            <SetBlackboardV3 output_key="minisearch_prox" value="1.5"/>
+            <SetBlackboardV3 output_key="claw_topic" value="command/actuator/claw_move_s"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="1" value="1"/>
+            <SetBlackboardV3 output_key="claw_drop_s" value="0.3"/>
+            <SetBlackboardV3 output_key="claw_open_s" value="2.0"/>
+            <SetBlackboardV3 output_key="claw_close_s" value="-2.0"/>
+            <SetBlackboardV3 output_key="ctrlr_timeout" value="30"/>
+            <SetBlackboardV3 output_key="ctrlr_dist" value="0.01"/>
+            <SetBlackboardV3 output_key="ctrlr_trust" value="0.95"/>
+            <SetBlackboardV3 output_key="overtable" value="0.0"/>
+            <SetBlackboardV3 output_key="pre_overtable" value="0.15"/>
+            <SetBlackboardV3 output_key="search_prox" value="2"/>
+            <SetBlackboardV3 output_key="target_err" value="0.5"/>
+            <SetBlackboardV3 output_key="search_timeout" value="180"/>
+            <SetBlackboardV3 output_key="reset_threshold" value="1000"/>
+            <SetBlackboardV3 output_key="num_sorts" value="0"/>
+            <SetBlackboardV3 output_key="cycles" value="1"/>
+            <Sequence name="Set Object stuff and frames">
+                <SetBlackboardV3 output_key="table" value="table"/>
+                <SetBlackboardV3 output_key="pre_table_pose_frame" value="pre_table_pose_frame"/>
+                <SetBlackboardV3 output_key="post_table_pose_frame" value="post_table_pose_frame"/>
+                <SetBlackboardV3 output_key="claw_link" value="talos/claw_link"/>
+                <SetBlackboardV3 output_key="base_link" value="talos/base_link"/>
+                <SetBlackboardV3 output_key="curr_object" value="bandage"/>
+                <SetBlackboardV3 output_key="curr_drop" value="helmet"/>
+            </Sequence>
+            <IfThenElse>
+                <CompareNums a="{repair_mission}" b="0" test="=="/>
+                <SetBlackboardV3 output_key="curr_image" value="buoy"/>
+                <SetBlackboardV3 output_key="curr_image" value="compass"/>
+            </IfThenElse>
+            <Sequence name="find table">
+                <ForceSuccess>
+                    <SubTree ID="SetActiveCamera" is_dfc="{1}"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <CallSetBoolService data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <CallSetStringService data="helmet,warning,bandage,pill,nut_and_bolt,plug" name="Map every table prop it sees while searching for each" srv_name="/talos/mapping/set_background_targets" time_limit_secs="3"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <Sequence>
+                        <SetBlackboardV3 output_key="secondary_drop" value="warning"/>
+                        <SetBlackboardV3 output_key="table_timeout" value="60"/>
+                        <SetBlackboardV3 output_key="table_dist" value="1.5"/>
+                        <SetBlackboardV3 name="Tight, like the claw hover: the table is fit to these" output_key="table_cov" value="0.0005"/>
+                        <Format format="{curr_drop}_frame" out="{curr_drop_frame}"/>
+                        <Format format="{secondary_drop}_frame" out="{secondary_drop_frame}"/>
+                        <ForceSuccess>
+                            <SubTree ID="DownwardSearchMpc" min_dist="{table_dist}" object_name="{curr_drop}" target_cov="{table_cov}" timeout_sec="{table_timeout}"/>
+                        </ForceSuccess>
+                        <ForceSuccess>
+                            <SubTree ID="DownwardSearchMpc" min_dist="{table_dist}" object_name="{secondary_drop}" target_cov="{table_cov}" timeout_sec="{table_timeout}"/>
+                        </ForceSuccess>
+                    </Sequence>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <CallSetBoolService data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                </ForceSuccess>
+                <Format format="{curr_drop},{secondary_drop}," name="trailing comma: a value that starts with { and ends with } is read as one key" out="{baskets}"/>
+                <Fallback name="Fit the table to the baskets, only once both estimates are tight">
+                    <Sequence>
+                        <RetryUntilSuccessfulOrTimeout name="both baskets converged" num_seconds="1">
+                            <Sequence>
+                                <Wait seconds="0.2"/>
+                                <MapConverged object="{baskets}" target_cov="{table_cov}"/>
+                            </Sequence>
+                        </RetryUntilSuccessfulOrTimeout>
+                        <ForceSuccess>
+                            <CallTriggerService srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
+                        </ForceSuccess>
+                    </Sequence>
+                    <Info message="{baskets} not both converged below {table_cov}: the table keeps its prior"/>
+                </Fallback>
+                <SetBlackboardV3 output_key="0" value="0"/>
+                <SetBlackboardV3 output_key="2" value="2"/>
+                <TransformPose from_frame="{curr_drop_frame}" op="0" or="0" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
+                <Math a="{ax}" b="2" operator="/" out="{ax}"/>
+                <Math a="{ay}" b="2" operator="/" out="{ay}"/>
+                <Math a="{az}" b="2" operator="/" out="{az}"/>
+            </Sequence>
+            <ForceSuccess>
+                <SubTree ID="SetActuatorsArmed" armed="{1}"/>
+            </ForceSuccess>
+            <RepeatV3 num_cycles="4">
+                <Sequence name="object cycles">
+                    <ForceSuccess name="Object pickup and dropoff">
+                        <Sequence>
+                            <SubTree ID="pickupObjectMpc" claw_close_s="{claw_close_s}" claw_link="{claw_link}" claw_open_s="{claw_open_s}" claw_topic="{claw_topic}" ctrlr_dist="{ctrlr_dist}" ctrlr_timeout="{ctrlr_timeout}" ctrlr_trust="{ctrlr_trust}" minisearch_prox="{minisearch_prox}" object_name="{curr_object}" overtable="{overtable}" pickup_center_x="{ax}" pickup_center_y="{ay}" pickup_center_z="{az}" pre_overtable="{pre_overtable}" reset_threshold="{reset_threshold}" search_prox="{search_prox}" search_timeout="{search_timeout}" target_err="{target_err}"/>
+                            <SubTree ID="SurfaceTree" target_image="{__v3_empty}"/>
+                            <SubTree ID="dropObjectMpc" claw_close_s="{claw_close_s}" claw_drop_s="{claw_drop_s}" claw_link="{claw_link}" claw_open_s="{claw_open_s}" claw_topic="{claw_topic}" ctrlr_dist="{ctrlr_dist}" ctrlr_timeout="{ctrlr_timeout}" ctrlr_trust="{ctrlr_trust}" dropoff_name="{curr_drop}" minisearch_prox="{minisearch_prox}" overtable="{pre_overtable}" reset_threshold="{reset_threshold}" search_prox="{search_prox}" search_timeout="{search_timeout}" target_err="{target_err}"/>
+                            <Math a="{num_sorts}" b="1" operator="+" out="{num_sorts}"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <ForceSuccess name="Update target">
+                        <Sequence>
+                            <Math a="{cycles}" b="1" operator="+" out="{cycles}"/>
+                            <IfThenElse>
+                                <CompareNums a="{cycles}" b="2" test="=="/>
+                                <Sequence>
+                                    <SetBlackboardV3 output_key="curr_object" value="pill"/>
+                                    <IfThenElse>
+                                        <CompareNums a="{repair_mission}" b="0" test="=="/>
+                                        <SetBlackboardV3 output_key="curr_image" value="sos"/>
+                                        <SetBlackboardV3 output_key="curr_image" value="hammer_and_wrench"/>
+                                    </IfThenElse>
+                                </Sequence>
+                                <IfThenElse>
+                                    <CompareNums a="{cycles}" b="3" test="=="/>
+                                    <Sequence>
+                                        <SetBlackboardV3 output_key="curr_object" value="nut_and_bolt"/>
+                                        <SetBlackboardV3 output_key="curr_drop" value="warning"/>
+                                    </Sequence>
+                                    <SetBlackboardV3 output_key="curr_object" value="plug"/>
+                                </IfThenElse>
+                            </IfThenElse>
+                        </Sequence>
+                    </ForceSuccess>
+                </Sequence>
+            </RepeatV3>
+            <Math a="{az}" b="{minisearch_prox}" operator="+" out="{midpoint_move_z}"/>
+            <SubTree ID="RelativeMoveNoYaw" frame_name="{secondary_drop_frame}" x="{ax}" y="{ay}" z="{midpoint_move_z}"/>
+            <ForceSuccess>
+                <SubTree ID="SpinTreeMpc" num_cycles="{num_sorts}" target_image="{curr_image}"/>
+            </ForceSuccess>
+            <SubTree ID="RelativeMoveNoYaw" frame_name="{secondary_drop_frame}" x="{ax}" y="{ay}" z="{midpoint_move_z}"/>
+            <ForceSuccess>
+                <SubTree ID="SetActuatorsArmed" armed="{0}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <CallSetStringService data="," name="Stop mapping the table props in the background" srv_name="/talos/mapping/set_background_targets" time_limit_secs="3"/>
+            </ForceSuccess>
+            <SubTree ID="SetActiveCamera" is_dfc="{0}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

@@ -1,6 +1,4 @@
-#include <behaviortree_cpp_v3/loggers/bt_zmq_publisher.h>
-#include <behaviortree_cpp_v3/loggers/bt_cout_logger.h>
-#include <behaviortree_cpp_v3/loggers/bt_file_logger.h>
+#include <behaviortree_cpp/loggers/bt_file_logger_v2.h>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/executors/single_threaded_executor.hpp>
@@ -96,7 +94,6 @@ namespace do_task
                 std::bind(&BTExecutor::handleService, this, _1, _2));
 
             // declare params
-            declare_parameter<bool>("enable_zmq", false);
             declare_parameter<std::string>("log_file_dir", getEnvVar("HOME") + "/btlogs");
             declare_parameter<std::vector<std::string>>("ext_plugin_list", std::vector<std::string>());
             declare_parameter<std::vector<std::string>>("ext_tree_dirs", std::vector<std::string>());
@@ -106,7 +103,6 @@ namespace do_task
             {
                 RCLCPP_INFO(this->get_logger(), "Getting parameter data");
                 // get param values
-                enableZMQ = get_parameter("enable_zmq").as_bool();
                 treeDirs = get_parameter("ext_tree_dirs").as_string_array();
                 pluginPaths = get_parameter("ext_plugin_list").as_string_array();
                 fblDirPath = get_parameter("log_file_dir").as_string();
@@ -194,8 +190,11 @@ namespace do_task
 
             try
             {
-                // load the tree file contents in to a BT context
-                Tree tree = factory->createTreeFromFile(goal_handle->get_goal()->tree);
+                // load the tree file contents in to a BT context. The factory keeps every tree it has read, so
+                // forget the last goal's: a subtree this file no longer defines must fail to load, not run stale.
+                factory->clearRegisteredBehaviorTrees();
+                // Includes resolve against the file's folder, so the path must have one.
+                Tree tree = factory->createTreeFromFile(std::filesystem::absolute(goal_handle->get_goal()->tree));
                 initRosForTree(tree, this->shared_from_this());
 
                 //make a new directory for the FBL log files
@@ -208,16 +207,12 @@ namespace do_task
                 tstruct = *localtime(&now);
                 strftime(buf, sizeof(buf), "%Y_%m_%d_%X", &tstruct);
                 //get file path name using time
-                std::string FBLFilePath = fblDirPath + "/BTLog_" + buf + ".fbl";
+                std::string FBLFilePath = fblDirPath + "/BTLog_" + buf + ".btlog";
 
                 // add the loggers to the BT context
                 RCLCPP_INFO(get_logger(), "DoTask: Loading Monitor");
-                PublisherZMQ zmq(tree); // publishes behaviortree data to a groot in real time
-                FileLogger fileLogger(tree, FBLFilePath.c_str());
+                FileLogger2 fileLogger(tree, FBLFilePath);
                 UwrtLogger uwrtLogger(tree, this->shared_from_this());
-
-                // configure our loggers
-                zmq.setEnabled(enableZMQ);
                 uwrtLogger.setEnabled(true);
 
                 // set up idle sleep rate
@@ -228,8 +223,9 @@ namespace do_task
                 auto tickStatus = NodeStatus::RUNNING;
                 while (tickStatus == NodeStatus::RUNNING)
                 {
-                    // always gets ticked once
-                    tickStatus = tree.tickRoot();
+                    // One tick of the root per loop, as BehaviorTree.CPP 3's tickRoot did (tickOnce would re-tick
+                    // at once whenever a node asks to be woken up).
+                    tickStatus = tree.tickExactlyOnce();
 
                     // check for a cancel
                     if (goal_handle->is_canceling() ) // || robotKilled
@@ -388,9 +384,6 @@ namespace do_task
         // ros action and service servers
         rclcpp_action::Server<ExecuteTree>::SharedPtr actionServer;
         rclcpp::Service<riptide_msgs2::srv::ListTrees>::SharedPtr listTreeServer;
-
-        // logger enablement flags
-        bool enableZMQ;
 
         // execution context thread for the action server
         std::thread executionThread;

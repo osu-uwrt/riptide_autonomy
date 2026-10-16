@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 
 using namespace std::chrono_literals;
@@ -87,7 +88,7 @@ BT::NodeStatus testTransform(std::shared_ptr<BtTestTool> toolNode, double x, dou
     auto node = toolNode->createLeafNodeFromConfig("TransformPose", cfg);
     auto result = toolNode->tickUntilFinished(node, 4s);
 
-    auto blackboard = node->config().blackboard;
+    auto blackboard = std::as_const(*node).config().blackboard;
 
     outputsSet = true;
     outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "out_x", results[0]);

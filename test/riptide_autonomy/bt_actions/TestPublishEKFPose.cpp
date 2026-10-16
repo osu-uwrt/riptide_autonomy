@@ -1,5 +1,5 @@
 #include "riptide_autonomy/bt_actions/PublishEKFPose.btaction.hpp"
-#include <behaviortree_cpp_v3/controls/sequence_node.h>
+#include <behaviortree_cpp/controls/sequence_node.h>
 #include <gtest/gtest.h>
 #include <thread>
 

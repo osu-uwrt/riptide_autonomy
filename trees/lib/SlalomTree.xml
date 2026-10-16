@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="MiniSearch.xml"/>
+    <include path="PassThroughSlalom.xml"/>
+    <include path="SingleSlalom.xml"/>
+    <BehaviorTree ID="SlalomTree">
+        <Sequence name="Slalom">
+            <SetBlackboardV3 output_key="1" value="slalom_exit_dist"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="slalom_parent" value="slalom_parent"/>
+            <SetBlackboardV3 output_key="slalom_front_frame" value="slalom_front_frame"/>
+            <SetBlackboardV3 output_key="slalom_front" value="slalom_front"/>
+            <SetBlackboardV3 output_key="slalom_middle" value="slalom_middle"/>
+            <SetBlackboardV3 output_key="slalom_back_frame" value="slalom_back_frame"/>
+            <SetBlackboardV3 output_key="slalom_back" value="slalom_back"/>
+            <SetBlackboardV3 output_key="target_srch_err" value="0.3"/>
+            <SetBlackboardV3 output_key="msrch_prox" value="2.5"/>
+            <SetBlackboardV3 output_key="msrch_timeout" value="15"/>
+            <Info message="SALMONI TIME"/>
+            <ForceSuccess>
+                <RetryUntilSuccessfulV3 num_attempts="3">
+                    <CallSetStringService data="slalom_parent" srv_name="set_slalom_type" time_limit_secs="3"/>
+                </RetryUntilSuccessfulV3>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="MiniSearch" object_name="{slalom_parent}" parent_object="{slalom_parent}" prox_x="{msrch_prox}" prox_y="{0}" prox_z="{0}" target_cov="{target_srch_err}" timeout_secs="{msrch_timeout}"/>
+            </ForceSuccess>
+            <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+            <SubTree ID="PassThroughSlalom" pass_on_left="{pass_on_left}" slalom_object="{slalom_front_frame}"/>
+            <SubTree ID="SingleSlalom" pass_on_left="{pass_on_left}" slalom_type="{slalom_middle}"/>
+            <SubTree ID="SingleSlalom" pass_on_left="{pass_on_left}" slalom_type="{slalom_back}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

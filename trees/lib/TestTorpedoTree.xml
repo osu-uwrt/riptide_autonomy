@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="Search.xml"/>
+    <include path="MiniSearch.xml"/>
+    <include path="SetActuatorsArmed.xml"/>
+    <include path="ShootSearchedObject.xml"/>
+    <BehaviorTree ID="TestTorpedoTree">
+        <Sequence name="TEST TORPEDO">
+            <SetBlackboardV3 output_key="torpedo" value="torpedo"/>
+            <SetBlackboardV3 output_key="1" value="1"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="search_timeout" value="60"/>
+            <SetBlackboardV3 output_key="target_cov" value="0.0025"/>
+            <SetBlackboardV3 output_key="min_dist" value="1"/>
+            <SetBlackboardV3 output_key="max_dist" value="2"/>
+            <SetBlackboardV3 output_key="ms_prox" value="1.5"/>
+            <SetBlackboardV3 output_key="ms_timeout" value="30"/>
+            <SetBlackboardV3 output_key="hole_cov" value="0.0005"/>
+            <SetBlackboardV3 output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
+            <SetBlackboardV3 output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
+            <IfThenElse>
+                <CompareNums a="{repair_mission}" b="0" test="=="/>
+                <Sequence>
+                    <SetBlackboardV3 output_key="torpedo_first" value="blood_hole_large"/>
+                    <SetBlackboardV3 output_key="torpedo_second" value="blood_hole_small"/>
+                </Sequence>
+                <Sequence>
+                    <SetBlackboardV3 output_key="torpedo_first" value="fire_hole_large"/>
+                    <SetBlackboardV3 output_key="torpedo_second" value="fire_hole_small"/>
+                </Sequence>
+            </IfThenElse>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" is_dfc="{0}"/>
+                    <SubTree ID="Search" max_dist="{max_dist}" min_dist="{min_dist}" object_name="{torpedo}" target_cov="{target_cov}" timeout_secs="{search_timeout}"/>
+                </Sequence>
+            </ForceSuccess>
+            <Sequence name="Refine both holes before shooting">
+                <ForceSuccess>
+                    <SubTree ID="MiniSearch" object_name="{torpedo_first}" parent_object="{torpedo}" prox_x="{ms_prox}" prox_y="{0}" prox_z="{0}" target_cov="{hole_cov}" timeout_secs="{ms_timeout}"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <SubTree ID="MiniSearch" object_name="{torpedo_second}" parent_object="{torpedo}" prox_x="{ms_prox}" prox_y="{0}" prox_z="{0}" target_cov="{hole_cov}" timeout_secs="{ms_timeout}"/>
+                </ForceSuccess>
+                <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+            </Sequence>
+            <Fallback name="Try run while armed">
+                <Sequence name="torpedo">
+                    <SubTree ID="SetActuatorsArmed" armed="{1}"/>
+                    <SubTree ID="ShootSearchedObject" object_name="{torpedo_first}" torpedo_link_name="{talos/torpedo_0_link}"/>
+                    <SubTree ID="ShootSearchedObject" object_name="{torpedo_second}" torpedo_link_name="{talos/torpedo_1_link}"/>
+                </Sequence>
+                <ForceFailure>
+                    <Sequence name="handle fail">
+                        <Error message="Torpedo tree failed, disarming actuators"/>
+                        <SubTree ID="SetActuatorsArmed" armed="{0}"/>
+                    </Sequence>
+                </ForceFailure>
+            </Fallback>
+            <Sequence name="handle success">
+                <Info message="Torpedo tree succeeded, disarming torpedos"/>
+                <SubTree ID="SetActuatorsArmed" armed="{0}"/>
+            </Sequence>
+        </Sequence>
+    </BehaviorTree>
+</root>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="WaitForKillSwitch.xml"/>
+    <include path="PrepForRun.xml"/>
+    <include path="Dive.xml"/>
+    <include path="GateTree.xml"/>
+    <include path="SlalomTree.xml"/>
+    <include path="RandomPingerTree.xml"/>
+    <include path="NewTableTree.xml"/>
+    <include path="TorpedoTree.xml"/>
+    <include path="BinTree.xml"/>
+    <include path="ReturnHomeTree.xml"/>
+    <include path="KillController.xml"/>
+    <BehaviorTree ID="CompMissionTree">
+        <Sequence name="COMP">
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="3" value="3"/>
+            <SetBlackboardV3 output_key="talos/base_link" value="talos/base_link"/>
+            <SetBlackboardV3 output_key="60" value="60"/>
+            <SetBlackboardV3 output_key="depth" value="-0.56"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="PrepForRun"/>
+            <SubTree ID="Dive" depth="{depth}"/>
+            <ForceSuccess>
+                <SubTree ID="GateTree" repair_mission="{repair_mission}" sla_pass_on_left="{sla_pass_on_left}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SlalomTree" pass_on_left="{sla_pass_on_left}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="RandomPingerTree" is_table="{pinger_is_table}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <IfThenElse>
+                    <CompareNums a="{repair_mission}" b="0" test="=="/>
+                    <SetBlackboardV3 output_key="target_image" value="buoy"/>
+                    <SetBlackboardV3 output_key="target_image" value="compass"/>
+                </IfThenElse>
+            </ForceSuccess>
+            <IfThenElse name="Torpedo/bin/table tasks">
+                <Inverter name="is table?">
+                    <CompareNums a="{pinger_is_table}" b="0" test="=="/>
+                </Inverter>
+                <Sequence name="Table then torpedo">
+                    <ForceSuccess>
+                        <SubTree ID="NewTableTree" repair_mission="{repair_mission}"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <SubTree ID="TorpedoTree" repair_mission="{repair_mission}"/>
+                    </ForceSuccess>
+                </Sequence>
+                <Sequence name="torpedo then table">
+                    <ForceSuccess>
+                        <SubTree ID="TorpedoTree" repair_mission="{repair_mission}"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <SubTree ID="NewTableTree" repair_mission="{repair_mission}"/>
+                    </ForceSuccess>
+                </Sequence>
+            </IfThenElse>
+            <ForceSuccess>
+                <SubTree ID="BinTree" repair_mission="{repair_mission}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="ReturnHomeTree"/>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

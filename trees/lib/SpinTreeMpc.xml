@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="RotateToFrame.xml"/>
+    <include path="SurfaceTree.xml"/>
+    <BehaviorTree ID="SpinTreeMpc">
+        <Sequence>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="2" value="2"/>
+            <Format format="{target_image}_frame" out="{target_frame}"/>
+            <ForceSuccess>
+                <SubTree ID="RotateToFrame" relative_yaw="{0}" target_frame="{target_frame}"/>
+            </ForceSuccess>
+            <Wait name="Hold facing it 1 s: the turn reports done within 14 deg, and the spin starts (and ends) where it is" seconds="1"/>
+            <ContinuousSpin num_cycles="{num_cycles}" odom_timeout_secs="1" timeout_secs="120" yaw_rate=""/>
+            <ForceSuccess>
+                <SubTree ID="RotateToFrame" relative_yaw="{0}" target_frame="{target_frame}"/>
+            </ForceSuccess>
+            <SubTree ID="SurfaceTree" target_image="{target_image}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

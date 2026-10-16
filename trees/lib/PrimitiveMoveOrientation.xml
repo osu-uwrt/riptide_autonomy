@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="PrimitiveMoveOrientation">
+        <Sequence>
+            <Info message="Rotating to RPY {r}, {p}, {y}"/>
+            <Fallback>
+                <RetryUntilSuccessfulOrTimeout num_seconds="{timeout}">
+                    <Sequence>
+                        <Wait seconds="0.25"/>
+                        <PublishToController isOrientation="1" mode="3" x="{r}" y="{p}" z="{y}"/>
+                        <GetOdometry name="Get Current RPY" op="{cp}" or="{cr}" oy="{cy}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                        <ApproxEqualToAngle a="{cr}" b="{r}" name="at goal roll?" range="0.25"/>
+                        <ApproxEqualToAngle a="{cp}" b="{p}" name="at goal pitch?" range="0.25"/>
+                        <ApproxEqualToAngle a="{cy}" b="{y}" name="at goal yaw?" range="0.25"/>
+                    </Sequence>
+                </RetryUntilSuccessfulOrTimeout>
+                <ForceSuccess>
+                    <Sequence>
+                        <GetOdometry op="{cr}" or="{cp}" oy="{cy}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                        <Error message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                    </Sequence>
+                </ForceSuccess>
+            </Fallback>
+            <Info message="Rotation Complete."/>
+        </Sequence>
+    </BehaviorTree>
+</root>

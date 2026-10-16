@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="DiscoverSingleMapObject.xml"/>
+    <BehaviorTree ID="DiscoverObjects">
+        <Sequence name="Discover Loop">
+            <Info message="Discovering {target_1}, {target_2}, {target_3}, {target_4}"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 name="dont inc first time" output_key="angle_inc" value="0"/>
+            <Fallback>
+                <Inverter>
+                    <RepeatV3 num_cycles="3">
+                        <Sequence>
+                            <Inverter>
+                                <Fallback>
+                                    <SubTree ID="DiscoverSingleMapObject" delta_angle="{angle_inc}" discovered_object="{discovered_object}" target="{target_1}" target_error="{target_error}"/>
+                                    <SubTree ID="DiscoverSingleMapObject" delta_angle="{0}" discovered_object="{discovered_object}" target="{target_2}" target_error="{target_error}"/>
+                                    <SubTree ID="DiscoverSingleMapObject" delta_angle="{0}" discovered_object="{discovered_object}" target="{target_3}" target_error="{target_error}"/>
+                                    <SubTree ID="DiscoverSingleMapObject" delta_angle="{0}" discovered_object="{discovered_object}" target="{target_4}" target_error="{target_error}"/>
+                                    <ForceFailure>
+                                        <Info message="No targets found. Trying again."/>
+                                    </ForceFailure>
+                                </Fallback>
+                            </Inverter>
+                            <SetBlackboardV3 name="now inc" output_key="angle_inc" value="0.78"/>
+                        </Sequence>
+                    </RepeatV3>
+                </Inverter>
+                <ForceFailure>
+                    <Error message="Discover tree ending without discovering any objects."/>
+                </ForceFailure>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+</root>

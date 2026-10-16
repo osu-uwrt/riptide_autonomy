@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="Move.xml"/>
+    <BehaviorTree ID="RelativeMove">
+        <Sequence>
+            <TransformPose from_frame="{frame_name}" op="{op}" or="{or}" out_op="{gop}" out_or="{gor}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="{oy}" to_frame="world" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="Move" op="{gop}" or="{gor}" oy="{goy}" x="{gx}" y="{gy}" z="{gz}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

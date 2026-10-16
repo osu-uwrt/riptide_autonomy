@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="AlignLinkPositionOnly.xml"/>
+    <BehaviorTree ID="DownwardMove">
+        <Sequence>
+            <TransformPose from_frame="{frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{before_x}" out_y="{before_y}" out_z="{before_z}" oy="0" to_frame="map" x="0" y="0" z="0"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <getCovariance Covariance="{Icov}" Target="{object_name}"/>
+            <CompareNums a="{Icov}" b="{target_Cov}" name="Did we acheive target error?" test="&gt;"/>
+            <Info message="{object_name} error at {Icov}"/>
+            <SetBlackboardV3 output_key="dfc_link" value="talos/dfc_base_link"/>
+            <SubTree ID="AlignLinkPositionOnly" frame_name="{frame}" link_name="{dfc_link}" x="{gx}" y="{gy}" z="{gz}"/>
+            <TransformPose from_frame="{frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{after_x}" out_y="{after_y}" out_z="{after_z}" oy="0" to_frame="map" x="0" y="0" z="0"/>
+            <CalculateDistance dist="{amount_adjusted}" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
+            <CompareNums a="{amount_adjusted}" b="{reset_adjust_threshold}" name="Did we move the object significantly?" test="&gt;"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

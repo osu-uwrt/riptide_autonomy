@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="MiniSearch.xml"/>
+    <include path="RelativeMove.xml"/>
+    <include path="FlipTree.xml"/>
+    <BehaviorTree ID="GateTree">
+        <Sequence>
+            <SetBlackboardV3 output_key="-1" value="-1"/>
+            <SetBlackboardV3 output_key="1" value="1"/>
+            <SetBlackboardV3 output_key="search_timeout" value="10"/>
+            <SetBlackboardV3 output_key="max_dist" value="3.0"/>
+            <SetBlackboardV3 output_key="search_prox_z" value="0"/>
+            <SetBlackboardV3 output_key="min_dist" value="1.5"/>
+            <SetBlackboardV3 output_key="3.1415" value="3.1415"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="target_cov" value="0.1"/>
+            <SetBlackboardV3 output_key="undergate_depth" value="-1.1"/>
+            <IfThenElse>
+                <CompareNums a="{repair_mission}" b="0" test="=="/>
+                <Sequence name="Rescue is primary">
+                    <SetBlackboardV3 output_key="subprop" value="gate_rescue"/>
+                    <SetBlackboardV3 output_key="alt_subprop" value="gate_repair"/>
+                </Sequence>
+                <Sequence name="Repair is primary">
+                    <SetBlackboardV3 output_key="subprop" value="gate_repair"/>
+                    <SetBlackboardV3 output_key="alt_subprop" value="gate_rescue"/>
+                </Sequence>
+            </IfThenElse>
+            <SetBlackboardV3 output_key="prop" value="gate"/>
+            <Format format="{prop}_frame" out="{prop_frame}"/>
+            <Format format="{subprop}_frame" out="{subprop_frame}"/>
+            <Format format="{alt_subprop}_frame" out="{alt_subprop_frame}"/>
+            <Info message="GATE TIME"/>
+            <ForceSuccess>
+                <Sequence name="Set camera and search">
+                    <AlwaysFailure name="Comment out following"/>
+                    <Info message="Setting correct active camera"/>
+                    <SubTree ID="SetActiveCamera" is_dfc="{0}"/>
+                    <Info message="Mini-searching for alternate prop"/>
+                    <ForceSuccess>
+                        <SubTree ID="MiniSearch" object_name="{alt_subprop}" parent_object="{alt_subprop}" prox_x="{max_dist}" prox_y="{0}" prox_z="{search_prox_z}" target_cov="{target_cov}" timeout_secs="{search_timeout}"/>
+                    </ForceSuccess>
+                    <Info message="Mini-searching for primary prop"/>
+                    <ForceSuccess>
+                        <SubTree ID="MiniSearch" object_name="{subprop}" parent_object="{subprop}" prox_x="{max_dist}" prox_y="{0}" prox_z="{search_prox_z}" target_cov="{target_cov}" timeout_secs="{search_timeout}"/>
+                    </ForceSuccess>
+                </Sequence>
+            </ForceSuccess>
+            <Sequence name="Determine pass_on_left for slalom">
+                <Info message="Determining slalom pass-on-left value"/>
+                <TransformPose from_frame="{alt_subprop_frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{__v3_empty}" out_y="{dist_prim_to_alt}" out_z="{__v3_empty}" oy="0" to_frame="{subprop_frame}" x="0" y="0" z="0"/>
+                <IfThenElse>
+                    <CompareNums a="{dist_prim_to_alt}" b="0" name="If is positive" test="&gt;"/>
+                    <Sequence name="Should pass on left">
+                        <SetBlackboardV3 output_key="sla_pass_on_left" value="1"/>
+                        <Info message="Slaom should pass on LEFT"/>
+                    </Sequence>
+                    <Sequence name="Should pass on right">
+                        <SetBlackboardV3 output_key="sla_pass_on_left" value="0"/>
+                        <Info message="Slalom should pass on RIGHT"/>
+                    </Sequence>
+                </IfThenElse>
+            </Sequence>
+            <SetStatus status="aligning"/>
+            <Info message="Performing gate task"/>
+            <SubTree ID="RelativeMove" frame_name="{subprop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{1}" y="{0}" z="{undergate_depth}"/>
+            <SetStatus status="performing"/>
+            <SubTree ID="RelativeMove" frame_name="{subprop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{0}" y="{0}" z="{undergate_depth}"/>
+            <SubTree ID="FlipTree" undergate_depth="{undergate_depth}"/>
+            <Wait seconds="2"/>
+            <SubTree ID="RelativeMove" frame_name="{subprop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{-1}" y="{0}" z="{undergate_depth}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

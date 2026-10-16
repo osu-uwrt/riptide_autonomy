@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="PrimitiveMovePosition.xml"/>
+    <include path="SmartMovePosition.xml"/>
+    <BehaviorTree ID="AlignLinkPositionOnly">
+        <Sequence name="Position link while holding current orientation">
+            <SetBlackboardV3 output_key="15" value="15"/>
+            <TransformPose from_frame="{link_name}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{frame_name}" x="0" y="0" z="0"/>
+            <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{link_name}" op="{link_pitch}" or="{link_roll}" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="{link_yaw}" reference_frame="{frame_name}" x="{x}" y="{y}" z="{z}"/>
+            <PublishToController isOrientation="1" mode="3" x="{aor}" y="{aop}" z="{aoy}"/>
+            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{__v3_empty}" x="{cx}" y="{cy}" z="{__v3_empty}"/>
+            <SubTree ID="PrimitiveMovePosition" timeout="{15}" x="{cx}" y="{cy}" z="{az}"/>
+            <SubTree ID="SmartMovePosition" x="{ax}" y="{ay}" z="{az}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

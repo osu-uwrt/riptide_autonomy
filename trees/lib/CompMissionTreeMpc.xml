@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="WaitForKillSwitch.xml"/>
+    <include path="PrepForRun.xml"/>
+    <include path="Dive.xml"/>
+    <include path="GateTreeMpc.xml"/>
+    <include path="SlalomPathMpc.xml"/>
+    <include path="RandomPingerTree.xml"/>
+    <include path="NewTableTreeMpc.xml"/>
+    <include path="TorpedoTreeMpc.xml"/>
+    <include path="BinTreeMpc.xml"/>
+    <include path="KillController.xml"/>
+    <BehaviorTree ID="CompMissionTreeMpc">
+        <Sequence name="COMP">
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="3" value="3"/>
+            <SetBlackboardV3 output_key="talos/base_link" value="talos/base_link"/>
+            <SetBlackboardV3 output_key="60" value="60"/>
+            <SetBlackboardV3 output_key="depth" value="-0.56"/>
+            <SetBlackboardV3 output_key="pre_torpedo_pose_frame" value="pre_torpedo_pose_frame"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="PrepForRun"/>
+            <SubTree ID="Dive" depth="{depth}"/>
+            <ForceSuccess>
+                <SubTree ID="GateTreeMpc" repair_mission="{repair_mission}" sla_pass_on_left="{sla_pass_on_left}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SlalomPathMpc" exit_frame="{pre_torpedo_pose_frame}" pass_on_left="{sla_pass_on_left}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="RandomPingerTree" is_table="{pinger_is_table}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <IfThenElse>
+                    <CompareNums a="{repair_mission}" b="0" test="=="/>
+                    <SetBlackboardV3 output_key="target_image" value="buoy"/>
+                    <SetBlackboardV3 output_key="target_image" value="compass"/>
+                </IfThenElse>
+            </ForceSuccess>
+            <IfThenElse name="Torpedo/bin/table tasks">
+                <Inverter name="is table?">
+                    <CompareNums a="{pinger_is_table}" b="0" test="=="/>
+                </Inverter>
+                <Sequence name="Table then torpedo">
+                    <ForceSuccess>
+                        <Sequence name="Path: to the table">
+                            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{path_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                            <AddWaypoint frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <SubTree ID="NewTableTreeMpc" repair_mission="{repair_mission}"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <Sequence name="Path: leave the table, straight to torpedo">
+                            <SetMappingTarget lock_map="0" name="Map the torpedo as it comes into view" target_object="torpedo" time_limit_secs="3"/>
+                            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{path_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                            <AddWaypoint frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
+                            <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <SubTree ID="TorpedoTreeMpc" repair_mission="{repair_mission}"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <Sequence name="Path: leave torpedo, straight to bins">
+                            <TransformPose name="torpedo heading" from_frame="pre_torpedo_pose_frame" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{torp_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                            <AddWaypoint frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                        </Sequence>
+                    </ForceSuccess>
+                </Sequence>
+                <Sequence name="torpedo then table">
+                    <ForceSuccess>
+                        <Sequence name="Path: to torpedo">
+                            <SetMappingTarget lock_map="0" name="Map the torpedo as it comes into view" target_object="torpedo" time_limit_secs="3"/>
+                            <AddWaypoint frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
+                            <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{transit_path}"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <SubTree ID="TorpedoTreeMpc" repair_mission="{repair_mission}"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <Sequence name="Path: leave torpedo, straight to the table">
+                            <TransformPose name="torpedo heading" from_frame="pre_torpedo_pose_frame" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{torp_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                            <AddWaypoint frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <SubTree ID="NewTableTreeMpc" repair_mission="{repair_mission}"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <Sequence name="Path: leave the table, straight to bins">
+                            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{path_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                            <AddWaypoint frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <AddWaypoint frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                            <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                        </Sequence>
+                    </ForceSuccess>
+                </Sequence>
+            </IfThenElse>
+            <ForceSuccess>
+                <SubTree ID="BinTreeMpc" repair_mission="{repair_mission}"/>
+            </ForceSuccess>
+            <Info message="WINNING TIME"/>
+            <ForceSuccess>
+                <Sequence name="Path: leave bins, straight home through the gate">
+                    <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{path_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                    <AddWaypoint frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                    <AddWaypoint frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                    <AddWaypoint frame="pre_return_home_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre home" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                    <AddWaypoint frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m before the gate" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="-1" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
+                    <AddWaypoint frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
+                    <AddWaypoint frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m past the gate" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="1" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
+                    <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="240" waypoints="{transit_path}"/>
+                </Sequence>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

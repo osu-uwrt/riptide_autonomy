@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="Move.xml"/>
+    <BehaviorTree ID="RelativeMoveNoYaw">
+        <Sequence>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <TransformPose from_frame="{frame_name}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="0" to_frame="world" x="{x}" y="{y}" z="{z}"/>
+            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{cur_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{cur_yaw}" x="{gx}" y="{gy}" z="{gz}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

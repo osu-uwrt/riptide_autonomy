@@ -1,5 +1,5 @@
 # riptide_autonomy
-This package contains OSU UWRT's competition task code. UWRT uses a behaviortree-based autonomy system, featuring the [BehaviorTree.CPP](https://behaviortree.dev) library, and uses [its fork of Groot](https://github.com/osu-uwrt/Groot) to edit its behavior trees. This package contains the following parts of the system:
+This package contains OSU UWRT's competition task code. UWRT uses a behaviortree-based autonomy system, featuring the [BehaviorTree.CPP](https://behaviortree.dev) 4 library, and edits its behavior trees in the Nereus viewer's behavior tree editor. This package contains the following parts of the system:
 
 - All actions, conditions, and decorators used in the behavior trees
 - All behavior trees used on the robot
@@ -13,7 +13,8 @@ The package is split up into five main parts:
 - Custom node *definitions* or *headers*, which are located in *include/riptide_autonomy* and split up by node type (bt_actions, bt_conditions, and bt_decorators). This is the C++ code that defines the behaviors of the package's custom BT nodes.
 - Custom node *tests*, which are located in *test/riptide_autonomy* and split up by node type. This is the C++ code that tests the custom node definitions. All tests are written using the GTest framework. Header files for test utilities can be found in *include/autonomy_test*.
 - The **doTask** executable, which spins up an action server that runs behavior tree XML files on the system.
-- The BT XML, located in *trees*, stores the XML which is run by the **doTask** executable. The XML workspace is located in *trees/.groot/workspace.xml* and contains all custom node declarations and subtree definitions. This file cannot actually be run because there is no main tree, but it is used by UWRTs [Groot](https://github.com/osu-uwrt/Groot) editor to ensure that each executable behavior tree in the *trees* directory shares the same custom nodes and subtrees. 
+- The BT XML, located in *trees*, stores the trees run by the **doTask** executable. Each file directly in *trees* is a mission: its main tree plus `<include>`s. Every shared subtree is defined once, in *trees/lib/<ID>.xml*, which includes the subtrees it uses, so editing a subtree changes it for every mission. *trees/lib/node_models.xml* lists the custom nodes and their ports for the editor; regenerate it with `ros2 run riptide_autonomy2 updateNodeModels` after adding or changing a node.
+- The trees were converted from BehaviorTree.CPP 3 by `nereus/bt_editor/tools/bt3_to_bt4.py`. Converted trees use **SetBlackboardV3**, **RepeatV3**, **RetryUntilSuccessfulV3** and **BlackboardCheckString**, which keep v3's behavior (v4's own SetBlackboard, Repeat and RetryUntilSuccessful act differently); new trees can use either.
 - The BT assistant, located in *src/riptide_autonomy/assistant* is a useful tool for performing tedious tasks related to the package.
 
 ## Running BehaviorTrees
@@ -77,7 +78,13 @@ UWRT's AUV has strips of LEDs in both cages to indicate robot status to swimmers
 | Fast blink green  | Tag cal success; tree starting    |
 
 ## Editing BehaviorTrees
-Use UWRTs fork of [Groot](https://github.com/osu-uwrt/Groot) to edit behavior trees used by the system.
+Open **Windows > Behavior trees** in the Nereus viewer. It edits the files in *trees* in place (open a subtree in place with
+Space, Ctrl+Enter to go to its definition), checks them as you go, and saves only the files that changed. Deploy as
+usual afterwards. Notes for writing trees by hand in BehaviorTree.CPP 4:
+- A SubTree argument is `{key}` to pass a parent key, or plain text to pass that text.
+- An output port takes `{key}`; a bare name stores nothing.
+- A value that starts with `{` and ends with `}` is one key, so `"{a},{b}"` reads a key named `a},{b`: end such text with
+  another character (`"{a},{b};"`).
 
 ## Using the BT assistant
 The BehaviorTree assistant is a tool that streamlines system-related tasks such as creating nodes, checking system health, rebuilding the project, and generating the C++ sources that register the custom nodes with the BT.CPP library. The tool can be invoked through ROS with the command:
@@ -111,7 +118,7 @@ and **node name** is the name of the new node being created.
 Upon generating the necessary files, the command will invoke colcon and rebuild the package unless the **--no-rebuild** flag is specified.
 
 ### Checking System Health (**btassistant.py check**)
-The **check** subcommand evaluates the health of different aspects of the system, ranging from ensuring that every custom node is part of the XML workspace, to invoking the custom nodes' test code. The usage of this subcommand is:
+The **check** subcommand evaluates the health of different aspects of the system, ranging from ensuring that *trees/lib/node_models.xml* lists every custom node, to invoking the custom nodes' test code. The usage of this subcommand is:
 
 ```ros2 run riptide_autonomy2 btassistant.py check <module>```
 
@@ -119,7 +126,7 @@ where **module** can be any of the following:
 
 - **files** - Checks the package's file tree to ensure that every custom node has a "definition" in *include/riptide_autonomy* and a "test" in *test/riptide_autonomy*. If the assistant finds a custom node with a definition but no test, or a test but no definition, it will notify the user and prompt them to delete the existing file, add the missing one, or ignore the problem. If changes were made to the file tree at the end of execution, the user will be asked if they would like to rebuild the package.
 
-- **behaviortree** - The same as running ```ros2 run riptide_autonomy checkBT```. Checks that every custom node in the package is defined in the TreeNodesModel of the XML workspace. This also checks that all ports reported in the XML workspace match those defined by the custom nodes. If any discrepancies are found, the assistant will offer to fix the problem by modifying the XML workspace. This tool will NOT modify any source code. It is up to the user to determine whether modifying the workspace is the best fix, or if it is better to modify source code. 
+- **behaviortree** - The same as running ```ros2 run riptide_autonomy2 updateNodeModels --check```. Checks that `trees/lib/node_models.xml`, the node list the behavior tree editor shows, matches the nodes the package compiles. Run ```ros2 run riptide_autonomy2 updateNodeModels``` to rewrite it after adding or changing a node.
 
 - **nodes** - This subcommand invokes the tests defined in *test/riptide_autonomy*. It is roughly equivalent to running the command ```ros2 run riptide_autonomy testBT```, however, because tests are not built by default (for quicker compilation), this subcommand will rebuild autonomy with tests enabled if no **testBT** executable is detected.
 
@@ -145,4 +152,4 @@ This subcommand is invoked during the CMake configure step to generate the C++ s
 |------------|--------------|
 | OS Distro  | Ubuntu 22.04 |
 | ROS Distro | ROS2 Humble  |
-| BT.CPP     | BT-CPP-v3
+| BT.CPP     | BehaviorTree.CPP 4 (`ros-humble-behaviortree-cpp`)

@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <TreeNodesModel>
+        <SubTree ID="ActivateMagnet">
+            <input_port name="magnet_frame"/>
+        </SubTree>
+        <SubTree ID="ActivateMagnetMpc">
+            <input_port name="magnet_frame"/>
+            <output_port name="retreat_path" type="std::string">Waypoints back to pre-align and up; empty if alignment failed</output_port>
+        </SubTree>
+        <Action ID="AddArc">
+            <input_port name="approach" type="std::string">false: start from the previous point, no line to the arc (default true)</input_port>
+            <input_port name="cx" type="std::string">Centre x in frame</input_port>
+            <input_port name="cy" type="std::string">Centre y in frame</input_port>
+            <input_port name="end_radius" type="std::string">Radius at the end (default radius; differs = spiral)</input_port>
+            <input_port name="frame" type="std::string">Frame of the centre and angles (default: FollowPath's frame)</input_port>
+            <input_port name="heading" type="std::string">waypoint (default), path (face travel) or look_at; also the approach line's</input_port>
+            <input_port name="look_frame" type="std::string">Face this TF frame, followed live as it moves (sets heading look_at)</input_port>
+            <input_port name="look_x" type="std::string">look_at point in frame (default: the centre), or in look_frame (default 0)</input_port>
+            <input_port name="look_y" type="std::string">look_at point in frame (default: the centre), or in look_frame (default 0)</input_port>
+            <input_port name="look_z" type="std::string">look_at point in frame (default: z), or in look_frame (default 0)</input_port>
+            <output_port name="out" type="std::string">Path with the arc appended</output_port>
+            <input_port name="pan" type="std::string">Swing the heading this far each way along the arc (rad, needs heading path or look_at; default 0)</input_port>
+            <input_port name="pan_step" type="std::string">Arc per pan piece (rad, default 0.25)</input_port>
+            <input_port name="path" type="std::string">Waypoints so far (leave empty to start a new path)</input_port>
+            <input_port name="radius" type="std::string"/>
+            <input_port name="spin" type="std::string">Extra yaw over the arc, 6.283 = one turn (default 0)</input_port>
+            <input_port name="spin_rate" type="std::string">Steady spin on the arc, rad per metre (default 0)</input_port>
+            <input_port name="start_angle" type="std::string">Where the arc starts, from the frame's +x (rad)</input_port>
+            <input_port name="sweep" type="std::string">How far round (rad, + = counterclockwise from above)</input_port>
+            <input_port name="yaw" type="std::string">End yaw for heading waypoint (default 0)</input_port>
+            <input_port name="yaw_frame" type="std::string">End yaw is in this frame instead of frame (e.g. world)</input_port>
+            <input_port name="yaw_offset" type="std::string">Added to path / look_at yaw (default 0)</input_port>
+            <input_port name="z" type="std::string">Depth in frame</input_port>
+        </Action>
+        <Action ID="AddWaypoint">
+            <input_port name="frame" type="std::string">Frame of this waypoint (default: FollowPath's frame)</input_port>
+            <input_port name="heading" type="std::string">waypoint (default: blend to yaw), path (face travel) or look_at</input_port>
+            <input_port name="look_frame" type="std::string">Face this TF frame, followed live as it moves (sets heading look_at)</input_port>
+            <input_port name="look_x" type="std::string">look_at point in frame, or in look_frame (default 0)</input_port>
+            <input_port name="look_y" type="std::string">look_at point in frame, or in look_frame (default 0)</input_port>
+            <input_port name="look_z" type="std::string">look_at point in frame, or in look_frame (default 0)</input_port>
+            <output_port name="out" type="std::string">Path with this waypoint appended</output_port>
+            <input_port name="path" type="std::string">Waypoints so far (leave empty to start a new path)</input_port>
+            <input_port name="pitch" type="std::string">Pitch at this waypoint (default 0)</input_port>
+            <input_port name="roll" type="std::string">Roll at this waypoint (default 0)</input_port>
+            <input_port name="spin" type="std::string">Extra yaw over this leg, 6.283 = one turn (default 0)</input_port>
+            <input_port name="spin_rate" type="std::string">Steady spin on this leg, rad per metre (default 0)</input_port>
+            <input_port name="x" type="std::string"/>
+            <input_port name="y" type="std::string"/>
+            <input_port name="yaw" type="std::string">End yaw for heading waypoint (default 0)</input_port>
+            <input_port name="yaw_frame" type="std::string">roll/pitch/yaw are in this frame instead of frame (e.g. world: hold a world heading)</input_port>
+            <input_port name="yaw_offset" type="std::string">Added to path / look_at yaw (default 0)</input_port>
+            <input_port name="z" type="std::string"/>
+        </Action>
+        <SubTree ID="AlignLink">
+            <input_port name="frame_name">frame to align to</input_port>
+            <input_port name="link_name">link to align</input_port>
+            <input_port name="prox_x" default="1">default x promity</input_port>
+            <input_port name="prox_z" default="0">default z proximity</input_port>
+        </SubTree>
+        <SubTree ID="AlignLinkPositionOnly">
+            <input_port name="frame_name"/>
+            <input_port name="link_name"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <Condition ID="ApproxEqualTo">
+            <input_port name="a" type="std::string"/>
+            <input_port name="b" type="std::string"/>
+            <input_port name="range" type="std::string"/>
+        </Condition>
+        <Condition ID="ApproxEqualToAngle">
+            <input_port name="a" type="std::string"/>
+            <input_port name="b" type="std::string"/>
+            <input_port name="range" type="std::string"/>
+        </Condition>
+        <SubTree ID="AssertTree">
+            <input_port name="a"/>
+            <input_port name="aname"/>
+            <input_port name="b"/>
+            <input_port name="test">Same as CompareNums</input_port>
+        </SubTree>
+        <SubTree ID="BinTree">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <SubTree ID="BinTreeMpc">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <Decorator ID="BlackboardCheckString">
+            <input_port name="return_on_mismatch" type="std::string">Status when value_A != value_B</input_port>
+            <input_port name="value_A" type="std::string"/>
+            <input_port name="value_B" type="std::string"/>
+        </Decorator>
+        <SubTree ID="BuoyTree"/>
+        <Action ID="CalculateDistance">
+            <output_port name="dist" type="std::string"/>
+            <input_port name="x1" type="std::string"/>
+            <input_port name="x2" type="std::string"/>
+            <input_port name="y1" type="std::string"/>
+            <input_port name="y2" type="std::string"/>
+            <input_port name="z1" type="std::string"/>
+            <input_port name="z2" type="std::string"/>
+        </Action>
+        <Action ID="CallSetBoolService">
+            <input_port name="data" type="std::string"/>
+            <input_port name="srv_name" type="std::string"/>
+            <input_port name="time_limit_secs" type="std::string"/>
+        </Action>
+        <Action ID="CallSetStringService">
+            <input_port name="data" type="std::string"/>
+            <input_port name="srv_name" type="std::string"/>
+            <input_port name="time_limit_secs" type="std::string"/>
+        </Action>
+        <Action ID="CallStartBinaryClassifierService">
+            <input_port name="class_name" type="std::string"/>
+            <input_port name="object1_name" type="std::string"/>
+            <input_port name="object2_name" type="std::string"/>
+            <input_port name="srv_name" type="std::string"/>
+            <input_port name="time_limit_secs" type="std::string"/>
+        </Action>
+        <Action ID="CallTriggerService">
+            <input_port name="srv_name" type="std::string"/>
+            <input_port name="time_limit_secs" type="std::string"/>
+        </Action>
+        <Action ID="CenterDetection">
+            <input_port name="align_tolerance" type="std::string">Square on within this (rad); default 0.08</input_port>
+            <input_port name="align_yaw" type="std::string">Move square on to the object (its frame's yaw); false: turn in place; default true</input_port>
+            <input_port name="base_frame" type="std::string">Vehicle frame; default talos/base_link</input_port>
+            <input_port name="center_depth" type="std::string">false: yaw only; default true</input_port>
+            <input_port name="depth_tolerance" type="std::string">Level within this (m); default 0.1</input_port>
+            <input_port name="max_age_secs" type="std::string">Lost once no detection is this old; default 1.5</input_port>
+            <input_port name="max_depth" type="std::string">Deepest depth to move to; default -2.5</input_port>
+            <input_port name="min_depth" type="std::string">Shallowest depth to move to; default -0.75</input_port>
+            <input_port name="min_score" type="std::string">Ignore weaker detections; default 0.2</input_port>
+            <input_port name="object_frame" type="std::string">Frame whose yaw to align with; default &lt;object_name&gt;_frame</input_port>
+            <input_port name="object_name" type="std::string">Detector class to center</input_port>
+            <input_port name="position_tolerance" type="std::string">There within this (m); default 0.1</input_port>
+            <input_port name="standoff" type="std::string">Camera distance in front of it (m); default the range it was seen from</input_port>
+            <input_port name="timeout_secs" type="std::string">Give up after; default 8</input_port>
+            <input_port name="yaw_tolerance" type="std::string">Centered within this (rad); default 0.05</input_port>
+        </Action>
+        <SubTree ID="CheckActuatorStates"/>
+        <Action ID="CheckBlackboardExists">
+            <input_port name="input" type="std::string"/>
+        </Action>
+        <SubTree ID="CollectDets">
+            <input_port name="target"/>
+            <input_port name="target_error"/>
+        </SubTree>
+        <SubTree ID="CollectDetsAtAngle">
+            <input_port name="frame"/>
+            <input_port name="rel_yaw"/>
+            <input_port name="target"/>
+            <input_port name="target_error"/>
+        </SubTree>
+        <SubTree ID="CompLiteMissionTree">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <SubTree ID="CompMissionTree">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <SubTree ID="CompMissionTreeMpc">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <Condition ID="CompareNums">
+            <input_port name="a" type="std::string"/>
+            <input_port name="b" type="std::string"/>
+            <input_port name="test" type="std::string"/>
+        </Condition>
+        <Action ID="ComputeFrameAlignment">
+            <input_port name="base_frame" type="std::string"/>
+            <input_port name="link_frame" type="std::string"/>
+            <input_port name="op" type="std::string"/>
+            <input_port name="or" type="std::string"/>
+            <output_port name="out_op" type="std::string"/>
+            <output_port name="out_or" type="std::string"/>
+            <output_port name="out_oy" type="std::string"/>
+            <output_port name="out_x" type="std::string"/>
+            <output_port name="out_y" type="std::string"/>
+            <output_port name="out_z" type="std::string"/>
+            <input_port name="oy" type="std::string"/>
+            <input_port name="reference_frame" type="std::string"/>
+            <input_port name="x" type="std::string"/>
+            <input_port name="y" type="std::string"/>
+            <input_port name="z" type="std::string"/>
+        </Action>
+        <Action ID="ContinuousSpin">
+            <input_port name="num_cycles" type="std::string">Number of full counterclockwise turns</input_port>
+            <input_port name="odom_timeout_secs" type="std::string">Odometry watchdog; default 1 second</input_port>
+            <input_port name="timeout_secs" type="std::string">Overall timeout; default 90 seconds</input_port>
+            <input_port name="yaw_rate" type="std::string">Target ramp speed in radians/second; unset: as fast as the controller follows</input_port>
+        </Action>
+        <SubTree ID="DemoTableTree"/>
+        <SubTree ID="DeployTankTree"/>
+        <SubTree ID="DiscoverObjects">
+            <input_port name="base_link"/>
+            <output_port name="discovered_object" type="std::string"/>
+            <input_port name="target_1"/>
+            <input_port name="target_2"/>
+            <input_port name="target_3"/>
+            <input_port name="target_4"/>
+            <input_port name="target_error"/>
+        </SubTree>
+        <SubTree ID="DiscoverSingleMapObject">
+            <input_port name="delta_angle"/>
+            <output_port name="discovered_object" type="std::string"/>
+            <input_port name="target"/>
+            <input_port name="target_error"/>
+        </SubTree>
+        <SubTree ID="Dive">
+            <input_port name="depth">depth to submerge to</input_port>
+        </SubTree>
+        <SubTree ID="DownwardMiniSearch">
+            <input_port name="object_frame"/>
+            <input_port name="object_name"/>
+            <input_port name="search_prox"/>
+        </SubTree>
+        <SubTree ID="DownwardMove">
+            <input_port name="frame"/>
+            <input_port name="gx"/>
+            <input_port name="gy"/>
+            <input_port name="gz"/>
+            <input_port name="object_name"/>
+            <input_port name="reset_adjust_threshold"/>
+            <input_port name="target_Cov"/>
+        </SubTree>
+        <SubTree ID="DownwardSearch">
+            <input_port name="min_dist"/>
+            <input_port name="object_name"/>
+            <input_port name="target_cov"/>
+            <input_port name="timeout_sec"/>
+        </SubTree>
+        <SubTree ID="DownwardSearchMpc">
+            <input_port name="min_dist"/>
+            <input_port name="object_name"/>
+            <input_port name="target_cov"/>
+            <input_port name="timeout_sec"/>
+        </SubTree>
+        <SubTree ID="DownwardTrack">
+            <input_port name="frame"/>
+            <input_port name="min_dist"/>
+            <input_port name="object_name"/>
+            <input_port name="target_cov"/>
+        </SubTree>
+        <Action ID="Error">
+            <input_port name="message" type="std::string"/>
+        </Action>
+        <SubTree ID="FireDropper"/>
+        <SubTree ID="FireTorpedo"/>
+        <SubTree ID="FlipTree">
+            <input_port name="undergate_depth"/>
+        </SubTree>
+        <Action ID="FollowPath">
+            <input_port name="frame" type="std::string">Frame of waypoints without their own (default world)</input_port>
+            <input_port name="max_depth" type="std::string">Deepest allowed z in world (default -4)</input_port>
+            <input_port name="max_speed" type="std::string">Cruise speed cap for this path, m/s (default 0: the controller's own limit)</input_port>
+            <input_port name="min_depth" type="std::string">Shallowest allowed z in world (default -0.55)</input_port>
+            <input_port name="spin_rate" type="std::string">Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)</input_port>
+            <input_port name="timeout" type="std::string">Seconds before giving up (default 60)</input_port>
+            <input_port name="waypoints" type="std::string">"x,y,z,yaw; frame: x,y,z,yaw | arc=cx,cy,sweep; ..." (or x,y,z,roll,pitch,yaw); {blackboard} references allowed</input_port>
+        </Action>
+        <Action ID="Format">
+            <input_port name="format" type="std::string"/>
+            <output_port name="out" type="std::string"/>
+        </Action>
+        <SubTree ID="GateTree">
+            <input_port name="repair_mission"/>
+            <output_port name="sla_pass_on_left" type="std::string"/>
+        </SubTree>
+        <SubTree ID="GateTreeMpc">
+            <input_port name="repair_mission"/>
+            <output_port name="sla_pass_on_left" type="std::string"/>
+        </SubTree>
+        <Action ID="GetActuatorStatus">
+            <output_port name="actuators_busy" type="std::string"/>
+            <output_port name="claw_state" type="std::string"/>
+            <output_port name="dropper_available_count" type="std::string"/>
+            <output_port name="dropper_state" type="std::string"/>
+            <output_port name="torpedo_available_count" type="std::string"/>
+            <output_port name="torpedo_state" type="std::string"/>
+        </Action>
+        <Action ID="GetBoolTopic">
+            <input_port name="topic" type="std::string"/>
+            <output_port name="value" type="std::string"/>
+        </Action>
+        <Action ID="GetFloat64Topic">
+            <input_port name="topic" type="std::string"/>
+            <output_port name="value" type="std::string"/>
+        </Action>
+        <Action ID="GetImuOrientation">
+            <output_port name="op" type="std::string"/>
+            <output_port name="or" type="std::string"/>
+            <output_port name="oy" type="std::string"/>
+            <input_port name="topic" type="std::string"/>
+        </Action>
+        <Action ID="GetMappingState">
+            <output_port name="map_locked" type="std::string"/>
+            <output_port name="target_name" type="std::string"/>
+        </Action>
+        <Action ID="GetOdometry">
+            <output_port name="op" type="std::string"/>
+            <output_port name="or" type="std::string"/>
+            <output_port name="oy" type="std::string"/>
+            <output_port name="x" type="std::string"/>
+            <output_port name="y" type="std::string"/>
+            <output_port name="z" type="std::string"/>
+        </Action>
+        <SubTree ID="GetOppositeColorBasket">
+            <input_port name="obj"/>
+            <output_port name="out" type="std::string"/>
+            <output_port name="out_frame" type="std::string"/>
+        </SubTree>
+        <Action ID="GetTwistTopic">
+            <input_port name="topic" type="std::string">Topic to listen to</input_port>
+            <output_port name="vel_pitch" type="std::string"/>
+            <output_port name="vel_roll" type="std::string"/>
+            <output_port name="vel_x" type="std::string"/>
+            <output_port name="vel_y" type="std::string"/>
+            <output_port name="vel_yaw" type="std::string"/>
+            <output_port name="vel_z" type="std::string"/>
+        </Action>
+        <SubTree ID="GoToObject">
+            <output_port name="discovered_object" type="std::string"/>
+            <input_port name="object_1"/>
+            <input_port name="object_2"/>
+            <input_port name="object_3"/>
+            <input_port name="object_4"/>
+            <input_port name="target_error"/>
+        </SubTree>
+        <SubTree ID="GrabObject">
+            <output_port name="discovered_target" type="std::string"/>
+            <input_port name="object_1"/>
+            <input_port name="object_2"/>
+            <input_port name="object_3"/>
+            <input_port name="object_4"/>
+            <input_port name="target_error"/>
+        </SubTree>
+        <Action ID="HeadingToPoint">
+            <input_port name="currX" type="std::string"/>
+            <input_port name="currY" type="std::string"/>
+            <output_port name="heading" type="std::string"/>
+            <input_port name="targX" type="std::string"/>
+            <input_port name="targY" type="std::string"/>
+        </Action>
+        <Action ID="Info">
+            <input_port name="message" type="std::string"/>
+        </Action>
+        <Condition ID="IsTrue">
+            <input_port name="value" type="std::string"/>
+        </Condition>
+        <SubTree ID="KillController"/>
+        <SubTree ID="LockInObject">
+            <input_port name="object"/>
+            <input_port name="target_error"/>
+        </SubTree>
+        <SubTree ID="MagnetTree">
+            <input_port name="bin_object_vision_class">Class used in binary classifier</input_port>
+        </SubTree>
+        <SubTree ID="MagnetTreeMpc">
+            <input_port name="bin_object_vision_class">Class used in binary classifier</input_port>
+        </SubTree>
+        <Condition ID="MapConverged">
+            <input_port name="object" type="std::string">Mapping object (mapping/&lt;object&gt;), or a comma list that must all converge</input_port>
+            <input_port name="target_cov" type="std::string">Converged below this error (getCovariance's)</input_port>
+        </Condition>
+        <Action ID="Math">
+            <input_port name="a" type="std::string"/>
+            <input_port name="b" type="std::string"/>
+            <input_port name="operator" type="std::string"/>
+            <output_port name="out" type="std::string"/>
+        </Action>
+        <SubTree ID="MiniSearch">
+            <input_port name="object_name"/>
+            <input_port name="parent_object"/>
+            <input_port name="prox_x" default="1"/>
+            <input_port name="prox_y" default="0"/>
+            <input_port name="prox_z" default="0"/>
+            <input_port name="target_cov" default="1.25"/>
+            <input_port name="timeout_secs" default="60"/>
+        </SubTree>
+        <SubTree ID="MiniSearchMpc">
+            <input_port name="object_name"/>
+            <input_port name="parent_object"/>
+            <input_port name="prox_x" default="1"/>
+            <input_port name="prox_y" default="0"/>
+            <input_port name="prox_z" default="0"/>
+            <input_port name="target_cov" default="1.25"/>
+            <input_port name="timeout_secs" default="60"/>
+        </SubTree>
+        <SubTree ID="Move">
+            <input_port name="op"/>
+            <input_port name="or"/>
+            <input_port name="oy"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <SubTree ID="NewTableTree">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <SubTree ID="NewTableTreeMpc">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <SubTree ID="PassThroughSlalom">
+            <input_port name="pass_on_left"/>
+            <input_port name="slalom_object"/>
+        </SubTree>
+        <SubTree ID="PrepForRun"/>
+        <SubTree ID="PrimitiveMoveOrientation">
+            <input_port name="p"/>
+            <input_port name="r"/>
+            <input_port name="timeout" default="15"/>
+            <input_port name="y"/>
+        </SubTree>
+        <SubTree ID="PrimitiveMovePosition">
+            <input_port name="timeout" default="60"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <Action ID="PublishEKFPose">
+            <input_port name="orientation_tolerance" type="std::string">Reset confirmation tolerance in radians (default 0.1)</input_port>
+            <input_port name="pitch" type="std::string"/>
+            <input_port name="position_tolerance" type="std::string">Reset confirmation tolerance in meters (default 0.1)</input_port>
+            <input_port name="roll" type="std::string"/>
+            <input_port name="setOrientation" type="std::string"/>
+            <input_port name="setX" type="std::string"/>
+            <input_port name="setY" type="std::string"/>
+            <input_port name="setZ" type="std::string"/>
+            <input_port name="timeout_secs" type="std::string">Reset and odometry confirmation timeout (default 5 seconds)</input_port>
+            <input_port name="x" type="std::string"/>
+            <input_port name="y" type="std::string"/>
+            <input_port name="yaw" type="std::string"/>
+            <input_port name="z" type="std::string"/>
+        </Action>
+        <Action ID="PublishFloat32">
+            <input_port name="data" type="std::string"/>
+            <input_port name="topic" type="std::string"/>
+        </Action>
+        <Action ID="PublishInt8">
+            <input_port name="data" type="std::string"/>
+            <input_port name="topic" type="std::string"/>
+        </Action>
+        <Action ID="PublishToController">
+            <input_port name="isOrientation" type="std::string"/>
+            <input_port name="mode" type="std::string"/>
+            <input_port name="x" type="std::string"/>
+            <input_port name="y" type="std::string"/>
+            <input_port name="z" type="std::string"/>
+        </Action>
+        <SubTree ID="RandomPingerTree">
+            <output_port name="is_table" type="std::string"/>
+        </SubTree>
+        <SubTree ID="RecoverTrackingAtHeading">
+            <input_port name="relative_yaw"/>
+            <input_port name="target_obj_frame"/>
+        </SubTree>
+        <SubTree ID="RelativeMove">
+            <input_port name="frame_name">the frame to move relative to</input_port>
+            <input_port name="op"/>
+            <input_port name="or"/>
+            <input_port name="oy"/>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <SubTree ID="RelativeMoveNoYaw">
+            <input_port name="frame_name">the frame to move relative to</input_port>
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <SubTree ID="ReloadActuators"/>
+        <Decorator ID="RepeatV3">
+            <input_port name="num_cycles" type="std::string">Repeat a successful child N times (-1: forever)</input_port>
+        </Decorator>
+        <Decorator ID="RetryUntilSuccessfulOrTimeout">
+            <input_port name="num_seconds" type="std::string"/>
+        </Decorator>
+        <Decorator ID="RetryUntilSuccessfulV3">
+            <input_port name="num_attempts" type="std::string">Retry a failing child up to N times (-1: forever)</input_port>
+        </Decorator>
+        <SubTree ID="ReturnHomeTree"/>
+        <SubTree ID="RotateToFrame">
+            <inout_port name="relative_yaw" type="std::string"/>
+            <inout_port name="target_frame" type="std::string"/>
+        </SubTree>
+        <SubTree ID="Search">
+            <input_port name="max_dist" default="4.0"/>
+            <input_port name="min_dist" default="1.75"/>
+            <input_port name="object_name">Frame to search for</input_port>
+            <input_port name="target_cov" default="1.25">Target covariance to end search</input_port>
+            <input_port name="timeout_secs" default="120">Timeout for search</input_port>
+        </SubTree>
+        <SubTree ID="SearchMpc">
+            <input_port name="max_dist" default="4.0"/>
+            <input_port name="min_dist" default="1.75"/>
+            <input_port name="object_name">Frame to search for</input_port>
+            <input_port name="target_cov" default="1.25">Target covariance to end search</input_port>
+            <input_port name="timeout_secs" default="120">Timeout for search</input_port>
+        </SubTree>
+        <Condition ID="SeenRecently">
+            <input_port name="max_age_secs" type="std::string"/>
+            <input_port name="min_score" type="std::string"/>
+            <input_port name="object_name" type="std::string"/>
+        </Condition>
+        <SubTree ID="SetActiveCamera">
+            <input_port name="is_dfc">1 for dfc, 0 otherwise</input_port>
+        </SubTree>
+        <SubTree ID="SetActuatorsArmed">
+            <input_port name="armed"/>
+        </SubTree>
+        <Action ID="SetBlackboardV3">
+            <inout_port name="output_key" type="std::string">Key to write (a key name, or {key} holding the key name)</inout_port>
+            <input_port name="value" type="std::string">Text to store, or {key} to copy that entry</input_port>
+        </Action>
+        <SubTree ID="SetClawState">
+            <input_port name="claw_opened"/>
+            <input_port name="claw_raised"/>
+        </SubTree>
+        <Action ID="SetControllerSafeMode">
+            <input_port name="safe" type="std::string"/>
+            <input_port name="timeout_secs" type="std::string"/>
+        </Action>
+        <Action ID="SetMappingTarget">
+            <input_port name="lock_map" type="std::string"/>
+            <input_port name="target_object" type="std::string"/>
+            <input_port name="time_limit_secs" type="std::string"/>
+        </Action>
+        <Action ID="SetStatus">
+            <input_port name="status" type="std::string"/>
+        </Action>
+        <SubTree ID="SetWinchState">
+            <input_port name="winch_extended"/>
+        </SubTree>
+        <SubTree ID="ShootBothObjectsMpc">
+            <input_port name="link_1">Torpedo link fired at object_1</input_port>
+            <input_port name="link_2">Torpedo link fired at object_2</input_port>
+            <input_port name="object_1"/>
+            <input_port name="object_2"/>
+            <input_port name="torpedo_name" default="torpedo"/>
+        </SubTree>
+        <SubTree ID="ShootDownwardObject">
+            <input_port name="dropper_link_name"/>
+            <input_port name="object_name"/>
+            <input_port name="search_prox"/>
+        </SubTree>
+        <SubTree ID="ShootDownwardObjectMpc">
+            <input_port name="dropper_link_name"/>
+            <input_port name="object_name"/>
+            <input_port name="search_prox"/>
+        </SubTree>
+        <SubTree ID="ShootObject">
+            <input_port name="object_name"/>
+            <input_port name="torpedo_link_name" default="talos/torpedo_link"/>
+            <input_port name="torpedo_name" default="torpedo"/>
+        </SubTree>
+        <SubTree ID="ShootSearchedObject">
+            <input_port name="object_name"/>
+            <input_port name="torpedo_link_name" default="talos/torpedo_link"/>
+        </SubTree>
+        <SubTree ID="SingleSlalom">
+            <input_port name="pass_on_left">Whether to pass on the left side of the red slalom pole</input_port>
+            <input_port name="slalom_type">The mapping type of slalom to search for</input_port>
+        </SubTree>
+        <SubTree ID="SlalomPath">
+            <input_port name="pass_on_left"/>
+        </SubTree>
+        <SubTree ID="SlalomPathMpc">
+            <input_port name="exit_frame">Frame the path continues to after the slalom (heading held); empty ends at the slalom</input_port>
+            <input_port name="pass_on_left"/>
+        </SubTree>
+        <SubTree ID="SlalomTree">
+            <input_port name="pass_on_left"/>
+        </SubTree>
+        <SubTree ID="SmartMovePosition">
+            <input_port name="x"/>
+            <input_port name="y"/>
+            <input_port name="z"/>
+        </SubTree>
+        <SubTree ID="SmartMoveSurge">
+            <input_port name="timeout" default="60"/>
+            <input_port name="x"/>
+            <input_port name="z"/>
+        </SubTree>
+        <SubTree ID="SpinTree">
+            <input_port name="num_cycles"/>
+            <input_port name="target_image"/>
+        </SubTree>
+        <SubTree ID="SpinTreeMpc">
+            <input_port name="num_cycles"/>
+            <input_port name="target_image"/>
+        </SubTree>
+        <SubTree ID="SurfaceTree">
+            <input_port name="target_image"/>
+        </SubTree>
+        <SubTree ID="SurgeMove">
+            <input_port name="timeout" default="30"/>
+            <input_port name="x"/>
+            <input_port name="z"/>
+        </SubTree>
+        <SubTree ID="TableTree"/>
+        <SubTree ID="TankLongitudinalFF">
+            <input_port name="duration"/>
+            <input_port name="power"/>
+        </SubTree>
+        <SubTree ID="TestTorpedoTree">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <SubTree ID="TorpedoTree">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <SubTree ID="TorpedoTreeMpc">
+            <input_port name="repair_mission"/>
+        </SubTree>
+        <Action ID="TransformPose">
+            <input_port name="from_frame" type="std::string"/>
+            <input_port name="op" type="std::string"/>
+            <input_port name="or" type="std::string"/>
+            <output_port name="out_op" type="std::string"/>
+            <output_port name="out_or" type="std::string"/>
+            <output_port name="out_oy" type="std::string"/>
+            <output_port name="out_x" type="std::string"/>
+            <output_port name="out_y" type="std::string"/>
+            <output_port name="out_z" type="std::string"/>
+            <input_port name="oy" type="std::string"/>
+            <input_port name="to_frame" type="std::string"/>
+            <input_port name="x" type="std::string"/>
+            <input_port name="y" type="std::string"/>
+            <input_port name="z" type="std::string"/>
+        </Action>
+        <Action ID="TriggerControllerStunt">
+            <input_port name="targetStuntState" type="std::string"/>
+        </Action>
+        <Action ID="Wait">
+            <input_port name="seconds" type="std::string"/>
+        </Action>
+        <SubTree ID="WaitForActuators">
+            <inout_port name="timeout_secs" type="std::string"/>
+        </SubTree>
+        <SubTree ID="WaitForController">
+            <input_port name="dist"/>
+            <input_port name="link_frame"/>
+            <input_port name="target_frame"/>
+            <input_port name="timeout">max time to wait in seconds</input_port>
+            <input_port name="trust">minimum controller scale trust threshold</input_port>
+        </SubTree>
+        <Action ID="WaitForDetection">
+            <input_port name="object_name" type="std::string"/>
+            <input_port name="timeout_secs" type="std::string"/>
+        </Action>
+        <SubTree ID="WaitForKillSwitch"/>
+        <SubTree ID="WaitForTalos">
+            <output_port name="bin_heading" type="std::string"/>
+        </SubTree>
+        <SubTree ID="dropObject">
+            <input_port name="claw_close_s"/>
+            <input_port name="claw_drop_s"/>
+            <input_port name="claw_link"/>
+            <input_port name="claw_open_s"/>
+            <input_port name="claw_topic"/>
+            <input_port name="ctrlr_dist"/>
+            <input_port name="ctrlr_timeout"/>
+            <input_port name="ctrlr_trust"/>
+            <input_port name="dropoff_name"/>
+            <input_port name="minisearch_prox"/>
+            <input_port name="overtable"/>
+            <input_port name="reset_threshold"/>
+            <input_port name="search_prox"/>
+            <input_port name="search_timeout"/>
+            <input_port name="target_err"/>
+        </SubTree>
+        <SubTree ID="dropObjectMpc">
+            <input_port name="claw_close_s"/>
+            <input_port name="claw_drop_s"/>
+            <input_port name="claw_link"/>
+            <input_port name="claw_open_s"/>
+            <input_port name="claw_topic"/>
+            <input_port name="ctrlr_dist"/>
+            <input_port name="ctrlr_timeout"/>
+            <input_port name="ctrlr_trust"/>
+            <input_port name="dropoff_name"/>
+            <input_port name="minisearch_prox"/>
+            <input_port name="overtable"/>
+            <input_port name="reset_threshold"/>
+            <input_port name="search_prox"/>
+            <input_port name="search_timeout"/>
+            <input_port name="target_err"/>
+        </SubTree>
+        <Action ID="getCovariance">
+            <output_port name="Covariance" type="std::string"/>
+            <input_port name="Target" type="std::string"/>
+        </Action>
+        <SubTree ID="pickupObject">
+            <input_port name="claw_close_s"/>
+            <input_port name="claw_link"/>
+            <input_port name="claw_open_s"/>
+            <input_port name="claw_topic"/>
+            <input_port name="ctrlr_dist"/>
+            <input_port name="ctrlr_timeout"/>
+            <input_port name="ctrlr_trust"/>
+            <input_port name="minisearch_prox"/>
+            <input_port name="object_name"/>
+            <input_port name="overtable"/>
+            <input_port name="pickup_center_x"/>
+            <input_port name="pickup_center_y"/>
+            <input_port name="pickup_center_z"/>
+            <input_port name="pre_overtable"/>
+            <input_port name="reset_threshold"/>
+            <input_port name="search_prox"/>
+            <input_port name="search_timeout"/>
+            <inout_port name="target_err" type="std::string"/>
+        </SubTree>
+        <SubTree ID="pickupObjectMpc">
+            <input_port name="claw_close_s"/>
+            <input_port name="claw_link"/>
+            <input_port name="claw_open_s"/>
+            <input_port name="claw_topic"/>
+            <input_port name="ctrlr_dist"/>
+            <input_port name="ctrlr_timeout"/>
+            <input_port name="ctrlr_trust"/>
+            <input_port name="minisearch_prox"/>
+            <input_port name="object_name"/>
+            <input_port name="overtable"/>
+            <input_port name="pickup_center_x"/>
+            <input_port name="pickup_center_y"/>
+            <input_port name="pickup_center_z"/>
+            <input_port name="pre_overtable"/>
+            <input_port name="reset_threshold"/>
+            <input_port name="search_prox"/>
+            <input_port name="search_timeout"/>
+            <inout_port name="target_err" type="std::string"/>
+        </SubTree>
+    </TreeNodesModel>
+</root>

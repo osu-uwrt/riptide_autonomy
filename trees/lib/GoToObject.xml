@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="DiscoverObjects.xml"/>
+    <include path="LockInObject.xml"/>
+    <include path="SmartMoveSurge.xml"/>
+    <BehaviorTree ID="GoToObject">
+        <Sequence name="Find bin-based discovery position">
+            <SetBlackboardV3 output_key="base_link" value="liltank/base_link"/>
+            <SetBlackboardV3 output_key="discov_basket_prox" value="0.15"/>
+            <SetBlackboardV3 output_key="60" value="60"/>
+            <SetBlackboardV3 output_key="15" value="15"/>
+            <RetryUntilSuccessfulV3 num_attempts="4">
+                <SubTree ID="DiscoverObjects" base_link="{base_link}" discovered_object="{discovered_object}" target_1="{object_1}" target_2="{object_2}" target_3="{object_3}" target_4="{object_4}" target_error="{target_error}"/>
+            </RetryUntilSuccessfulV3>
+            <Info message="DISCOVERED GO-ABLE OBJECT: {discovered_object}. Attempting to lock in"/>
+            <SubTree ID="LockInObject" object="{discovered_object}" target_error="{target_error}"/>
+            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{__v3_empty}" x="{__v3_empty}" y="{__v3_empty}" z="{z}"/>
+            <SubTree ID="SmartMoveSurge" timeout="{60}" x="{discov_basket_prox}" z="{z}"/>
+            <RepeatV3 num_cycles="5">
+                <PublishToController isOrientation="0" mode="0" name="Disable position control" x="0" y="0" z="0"/>
+            </RepeatV3>
+        </Sequence>
+    </BehaviorTree>
+</root>

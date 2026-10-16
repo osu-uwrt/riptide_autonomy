@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
@@ -15,7 +16,7 @@ BT::NodeStatus testGetOdometry(
     BT::NodeStatus result = toolNode->tickUntilFinished(odometryNode, 4s);
 
     //collect results
-    auto blackboard = odometryNode->config().blackboard;
+    auto blackboard = std::as_const(*odometryNode).config().blackboard;
     outputsSet = true;
     outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "x", positionOut.x);
     outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, blackboard, "y", positionOut.y);

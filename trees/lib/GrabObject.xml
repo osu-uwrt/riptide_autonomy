@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="DiscoverObjects.xml"/>
+    <include path="SetClawState.xml"/>
+    <include path="LockInObject.xml"/>
+    <include path="SmartMoveSurge.xml"/>
+    <include path="TankLongitudinalFF.xml"/>
+    <BehaviorTree ID="GrabObject">
+        <Sequence name="Discover trash">
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="1" value="1"/>
+            <SetBlackboardV3 output_key="60" value="60"/>
+            <SetBlackboardV3 name="After grabbing, move back with pwr" output_key="back_pwr" value="-0.2"/>
+            <SetBlackboardV3 name="After grabbing, move back for duration" output_key="back_dur" value="1"/>
+            <SetBlackboardV3 output_key="grab_prox" value="0.15"/>
+            <SetBlackboardV3 output_key="base_link" value="liltank/base_link"/>
+            <SubTree ID="DiscoverObjects" base_link="{base_link}" discovered_object="{discovered_target}" target_1="{object_1}" target_2="{object_2}" target_3="{object_3}" target_4="{object_4}" target_error="{target_error}"/>
+            <Info message="DISCOVERED GRABBABLE OBJECT {discovered_target}. Attempting to lock in"/>
+            <SubTree ID="SetClawState" claw_opened="{1}" claw_raised="{0}"/>
+            <SubTree ID="LockInObject" object="{discovered_target}" target_error="{target_error}"/>
+            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{__v3_empty}" x="{__v3_empty}" y="{__v3_empty}" z="{z}"/>
+            <SubTree ID="SmartMoveSurge" timeout="{60}" x="{grab_prox}" z="{z}"/>
+            <RepeatV3 num_cycles="5">
+                <PublishToController isOrientation="0" mode="0" name="Disable position control" x="0" y="0" z="0"/>
+            </RepeatV3>
+            <SubTree ID="SetClawState" claw_opened="{0}" claw_raised="{0}"/>
+            <SubTree ID="TankLongitudinalFF" duration="{back_dur}" power="{back_pwr}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

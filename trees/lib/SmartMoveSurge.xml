@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SurgeMove.xml"/>
+    <include path="RelativeMove.xml"/>
+    <include path="TankLongitudinalFF.xml"/>
+    <include path="RecoverTrackingAtHeading.xml"/>
+    <BehaviorTree ID="SmartMoveSurge">
+        <RetryUntilSuccessfulOrTimeout num_seconds="{timeout}">
+            <Sequence>
+                <SetBlackboardV3 output_key="liltank/base_link" value="liltank/base_link"/>
+                <SetBlackboardV3 output_key="0" value="0"/>
+                <SetBlackboardV3 output_key="1" value="1"/>
+                <SetBlackboardV3 output_key="1.5707" value="1.5707"/>
+                <SetBlackboardV3 output_key="-1.5707" value="-1.5707"/>
+                <SetBlackboardV3 output_key="30" value="30"/>
+                <Fallback>
+                    <SubTree ID="SurgeMove" timeout="{30}" x="{x}" z="{z}"/>
+                    <ForceFailure>
+                        <Sequence name="Attempt to fix surge move failure">
+                            <Info message="Detected surge move failure!"/>
+                            <GetBoolTopic topic="controller/surge/tracking" value="{surge_tracking}"/>
+                            <Info message="Surge tracking state is currently {surge_tracking}"/>
+                            <IfThenElse name="Fix surge failure">
+                                <IsTrue value="{surge_tracking}"/>
+                                <Sequence name="Fix impedance issue">
+                                    <SetBlackboardV3 output_key="imp_pwr" value="0.3"/>
+                                    <Info message="Detected impedance issue. Attempting to move out of the way"/>
+                                    <SubTree ID="RelativeMove" frame_name="{liltank/base_link}" op="{0}" or="{0}" oy="{1.5707}" x="{0}" y="{0}" z="{0}"/>
+                                    <SubTree ID="TankLongitudinalFF" duration="{1}" power="{imp_pwr}"/>
+                                    <SubTree ID="RelativeMove" frame_name="{liltank/base_link}" op="{0}" or="{0}" oy="{-1.5707}" x="{0}" y="{0}" z="{0}"/>
+                                </Sequence>
+                                <Sequence name="Fix tracking issue">
+                                    <SetBlackboardV3 output_key="right_angle" value="0.785"/>
+                                    <Math a="{right_angle}" b="-1" operator="*" out="{left_angle}"/>
+                                    <SetBlackboardV3 output_key="1" value="1"/>
+                                    <SetBlackboardV3 name="Must be negative so vehicle moves backwards" output_key="long_pwr" value="-0.3"/>
+                                    <Info message="Detected surge tracking issue. Attempting to recover it"/>
+                                    <SubTree ID="TankLongitudinalFF" duration="{1}" power="{long_pwr}"/>
+                                    <GetMappingState map_locked="{__v3_empty}" target_name="{target_obj}"/>
+                                    <Format format="{target_obj}_frame" out="{target_obj_frame}"/>
+                                    <RepeatV3 num_cycles="5">
+                                        <PublishToController isOrientation="0" mode="0" name="Disable linear" x="0" y="0" z="0"/>
+                                    </RepeatV3>
+                                    <Fallback>
+                                        <SubTree ID="RecoverTrackingAtHeading" relative_yaw="{0}" target_obj_frame="{target_obj_frame}"/>
+                                        <SubTree ID="RecoverTrackingAtHeading" relative_yaw="{right_angle}" target_obj_frame="{target_obj_frame}"/>
+                                        <SubTree ID="RecoverTrackingAtHeading" relative_yaw="{left_angle}" target_obj_frame="{target_obj_frame}"/>
+                                        <ForceFailure>
+                                            <Sequence>
+                                                <Info message="Unable to recover tracking. Resetting map target"/>
+                                                <SetMappingTarget lock_map="0" target_object="{target_obj}" time_limit_secs="3"/>
+                                            </Sequence>
+                                        </ForceFailure>
+                                    </Fallback>
+                                </Sequence>
+                            </IfThenElse>
+                        </Sequence>
+                    </ForceFailure>
+                </Fallback>
+            </Sequence>
+        </RetryUntilSuccessfulOrTimeout>
+    </BehaviorTree>
+</root>

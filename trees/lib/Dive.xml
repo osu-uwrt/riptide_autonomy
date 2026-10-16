@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="PrimitiveMovePosition.xml"/>
+    <include path="PrimitiveMoveOrientation.xml"/>
+    <BehaviorTree ID="Dive">
+        <Sequence>
+            <SetBlackboardV3 output_key="15" value="15"/>
+            <SetBlackboardV3 output_key="60" value="60"/>
+            <SetBlackboardV3 output_key="10" value="10"/>
+            <SetBlackboardV3 output_key="30" value="30"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <GetOdometry op="{op}" or="{or}" oy="{oy}" x="{x}" y="{y}" z="{z}"/>
+            <PublishToController isOrientation="1" mode="3" x="0" y="0" z="{oy}"/>
+            <SubTree ID="PrimitiveMovePosition" timeout="{60}" x="{x}" y="{y}" z="{depth}"/>
+            <SubTree ID="PrimitiveMoveOrientation" p="{0}" r="{0}" timeout="{15}" y="{oy}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

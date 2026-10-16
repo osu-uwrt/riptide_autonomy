@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="PrepForRun.xml"/>
+    <include path="WaitForKillSwitch.xml"/>
+    <include path="Dive.xml"/>
+    <include path="GateTree.xml"/>
+    <include path="SlalomTree.xml"/>
+    <include path="TorpedoTree.xml"/>
+    <include path="SurfaceTree.xml"/>
+    <include path="BinTree.xml"/>
+    <include path="ReturnHomeTree.xml"/>
+    <include path="KillController.xml"/>
+    <BehaviorTree ID="CompLiteMissionTree">
+        <Sequence>
+            <SetBlackboardV3 output_key="depth" value="-0.56"/>
+            <SubTree ID="PrepForRun"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="Dive" depth="{depth}"/>
+            <ForceSuccess>
+                <SubTree ID="GateTree" repair_mission="{repair_mission}" sla_pass_on_left="{pass_on_left}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SlalomTree" pass_on_left="{pass_on_left}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="TorpedoTree" repair_mission="{repair_mission}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <IfThenElse>
+                    <CompareNums a="{repair_mission}" b="0" test="=="/>
+                    <SetBlackboardV3 output_key="target_image" value="buoy"/>
+                    <SetBlackboardV3 output_key="target_image" value="compass"/>
+                </IfThenElse>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SurfaceTree" target_image="{target_image}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="BinTree" repair_mission="{repair_mission}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="ReturnHomeTree"/>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

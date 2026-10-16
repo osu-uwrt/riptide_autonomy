@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="WaitForController.xml"/>
+    <include path="FireTorpedo.xml"/>
+    <BehaviorTree ID="ShootBothObjectsMpc">
+        <Sequence name="Search both holes, then shoot both">
+            <SetBlackboardV3 output_key="ctrler_timeout" value="60"/>
+            <SetBlackboardV3 output_key="scale_trust" value="0.985"/>
+            <SetBlackboardV3 output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboardV3 output_key="shoot_prox" value="0.6"/>
+            <SetBlackboardV3 output_key="shoot_prox_plus" value="1.1"/>
+            <SetBlackboardV3 output_key="ms_prox" value="1.5"/>
+            <SetBlackboardV3 output_key="ms_timeout" value="30"/>
+            <SetBlackboardV3 output_key="target_cov" value="0.0005"/>
+            <Format format="{torpedo_name}_frame" out="{torpedo_frame}"/>
+            <Format format="{object_1}_frame" out="{object_1_frame}"/>
+            <Format format="{object_2}_frame" out="{object_2_frame}"/>
+            <Info message="Searching {object_1} and {object_2} before shooting"/>
+            <ForceSuccess>
+                <Sequence name="Stand off in front of the board">
+                    <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{link_1}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{board_yaw}" out_x="{board_x}" out_y="{board_y}" out_z="{board_z}" oy="3.1415" reference_frame="{torpedo_frame}" x="{ms_prox}" y="0" z="0"/>
+                    <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="board standoff" out="{board_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{board_x}" y="{board_y}" yaw="{board_yaw}" yaw_offset="" z="{board_z}"/>
+                    <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{board_path}"/>
+                </Sequence>
+            </ForceSuccess>
+            <SetStatus status="searching"/>
+            <Format format="{object_1},{object_2}," name="Both holes (the trailing comma keeps it a string, not one blackboard key)" out="{both_holes}"/>
+            <SetMappingTarget lock_map="0" name="Map both holes at once" target_object="{both_holes}" time_limit_secs="3"/>
+            <ForceSuccess>
+                <RetryUntilSuccessfulOrTimeout name="Hold at the standoff until both holes converge" num_seconds="{ms_timeout}">
+                    <Sequence>
+                        <Wait seconds="0.25"/>
+                        <MapConverged object="{object_1}" target_cov="{target_cov}"/>
+                        <MapConverged object="{object_2}" target_cov="{target_cov}"/>
+                    </Sequence>
+                </RetryUntilSuccessfulOrTimeout>
+            </ForceSuccess>
+            <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+            <SetStatus status="aligning"/>
+            <ForceSuccess>
+                <RetryUntilSuccessfulV3 num_attempts="2">
+                    <Sequence name="Align torpedo 1 on hole 1 (1.1 m then 0.6 m as one path)">
+                        <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{link_1}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{a1_yaw}" out_x="{a1_x}" out_y="{a1_y}" out_z="{a1_z}" oy="3.1415" reference_frame="{object_1_frame}" x="{shoot_prox_plus}" y="0" z="0"/>
+                        <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{link_1}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{s1_yaw}" out_x="{s1_x}" out_y="{s1_y}" out_z="{s1_z}" oy="3.1415" reference_frame="{object_1_frame}" x="{shoot_prox}" y="0" z="0"/>
+                        <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="hole 1 at 1.1 m" out="{shot_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{a1_x}" y="{a1_y}" yaw="{a1_yaw}" yaw_offset="" z="{a1_z}"/>
+                        <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="hole 1 at firing distance" out="{shot_path}" path="{shot_path}" pitch="" roll="" spin="" spin_rate="" x="{s1_x}" y="{s1_y}" yaw="{s1_yaw}" yaw_offset="" z="{s1_z}"/>
+                        <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{shot_path}"/>
+                        <SubTree ID="WaitForController" dist="{ctrler_dist}" link_frame="{link_1}" target_frame="{object_1_frame}" timeout="{ctrler_timeout}" trust="{scale_trust}"/>
+                    </Sequence>
+                </RetryUntilSuccessfulV3>
+            </ForceSuccess>
+            <SetStatus status="performing"/>
+            <Info message="Firing at {object_1}"/>
+            <RetryUntilSuccessfulV3 num_attempts="3">
+                <SubTree ID="FireTorpedo"/>
+            </RetryUntilSuccessfulV3>
+            <SetStatus status="aligning"/>
+            <ForceSuccess>
+                <RetryUntilSuccessfulV3 num_attempts="2">
+                    <Sequence name="Slide across to hole 2 at firing distance">
+                        <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{link_2}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{s2_yaw}" out_x="{s2_x}" out_y="{s2_y}" out_z="{s2_z}" oy="3.1415" reference_frame="{object_2_frame}" x="{shoot_prox}" y="0" z="0"/>
+                        <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="hole 2 at firing distance" out="{shot_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{s2_x}" y="{s2_y}" yaw="{s2_yaw}" yaw_offset="" z="{s2_z}"/>
+                        <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{shot_path}"/>
+                        <SubTree ID="WaitForController" dist="{ctrler_dist}" link_frame="{link_2}" target_frame="{object_2_frame}" timeout="{ctrler_timeout}" trust="{scale_trust}"/>
+                    </Sequence>
+                </RetryUntilSuccessfulV3>
+            </ForceSuccess>
+            <SetStatus status="performing"/>
+            <Info message="Firing at {object_2}"/>
+            <RetryUntilSuccessfulV3 num_attempts="3">
+                <SubTree ID="FireTorpedo"/>
+            </RetryUntilSuccessfulV3>
+        </Sequence>
+    </BehaviorTree>
+</root>

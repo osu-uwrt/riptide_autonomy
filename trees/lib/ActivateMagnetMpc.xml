@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="WaitForController.xml"/>
+    <BehaviorTree ID="ActivateMagnetMpc">
+        <Sequence>
+            <SetBlackboardV3 output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboardV3 output_key="ctrler_trust" value="0.8"/>
+            <SetBlackboardV3 output_key="ctrler_timeout" value="20"/>
+            <SetBlackboardV3 output_key="magnet_activation_s" value="2"/>
+            <SetBlackboardV3 output_key="magnet_pre_align_dist" value="0.7"/>
+            <SetBlackboardV3 output_key="magnet_align_dist" value="0.0"/>
+            <SetBlackboardV3 output_key="magnet_align_height" value="0.04"/>
+            <SetBlackboardV3 output_key="post_align_height" value="-0.8"/>
+            <SetBlackboardV3 output_key="magnet_link" value="talos/magnet_link"/>
+            <SetStatus status="aligning"/>
+            <SetBlackboardV3 name="no retreat unless aligned" output_key="retreat_path" value=";"/>
+            <ForceSuccess>
+                <Sequence name="To the magnet frame's +x side with yaw along its x in one move, then straight back into it">
+                    <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="0" reference_frame="{magnet_frame}" x="{magnet_pre_align_dist}" y="0" z="{magnet_align_height}"/>
+                    <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="{bop}" out_or="{bor}" out_oy="{boy}" out_x="{bx}" out_y="{by}" out_z="{bz}" oy="0" reference_frame="{magnet_frame}" x="{magnet_align_dist}" y="0" z="{magnet_align_height}"/>
+                    <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="retreat: back to pre-align" out="{retreat_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
+                    <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="retreat: then up" out="{retreat_path}" path="{retreat_path}" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{post_align_height}"/>
+                    <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre-align: magnet link out on the frame's +x, facing +x" out="{pre_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
+                    <FollowPath frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="One move: there, turned and at depth" spin_rate="" timeout="60" waypoints="{pre_path}"/>
+                    <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="the magnet" out="{in_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bz}"/>
+                    <FollowPath frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="Straight back into it" spin_rate="" timeout="30" waypoints="{in_path}"/>
+                    <SubTree ID="WaitForController" dist="{ctrler_dist}" link_frame="{magnet_link}" target_frame="{magnet_frame}" timeout="{ctrler_timeout}" trust="{ctrler_trust}"/>
+                </Sequence>
+            </ForceSuccess>
+            <SetStatus status="performing"/>
+            <Wait seconds="{magnet_activation_s}"/>
+            <SetStatus status="aligning"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

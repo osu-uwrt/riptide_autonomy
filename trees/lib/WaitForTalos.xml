@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="WaitForTalos">
+        <Sequence>
+            <AlwaysSuccess name="Wait for drop queue"/>
+            <AlwaysSuccess name="Transmit heading"/>
+            <GetOdometry name="Receive bin heading" op="{__v3_empty}" or="{__v3_empty}" oy="{bin_heading}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+            <AlwaysSuccess name="Wait for start queue"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

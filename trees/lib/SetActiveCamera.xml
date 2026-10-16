@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="SetActiveCamera">
+        <Fallback>
+            <Sequence>
+                <IfThenElse>
+                    <IsTrue value="{is_dfc}"/>
+                    <Info message="Attempting to set the camera to DFC"/>
+                    <Info message="Attempting to set the camera to FFC"/>
+                </IfThenElse>
+                <RetryUntilSuccessfulV3 num_attempts="3">
+                    <CallSetBoolService data="{is_dfc}" srv_name="set_camera_is_dfc" time_limit_secs="3"/>
+                </RetryUntilSuccessfulV3>
+                <Info message="Active camera set successfully."/>
+            </Sequence>
+            <ForceFailure>
+                <Error message="Failed to set the active camera after 3 attempts!"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
+</root>

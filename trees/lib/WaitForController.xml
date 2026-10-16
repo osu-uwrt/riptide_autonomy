@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="AssertTree.xml"/>
+    <BehaviorTree ID="WaitForController">
+        <Fallback>
+            <RetryUntilSuccessfulOrTimeout num_seconds="{timeout}">
+                <Sequence name="Wait for scale trust">
+                    <SetBlackboardV3 output_key="Yaw" value="Yaw"/>
+                    <SetBlackboardV3 output_key="Pitch" value="Pitch"/>
+                    <SetBlackboardV3 output_key="Roll" value="Roll"/>
+                    <SetBlackboardV3 output_key="Z" value="Z"/>
+                    <SetBlackboardV3 output_key="Y" value="Y"/>
+                    <SetBlackboardV3 output_key="X" value="X"/>
+                    <SetBlackboardV3 output_key="Dist" value="Dist"/>
+                    <SetBlackboardV3 output_key="&gt;" value="&gt;"/>
+                    <SetBlackboardV3 output_key="&lt;" value="&lt;"/>
+                    <Wait seconds="1"/>
+                    <GetTwistTopic topic="controller/scale/trust" vel_pitch="{top}" vel_roll="{tor}" vel_x="{tx}" vel_y="{ty}" vel_yaw="{toy}" vel_z="{tz}"/>
+                    <SubTree ID="AssertTree" a="{tx}" aname="{X}" b="{trust}" test="{&gt;}"/>
+                    <SubTree ID="AssertTree" a="{ty}" aname="{Y}" b="{trust}" test="{&gt;}"/>
+                    <SubTree ID="AssertTree" a="{tz}" aname="{Z}" b="{trust}" test="{&gt;}"/>
+                    <SubTree ID="AssertTree" a="{tor}" aname="{Roll}" b="{trust}" test="{&gt;}"/>
+                    <SubTree ID="AssertTree" a="{top}" aname="{Pitch}" b="{trust}" test="{&gt;}"/>
+                    <SubTree ID="AssertTree" a="{toy}" aname="{Yaw}" b="{trust}" test="{&gt;}"/>
+                    <TransformPose from_frame="{link_frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{__v3_empty}" out_y="{link_y}" out_z="{__v3_empty}" oy="0" to_frame="{target_frame}" x="0" y="0" z="0"/>
+                    <ForceSuccess>
+                        <Sequence>
+                            <CompareNums a="{link_y}" b="0" test="&lt;"/>
+                            <Math a="{link_y}" b="-1" operator="*" out="{link_y}"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <Info message="Link dist is {link_y}"/>
+                    <SubTree ID="AssertTree" a="{link_y}" aname="{Dist}" b="{dist}" test="{&lt;}"/>
+                </Sequence>
+            </RetryUntilSuccessfulOrTimeout>
+            <ForceFailure>
+                <Error message="Controller trust did not settle in time"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
+</root>

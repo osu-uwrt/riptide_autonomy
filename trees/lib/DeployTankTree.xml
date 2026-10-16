@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="DownwardSearch.xml"/>
+    <include path="Move.xml"/>
+    <include path="DiscoverObjects.xml"/>
+    <include path="RelativeMove.xml"/>
+    <BehaviorTree ID="DeployTankTree">
+        <Sequence name="TANK DEPLOY TREE">
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="1" value="1"/>
+            <SetBlackboardV3 output_key="2" value="2"/>
+            <SetBlackboardV3 output_key="-2" value="-2"/>
+            <SetBlackboardV3 output_key="overtable" value="0.5"/>
+            <SetBlackboardV3 output_key="table_sawfish" value="table_sawfish"/>
+            <SetBlackboardV3 output_key="talos/base_link" value="talos/base_link"/>
+            <SetBlackboardV3 output_key="table_reefshark" value="table_reefshark"/>
+            <SetBlackboardV3 output_key="search_dist" value="1.8"/>
+            <SetBlackboardV3 output_key="table" value="table"/>
+            <Format format="{table}_frame" out="{table_frame}"/>
+            <SetBlackboardV3 output_key="target_err" value="0.01"/>
+            <SetBlackboardV3 output_key="search_timeout" value="60"/>
+            <Info message="TANK DEPLOYMENT TIME"/>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" is_dfc="{1}"/>
+                    <SubTree ID="DownwardSearch" min_dist="{search_dist}" object_name="{table}" target_cov="{target_err}" timeout_sec="{search_timeout}"/>
+                </Sequence>
+            </ForceSuccess>
+            <Info message="Aligning hitch to table"/>
+            <ComputeFrameAlignment base_frame="talos/base_link" link_frame="talos/hitch_link" op="0" or="0" out_op="{oop}" out_or="{oor}" out_oy="{ooy}" out_x="{ox}" out_y="{oy}" out_z="{oz}" oy="0" reference_frame="table_frame" x="0" y="0" z="2"/>
+            <SubTree ID="Move" op="{oop}" or="{oor}" oy="{ooy}" x="{ox}" y="{oy}" z="{oz}"/>
+            <ComputeFrameAlignment base_frame="talos/base_link" link_frame="talos/hitch_link" op="0" or="0" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="0" reference_frame="table_frame" x="0" y="0" z="{overtable}"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{aoy}" x="{ax}" y="{ay}" z="{az}"/>
+            <Info message="Deploying tank"/>
+            <AlwaysSuccess name="De-energize hitch"/>
+            <Sequence name="Get Fish Heading">
+                <Info message="Determining reefshark heading"/>
+                <SubTree ID="Move" op="{oop}" or="{oor}" oy="{ooy}" x="{ox}" y="{oy}" z="{oz}"/>
+                <RetryUntilSuccessfulV3 num_attempts="4">
+                    <SubTree ID="DiscoverObjects" base_link="{talos/base_link}" discovered_object="{table_fish}" target_1="{table_reefshark}" target_2="{table_sawfish}" target_3="{__v3_empty}" target_4="{__v3_empty}" target_error="{target_err}"/>
+                </RetryUntilSuccessfulV3>
+                <Info message="DISCOVERED FISH {table_fish}"/>
+                <GetOdometry op="{cop}" or="{cor}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
+                <Format format="{table_fish}_frame" out="{table_fish_frame}"/>
+                <TransformPose from_frame="{table_fish_frame}" op="0" or="0" out_op="{fop}" out_or="{for}" out_oy="{foy}" out_x="{fx}" out_y="{fy}" out_z="{fz}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                <HeadingToPoint currX="{cx}" currY="{cy}" heading="{heading_to_fish}" targX="{fx}" targY="{fy}"/>
+                <Info message="Heading to fish {table_fish} is {heading_to_fish}"/>
+                <IfThenElse>
+                    <BlackboardCheckString name="Is reefshark?" return_on_mismatch="0" value_A="{table_fish}" value_B="{table_reefshark}">
+                        <AlwaysSuccess/>
+                    </BlackboardCheckString>
+                    <SetBlackboardV3 name="is reefshark, dont change heading" output_key="heading_to_reefshark" value="{heading_to_fish}"/>
+                    <Math a="{heading_to_fish}" b="3.1415" operator="+" out="{heading_to_reefshark}"/>
+                </IfThenElse>
+                <Info message="Heading to reefshark is {heading_to_reefshark}"/>
+            </Sequence>
+            <Sequence name="Set Tank Fish Heading">
+                <Info message="Contacting tank"/>
+                <AlwaysSuccess name="Request heading from tank"/>
+                <Info message="Receiving heading from tank"/>
+                <GetOdometry name="Receive heading from tank" op="{tank_op}" or="{tank_or}" oy="{tank_oy}" x="{tank_x}" y="{tank_y}" z="{tank_z}"/>
+                <GetOdometry op="{talos_op}" or="{talos_or}" oy="{talos_oy}" x="{talos_x}" y="{talos_y}" z="{talos_z}"/>
+                <Math a="{tank_oy}" b="{talos_oy}" name="Compute tank-talos heading" operator="-" out="{tank_talos_diff}"/>
+                <Math a="{heading_to_reefshark}" b="{tank_talos_diff}" operator="+" out="{tank_reefshark_heading}"/>
+                <ForceSuccess>
+                    <Info message="Tank heading is {tank_oy}, talos heading is {talos_oy}, reefshark heading {heading_to_reefshark} for tank is {tank_reefshark_heading}"/>
+                </ForceSuccess>
+                <Info message="Transmitting reefshark heading to tank"/>
+                <AlwaysSuccess name="Transmit tank_reefshark_heading to tank"/>
+            </Sequence>
+            <SubTree ID="RelativeMove" frame_name="{table_frame}" op="{0}" or="{0}" oy="{0}" x="{-2}" y="{0}" z="{2}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

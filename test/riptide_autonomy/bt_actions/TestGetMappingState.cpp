@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
@@ -24,8 +25,8 @@ BT::NodeStatus testGetMappingStateTopic(
     BT::NodeStatus status = toolNode->tickUntilFinished(node, TESTGETMAPPINGSTATE_TIMEOUT);
 
     //node done, get result
-    outputSet = getOutputFromBlackboard<bool>(toolNode, node->config().blackboard, "map_locked", receivedVal.lock_map);
-    outputSet = outputSet && getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "target_name", receivedVal.target_object);
+    outputSet = getOutputFromBlackboard<bool>(toolNode, std::as_const(*node).config().blackboard, "map_locked", receivedVal.lock_map);
+    outputSet = outputSet && getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "target_name", receivedVal.target_object);
     return status;
 }
 

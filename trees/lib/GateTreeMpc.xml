@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="MiniSearchMpc.xml"/>
+    <include path="FlipTree.xml"/>
+    <BehaviorTree ID="GateTreeMpc">
+        <Sequence>
+            <SetBlackboardV3 output_key="-1" value="-1"/>
+            <SetBlackboardV3 output_key="1" value="1"/>
+            <SetBlackboardV3 output_key="search_timeout" value="10"/>
+            <SetBlackboardV3 output_key="max_dist" value="3.0"/>
+            <SetBlackboardV3 output_key="search_prox_z" value="0"/>
+            <SetBlackboardV3 output_key="min_dist" value="1.5"/>
+            <SetBlackboardV3 output_key="3.1415" value="3.1415"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="target_cov" value="0.1"/>
+            <SetBlackboardV3 output_key="undergate_depth" value="-1.1"/>
+            <IfThenElse>
+                <CompareNums a="{repair_mission}" b="0" test="=="/>
+                <Sequence name="Rescue is primary">
+                    <SetBlackboardV3 output_key="subprop" value="gate_rescue"/>
+                    <SetBlackboardV3 output_key="alt_subprop" value="gate_repair"/>
+                </Sequence>
+                <Sequence name="Repair is primary">
+                    <SetBlackboardV3 output_key="subprop" value="gate_repair"/>
+                    <SetBlackboardV3 output_key="alt_subprop" value="gate_rescue"/>
+                </Sequence>
+            </IfThenElse>
+            <SetBlackboardV3 output_key="prop" value="gate"/>
+            <Format format="{prop}_frame" out="{prop_frame}"/>
+            <Format format="{subprop}_frame" out="{subprop_frame}"/>
+            <Format format="{alt_subprop}_frame" out="{alt_subprop_frame}"/>
+            <Info message="GATE TIME"/>
+            <ForceSuccess>
+                <Sequence name="Set camera and search">
+                    <AlwaysFailure name="Comment out following"/>
+                    <Info message="Setting correct active camera"/>
+                    <SubTree ID="SetActiveCamera" is_dfc="{0}"/>
+                    <Info message="Mini-searching for alternate prop"/>
+                    <ForceSuccess>
+                        <SubTree ID="MiniSearchMpc" object_name="{alt_subprop}" parent_object="{alt_subprop}" prox_x="{max_dist}" prox_y="{0}" prox_z="{search_prox_z}" target_cov="{target_cov}" timeout_secs="{search_timeout}"/>
+                    </ForceSuccess>
+                    <Info message="Mini-searching for primary prop"/>
+                    <ForceSuccess>
+                        <SubTree ID="MiniSearchMpc" object_name="{subprop}" parent_object="{subprop}" prox_x="{max_dist}" prox_y="{0}" prox_z="{search_prox_z}" target_cov="{target_cov}" timeout_secs="{search_timeout}"/>
+                    </ForceSuccess>
+                </Sequence>
+            </ForceSuccess>
+            <Sequence name="Determine pass_on_left for slalom">
+                <Info message="Determining slalom pass-on-left value"/>
+                <TransformPose from_frame="{alt_subprop_frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{__v3_empty}" out_y="{dist_prim_to_alt}" out_z="{__v3_empty}" oy="0" to_frame="{subprop_frame}" x="0" y="0" z="0"/>
+                <IfThenElse>
+                    <CompareNums a="{dist_prim_to_alt}" b="0" name="If is positive" test="&gt;"/>
+                    <Sequence name="Should pass on left">
+                        <SetBlackboardV3 output_key="sla_pass_on_left" value="1"/>
+                        <Info message="Slaom should pass on LEFT"/>
+                    </Sequence>
+                    <Sequence name="Should pass on right">
+                        <SetBlackboardV3 output_key="sla_pass_on_left" value="0"/>
+                        <Info message="Slalom should pass on RIGHT"/>
+                    </Sequence>
+                </IfThenElse>
+            </Sequence>
+            <SetStatus status="aligning"/>
+            <Info message="Performing gate task"/>
+            <AddWaypoint frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m in front of the gate" out="{gate_path}" path="" pitch="" roll="" spin="" spin_rate="" x="1" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
+            <AddWaypoint frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="{gate_path}" path="{gate_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
+            <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" name="Approach and enter the gate as one path" spin_rate="" timeout="60" waypoints="{gate_path}"/>
+            <SetStatus status="performing"/>
+            <ForceSuccess name="Flip (under the MPC FlipTree can't set the stunt safe mode and fails); the gate exit runs either way">
+                <Sequence>
+                    <SubTree ID="FlipTree" undergate_depth="{undergate_depth}"/>
+                    <Wait seconds="2"/>
+                </Sequence>
+            </ForceSuccess>
+            <SetBlackboardV3 name="How far past the gate to go before turning for the slalom (m)" output_key="behind_gate" value="-1.0"/>
+            <AddWaypoint frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="behind the gate" out="{exit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{behind_gate}" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
+            <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" name="Straight out the back of the gate, clear of its sides" spin_rate="" timeout="30" waypoints="{exit_path}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>
