@@ -315,7 +315,11 @@ class FollowPath : public UWRTActionNode {
             goalHandle = goalFuture.get();
         }
         if(goalHandle) {
-            client->async_cancel_goal(goalHandle);
+            try {
+                client->async_cancel_goal(goalHandle);
+            } catch(const rclcpp_action::exceptions::UnknownGoalHandleError&) {
+                // the result already came in, so the client forgot the goal; nothing to cancel
+            }
         } else if(goalFuture.valid()) { // still being accepted; this is the only path client
             client->async_cancel_all_goals();
         }
