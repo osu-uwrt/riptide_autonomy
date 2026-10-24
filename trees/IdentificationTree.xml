@@ -20,27 +20,40 @@
                  ros2 launch riptide_mpc pool_identify.launch.py wait_for_trigger:=true max_iterations:=1
                  After the dive it goes to the mapping origin facing map +x, so leave 1.5 m of clear water
                  ahead (map +x) and to port (map +y) of the origin, and room below for heave. -->
+            <!-- LEDs: red solid waiting for the kill switch, blue slow flash starting, green solid diving and
+                 going to the origin, blue fast flash starting pool_identify; from then on pool_identify shows
+                 each block (legend at the top of riptide_mpc src/pool_identify_node.cpp) and its result
+                 (green breath done, red breath ended early, red fast flash safety abort). Red breath right
+                 after the blue fast flash: pool_identify never answered the start (not launched?). -->
             <SetBlackboard output_key="depth" value="-0.85"/>
             <SubTree ID="WaitForKillSwitch"/>
+            <Action ID="SetStatus" status="moving"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <Action ID="AddWaypoint" frame="map" heading="" look_frame="" look_x="" look_y="" look_z="" name="mapping origin, facing its +x" out="origin_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="{depth}"/>
             <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="120" waypoints="{origin_path}"/>
             <ForceSuccess>
-                <Sequence name="identify">
-                    <Action ID="Info" message="Starting pool identification"/>
-                    <RetryUntilSuccessful num_attempts="5">
-                        <Action ID="CallTriggerService" srv_name="/talos/pool_identify/start" time_limit_secs="3"/>
-                    </RetryUntilSuccessful>
-                    <Action ID="SetStatus" status="performing"/>
-                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="wait for identification" num_seconds="2400">
-                        <Sequence>
-                            <Action ID="Wait" seconds="2"/>
-                            <Action ID="GetBoolTopic" topic="pool_identify/done" value="{ident_done}"/>
-                            <Condition ID="IsTrue" value="{ident_done}"/>
-                        </Sequence>
-                    </Decorator>
-                    <Action ID="Info" message="Pool identification finished"/>
-                </Sequence>
+                <Fallback>
+                    <Sequence name="identify">
+                        <Action ID="Info" message="Starting pool identification"/>
+                        <!-- before the trigger: pool_identify owns the LEDs once it starts -->
+                        <Action ID="SetStatus" status="performing"/>
+                        <RetryUntilSuccessful num_attempts="5">
+                            <Action ID="CallTriggerService" srv_name="/talos/pool_identify/start" time_limit_secs="3"/>
+                        </RetryUntilSuccessful>
+                        <Decorator ID="RetryUntilSuccessfulOrTimeout" name="wait for identification" num_seconds="2400">
+                            <Sequence>
+                                <Action ID="Wait" seconds="2"/>
+                                <Action ID="GetBoolTopic" topic="pool_identify/done" value="{ident_done}"/>
+                                <Condition ID="IsTrue" value="{ident_done}"/>
+                            </Sequence>
+                        </Decorator>
+                        <Action ID="Info" message="Pool identification finished"/>
+                    </Sequence>
+                    <Sequence name="identification did not run">
+                        <Action ID="SetStatus" status="failure"/>
+                        <Action ID="Info" message="Pool identification did not start or did not finish in time"/>
+                    </Sequence>
+                </Fallback>
             </ForceSuccess>
             <SubTree ID="KillController"/>
         </Sequence>
