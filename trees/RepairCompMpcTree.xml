@@ -46,12 +46,12 @@
             <Action ID="SetStatus" status="aligning"/>
             <SetBlackboard name="no retreat unless aligned" output_key="retreat_path" value=";"/>
             <ForceSuccess>
-                <Sequence name="To the magnet frame's +x side with yaw along its x in one move, then straight back into it">
+                <Sequence name="To the magnet frame&apos;s +x side with yaw along its x in one move, then straight back into it">
                     <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="0" reference_frame="{magnet_frame}" x="{magnet_pre_align_dist}" y="0" z="{magnet_align_height}"/>
                     <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="0" reference_frame="{magnet_frame}" x="{magnet_align_dist}" y="0" z="{magnet_align_height}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="retreat: back to pre-align" out="retreat_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="retreat: then up" out="retreat_path" path="{retreat_path}" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{post_align_height}"/>
-                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre-align: magnet link out on the frame's +x, facing +x" out="pre_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
+                    <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre-align: magnet link out on the frame&apos;s +x, facing +x" out="pre_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
                     <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="One move: there, turned and at depth" spin_rate="" timeout="60" waypoints="{pre_path}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="the magnet" out="in_path" path="" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bz}"/>
                     <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="Straight back into it" spin_rate="" timeout="30" waypoints="{in_path}"/>
@@ -921,7 +921,7 @@
                 </IfThenElse>
                 <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
                 <SetBlackboard name="Search speed (m/s); the chase stays at full speed" output_key="search_speed" value="0.2"/>
-                <SetBlackboard name="Spiral's outer radius (m); timeout_sec usually ends it first" output_key="search_radius" value="2.0"/>
+                <SetBlackboard name="Spiral&apos;s outer radius (m); timeout_sec usually ends it first" output_key="search_radius" value="2.0"/>
                 <Action ID="Math" a="{search_radius}" b="{radius_step}" operator="-" out="spiral_span"/>
                 <Action ID="Math" a="{spiral_span}" b="{radius_step}" operator="/" name="turns: one radius_step apart" out="spiral_turns"/>
                 <Action ID="Math" a="{spiral_turns}" b="6.283185" operator="*" out="spiral_sweep"/>
@@ -933,7 +933,7 @@
                     <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="{timeout_sec}">
                         <Fallback>
                             <Sequence>
-                                <Action ID="Info" message="spiraling out to {search_radius} m round {object_name}'s estimate"/>
+                                <Action ID="Info" message="spiraling out to {search_radius} m round {object_name}&apos;s estimate"/>
                                 <ForceSuccess>
                                     <ReactiveSequence name="spiral until the object is in view">
                                         <Inverter>
@@ -942,7 +942,7 @@
                                         <Sequence name="one spiral out from the guess as a single path, at the search speed">
                                             <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
                                             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the guess" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="spiral_yaw" out_x="spiral_wx" out_y="spiral_wy" out_z="spiral_wz" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
-                                            <Action ID="TransformPose" from_frame="world" name="spiral center in the object's frame, so the path moves with its estimate" op="0" or="0" out_op="" out_or="" out_oy="" out_x="spiral_x" out_y="spiral_y" out_z="spiral_z" oy="0" to_frame="{frame}" x="{spiral_wx}" y="{spiral_wy}" z="{spiral_wz}"/>
+                                            <Action ID="TransformPose" from_frame="world" name="spiral center in the object&apos;s frame, so the path moves with its estimate" op="0" or="0" out_op="" out_or="" out_oy="" out_x="spiral_x" out_y="spiral_y" out_z="spiral_z" oy="0" to_frame="{frame}" x="{spiral_wx}" y="{spiral_wy}" z="{spiral_wz}"/>
                                             <Action ID="AddArc" approach="" cx="{spiral_x}" cy="{spiral_y}" end_radius="{search_radius}" frame="{frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="spiral out, heading held" out="spiral" path="" radius="{radius_step}" spin="" spin_rate="" start_angle="0" sweep="{spiral_sweep}" yaw="{spiral_yaw}" yaw_frame="world" yaw_offset="" z="{spiral_z}"/>
                                             <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="{search_speed}" min_depth="-0.75" spin_rate="" timeout="600" waypoints="{spiral}"/>
                                         </Sequence>
@@ -1205,7 +1205,7 @@
             <Action ID="AddWaypoint" frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="gate_path" path="{gate_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
             <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Approach and enter the gate as one path" spin_rate="" timeout="60" waypoints="{gate_path}"/>
             <Action ID="SetStatus" status="performing"/>
-            <ForceSuccess name="Flip (under the MPC FlipTree can't set the stunt safe mode and fails); the gate exit runs either way">
+            <ForceSuccess name="Flip (under the MPC FlipTree can&apos;t set the stunt safe mode and fails); the gate exit runs either way">
                 <Sequence>
                     <SubTree ID="FlipTree" __shared_blackboard="false" undergate_depth="undergate_depth"/>
                     <Action ID="Wait" seconds="2"/>
@@ -1469,7 +1469,7 @@
             <Action ID="Format" format="{parent_object}_frame" out="parent_frame"/>
             <Action ID="Format" format="{object_name}_frame" out="object_frame"/>
             <Action ID="SetStatus" status="searching"/>
-            <Action ID="TransformPose" from_frame="{camera_link}" name="the camera's tilt now (kept, so the vehicle stays level)" op="0" or="0" out_op="cam_pitch" out_or="cam_roll" out_oy="" out_x="" out_y="" out_z="" oy="0" to_frame="{parent_frame}" x="0" y="0" z="0"/>
+            <Action ID="TransformPose" from_frame="{camera_link}" name="the camera&apos;s tilt now (kept, so the vehicle stays level)" op="0" or="0" out_op="cam_pitch" out_or="cam_roll" out_oy="" out_x="" out_y="" out_z="" oy="0" to_frame="{parent_frame}" x="0" y="0" z="0"/>
             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{camera_link}" name="camera at the search point, facing the object" op="{cam_pitch}" or="{cam_roll}" out_op="" out_or="" out_oy="{oy}" out_x="{x}" out_y="{y}" out_z="{z}" oy="3.1415" reference_frame="{parent_frame}" x="{prox_x}" y="{prox_y}" z="{prox_z}"/>
             <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="60" x="x" y="y" z="z"/>
             <SubTree ID="PrimitiveMoveOrientation" __shared_blackboard="false" p="0" r="0" timeout="15" y="oy"/>
@@ -1482,7 +1482,7 @@
                     <IfThenElse name="move in front of sub object if confident">
                         <Condition ID="CompareNums" a="{cov}" b="0.1" name="if error good enough" test="&lt;"/>
                         <Sequence name="move in front of object">
-                            <Action ID="TransformPose" from_frame="{camera_link}" name="the camera's tilt now (kept, so the vehicle stays level)" op="0" or="0" out_op="cam_pitch" out_or="cam_roll" out_oy="" out_x="" out_y="" out_z="" oy="0" to_frame="{parent_frame}" x="0" y="0" z="0"/>
+                            <Action ID="TransformPose" from_frame="{camera_link}" name="the camera&apos;s tilt now (kept, so the vehicle stays level)" op="0" or="0" out_op="cam_pitch" out_or="cam_roll" out_oy="" out_x="" out_y="" out_z="" oy="0" to_frame="{parent_frame}" x="0" y="0" z="0"/>
                             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{camera_link}" name="camera straight in front of it" op="{cam_pitch}" or="{cam_roll}" out_op="" out_or="" out_oy="{new_yaw}" out_x="{new_x}" out_y="{new_y}" out_z="{new_z}" oy="3.1415" reference_frame="{parent_frame}" x="{prox_x}" y="0" z="{prox_z}"/>
                             <Action ID="PublishToController" isOrientation="0" mode="3" x="{new_x}" y="{new_y}" z="{new_z}"/>
                             <Action ID="PublishToController" isOrientation="1" mode="3" x="0" y="0" z="{new_yaw}"/>
@@ -1831,7 +1831,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -2063,7 +2063,7 @@
         <Sequence name="Search while moving">
             <SetBlackboard output_key="0" value="0"/>
             <SetBlackboard name="First sweep: arc each way round the estimate (rad), at max_dist" output_key="sweep_first" value="0.5"/>
-            <SetBlackboard name="First sweep: pan each way along the arc (rad); the forward camera's +-27 deg then sees +-dist*tan(27 deg + pan) round the estimate, +-3 m at 2 m" output_key="pan_first" value="0.5"/>
+            <SetBlackboard name="First sweep: pan each way along the arc (rad); the forward camera&apos;s +-27 deg then sees +-dist*tan(27 deg + pan) round the estimate, +-3 m at 2 m" output_key="pan_first" value="0.5"/>
             <SetBlackboard name="Wider sweeps after one that saw nothing: arc (rad), new viewing angles for a board facing another way or hidden from one side" output_key="sweep_wide" value="1.0"/>
             <SetBlackboard name="Wider sweeps: pan (rad)" output_key="pan_wide" value="0.7"/>
             <SetBlackboard name="First sweep: arc per pan (rad); each pan is yaw-rate limited, so fewer pans are faster" output_key="pan_step_first" value="0.25"/>
@@ -2076,7 +2076,7 @@
             <ForceSuccess>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Sweep until the map has it" num_seconds="{timeout_secs}">
                     <Sequence name="One sweep">
-                        <IfThenElse name="This sweep's arc, pan and distance">
+                        <IfThenElse name="This sweep&apos;s arc, pan and distance">
                             <Condition ID="CompareNums" a="{stage}" b="0" test="=="/>
                             <Sequence name="first sweep">
                                 <SetBlackboard output_key="sweep" value="{sweep_first}"/>
@@ -2105,7 +2105,7 @@
                                 </Sequence>
                             </IfThenElse>
                         </IfThenElse>
-                        <Action ID="Info" message="Sweeping {sweep} rad each way round {object_name}'s estimate at {dist} m, panning {pan} rad (stage {stage})"/>
+                        <Action ID="Info" message="Sweeping {sweep} rad each way round {object_name}&apos;s estimate at {dist} m, panning {pan} rad (stage {stage})"/>
                         <Action ID="Math" a="{sweep}" b="-1" operator="*" out="neg_sweep"/>
                         <Action ID="Math" a="{sweep}" b="-2" operator="*" out="back_sweep"/>
                         <Action ID="AddWaypoint" frame="{frame}" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="in front, facing it" out="sweep_path" path="" pitch="" roll="" spin="" spin_rate="" x="{dist}" y="0" yaw="" yaw_frame="" yaw_offset="" z="0"/>
@@ -2793,7 +2793,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -3282,9 +3282,21 @@
             <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
             <SetBlackboard output_key="step_secs" value="0.5"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="30">
-                <Sequence name="re-aim at the latest estimate">
-                    <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
-                    <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                <Sequence name="re-aim at the object">
+                    <Fallback name="at the detection itself, else the mapping estimate">
+                        <!-- A new target's mapping frame stays put until a few detections agree, so aiming at it can keep
+                             a real object at the edge of the view; aim at where the detector last saw it instead -->
+                        <Sequence name="aim at the latest detection">
+                            <Action ID="LatestDetection" frame="world" max_age_secs="1.0" min_score="0.2" object_name="{object_name}" out_x="det_x" out_y="det_y" out_z="det_z"/>
+                            <Action ID="Math" a="{det_z}" b="{min_dist}" operator="+" out="det_above_z"/>
+                            <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="world" x="{det_x}" y="{det_y}" z="{det_above_z}"/>
+                        </Sequence>
+                        <Sequence name="aim at the latest estimate">
+                            <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                        </Sequence>
+                    </Fallback>
                     <ForceSuccess>
                         <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="step_secs" x="ax" y="ay" z="az"/>
                     </ForceSuccess>
@@ -3412,6 +3424,15 @@
             <input_port name="srv_name" required="true">Name of the service</input_port>
             <input_port name="time_limit_secs" required="true">How long to wait before failure</input_port>
         </Action>
+        <Action ID="LatestDetection">
+            <input_port name="frame" required="false"/>
+            <input_port name="max_age_secs" required="false"/>
+            <input_port name="min_score" required="false"/>
+            <input_port name="object_name" required="false"/>
+            <output_port name="out_x" required="false"/>
+            <output_port name="out_y" required="false"/>
+            <output_port name="out_z" required="false"/>
+        </Action>
         <Action ID="CenterDetection">
             <input_port name="object_name" required="true">Detector class to center</input_port>
             <input_port default="0.2" name="min_score" required="false">Ignore weaker detections</input_port>
@@ -3473,7 +3494,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -3667,7 +3688,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -4099,4 +4120,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
