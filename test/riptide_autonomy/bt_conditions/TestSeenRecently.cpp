@@ -1,5 +1,6 @@
 #include "autonomy_test/autonomy_testing.hpp"
 
+#include <std_msgs/msg/string.hpp>
 #include <vision_msgs/msg/detection3_d_array.hpp>
 
 using namespace std::chrono_literals;
@@ -48,4 +49,20 @@ TEST_F(BtTest, test_SeenRecently_ignores_other_objects_and_low_confidence) {
     pub->publish(detection("bin", 0.1)); // below mapping's 0.2 confidence cutoff
     toolNode->spinForTime(0.2s);
     ASSERT_EQ(node->executeTick(), BT::NodeStatus::FAILURE);
+}
+
+// A binary classifier target is never a detector class: mapping/fused says when a detection went into it.
+TEST_F(BtTest, test_SeenRecently_counts_what_mapping_fused) {
+    auto node = seenRecently(toolNode, "bin_target1", 0.5);
+    auto pub = toolNode->create_publisher<std_msgs::msg::String>("mapping/fused", 10);
+    toolNode->spinForTime(0.3s); // discovery
+    std_msgs::msg::String msg;
+    msg.data = "bin_target2,helmet";
+    pub->publish(msg);
+    toolNode->spinForTime(0.2s);
+    ASSERT_EQ(node->executeTick(), BT::NodeStatus::FAILURE); // the other instance
+    msg.data = "bin_target1";
+    pub->publish(msg);
+    toolNode->spinForTime(0.2s);
+    ASSERT_EQ(node->executeTick(), BT::NodeStatus::SUCCESS);
 }

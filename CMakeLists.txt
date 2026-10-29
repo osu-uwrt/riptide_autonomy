@@ -5,6 +5,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# Installed executables (lib/riptide_autonomy2) and the node libraries (lib) find libautonomy_utils.so next to them:
+# nothing puts this package's lib on LD_LIBRARY_PATH (it exports no libraries), and install strips the build RPATH
+set(CMAKE_INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)

@@ -2,13 +2,17 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
+#include <sstream>
+#include <std_msgs/msg/string.hpp>
 #include <unordered_map>
 
 /**
  * @brief SUCCESS if `object_name` was detected (at or above `min_score`) within the
  * last `max_age_secs`. Unlike WaitForDetection it answers immediately, so it can
  * guard a running move in a ReactiveSequence and interrupt it the moment the
- * object comes into view.
+ * object comes into view. A detection mapping fused into the object counts too
+ * (mapping/fused), so a binary classifier target (bin_target1, from "fire"
+ * detections) is seen although the detector never names it.
  */
 class SeenRecently : public UWRTConditionNode {
     public:
@@ -30,6 +34,18 @@ class SeenRecently : public UWRTConditionNode {
             DETECTIONS_TOPIC,
             10,
             std::bind(&SeenRecently::detection3dArrayCb, this, _1));
+        fusedSub = rosNode()->create_subscription<std_msgs::msg::String>(
+            "mapping/fused",
+            10,
+            [this](const std_msgs::msg::String::SharedPtr msg) {
+                std::stringstream list(msg->data);
+                std::string name;
+                while(std::getline(list, name, ',')) {
+                    if(!name.empty()) {
+                        lastSeen[name] = rosNode()->get_clock()->now();
+                    }
+                }
+            });
     }
 
     BT::NodeStatus tick() override {
@@ -57,4 +73,5 @@ class SeenRecently : public UWRTConditionNode {
 
     std::unordered_map<std::string, rclcpp::Time> lastSeen;
     rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr sub;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr fusedSub;
 };

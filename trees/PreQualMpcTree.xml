@@ -75,7 +75,7 @@
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="1 behind gate" out="prequal_path" path="" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="2 through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="Math" a="{pole_y}" b="{pole_radius}" operator="+" out="arc_start_y"/>
-                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="3 out to the pole's right" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{pole_x}" y="{arc_start_y}" yaw="" yaw_offset="" z="{pole_z}"/>
+                <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="3 out to the pole&apos;s right" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{pole_x}" y="{arc_start_y}" yaw="" yaw_offset="" z="{pole_z}"/>
                 <Action ID="AddArc" approach="false" cx="{pole_x}" cy="{pole_y}" end_radius="" frame="{gate_frame}" heading="" look_frame="{pole_frame}" look_x="" look_y="" look_z="" name="4 round behind the pole to its left, facing it" out="prequal_path" path="{prequal_path}" radius="{pole_radius}" spin="" spin_rate="" start_angle="1.5708" sweep="3.1416" yaw="" yaw_offset="" z="{pole_z}"/>
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="5 front of gate, nose first" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="6 back through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
@@ -709,9 +709,21 @@
             <SetBlackboard output_key="dfc_link" value="talos/dfc_base_link"/>
             <SetBlackboard output_key="step_secs" value="0.5"/>
             <Decorator ID="RetryUntilSuccessfulOrTimeout" num_seconds="30">
-                <Sequence name="re-aim at the latest estimate">
-                    <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
-                    <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                <Sequence name="re-aim at the object">
+                    <Fallback name="at the detection itself, else the mapping estimate">
+                        <!-- A new target's mapping frame stays put until a few detections agree, so aiming at it can keep
+                             a real object at the edge of the view; aim at where the detector last saw it instead -->
+                        <Sequence name="aim at the latest detection">
+                            <Action ID="LatestDetection" frame="world" max_age_secs="1.0" min_score="0.2" object_name="{object_name}" out_x="det_x" out_y="det_y" out_z="det_z"/>
+                            <Action ID="Math" a="{det_z}" b="{min_dist}" operator="+" out="det_above_z"/>
+                            <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="world" x="{det_x}" y="{det_y}" z="{det_above_z}"/>
+                        </Sequence>
+                        <Sequence name="aim at the latest estimate">
+                            <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                            <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                        </Sequence>
+                    </Fallback>
                     <ForceSuccess>
                         <SubTree ID="PrimitiveMovePosition" __shared_blackboard="false" timeout="step_secs" x="ax" y="ay" z="az"/>
                     </ForceSuccess>
@@ -1248,7 +1260,7 @@
                 <ForceSuccess>
                     <Sequence>
                         <Action ID="GetOdometry" op="{cr}" or="{cp}" oy="{cy}" x="" y="" z=""/>
-                        <Action ID="Error" message="Couldn't bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
+                        <Action ID="Error" message="Couldn&apos;t bring talos to the desired orientation! Wanted {r}, {p}, {y} but got {cr}, {cp}, {cy}. Moving on anyway."/>
                     </Sequence>
                 </ForceSuccess>
             </Fallback>
@@ -1922,7 +1934,7 @@
                     </Sequence>
                 </Parallel>
                 <ForceFailure>
-                    <Action ID="Error" message="Couldn't move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
+                    <Action ID="Error" message="Couldn&apos;t move surge to desired setpoint. Wanted x={x}, z={z}; got x={cx}, z={cz}."/>
                 </ForceFailure>
             </Fallback>
         </Sequence>
@@ -2267,6 +2279,15 @@
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
+        <Action ID="LatestDetection">
+            <input_port name="frame" required="false"/>
+            <input_port name="max_age_secs" required="false"/>
+            <input_port name="min_score" required="false"/>
+            <input_port name="object_name" required="false"/>
+            <output_port name="out_x" required="false"/>
+            <output_port name="out_y" required="false"/>
+            <output_port name="out_z" required="false"/>
+        </Action>
         <SubTree ID="ActivateMagnet">
             <input_port default="false" name="__shared_blackboard" required="false">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
             <input_port name="magnet_frame" required="true"/>
@@ -2419,7 +2440,7 @@
         <Condition ID="CompareNums">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port name="test" required="true">can be &quot;&lt;&quot;, &quot;&gt;&quot;, or &quot;=&quot;.</input_port>
+            <input_port name="test" required="true">can be "&lt;", "&gt;", or "=".</input_port>
         </Condition>
         <Action ID="ComputeFrameAlignment">
             <input_port default="talos/base_link" name="base_frame" required="true"/>
@@ -2616,7 +2637,7 @@
         <Action ID="Math">
             <input_port name="a" required="true"/>
             <input_port name="b" required="true"/>
-            <input_port default="+" name="operator" required="true">can be &quot;+&quot;, &quot;-&quot;, &quot;*&quot;, or &quot;/&quot;. Node will compute a &quot;op b. For example, if the operator is &quot;-&quot;, output will be a - b.</input_port>
+            <input_port default="+" name="operator" required="true">can be "+", "-", "*", or "/". Node will compute a "op b. For example, if the operator is "-", output will be a - b.</input_port>
             <output_port name="out" required="false"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -2926,4 +2947,3 @@
     </TreeNodesModel>
     <!-- ////////// -->
 </root>
-
