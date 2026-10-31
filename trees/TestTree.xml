@@ -5,8 +5,7 @@
     <include path="lib/KillController.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboardV3 output_key="depth" value="-1.75"/>
-            <SubTree ID="Dive" depth="{depth}"/>
+            <SubTree ID="Dive" depth="-1.75"/>
             <SubTree ID="FlipTree"/>
             <SubTree ID="KillController"/>
         </Sequence>

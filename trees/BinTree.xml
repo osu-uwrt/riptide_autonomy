@@ -9,9 +9,8 @@
             <ForceSuccess>
                 <Sequence name="Bins">
                     <SetBlackboardV3 output_key="0" value="repair_mission"/>
-                    <SetBlackboardV3 output_key="depth" value="-1"/>
                     <SubTree ID="WaitForKillSwitch"/>
-                    <SubTree ID="Dive" depth="{depth}"/>
+                    <SubTree ID="Dive" depth="-1"/>
                     <SubTree ID="BinTree" repair_mission="{repair_mission}"/>
                     <SubTree ID="KillController"/>
                 </Sequence>

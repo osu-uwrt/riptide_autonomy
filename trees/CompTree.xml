@@ -4,17 +4,15 @@
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="MISSION">
             <SetBlackboardV3 output_key="repair_mission" value="0"/>
-            <SetBlackboardV3 output_key="0" value="0"/>
-            <SetBlackboardV3 output_key="1" value="1"/>
             <IfThenElse>
                 <CompareNums a="{repair_mission}" b="0" test="=="/>
                 <Sequence>
                     <Info message="MISSION: RESCUE"/>
-                    <SubTree ID="CompMissionTree" repair_mission="{0}"/>
+                    <SubTree ID="CompMissionTree" repair_mission="0"/>
                 </Sequence>
                 <Sequence>
                     <Info message="MISSION: REPAIR"/>
-                    <SubTree ID="CompMissionTree" repair_mission="{1}"/>
+                    <SubTree ID="CompMissionTree" repair_mission="1"/>
                 </Sequence>
             </IfThenElse>
         </Sequence>

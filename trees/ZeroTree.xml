@@ -6,11 +6,9 @@
     <include path="lib/KillController.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboardV3 output_key="0" value="0"/>
-            <SetBlackboardV3 output_key="-1" value="-1"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Dive" depth="{-1}"/>
-            <SubTree ID="Move" op="{0}" or="{0}" oy="{0}" x="{0}" y="{0}" z="{-1}"/>
+            <SubTree ID="Dive" depth="-1"/>
+            <SubTree ID="Move" op="0" or="0" oy="0" x="0" y="0" z="-1"/>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>

@@ -3,9 +3,8 @@
     <include path="lib/CompMissionTreeMpc.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="MISSION">
-            <SetBlackboardV3 output_key="0" value="0"/>
             <Info message="MISSION: RESCUE"/>
-            <SubTree ID="CompMissionTreeMpc" repair_mission="{0}"/>
+            <SubTree ID="CompMissionTreeMpc" repair_mission="0"/>
         </Sequence>
     </BehaviorTree>
 </root>

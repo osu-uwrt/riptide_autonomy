@@ -3,8 +3,7 @@
     <include path="lib/CompLiteMissionTree.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboardV3 output_key="repair_mission" value="1"/>
-            <SubTree ID="CompLiteMissionTree" repair_mission="{repair_mission}"/>
+            <SubTree ID="CompLiteMissionTree" repair_mission="1"/>
         </Sequence>
     </BehaviorTree>
 </root>

@@ -7,13 +7,11 @@
     <include path="lib/KillController.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="TEST TORPEDO">
-            <SetBlackboardV3 output_key="repair_mission" value="0"/>
-            <SetBlackboardV3 output_key="depth" value="-0.56"/>
             <SubTree ID="ReloadActuators"/>
             <SubTree ID="WaitForKillSwitch"/>
             <SetStatus status="moving"/>
-            <SubTree ID="Dive" depth="{depth}"/>
-            <SubTree ID="TestTorpedoTree" repair_mission="{repair_mission}"/>
+            <SubTree ID="Dive" depth="-0.56"/>
+            <SubTree ID="TestTorpedoTree" repair_mission="0"/>
             <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>

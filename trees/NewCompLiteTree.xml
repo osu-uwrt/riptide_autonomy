@@ -10,22 +10,20 @@
     <include path="lib/KillController.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboardV3 output_key="repair_mission" value="0"/>
-            <SetBlackboardV3 output_key="depth" value="-0.56"/>
             <SubTree ID="PrepForRun"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Dive" depth="{depth}"/>
+            <SubTree ID="Dive" depth="-0.56"/>
             <ForceSuccess>
-                <SubTree ID="GateTree" repair_mission="{repair_mission}" sla_pass_on_left="{pass_on_left}"/>
+                <SubTree ID="GateTree" repair_mission="0" sla_pass_on_left="{pass_on_left}"/>
             </ForceSuccess>
             <ForceSuccess>
                 <SubTree ID="SlalomTree" pass_on_left="{pass_on_left}"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="BinTree" repair_mission="{repair_mission}"/>
+                <SubTree ID="BinTree" repair_mission="0"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="TorpedoTree" repair_mission="{repair_mission}"/>
+                <SubTree ID="TorpedoTree" repair_mission="0"/>
             </ForceSuccess>
             <SubTree ID="KillController"/>
         </Sequence>

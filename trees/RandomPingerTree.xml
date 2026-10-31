@@ -6,37 +6,34 @@
     <include path="lib/BinTree.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="MISSION">
-            <SetBlackboardV3 output_key="1" value="1"/>
-            <SetBlackboardV3 output_key="0" value="0"/>
             <Info message="MISSION: RESCUE"/>
             <ForceSuccess>
                 <SubTree ID="RandomPingerTree" is_table="{{pinger_is_table}}"/>
             </ForceSuccess>
-            <SetBlackboardV3 output_key="target_image" value="buoy"/>
             <IfThenElse>
                 <Inverter>
                     <CompareNums a="{pinger_is_table}" b="0" test="=="/>
                 </Inverter>
                 <Sequence>
                     <ForceSuccess>
-                        <SubTree ID="SurfaceTree" target_image="{target_image}"/>
+                        <SubTree ID="SurfaceTree" target_image="buoy"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="TorpedoTree" repair_mission="{0}"/>
+                        <SubTree ID="TorpedoTree" repair_mission="0"/>
                     </ForceSuccess>
                 </Sequence>
                 <Sequence>
                     <ForceSuccess>
-                        <SubTree ID="TorpedoTree" repair_mission="{0}"/>
+                        <SubTree ID="TorpedoTree" repair_mission="0"/>
                     </ForceSuccess>
                     <ForceSuccess>
-                        <SubTree ID="SurfaceTree" target_image="{target_image}"/>
+                        <SubTree ID="SurfaceTree" target_image="buoy"/>
                     </ForceSuccess>
                 </Sequence>
             </IfThenElse>
             <ForceSuccess>
                 <Sequence>
-                    <SubTree ID="BinTree" repair_mission="{0}"/>
+                    <SubTree ID="BinTree" repair_mission="0"/>
                 </Sequence>
             </ForceSuccess>
         </Sequence>

@@ -9,13 +9,8 @@
     <include path="lib/KillController.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="COMP">
-            <SetBlackboardV3 output_key="0" value="0"/>
-            <SetBlackboardV3 output_key="3" value="3"/>
-            <SetBlackboardV3 output_key="talos/base_link" value="talos/base_link"/>
-            <SetBlackboardV3 output_key="60" value="60"/>
-            <SetBlackboardV3 output_key="depth" value="-0.56"/>
             <SubTree ID="WaitForKillSwitch"/>
-            <SubTree ID="Dive" depth="{depth}"/>
+            <SubTree ID="Dive" depth="-0.56"/>
             <ForceSuccess>
                 <SubTree ID="SlalomTree" pass_on_left="{pass_on_left}"/>
             </ForceSuccess>

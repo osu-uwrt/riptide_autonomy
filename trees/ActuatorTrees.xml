@@ -5,16 +5,14 @@
     <include path="lib/FireTorpedo.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence>
-            <SetBlackboardV3 output_key="1" value="1"/>
-            <SetBlackboardV3 output_key="0" value="0"/>
             <SubTree ID="CheckActuatorStates"/>
-            <SubTree ID="SetActuatorsArmed" armed="{1}"/>
-            <RepeatV3 num_cycles="3">
+            <SubTree ID="SetActuatorsArmed" armed="1"/>
+            <Repeat num_cycles="3">
                 <ForceSuccess>
                     <SubTree ID="FireTorpedo"/>
                 </ForceSuccess>
-            </RepeatV3>
-            <SubTree ID="SetActuatorsArmed" armed="{0}"/>
+            </Repeat>
+            <SubTree ID="SetActuatorsArmed" armed="0"/>
         </Sequence>
     </BehaviorTree>
 </root>

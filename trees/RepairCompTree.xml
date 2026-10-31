@@ -3,9 +3,8 @@
     <include path="lib/CompMissionTree.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="MISSION">
-            <SetBlackboardV3 output_key="1" value="1"/>
             <Info message="MISSION: REPAIR"/>
-            <SubTree ID="CompMissionTree" repair_mission="{1}"/>
+            <SubTree ID="CompMissionTree" repair_mission="1"/>
         </Sequence>
     </BehaviorTree>
 </root>

@@ -26,9 +26,9 @@
                         <Info message="Starting pool identification"/>
                         <!-- before the trigger: pool_identify owns the LEDs once it starts -->
                         <SetStatus status="performing"/>
-                        <RetryUntilSuccessfulV3 num_attempts="5">
+                        <RetryUntilSuccessful num_attempts="5">
                             <CallTriggerService srv_name="/talos/pool_identify/start" time_limit_secs="3"/>
-                        </RetryUntilSuccessfulV3>
+                        </RetryUntilSuccessful>
                         <RetryUntilSuccessfulOrTimeout name="wait for identification" num_seconds="2400">
                             <Sequence>
                                 <Wait seconds="2"/>
