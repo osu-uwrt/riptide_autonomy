@@ -40,8 +40,10 @@ const std::string
  * TYPES
  *  
  */
+// any type: BT.CPP 4.10 types number text passed to a subtree (x="2" is an int) and a std::string port refuses
+// it. Nodes still read the value as text (tryGetInput)
 inline std::pair<std::string, BT::PortInfo> UwrtInput(BT::StringView name, BT::StringView description = {}) {
-    return BT::InputPort<std::string>(name, description);
+    return BT::InputPort<BT::AnyTypeAllowed>(name, description);
 }
 
 inline std::pair<std::string, BT::PortInfo> UwrtOutput(BT::StringView name, BT::StringView description = {}) {

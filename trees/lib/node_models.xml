@@ -9,49 +9,49 @@
             <output_port name="retreat_path" type="std::string">Waypoints back to pre-align and up; empty if alignment failed</output_port>
         </SubTree>
         <Action ID="AddArc">
-            <input_port name="approach" type="std::string">false: start from the previous point, no line to the arc (default true)</input_port>
-            <input_port name="cx" type="std::string">Centre x in frame</input_port>
-            <input_port name="cy" type="std::string">Centre y in frame</input_port>
-            <input_port name="end_radius" type="std::string">Radius at the end (default radius; differs = spiral)</input_port>
-            <input_port name="frame" type="std::string">Frame of the centre and angles (default: FollowPath's frame)</input_port>
-            <input_port name="heading" type="std::string">waypoint (default), path (face travel) or look_at; also the approach line's</input_port>
-            <input_port name="look_frame" type="std::string">Face this TF frame, followed live as it moves (sets heading look_at)</input_port>
-            <input_port name="look_x" type="std::string">look_at point in frame (default: the centre), or in look_frame (default 0)</input_port>
-            <input_port name="look_y" type="std::string">look_at point in frame (default: the centre), or in look_frame (default 0)</input_port>
-            <input_port name="look_z" type="std::string">look_at point in frame (default: z), or in look_frame (default 0)</input_port>
+            <input_port name="approach" type="BT::AnyTypeAllowed">false: start from the previous point, no line to the arc (default true)</input_port>
+            <input_port name="cx" type="BT::AnyTypeAllowed">Centre x in frame</input_port>
+            <input_port name="cy" type="BT::AnyTypeAllowed">Centre y in frame</input_port>
+            <input_port name="end_radius" type="BT::AnyTypeAllowed">Radius at the end (default radius; differs = spiral)</input_port>
+            <input_port name="frame" type="BT::AnyTypeAllowed">Frame of the centre and angles (default: FollowPath's frame)</input_port>
+            <input_port name="heading" type="BT::AnyTypeAllowed">waypoint (default), path (face travel) or look_at; also the approach line's</input_port>
+            <input_port name="look_frame" type="BT::AnyTypeAllowed">Face this TF frame, followed live as it moves (sets heading look_at)</input_port>
+            <input_port name="look_x" type="BT::AnyTypeAllowed">look_at point in frame (default: the centre), or in look_frame (default 0)</input_port>
+            <input_port name="look_y" type="BT::AnyTypeAllowed">look_at point in frame (default: the centre), or in look_frame (default 0)</input_port>
+            <input_port name="look_z" type="BT::AnyTypeAllowed">look_at point in frame (default: z), or in look_frame (default 0)</input_port>
             <output_port name="out" type="std::string">Path with the arc appended</output_port>
-            <input_port name="pan" type="std::string">Swing the heading this far each way along the arc (rad, needs heading path or look_at; default 0)</input_port>
-            <input_port name="pan_step" type="std::string">Arc per pan piece (rad, default 0.25)</input_port>
-            <input_port name="path" type="std::string">Waypoints so far (leave empty to start a new path)</input_port>
-            <input_port name="radius" type="std::string"/>
-            <input_port name="spin" type="std::string">Extra yaw over the arc, 6.283 = one turn (default 0)</input_port>
-            <input_port name="spin_rate" type="std::string">Steady spin on the arc, rad per metre (default 0)</input_port>
-            <input_port name="start_angle" type="std::string">Where the arc starts, from the frame's +x (rad)</input_port>
-            <input_port name="sweep" type="std::string">How far round (rad, + = counterclockwise from above)</input_port>
-            <input_port name="yaw" type="std::string">End yaw for heading waypoint (default 0)</input_port>
-            <input_port name="yaw_frame" type="std::string">End yaw is in this frame instead of frame (e.g. world)</input_port>
-            <input_port name="yaw_offset" type="std::string">Added to path / look_at yaw (default 0)</input_port>
-            <input_port name="z" type="std::string">Depth in frame</input_port>
+            <input_port name="pan" type="BT::AnyTypeAllowed">Swing the heading this far each way along the arc (rad, needs heading path or look_at; default 0)</input_port>
+            <input_port name="pan_step" type="BT::AnyTypeAllowed">Arc per pan piece (rad, default 0.25)</input_port>
+            <input_port name="path" type="BT::AnyTypeAllowed">Waypoints so far (leave empty to start a new path)</input_port>
+            <input_port name="radius" type="BT::AnyTypeAllowed"/>
+            <input_port name="spin" type="BT::AnyTypeAllowed">Extra yaw over the arc, 6.283 = one turn (default 0)</input_port>
+            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin on the arc, rad per metre (default 0)</input_port>
+            <input_port name="start_angle" type="BT::AnyTypeAllowed">Where the arc starts, from the frame's +x (rad)</input_port>
+            <input_port name="sweep" type="BT::AnyTypeAllowed">How far round (rad, + = counterclockwise from above)</input_port>
+            <input_port name="yaw" type="BT::AnyTypeAllowed">End yaw for heading waypoint (default 0)</input_port>
+            <input_port name="yaw_frame" type="BT::AnyTypeAllowed">End yaw is in this frame instead of frame (e.g. world)</input_port>
+            <input_port name="yaw_offset" type="BT::AnyTypeAllowed">Added to path / look_at yaw (default 0)</input_port>
+            <input_port name="z" type="BT::AnyTypeAllowed">Depth in frame</input_port>
         </Action>
         <Action ID="AddWaypoint">
-            <input_port name="frame" type="std::string">Frame of this waypoint (default: FollowPath's frame)</input_port>
-            <input_port name="heading" type="std::string">waypoint (default: blend to yaw), path (face travel) or look_at</input_port>
-            <input_port name="look_frame" type="std::string">Face this TF frame, followed live as it moves (sets heading look_at)</input_port>
-            <input_port name="look_x" type="std::string">look_at point in frame, or in look_frame (default 0)</input_port>
-            <input_port name="look_y" type="std::string">look_at point in frame, or in look_frame (default 0)</input_port>
-            <input_port name="look_z" type="std::string">look_at point in frame, or in look_frame (default 0)</input_port>
+            <input_port name="frame" type="BT::AnyTypeAllowed">Frame of this waypoint (default: FollowPath's frame)</input_port>
+            <input_port name="heading" type="BT::AnyTypeAllowed">waypoint (default: blend to yaw), path (face travel) or look_at</input_port>
+            <input_port name="look_frame" type="BT::AnyTypeAllowed">Face this TF frame, followed live as it moves (sets heading look_at)</input_port>
+            <input_port name="look_x" type="BT::AnyTypeAllowed">look_at point in frame, or in look_frame (default 0)</input_port>
+            <input_port name="look_y" type="BT::AnyTypeAllowed">look_at point in frame, or in look_frame (default 0)</input_port>
+            <input_port name="look_z" type="BT::AnyTypeAllowed">look_at point in frame, or in look_frame (default 0)</input_port>
             <output_port name="out" type="std::string">Path with this waypoint appended</output_port>
-            <input_port name="path" type="std::string">Waypoints so far (leave empty to start a new path)</input_port>
-            <input_port name="pitch" type="std::string">Pitch at this waypoint (default 0)</input_port>
-            <input_port name="roll" type="std::string">Roll at this waypoint (default 0)</input_port>
-            <input_port name="spin" type="std::string">Extra yaw over this leg, 6.283 = one turn (default 0)</input_port>
-            <input_port name="spin_rate" type="std::string">Steady spin on this leg, rad per metre (default 0)</input_port>
-            <input_port name="x" type="std::string"/>
-            <input_port name="y" type="std::string"/>
-            <input_port name="yaw" type="std::string">End yaw for heading waypoint (default 0)</input_port>
-            <input_port name="yaw_frame" type="std::string">roll/pitch/yaw are in this frame instead of frame (e.g. world: hold a world heading)</input_port>
-            <input_port name="yaw_offset" type="std::string">Added to path / look_at yaw (default 0)</input_port>
-            <input_port name="z" type="std::string"/>
+            <input_port name="path" type="BT::AnyTypeAllowed">Waypoints so far (leave empty to start a new path)</input_port>
+            <input_port name="pitch" type="BT::AnyTypeAllowed">Pitch at this waypoint (default 0)</input_port>
+            <input_port name="roll" type="BT::AnyTypeAllowed">Roll at this waypoint (default 0)</input_port>
+            <input_port name="spin" type="BT::AnyTypeAllowed">Extra yaw over this leg, 6.283 = one turn (default 0)</input_port>
+            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin on this leg, rad per metre (default 0)</input_port>
+            <input_port name="x" type="BT::AnyTypeAllowed"/>
+            <input_port name="y" type="BT::AnyTypeAllowed"/>
+            <input_port name="yaw" type="BT::AnyTypeAllowed">End yaw for heading waypoint (default 0)</input_port>
+            <input_port name="yaw_frame" type="BT::AnyTypeAllowed">roll/pitch/yaw are in this frame instead of frame (e.g. world: hold a world heading)</input_port>
+            <input_port name="yaw_offset" type="BT::AnyTypeAllowed">Added to path / look_at yaw (default 0)</input_port>
+            <input_port name="z" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="AlignLink">
             <input_port name="frame_name">frame to align to</input_port>
@@ -67,14 +67,14 @@
             <input_port name="z"/>
         </SubTree>
         <Condition ID="ApproxEqualTo">
-            <input_port name="a" type="std::string"/>
-            <input_port name="b" type="std::string"/>
-            <input_port name="range" type="std::string"/>
+            <input_port name="a" type="BT::AnyTypeAllowed"/>
+            <input_port name="b" type="BT::AnyTypeAllowed"/>
+            <input_port name="range" type="BT::AnyTypeAllowed"/>
         </Condition>
         <Condition ID="ApproxEqualToAngle">
-            <input_port name="a" type="std::string"/>
-            <input_port name="b" type="std::string"/>
-            <input_port name="range" type="std::string"/>
+            <input_port name="a" type="BT::AnyTypeAllowed"/>
+            <input_port name="b" type="BT::AnyTypeAllowed"/>
+            <input_port name="range" type="BT::AnyTypeAllowed"/>
         </Condition>
         <SubTree ID="AssertTree">
             <input_port name="a"/>
@@ -96,54 +96,54 @@
         <SubTree ID="BuoyTree"/>
         <Action ID="CalculateDistance">
             <output_port name="dist" type="std::string"/>
-            <input_port name="x1" type="std::string"/>
-            <input_port name="x2" type="std::string"/>
-            <input_port name="y1" type="std::string"/>
-            <input_port name="y2" type="std::string"/>
-            <input_port name="z1" type="std::string"/>
-            <input_port name="z2" type="std::string"/>
+            <input_port name="x1" type="BT::AnyTypeAllowed"/>
+            <input_port name="x2" type="BT::AnyTypeAllowed"/>
+            <input_port name="y1" type="BT::AnyTypeAllowed"/>
+            <input_port name="y2" type="BT::AnyTypeAllowed"/>
+            <input_port name="z1" type="BT::AnyTypeAllowed"/>
+            <input_port name="z2" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="CallSetBoolService">
-            <input_port name="data" type="std::string"/>
-            <input_port name="srv_name" type="std::string"/>
-            <input_port name="time_limit_secs" type="std::string"/>
+            <input_port name="data" type="BT::AnyTypeAllowed"/>
+            <input_port name="srv_name" type="BT::AnyTypeAllowed"/>
+            <input_port name="time_limit_secs" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="CallSetStringService">
-            <input_port name="data" type="std::string"/>
-            <input_port name="srv_name" type="std::string"/>
-            <input_port name="time_limit_secs" type="std::string"/>
+            <input_port name="data" type="BT::AnyTypeAllowed"/>
+            <input_port name="srv_name" type="BT::AnyTypeAllowed"/>
+            <input_port name="time_limit_secs" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="CallStartBinaryClassifierService">
-            <input_port name="class_name" type="std::string"/>
-            <input_port name="object1_name" type="std::string"/>
-            <input_port name="object2_name" type="std::string"/>
-            <input_port name="srv_name" type="std::string"/>
-            <input_port name="time_limit_secs" type="std::string"/>
+            <input_port name="class_name" type="BT::AnyTypeAllowed"/>
+            <input_port name="object1_name" type="BT::AnyTypeAllowed"/>
+            <input_port name="object2_name" type="BT::AnyTypeAllowed"/>
+            <input_port name="srv_name" type="BT::AnyTypeAllowed"/>
+            <input_port name="time_limit_secs" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="CallTriggerService">
-            <input_port name="srv_name" type="std::string"/>
-            <input_port name="time_limit_secs" type="std::string"/>
+            <input_port name="srv_name" type="BT::AnyTypeAllowed"/>
+            <input_port name="time_limit_secs" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="CenterDetection">
-            <input_port name="align_tolerance" type="std::string">Square on within this (rad); default 0.08</input_port>
-            <input_port name="align_yaw" type="std::string">Move square on to the object (its frame's yaw); false: turn in place; default true</input_port>
-            <input_port name="base_frame" type="std::string">Vehicle frame; default talos/base_link</input_port>
-            <input_port name="center_depth" type="std::string">false: yaw only; default true</input_port>
-            <input_port name="depth_tolerance" type="std::string">Level within this (m); default 0.1</input_port>
-            <input_port name="max_age_secs" type="std::string">Lost once no detection is this old; default 1.5</input_port>
-            <input_port name="max_depth" type="std::string">Deepest depth to move to; default -2.5</input_port>
-            <input_port name="min_depth" type="std::string">Shallowest depth to move to; default -0.75</input_port>
-            <input_port name="min_score" type="std::string">Ignore weaker detections; default 0.2</input_port>
-            <input_port name="object_frame" type="std::string">Frame whose yaw to align with; default &lt;object_name&gt;_frame</input_port>
-            <input_port name="object_name" type="std::string">Detector class to center</input_port>
-            <input_port name="position_tolerance" type="std::string">There within this (m); default 0.1</input_port>
-            <input_port name="standoff" type="std::string">Camera distance in front of it (m); default the range it was seen from</input_port>
-            <input_port name="timeout_secs" type="std::string">Give up after; default 8</input_port>
-            <input_port name="yaw_tolerance" type="std::string">Centered within this (rad); default 0.05</input_port>
+            <input_port name="align_tolerance" type="BT::AnyTypeAllowed">Square on within this (rad); default 0.08</input_port>
+            <input_port name="align_yaw" type="BT::AnyTypeAllowed">Move square on to the object (its frame's yaw); false: turn in place; default true</input_port>
+            <input_port name="base_frame" type="BT::AnyTypeAllowed">Vehicle frame; default talos/base_link</input_port>
+            <input_port name="center_depth" type="BT::AnyTypeAllowed">false: yaw only; default true</input_port>
+            <input_port name="depth_tolerance" type="BT::AnyTypeAllowed">Level within this (m); default 0.1</input_port>
+            <input_port name="max_age_secs" type="BT::AnyTypeAllowed">Lost once no detection is this old; default 1.5</input_port>
+            <input_port name="max_depth" type="BT::AnyTypeAllowed">Deepest depth to move to; default -2.5</input_port>
+            <input_port name="min_depth" type="BT::AnyTypeAllowed">Shallowest depth to move to; default -0.75</input_port>
+            <input_port name="min_score" type="BT::AnyTypeAllowed">Ignore weaker detections; default 0.2</input_port>
+            <input_port name="object_frame" type="BT::AnyTypeAllowed">Frame whose yaw to align with; default &lt;object_name&gt;_frame</input_port>
+            <input_port name="object_name" type="BT::AnyTypeAllowed">Detector class to center</input_port>
+            <input_port name="position_tolerance" type="BT::AnyTypeAllowed">There within this (m); default 0.1</input_port>
+            <input_port name="standoff" type="BT::AnyTypeAllowed">Camera distance in front of it (m); default the range it was seen from</input_port>
+            <input_port name="timeout_secs" type="BT::AnyTypeAllowed">Give up after; default 8</input_port>
+            <input_port name="yaw_tolerance" type="BT::AnyTypeAllowed">Centered within this (rad); default 0.05</input_port>
         </Action>
         <SubTree ID="CheckActuatorStates"/>
         <Action ID="CheckBlackboardExists">
-            <input_port name="input" type="std::string"/>
+            <input_port name="input" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="CollectDets">
             <input_port name="target"/>
@@ -165,32 +165,32 @@
             <input_port name="repair_mission"/>
         </SubTree>
         <Condition ID="CompareNums">
-            <input_port name="a" type="std::string"/>
-            <input_port name="b" type="std::string"/>
-            <input_port name="test" type="std::string"/>
+            <input_port name="a" type="BT::AnyTypeAllowed"/>
+            <input_port name="b" type="BT::AnyTypeAllowed"/>
+            <input_port name="test" type="BT::AnyTypeAllowed"/>
         </Condition>
         <Action ID="ComputeFrameAlignment">
-            <input_port name="base_frame" type="std::string"/>
-            <input_port name="link_frame" type="std::string"/>
-            <input_port name="op" type="std::string"/>
-            <input_port name="or" type="std::string"/>
+            <input_port name="base_frame" type="BT::AnyTypeAllowed"/>
+            <input_port name="link_frame" type="BT::AnyTypeAllowed"/>
+            <input_port name="op" type="BT::AnyTypeAllowed"/>
+            <input_port name="or" type="BT::AnyTypeAllowed"/>
             <output_port name="out_op" type="std::string"/>
             <output_port name="out_or" type="std::string"/>
             <output_port name="out_oy" type="std::string"/>
             <output_port name="out_x" type="std::string"/>
             <output_port name="out_y" type="std::string"/>
             <output_port name="out_z" type="std::string"/>
-            <input_port name="oy" type="std::string"/>
-            <input_port name="reference_frame" type="std::string"/>
-            <input_port name="x" type="std::string"/>
-            <input_port name="y" type="std::string"/>
-            <input_port name="z" type="std::string"/>
+            <input_port name="oy" type="BT::AnyTypeAllowed"/>
+            <input_port name="reference_frame" type="BT::AnyTypeAllowed"/>
+            <input_port name="x" type="BT::AnyTypeAllowed"/>
+            <input_port name="y" type="BT::AnyTypeAllowed"/>
+            <input_port name="z" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="ContinuousSpin">
-            <input_port name="num_cycles" type="std::string">Number of full counterclockwise turns</input_port>
-            <input_port name="odom_timeout_secs" type="std::string">Odometry watchdog; default 1 second</input_port>
-            <input_port name="timeout_secs" type="std::string">Overall timeout; default 90 seconds</input_port>
-            <input_port name="yaw_rate" type="std::string">Target ramp speed in radians/second; unset: as fast as the controller follows</input_port>
+            <input_port name="num_cycles" type="BT::AnyTypeAllowed">Number of full counterclockwise turns</input_port>
+            <input_port name="odom_timeout_secs" type="BT::AnyTypeAllowed">Odometry watchdog; default 1 second</input_port>
+            <input_port name="timeout_secs" type="BT::AnyTypeAllowed">Overall timeout; default 90 seconds</input_port>
+            <input_port name="yaw_rate" type="BT::AnyTypeAllowed">Target ramp speed in radians/second; unset: as fast as the controller follows</input_port>
         </Action>
         <SubTree ID="DemoTableTree"/>
         <SubTree ID="DeployTankTree"/>
@@ -253,16 +253,16 @@
             <input_port name="undergate_depth"/>
         </SubTree>
         <Action ID="FollowPath">
-            <input_port name="frame" type="std::string">Frame of waypoints without their own (default world)</input_port>
-            <input_port name="max_depth" type="std::string">Deepest allowed z in world (default -4)</input_port>
-            <input_port name="max_speed" type="std::string">Cruise speed cap for this path, m/s (default 0: the controller's own limit)</input_port>
-            <input_port name="min_depth" type="std::string">Shallowest allowed z in world (default -0.55)</input_port>
-            <input_port name="spin_rate" type="std::string">Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)</input_port>
-            <input_port name="timeout" type="std::string">Seconds before giving up (default 60)</input_port>
-            <input_port name="waypoints" type="std::string">"x,y,z,yaw; frame: x,y,z,yaw | arc=cx,cy,sweep; ..." (or x,y,z,roll,pitch,yaw); {blackboard} references allowed</input_port>
+            <input_port name="frame" type="BT::AnyTypeAllowed">Frame of waypoints without their own (default world)</input_port>
+            <input_port name="max_depth" type="BT::AnyTypeAllowed">Deepest allowed z in world (default -4)</input_port>
+            <input_port name="max_speed" type="BT::AnyTypeAllowed">Cruise speed cap for this path, m/s (default 0: the controller's own limit)</input_port>
+            <input_port name="min_depth" type="BT::AnyTypeAllowed">Shallowest allowed z in world (default -0.55)</input_port>
+            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)</input_port>
+            <input_port name="timeout" type="BT::AnyTypeAllowed">Seconds before giving up (default 60)</input_port>
+            <input_port name="waypoints" type="BT::AnyTypeAllowed">"x,y,z,yaw; frame: x,y,z,yaw | arc=cx,cy,sweep; ..." (or x,y,z,roll,pitch,yaw); {blackboard} references allowed</input_port>
         </Action>
         <Action ID="Format">
-            <input_port name="format" type="std::string"/>
+            <input_port name="format" type="BT::AnyTypeAllowed"/>
             <output_port name="out" type="std::string"/>
         </Action>
         <SubTree ID="GateTree">
@@ -282,18 +282,18 @@
             <output_port name="torpedo_state" type="std::string"/>
         </Action>
         <Action ID="GetBoolTopic">
-            <input_port name="topic" type="std::string"/>
+            <input_port name="topic" type="BT::AnyTypeAllowed"/>
             <output_port name="value" type="std::string"/>
         </Action>
         <Action ID="GetFloat64Topic">
-            <input_port name="topic" type="std::string"/>
+            <input_port name="topic" type="BT::AnyTypeAllowed"/>
             <output_port name="value" type="std::string"/>
         </Action>
         <Action ID="GetImuOrientation">
             <output_port name="op" type="std::string"/>
             <output_port name="or" type="std::string"/>
             <output_port name="oy" type="std::string"/>
-            <input_port name="topic" type="std::string"/>
+            <input_port name="topic" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="GetMappingState">
             <output_port name="map_locked" type="std::string"/>
@@ -313,7 +313,7 @@
             <output_port name="out_frame" type="std::string"/>
         </SubTree>
         <Action ID="GetTwistTopic">
-            <input_port name="topic" type="std::string">Topic to listen to</input_port>
+            <input_port name="topic" type="BT::AnyTypeAllowed">Topic to listen to</input_port>
             <output_port name="vel_pitch" type="std::string"/>
             <output_port name="vel_roll" type="std::string"/>
             <output_port name="vel_x" type="std::string"/>
@@ -338,24 +338,24 @@
             <input_port name="target_error"/>
         </SubTree>
         <Action ID="HeadingToPoint">
-            <input_port name="currX" type="std::string"/>
-            <input_port name="currY" type="std::string"/>
+            <input_port name="currX" type="BT::AnyTypeAllowed"/>
+            <input_port name="currY" type="BT::AnyTypeAllowed"/>
             <output_port name="heading" type="std::string"/>
-            <input_port name="targX" type="std::string"/>
-            <input_port name="targY" type="std::string"/>
+            <input_port name="targX" type="BT::AnyTypeAllowed"/>
+            <input_port name="targY" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="Info">
             <input_port name="message" type="std::string"/>
         </Action>
         <Condition ID="IsTrue">
-            <input_port name="value" type="std::string"/>
+            <input_port name="value" type="BT::AnyTypeAllowed"/>
         </Condition>
         <SubTree ID="KillController"/>
         <Action ID="LatestDetection">
-            <input_port name="frame" type="std::string">Frame for the output position; default world</input_port>
-            <input_port name="max_age_secs" type="std::string">Fail if the latest detection is older; default 1.0</input_port>
-            <input_port name="min_score" type="std::string">Ignore weaker detections; default 0.2</input_port>
-            <input_port name="object_name" type="std::string">Detector class</input_port>
+            <input_port name="frame" type="BT::AnyTypeAllowed">Frame for the output position; default world</input_port>
+            <input_port name="max_age_secs" type="BT::AnyTypeAllowed">Fail if the latest detection is older; default 1.0</input_port>
+            <input_port name="min_score" type="BT::AnyTypeAllowed">Ignore weaker detections; default 0.2</input_port>
+            <input_port name="object_name" type="BT::AnyTypeAllowed">Detector class</input_port>
             <output_port name="out_x" type="std::string"/>
             <output_port name="out_y" type="std::string"/>
             <output_port name="out_z" type="std::string"/>
@@ -371,13 +371,13 @@
             <input_port name="bin_object_vision_class">Class used in binary classifier</input_port>
         </SubTree>
         <Condition ID="MapConverged">
-            <input_port name="object" type="std::string">Mapping object (mapping/&lt;object&gt;), or a comma list that must all converge</input_port>
-            <input_port name="target_cov" type="std::string">Converged below this error (getCovariance's)</input_port>
+            <input_port name="object" type="BT::AnyTypeAllowed">Mapping object (mapping/&lt;object&gt;), or a comma list that must all converge</input_port>
+            <input_port name="target_cov" type="BT::AnyTypeAllowed">Converged below this error (getCovariance's)</input_port>
         </Condition>
         <Action ID="Math">
-            <input_port name="a" type="std::string"/>
-            <input_port name="b" type="std::string"/>
-            <input_port name="operator" type="std::string"/>
+            <input_port name="a" type="BT::AnyTypeAllowed"/>
+            <input_port name="b" type="BT::AnyTypeAllowed"/>
+            <input_port name="operator" type="BT::AnyTypeAllowed"/>
             <output_port name="out" type="std::string"/>
         </Action>
         <SubTree ID="MiniSearch">
@@ -430,34 +430,34 @@
             <input_port name="z"/>
         </SubTree>
         <Action ID="PublishEKFPose">
-            <input_port name="orientation_tolerance" type="std::string">Reset confirmation tolerance in radians (default 0.1)</input_port>
-            <input_port name="pitch" type="std::string"/>
-            <input_port name="position_tolerance" type="std::string">Reset confirmation tolerance in meters (default 0.1)</input_port>
-            <input_port name="roll" type="std::string"/>
-            <input_port name="setOrientation" type="std::string"/>
-            <input_port name="setX" type="std::string"/>
-            <input_port name="setY" type="std::string"/>
-            <input_port name="setZ" type="std::string"/>
-            <input_port name="timeout_secs" type="std::string">Reset and odometry confirmation timeout (default 5 seconds)</input_port>
-            <input_port name="x" type="std::string"/>
-            <input_port name="y" type="std::string"/>
-            <input_port name="yaw" type="std::string"/>
-            <input_port name="z" type="std::string"/>
+            <input_port name="orientation_tolerance" type="BT::AnyTypeAllowed">Reset confirmation tolerance in radians (default 0.1)</input_port>
+            <input_port name="pitch" type="BT::AnyTypeAllowed"/>
+            <input_port name="position_tolerance" type="BT::AnyTypeAllowed">Reset confirmation tolerance in meters (default 0.1)</input_port>
+            <input_port name="roll" type="BT::AnyTypeAllowed"/>
+            <input_port name="setOrientation" type="BT::AnyTypeAllowed"/>
+            <input_port name="setX" type="BT::AnyTypeAllowed"/>
+            <input_port name="setY" type="BT::AnyTypeAllowed"/>
+            <input_port name="setZ" type="BT::AnyTypeAllowed"/>
+            <input_port name="timeout_secs" type="BT::AnyTypeAllowed">Reset and odometry confirmation timeout (default 5 seconds)</input_port>
+            <input_port name="x" type="BT::AnyTypeAllowed"/>
+            <input_port name="y" type="BT::AnyTypeAllowed"/>
+            <input_port name="yaw" type="BT::AnyTypeAllowed"/>
+            <input_port name="z" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="PublishFloat32">
-            <input_port name="data" type="std::string"/>
-            <input_port name="topic" type="std::string"/>
+            <input_port name="data" type="BT::AnyTypeAllowed"/>
+            <input_port name="topic" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="PublishInt8">
-            <input_port name="data" type="std::string"/>
-            <input_port name="topic" type="std::string"/>
+            <input_port name="data" type="BT::AnyTypeAllowed"/>
+            <input_port name="topic" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="PublishToController">
-            <input_port name="isOrientation" type="std::string"/>
-            <input_port name="mode" type="std::string"/>
-            <input_port name="x" type="std::string"/>
-            <input_port name="y" type="std::string"/>
-            <input_port name="z" type="std::string"/>
+            <input_port name="isOrientation" type="BT::AnyTypeAllowed"/>
+            <input_port name="mode" type="BT::AnyTypeAllowed"/>
+            <input_port name="x" type="BT::AnyTypeAllowed"/>
+            <input_port name="y" type="BT::AnyTypeAllowed"/>
+            <input_port name="z" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="RandomPingerTree">
             <output_port name="is_table" type="std::string"/>
@@ -486,7 +486,7 @@
             <input_port name="num_cycles" type="std::string">Repeat a successful child N times (-1: forever)</input_port>
         </Decorator>
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
-            <input_port name="num_seconds" type="std::string"/>
+            <input_port name="num_seconds" type="BT::AnyTypeAllowed"/>
         </Decorator>
         <Decorator ID="RetryUntilSuccessfulV3">
             <input_port name="num_attempts" type="std::string">Retry a failing child up to N times (-1: forever)</input_port>
@@ -511,9 +511,9 @@
             <input_port name="timeout_secs" default="120">Timeout for search</input_port>
         </SubTree>
         <Condition ID="SeenRecently">
-            <input_port name="max_age_secs" type="std::string"/>
-            <input_port name="min_score" type="std::string"/>
-            <input_port name="object_name" type="std::string"/>
+            <input_port name="max_age_secs" type="BT::AnyTypeAllowed"/>
+            <input_port name="min_score" type="BT::AnyTypeAllowed"/>
+            <input_port name="object_name" type="BT::AnyTypeAllowed"/>
         </Condition>
         <SubTree ID="SetActiveCamera">
             <input_port name="is_dfc">1 for dfc, 0 otherwise</input_port>
@@ -523,23 +523,23 @@
         </SubTree>
         <Action ID="SetBlackboardV3">
             <inout_port name="output_key" type="std::string">Key to write (a key name, or {key} holding the key name)</inout_port>
-            <input_port name="value" type="std::string">Text to store, or {key} to copy that entry</input_port>
+            <input_port name="value" type="BT::AnyTypeAllowed">Text to store, or {key} to copy that entry</input_port>
         </Action>
         <SubTree ID="SetClawState">
             <input_port name="claw_opened"/>
             <input_port name="claw_raised"/>
         </SubTree>
         <Action ID="SetControllerSafeMode">
-            <input_port name="safe" type="std::string"/>
-            <input_port name="timeout_secs" type="std::string"/>
+            <input_port name="safe" type="BT::AnyTypeAllowed"/>
+            <input_port name="timeout_secs" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="SetMappingTarget">
-            <input_port name="lock_map" type="std::string"/>
-            <input_port name="target_object" type="std::string"/>
-            <input_port name="time_limit_secs" type="std::string"/>
+            <input_port name="lock_map" type="BT::AnyTypeAllowed"/>
+            <input_port name="target_object" type="BT::AnyTypeAllowed"/>
+            <input_port name="time_limit_secs" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="SetStatus">
-            <input_port name="status" type="std::string"/>
+            <input_port name="status" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="SetWinchState">
             <input_port name="winch_extended"/>
@@ -625,26 +625,26 @@
             <input_port name="repair_mission"/>
         </SubTree>
         <Action ID="TransformPose">
-            <input_port name="from_frame" type="std::string"/>
-            <input_port name="op" type="std::string"/>
-            <input_port name="or" type="std::string"/>
+            <input_port name="from_frame" type="BT::AnyTypeAllowed"/>
+            <input_port name="op" type="BT::AnyTypeAllowed"/>
+            <input_port name="or" type="BT::AnyTypeAllowed"/>
             <output_port name="out_op" type="std::string"/>
             <output_port name="out_or" type="std::string"/>
             <output_port name="out_oy" type="std::string"/>
             <output_port name="out_x" type="std::string"/>
             <output_port name="out_y" type="std::string"/>
             <output_port name="out_z" type="std::string"/>
-            <input_port name="oy" type="std::string"/>
-            <input_port name="to_frame" type="std::string"/>
-            <input_port name="x" type="std::string"/>
-            <input_port name="y" type="std::string"/>
-            <input_port name="z" type="std::string"/>
+            <input_port name="oy" type="BT::AnyTypeAllowed"/>
+            <input_port name="to_frame" type="BT::AnyTypeAllowed"/>
+            <input_port name="x" type="BT::AnyTypeAllowed"/>
+            <input_port name="y" type="BT::AnyTypeAllowed"/>
+            <input_port name="z" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="TriggerControllerStunt">
-            <input_port name="targetStuntState" type="std::string"/>
+            <input_port name="targetStuntState" type="BT::AnyTypeAllowed"/>
         </Action>
         <Action ID="Wait">
-            <input_port name="seconds" type="std::string"/>
+            <input_port name="seconds" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="WaitForActuators">
             <inout_port name="timeout_secs" type="std::string"/>
@@ -657,8 +657,8 @@
             <input_port name="trust">minimum controller scale trust threshold</input_port>
         </SubTree>
         <Action ID="WaitForDetection">
-            <input_port name="object_name" type="std::string"/>
-            <input_port name="timeout_secs" type="std::string"/>
+            <input_port name="object_name" type="BT::AnyTypeAllowed"/>
+            <input_port name="timeout_secs" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="WaitForKillSwitch"/>
         <SubTree ID="WaitForTalos">
@@ -700,7 +700,7 @@
         </SubTree>
         <Action ID="getCovariance">
             <output_port name="Covariance" type="std::string"/>
-            <input_port name="Target" type="std::string"/>
+            <input_port name="Target" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="pickupObject">
             <input_port name="claw_close_s"/>
