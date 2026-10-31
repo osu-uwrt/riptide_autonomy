@@ -351,6 +351,15 @@
             <input_port name="value" type="std::string"/>
         </Condition>
         <SubTree ID="KillController"/>
+        <Action ID="LatestDetection">
+            <input_port name="frame" type="std::string">Frame for the output position; default world</input_port>
+            <input_port name="max_age_secs" type="std::string">Fail if the latest detection is older; default 1.0</input_port>
+            <input_port name="min_score" type="std::string">Ignore weaker detections; default 0.2</input_port>
+            <input_port name="object_name" type="std::string">Detector class</input_port>
+            <output_port name="out_x" type="std::string"/>
+            <output_port name="out_y" type="std::string"/>
+            <output_port name="out_z" type="std::string"/>
+        </Action>
         <SubTree ID="LockInObject">
             <input_port name="object"/>
             <input_port name="target_error"/>
