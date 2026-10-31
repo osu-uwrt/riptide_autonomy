@@ -31,10 +31,8 @@ class GetActuatorStatus : public UWRTActionNode {
      */
     void rosInit() override { 
         statusSource = RosEntityCache::subscription<riptide_msgs2::msg::ActuatorStatus>(rosnode, ACTUATOR_STATUS_TOPIC, rclcpp::SensorDataQoS());
-        statusListener = statusSource->listen(std::bind(&GetActuatorStatus::statusCb, this, _1));
 
         busySource = RosEntityCache::subscription<std_msgs::msg::Bool>(rosnode, ACTUATOR_BUSY_TOPIC, rclcpp::SensorDataQoS());
-        busyListener = busySource->listen(std::bind(&GetActuatorStatus::busyCb, this, _1));
     }
 
     /**
@@ -42,6 +40,12 @@ class GetActuatorStatus : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
+        if(!statusListener) {
+            // listen from the first tick on: onStart drops anything older anyway
+            statusListener = statusSource->listen(std::bind(&GetActuatorStatus::statusCb, this, _1));
+            busyListener = busySource->listen(std::bind(&GetActuatorStatus::busyCb, this, _1));
+        }
+
         statusReceived = false;
         busyReceived = false;
         startTime = rosnode->get_clock()->now();

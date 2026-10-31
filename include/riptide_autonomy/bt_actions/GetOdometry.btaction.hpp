@@ -29,7 +29,6 @@ class GetOdometry : public UWRTActionNode {
      */
     void rosInit() override { 
         odomSource = RosEntityCache::subscription<nav_msgs::msg::Odometry>(rosnode, ODOMETRY_TOPIC, 10);
-        listener = odomSource->listen(std::bind(&GetOdometry::odomCallback, this, _1));
     }
 
     /**
@@ -37,6 +36,11 @@ class GetOdometry : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
+        if(!listener) {
+            // listen from the first tick on: onStart drops anything older anyway
+            listener = odomSource->listen(std::bind(&GetOdometry::odomCallback, this, _1));
+        }
+
         msgReceived = false; //force node to collect another message
         startTime = rosnode->get_clock()->now();
 

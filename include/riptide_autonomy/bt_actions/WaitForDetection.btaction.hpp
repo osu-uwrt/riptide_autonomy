@@ -27,7 +27,6 @@ class WaitForDetection : public UWRTActionNode {
      */
     void rosInit() override { 
         source = RosEntityCache::subscription<vision_msgs::msg::Detection3DArray>(rosNode(), DETECTIONS_TOPIC, 10);
-        listener = source->listen(std::bind(&WaitForDetection::detection3dArrayCb, this, _1));
     }
 
     /**
@@ -35,6 +34,11 @@ class WaitForDetection : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
+        if(!listener) {
+            // listen from the first tick on: onStart drops anything older anyway
+            listener = source->listen(std::bind(&WaitForDetection::detection3dArrayCb, this, _1));
+        }
+
         targetObjectId = tryGetRequiredInput<std::string>(this, "object_name", "");
         timeout = tryGetRequiredInput<double>(this, "timeout_secs", 0);
         foundObject = false;

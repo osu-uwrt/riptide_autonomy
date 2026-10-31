@@ -46,7 +46,6 @@ class PublishEKFPose : public UWRTActionNode {
     void rosInit() override {
         poseClient = RosEntityCache::client<SetPose>(rosnode, SET_POSE_SERVER_NAME);
         odomSource = RosEntityCache::subscription<Odometry>(rosnode, ODOMETRY_TOPIC, 10);
-        odomListener = odomSource->listen(std::bind(&PublishEKFPose::recieveOdom, this, _1));
                
     }
 
@@ -55,6 +54,11 @@ class PublishEKFPose : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
+        if(!odomListener) {
+            // listen from the first tick on: onStart drops anything older anyway
+            odomListener = odomSource->listen(std::bind(&PublishEKFPose::recieveOdom, this, _1));
+        }
+
         clearPendingRequest();
         requestSent = false;
         responseReceived = false;

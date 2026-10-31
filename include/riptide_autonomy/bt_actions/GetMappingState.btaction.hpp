@@ -30,7 +30,6 @@ class GetMappingState : public UWRTActionNode {
      */
     void rosInit() override { 
         _source = RosEntityCache::subscription<riptide_msgs2::msg::MappingTargetInfo>(rosNode(), MAPPING_TARGET_INFO_TOPIC, 10);
-        _listener = _source->listen(std::bind(&GetMappingState::infoCb, this, _1));
     }
 
     /**
@@ -38,6 +37,11 @@ class GetMappingState : public UWRTActionNode {
      * @return NodeStatus status of the node after execution
      */
     BT::NodeStatus onStart() override {
+        if(!_listener) {
+            // listen from the first tick on: onStart drops anything older anyway
+            _listener = _source->listen(std::bind(&GetMappingState::infoCb, this, _1));
+        }
+
         _hasMsg = false;
         _startTime = rosNode()->get_clock()->now();
         return BT::NodeStatus::RUNNING;
