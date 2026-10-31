@@ -1,4 +1,6 @@
 #include <behaviortree_cpp/loggers/bt_file_logger_v2.h>
+#include <behaviortree_cpp/loggers/groot2_publisher.h>
+#include <behaviortree_cpp/xml_parsing.h>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/executors/single_threaded_executor.hpp>
@@ -97,6 +99,8 @@ namespace do_task
             declare_parameter<std::string>("log_file_dir", getEnvVar("HOME") + "/btlogs");
             declare_parameter<std::vector<std::string>>("ext_plugin_list", std::vector<std::string>());
             declare_parameter<std::vector<std::string>>("ext_tree_dirs", std::vector<std::string>());
+            declare_parameter<bool>("enable_groot2", false);
+            declare_parameter<int>("groot2_port", 1667);
 
             // load the params
             try
@@ -118,6 +122,7 @@ namespace do_task
             }
 
             // create the behavior tree factory context
+            RCLCPP_INFO(this->get_logger(), "Using BehaviorTree.CPP %s", BT::LibraryVersionString());
             factory = std::make_shared<BehaviorTreeFactory>();
 
             // load our plugins from ament index
@@ -190,12 +195,20 @@ namespace do_task
 
             try
             {
-                // load the tree file contents in to a BT context. The factory keeps every tree it has read, so
-                // forget the last goal's: a subtree this file no longer defines must fail to load, not run stale.
-                factory->clearRegisteredBehaviorTrees();
+                // load the tree file contents in to a BT context, as createTreeFromFile does but timing each step.
+                // A new parser per goal, so a subtree this file no longer defines fails to load instead of running stale.
+                using Clock = std::chrono::steady_clock;
+                const auto loadStart = Clock::now();
+                XMLParser parser(*factory);
                 // Includes resolve against the file's folder, so the path must have one.
-                Tree tree = factory->createTreeFromFile(std::filesystem::absolute(goal_handle->get_goal()->tree));
+                parser.loadFromFile(std::filesystem::absolute(goal_handle->get_goal()->tree));
+                const auto parsed = Clock::now();
+                Tree tree = parser.instantiateTree(Blackboard::create());
+                tree.manifests = factory->manifests();
+                const auto instantiated = Clock::now();
                 initRosForTree(tree, this->shared_from_this());
+                const auto rosReady = Clock::now();
+                logLoad(tree, loadStart, parsed, instantiated, rosReady);
 
                 //make a new directory for the FBL log files
                 std::filesystem::create_directory(fblDirPath);
@@ -214,6 +227,18 @@ namespace do_task
                 FileLogger2 fileLogger(tree, FBLFilePath);
                 UwrtLogger uwrtLogger(tree, this->shared_from_this());
                 uwrtLogger.setEnabled(true);
+
+                // live view for Groot2-compatible tools; the tree runs without it if the port is taken
+                std::unique_ptr<Groot2Publisher> groot2;
+                if(get_parameter("enable_groot2").as_bool()) {
+                    const int port = get_parameter("groot2_port").as_int();
+                    try {
+                        groot2 = std::make_unique<Groot2Publisher>(tree, port);
+                        RCLCPP_INFO(get_logger(), "DoTask: Groot2 publisher on port %d", port);
+                    } catch(const std::exception &e) {
+                        RCLCPP_WARN(get_logger(), "DoTask: no Groot2 publisher on port %d: %s", port, e.what());
+                    }
+                }
 
                 // set up idle sleep rate
                 rclcpp::Rate loop_rate(30ms);
@@ -353,6 +378,34 @@ namespace do_task
 
             // hand off the listing of possible files
             response->trees = treeFiles;
+        }
+
+        void logLoad(
+            Tree &tree,
+            std::chrono::steady_clock::time_point start,
+            std::chrono::steady_clock::time_point parsed,
+            std::chrono::steady_clock::time_point instantiated,
+            std::chrono::steady_clock::time_point rosReady)
+        {
+            auto ms = [](auto duration) {
+                return std::chrono::duration<double, std::milli>(duration).count();
+            };
+
+            size_t nodes = 0, rosNodes = 0;
+            tree.applyVisitor([&](TreeNode *node) {
+                nodes++;
+                rosNodes += dynamic_cast<UwrtBtNode *>(node) != nullptr;
+            });
+
+            std::string entities;
+            for(const auto &[kind, count] : RosEntityCache::liveCounts()) {
+                entities += (entities.empty() ? "" : ", ") + std::to_string(count) + " " + kind;
+            }
+
+            RCLCPP_INFO(get_logger(),
+                "DoTask: loaded in %.0f ms: parse %.0f ms, instantiate %.0f ms (%zu nodes), ROS init %.0f ms (%zu ROS nodes, %zu shared entities: %s)",
+                ms(rosReady - start), ms(parsed - start), ms(instantiated - parsed), nodes, ms(rosReady - instantiated),
+                rosNodes, RosEntityCache::liveTotal(), entities.empty() ? "none" : entities.c_str());
         }
 
         void bagTriggerCb() {
