@@ -41,7 +41,7 @@ class PublishInt8 : public UWRTActionNode {
 
         int data = tryGetRequiredInput<int>(this, "data", 0);
 
-        pub = rosnode->create_publisher<std_msgs::msg::UInt16>(topic, 10);
+        pub = RosEntityCache::publisher<std_msgs::msg::UInt16>(rosnode, topic, 10);
         std_msgs::msg::UInt16 msg;
         msg.data = data;
         pub->publish(msg);

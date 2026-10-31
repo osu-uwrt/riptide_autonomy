@@ -41,7 +41,7 @@ class PublishFloat32 : public UWRTActionNode {
 
         float data = tryGetRequiredInput<float>(this, "data", 0.0f);
 
-        pub = rosnode->create_publisher<std_msgs::msg::Float32>(topic, 10);
+        pub = RosEntityCache::publisher<std_msgs::msg::Float32>(rosnode, topic, 10);
         std_msgs::msg::Float32 msg;
         msg.data = data;
         pub->publish(msg);
