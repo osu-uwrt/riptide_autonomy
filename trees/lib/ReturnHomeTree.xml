@@ -2,16 +2,16 @@
 <root BTCPP_format="4">
     <include path="RelativeMoveNoYaw.xml"/>
     <BehaviorTree ID="ReturnHomeTree">
-        <Sequence>
-            <Format format="gate_frame" out="{gate_frame}"/>
-            <SetBlackboardV3 output_key="max_dist" value="4"/>
-            <SetBlackboardV3 output_key="min_dist" value="2"/>
-            <SetBlackboardV3 output_key="target_err" value="0.01"/>
-            <Info message="WINNING TIME"/>
-            <SubTree ID="RelativeMoveNoYaw" frame_name="pre_return_home_frame" x="0" y="0" z="0"/>
-            <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="-1" y="0" z="-0.7"/>
-            <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="0" y="0" z="-0.7"/>
-            <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="1" y="0" z="-0.7"/>
+        <!-- notgroot:globals -->
+        <Sequence name="globals">
+            <Script code="gate_frame := 'gate_frame'; max_dist := '4'; min_dist := '2'; target_err := '0.01'"/>
+            <Sequence>
+                <Info message="WINNING TIME"/>
+                <SubTree ID="RelativeMoveNoYaw" frame_name="pre_return_home_frame" x="0" y="0" z="0"/>
+                <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="-1" y="0" z="-0.7"/>
+                <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="0" y="0" z="-0.7"/>
+                <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="1" y="0" z="-0.7"/>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
 </root>

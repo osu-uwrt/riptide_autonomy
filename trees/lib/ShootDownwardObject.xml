@@ -5,29 +5,32 @@
     <include path="WaitForController.xml"/>
     <include path="FireDropper.xml"/>
     <BehaviorTree ID="ShootDownwardObject">
-        <Sequence>
-            <Format format="{object_name}_frame" out="{object_frame}"/>
-            <Info message="Attempting to shoot {object_frame}"/>
-            <ForceSuccess>
-                <RetryUntilSuccessful num_attempts="1">
-                    <Sequence>
-                        <ForceSuccess>
-                            <SubTree ID="DownwardMiniSearch" object_frame="{object_frame}" object_name="{object_name}" search_prox="{search_prox}"/>
-                        </ForceSuccess>
-                        <ForceSuccess>
-                            <CallTriggerService srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="1"/>
-                        </ForceSuccess>
-                        <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
-                        <SetStatus status="aligning"/>
-                        <SubTree ID="AlignLinkPositionOnly" frame_name="{object_frame}" link_name="{dropper_link_name}" x="0" y="0" z="1"/>
-                        <SubTree ID="WaitForController" dist="0.01" link_frame="{dropper_link_name}" target_frame="{object_frame}" timeout="30" trust="0.90"/>
-                    </Sequence>
+        <!-- notgroot:globals -->
+        <Sequence name="globals">
+            <Script code="object_frame := object_name .. '_frame'"/>
+            <Sequence>
+                <Info message="Attempting to shoot {object_frame}"/>
+                <ForceSuccess>
+                    <RetryUntilSuccessful num_attempts="1">
+                        <Sequence>
+                            <ForceSuccess>
+                                <SubTree ID="DownwardMiniSearch" object_frame="{object_frame}" object_name="{object_name}" search_prox="{search_prox}"/>
+                            </ForceSuccess>
+                            <ForceSuccess>
+                                <CallTriggerService srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="1"/>
+                            </ForceSuccess>
+                            <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+                            <SetStatus status="aligning"/>
+                            <SubTree ID="AlignLinkPositionOnly" frame_name="{object_frame}" link_name="{dropper_link_name}" x="0" y="0" z="1"/>
+                            <SubTree ID="WaitForController" dist="0.01" link_frame="{dropper_link_name}" target_frame="{object_frame}" timeout="30" trust="0.90"/>
+                        </Sequence>
+                    </RetryUntilSuccessful>
+                </ForceSuccess>
+                <SetStatus status="performing"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <SubTree ID="FireDropper"/>
                 </RetryUntilSuccessful>
-            </ForceSuccess>
-            <SetStatus status="performing"/>
-            <RetryUntilSuccessful num_attempts="3">
-                <SubTree ID="FireDropper"/>
-            </RetryUntilSuccessful>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
 </root>

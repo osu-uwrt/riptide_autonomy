@@ -3,17 +3,20 @@
     <include path="ReloadActuators.xml"/>
     <include path="SetActuatorsArmed.xml"/>
     <BehaviorTree ID="PrepForRun">
-        <Sequence>
-            <SetBlackboardV3 output_key="time_limit_secs" value="3"/>
-            <ForceSuccess>
-                <SetMappingTarget lock_map="1" target_object="" time_limit_secs="{time_limit_secs}"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="ReloadActuators"/>
-            </ForceSuccess>
-            <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" armed="0"/>
-            </ForceSuccess>
+        <!-- notgroot:globals -->
+        <Sequence name="globals">
+            <Script code="time_limit_secs := '3'"/>
+            <Sequence>
+                <ForceSuccess>
+                    <SetMappingTarget lock_map="1" target_object="" time_limit_secs="{time_limit_secs}"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <SubTree ID="ReloadActuators"/>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <SubTree ID="SetActuatorsArmed" armed="0"/>
+                </ForceSuccess>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
 </root>

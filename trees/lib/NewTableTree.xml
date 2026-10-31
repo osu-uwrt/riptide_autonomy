@@ -9,109 +9,110 @@
     <include path="dropObject.xml"/>
     <include path="SpinTree.xml"/>
     <BehaviorTree ID="NewTableTree">
-        <Sequence name="set blackboards">
-            <SetBlackboardV3 output_key="minisearch_prox" value="1.5"/>
-            <SetBlackboardV3 output_key="target_err" value="0.5"/>
-            <SetBlackboardV3 output_key="num_sorts" value="0"/>
-            <SetBlackboardV3 output_key="cycles" value="1"/>
-            <Sequence name="Set Object stuff and frames">
-                <SetBlackboardV3 output_key="claw_link" value="talos/claw_link"/>
-                <SetBlackboardV3 output_key="base_link" value="talos/base_link"/>
-                <SetBlackboardV3 output_key="curr_object" value="bandage"/>
-                <SetBlackboardV3 output_key="curr_drop" value="helmet"/>
-            </Sequence>
-            <IfThenElse>
-                <CompareNums a="{repair_mission}" b="0" test="=="/>
-                <SetBlackboardV3 output_key="curr_image" value="buoy"/>
-                <SetBlackboardV3 output_key="curr_image" value="compass"/>
-            </IfThenElse>
-            <Sequence name="Go To Table">
-                <SubTree ID="RelativeMoveNoYaw" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
-                <SubTree ID="RelativeMoveNoYaw" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
-            </Sequence>
-            <Sequence name="find table">
+        <!-- notgroot:globals -->
+        <Sequence name="globals">
+            <Script code="base_link := 'talos/base_link'; claw_link := 'talos/claw_link'; minisearch_prox := '1.5'"/>
+            <Sequence name="set blackboards">
+                <SetBlackboardV3 output_key="target_err" value="0.5"/>
+                <SetBlackboardV3 output_key="num_sorts" value="0"/>
+                <SetBlackboardV3 output_key="cycles" value="1"/>
+                <Sequence name="Set Object stuff and frames">
+                    <SetBlackboardV3 output_key="curr_object" value="bandage"/>
+                    <SetBlackboardV3 output_key="curr_drop" value="helmet"/>
+                </Sequence>
+                <IfThenElse>
+                    <CompareNums a="{repair_mission}" b="0" test="=="/>
+                    <SetBlackboardV3 output_key="curr_image" value="buoy"/>
+                    <SetBlackboardV3 output_key="curr_image" value="compass"/>
+                </IfThenElse>
+                <Sequence name="Go To Table">
+                    <SubTree ID="RelativeMoveNoYaw" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
+                    <SubTree ID="RelativeMoveNoYaw" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
+                </Sequence>
+                <Sequence name="find table">
+                    <ForceSuccess>
+                        <SubTree ID="SetActiveCamera" is_dfc="1"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <CallSetBoolService data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <Sequence>
+                            <SetBlackboardV3 output_key="secondary_drop" value="warning"/>
+                            <Format format="{curr_drop}_frame" out="{curr_drop_frame}"/>
+                            <Format format="{secondary_drop}_frame" out="{secondary_drop_frame}"/>
+                            <ForceSuccess>
+                                <SubTree ID="DownwardSearch" min_dist="1.5" object_name="{curr_drop}" target_cov="0.8" timeout_sec="60"/>
+                            </ForceSuccess>
+                            <ForceSuccess>
+                                <SubTree ID="DownwardSearch" min_dist="1.5" object_name="{secondary_drop}" target_cov="0.8" timeout_sec="60"/>
+                            </ForceSuccess>
+                        </Sequence>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <CallSetBoolService data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <CallTriggerService srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
+                    </ForceSuccess>
+                    <TransformPose from_frame="{curr_drop_frame}" op="0" or="0" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
+                    <Math a="{ax}" b="2" operator="/" out="{ax}"/>
+                    <Math a="{ay}" b="2" operator="/" out="{ay}"/>
+                    <Math a="{az}" b="2" operator="/" out="{az}"/>
+                </Sequence>
                 <ForceSuccess>
-                    <SubTree ID="SetActiveCamera" is_dfc="1"/>
+                    <SubTree ID="SetActuatorsArmed" armed="1"/>
                 </ForceSuccess>
-                <ForceSuccess>
-                    <CallSetBoolService data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
-                </ForceSuccess>
-                <ForceSuccess>
-                    <Sequence>
-                        <SetBlackboardV3 output_key="secondary_drop" value="warning"/>
-                        <Format format="{curr_drop}_frame" out="{curr_drop_frame}"/>
-                        <Format format="{secondary_drop}_frame" out="{secondary_drop_frame}"/>
-                        <ForceSuccess>
-                            <SubTree ID="DownwardSearch" min_dist="1.5" object_name="{curr_drop}" target_cov="0.8" timeout_sec="60"/>
+                <Repeat num_cycles="4">
+                    <Sequence name="object cycles">
+                        <ForceSuccess name="Object pickup and dropoff">
+                            <Sequence>
+                                <SubTree ID="pickupObject" claw_close_s="-2.0" claw_link="{claw_link}" claw_open_s="2.0" claw_topic="command/actuator/claw_move_s" ctrlr_dist="0.01" ctrlr_timeout="30" ctrlr_trust="0.95" minisearch_prox="{minisearch_prox}" object_name="{curr_object}" overtable="0.0" pickup_center_x="{ax}" pickup_center_y="{ay}" pickup_center_z="{az}" pre_overtable="0.15" reset_threshold="1000" search_prox="2" search_timeout="180" target_err="{target_err}"/>
+                                <SubTree ID="SurfaceTree"/>
+                                <SubTree ID="dropObject" claw_close_s="-2.0" claw_drop_s="0.3" claw_link="{claw_link}" claw_open_s="2.0" claw_topic="command/actuator/claw_move_s" ctrlr_dist="0.01" ctrlr_timeout="30" ctrlr_trust="0.95" dropoff_name="{curr_drop}" minisearch_prox="{minisearch_prox}" overtable="0.15" reset_threshold="1000" search_prox="2" search_timeout="180" target_err="{target_err}"/>
+                                <Math a="{num_sorts}" b="1" operator="+" out="{num_sorts}"/>
+                            </Sequence>
                         </ForceSuccess>
-                        <ForceSuccess>
-                            <SubTree ID="DownwardSearch" min_dist="1.5" object_name="{secondary_drop}" target_cov="0.8" timeout_sec="60"/>
+                        <ForceSuccess name="Update target">
+                            <Sequence>
+                                <Math a="{cycles}" b="1" operator="+" out="{cycles}"/>
+                                <IfThenElse>
+                                    <CompareNums a="{cycles}" b="2" test="=="/>
+                                    <Sequence>
+                                        <SetBlackboardV3 output_key="curr_object" value="pill"/>
+                                        <IfThenElse>
+                                            <CompareNums a="{repair_mission}" b="0" test="=="/>
+                                            <SetBlackboardV3 output_key="curr_image" value="sos"/>
+                                            <SetBlackboardV3 output_key="curr_image" value="hammer_and_wrench"/>
+                                        </IfThenElse>
+                                    </Sequence>
+                                    <IfThenElse>
+                                        <CompareNums a="{cycles}" b="3" test="=="/>
+                                        <Sequence>
+                                            <SetBlackboardV3 output_key="curr_object" value="nut_and_bolt"/>
+                                            <SetBlackboardV3 output_key="curr_drop" value="warning"/>
+                                        </Sequence>
+                                        <SetBlackboardV3 output_key="curr_object" value="plug"/>
+                                    </IfThenElse>
+                                </IfThenElse>
+                            </Sequence>
                         </ForceSuccess>
                     </Sequence>
-                </ForceSuccess>
+                </Repeat>
+                <Math a="{az}" b="{minisearch_prox}" operator="+" out="{midpoint_move_z}"/>
+                <SubTree ID="RelativeMoveNoYaw" frame_name="{secondary_drop_frame}" x="{ax}" y="{ay}" z="{midpoint_move_z}"/>
                 <ForceSuccess>
-                    <CallSetBoolService data="0" srv_name="set_table_pair_enabled" time_limit_secs="3"/>
+                    <SubTree ID="SpinTree" num_cycles="{num_sorts}" target_image="{curr_image}"/>
                 </ForceSuccess>
+                <SubTree ID="RelativeMoveNoYaw" frame_name="{secondary_drop_frame}" x="{ax}" y="{ay}" z="{midpoint_move_z}"/>
                 <ForceSuccess>
-                    <CallTriggerService srv_name="/talos/mapping/center_table_on_baskets" time_limit_secs="3"/>
+                    <SubTree ID="SetActuatorsArmed" armed="0"/>
                 </ForceSuccess>
-                <TransformPose from_frame="{curr_drop_frame}" op="0" or="0" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="0" to_frame="{secondary_drop_frame}" x="0" y="0" z="0"/>
-                <Math a="{ax}" b="2" operator="/" out="{ax}"/>
-                <Math a="{ay}" b="2" operator="/" out="{ay}"/>
-                <Math a="{az}" b="2" operator="/" out="{az}"/>
-            </Sequence>
-            <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" armed="1"/>
-            </ForceSuccess>
-            <Repeat num_cycles="4">
-                <Sequence name="object cycles">
-                    <ForceSuccess name="Object pickup and dropoff">
-                        <Sequence>
-                            <SubTree ID="pickupObject" claw_close_s="-2.0" claw_link="{claw_link}" claw_open_s="2.0" claw_topic="command/actuator/claw_move_s" ctrlr_dist="0.01" ctrlr_timeout="30" ctrlr_trust="0.95" minisearch_prox="{minisearch_prox}" object_name="{curr_object}" overtable="0.0" pickup_center_x="{ax}" pickup_center_y="{ay}" pickup_center_z="{az}" pre_overtable="0.15" reset_threshold="1000" search_prox="2" search_timeout="180" target_err="{target_err}"/>
-                            <SubTree ID="SurfaceTree"/>
-                            <SubTree ID="dropObject" claw_close_s="-2.0" claw_drop_s="0.3" claw_link="{claw_link}" claw_open_s="2.0" claw_topic="command/actuator/claw_move_s" ctrlr_dist="0.01" ctrlr_timeout="30" ctrlr_trust="0.95" dropoff_name="{curr_drop}" minisearch_prox="{minisearch_prox}" overtable="0.15" reset_threshold="1000" search_prox="2" search_timeout="180" target_err="{target_err}"/>
-                            <Math a="{num_sorts}" b="1" operator="+" out="{num_sorts}"/>
-                        </Sequence>
-                    </ForceSuccess>
-                    <ForceSuccess name="Update target">
-                        <Sequence>
-                            <Math a="{cycles}" b="1" operator="+" out="{cycles}"/>
-                            <IfThenElse>
-                                <CompareNums a="{cycles}" b="2" test="=="/>
-                                <Sequence>
-                                    <SetBlackboardV3 output_key="curr_object" value="pill"/>
-                                    <IfThenElse>
-                                        <CompareNums a="{repair_mission}" b="0" test="=="/>
-                                        <SetBlackboardV3 output_key="curr_image" value="sos"/>
-                                        <SetBlackboardV3 output_key="curr_image" value="hammer_and_wrench"/>
-                                    </IfThenElse>
-                                </Sequence>
-                                <IfThenElse>
-                                    <CompareNums a="{cycles}" b="3" test="=="/>
-                                    <Sequence>
-                                        <SetBlackboardV3 output_key="curr_object" value="nut_and_bolt"/>
-                                        <SetBlackboardV3 output_key="curr_drop" value="warning"/>
-                                    </Sequence>
-                                    <SetBlackboardV3 output_key="curr_object" value="plug"/>
-                                </IfThenElse>
-                            </IfThenElse>
-                        </Sequence>
-                    </ForceSuccess>
+                <SubTree ID="SetActiveCamera" is_dfc="0"/>
+                <Sequence name="Leave Table">
+                    <SubTree ID="RelativeMoveNoYaw" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
+                    <SubTree ID="RelativeMoveNoYaw" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
                 </Sequence>
-            </Repeat>
-            <Math a="{az}" b="{minisearch_prox}" operator="+" out="{midpoint_move_z}"/>
-            <SubTree ID="RelativeMoveNoYaw" frame_name="{secondary_drop_frame}" x="{ax}" y="{ay}" z="{midpoint_move_z}"/>
-            <ForceSuccess>
-                <SubTree ID="SpinTree" num_cycles="{num_sorts}" target_image="{curr_image}"/>
-            </ForceSuccess>
-            <SubTree ID="RelativeMoveNoYaw" frame_name="{secondary_drop_frame}" x="{ax}" y="{ay}" z="{midpoint_move_z}"/>
-            <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" armed="0"/>
-            </ForceSuccess>
-            <SubTree ID="SetActiveCamera" is_dfc="0"/>
-            <Sequence name="Leave Table">
-                <SubTree ID="RelativeMoveNoYaw" frame_name="post_table_pose_frame" x="0" y="0" z="0"/>
-                <SubTree ID="RelativeMoveNoYaw" frame_name="pre_table_pose_frame" x="0" y="0" z="0"/>
             </Sequence>
         </Sequence>
     </BehaviorTree>

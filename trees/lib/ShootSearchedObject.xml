@@ -4,25 +4,27 @@
     <include path="WaitForController.xml"/>
     <include path="FireTorpedo.xml"/>
     <BehaviorTree ID="ShootSearchedObject">
-        <Sequence name="shoot already refined object">
-            <SetBlackboardV3 output_key="shoot_prox" value="0.35"/>
-            <Format format="{object_name}_frame" out="{frame_to_shoot}"/>
-            <Info message="Attempting to shoot object {object_name}"/>
-            <SetStatus status="aligning"/>
-            <ForceSuccess>
-                <RetryUntilSuccessful num_attempts="2">
-                    <Sequence>
-                        <Math a="{shoot_prox}" b="0.5" operator="+" out="{shoot_prox_plus}"/>
-                        <SubTree ID="AlignLink" frame_name="{frame_to_shoot}" link_name="{torpedo_link_name}" prox_x="{shoot_prox_plus}" prox_z="0"/>
-                        <SubTree ID="AlignLink" frame_name="{frame_to_shoot}" link_name="{torpedo_link_name}" prox_x="{shoot_prox}" prox_z="0"/>
-                        <SubTree ID="WaitForController" dist="0.01" link_frame="{torpedo_link_name}" target_frame="{frame_to_shoot}" timeout="60" trust="0.99"/>
-                    </Sequence>
+        <!-- notgroot:globals -->
+        <Sequence name="globals">
+            <Script code="frame_to_shoot := object_name .. '_frame'; shoot_prox := '0.35'"/>
+            <Sequence name="shoot already refined object">
+                <Info message="Attempting to shoot object {object_name}"/>
+                <SetStatus status="aligning"/>
+                <ForceSuccess>
+                    <RetryUntilSuccessful num_attempts="2">
+                        <Sequence>
+                            <Math a="{shoot_prox}" b="0.5" operator="+" out="{shoot_prox_plus}"/>
+                            <SubTree ID="AlignLink" frame_name="{frame_to_shoot}" link_name="{torpedo_link_name}" prox_x="{shoot_prox_plus}" prox_z="0"/>
+                            <SubTree ID="AlignLink" frame_name="{frame_to_shoot}" link_name="{torpedo_link_name}" prox_x="{shoot_prox}" prox_z="0"/>
+                            <SubTree ID="WaitForController" dist="0.01" link_frame="{torpedo_link_name}" target_frame="{frame_to_shoot}" timeout="60" trust="0.99"/>
+                        </Sequence>
+                    </RetryUntilSuccessful>
+                </ForceSuccess>
+                <SetStatus status="performing"/>
+                <RetryUntilSuccessful num_attempts="3">
+                    <SubTree ID="FireTorpedo"/>
                 </RetryUntilSuccessful>
-            </ForceSuccess>
-            <SetStatus status="performing"/>
-            <RetryUntilSuccessful num_attempts="3">
-                <SubTree ID="FireTorpedo"/>
-            </RetryUntilSuccessful>
+            </Sequence>
         </Sequence>
     </BehaviorTree>
 </root>
