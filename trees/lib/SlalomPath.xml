@@ -3,7 +3,6 @@
     <include path="MiniSearch.xml"/>
     <BehaviorTree ID="SlalomPath">
         <Sequence name="Slalom">
-            <SetBlackboardV3 output_key="1" value="slalom_exit_dist"/>
             <Info message="SALMONI TIME"/>
             <ForceSuccess>
                 <RetryUntilSuccessful num_attempts="3">
