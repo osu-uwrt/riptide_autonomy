@@ -51,7 +51,7 @@ class SetStatus : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        pub = rosnode->create_publisher<riptide_msgs2::msg::LedCommand>(LED_COMMAND_TOPIC, 10);
+        pub = RosEntityCache::publisher<riptide_msgs2::msg::LedCommand>(rosnode, LED_COMMAND_TOPIC, 10);
     }
 
     /**

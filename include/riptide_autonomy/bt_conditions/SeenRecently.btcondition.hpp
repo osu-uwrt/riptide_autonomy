@@ -30,13 +30,10 @@ class SeenRecently : public UWRTConditionNode {
     }
 
     void rosInit() override {
-        sub = rosNode()->create_subscription<vision_msgs::msg::Detection3DArray>(
-            DETECTIONS_TOPIC,
-            10,
-            std::bind(&SeenRecently::detection3dArrayCb, this, _1));
-        fusedSub = rosNode()->create_subscription<std_msgs::msg::String>(
-            "mapping/fused",
-            10,
+        detectionSource = RosEntityCache::subscription<vision_msgs::msg::Detection3DArray>(rosNode(), DETECTIONS_TOPIC, 10);
+        detectionListener = detectionSource->listen(std::bind(&SeenRecently::detection3dArrayCb, this, _1));
+        fusedSource = RosEntityCache::subscription<std_msgs::msg::String>(rosNode(), "mapping/fused", 10);
+        fusedListener = fusedSource->listen(
             [this](const std_msgs::msg::String::SharedPtr msg) {
                 std::stringstream list(msg->data);
                 std::string name;
@@ -72,6 +69,7 @@ class SeenRecently : public UWRTConditionNode {
     }
 
     std::unordered_map<std::string, rclcpp::Time> lastSeen;
-    rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr sub;
-    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr fusedSub;
+    std::shared_ptr<SharedSubscription<vision_msgs::msg::Detection3DArray>> detectionSource;
+    std::shared_ptr<SharedSubscription<std_msgs::msg::String>> fusedSource;
+    RosListenerPtr detectionListener, fusedListener;
 };

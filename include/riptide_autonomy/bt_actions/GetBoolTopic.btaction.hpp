@@ -36,11 +36,8 @@ class GetBoolTopic : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         topic = tryGetRequiredInput<std::string>(this, "topic", "/some_bool");
-        sub = rosnode->create_subscription<std_msgs::msg::Bool>(
-            topic,
-            10,
-            std::bind(&GetBoolTopic::boolCb, this, _1)
-        );
+        source = RosEntityCache::subscription<std_msgs::msg::Bool>(rosnode, topic, 10);
+        listener = source->listen(std::bind(&GetBoolTopic::boolCb, this, _1));
 
         dataReceived = false;
         startTime = rosnode->get_clock()->now();
@@ -79,10 +76,11 @@ class GetBoolTopic : public UWRTActionNode {
         dataReceived = true;
     }
 
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub;
+    std::shared_ptr<SharedSubscription<std_msgs::msg::Bool>> source;
     rclcpp::Time startTime;
     std::string topic;
     bool
         data,
         dataReceived;
+    RosListenerPtr listener;
 };

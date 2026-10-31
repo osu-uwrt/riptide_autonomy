@@ -24,9 +24,10 @@ public:
     }
 
     void rosInit() override {
-        linearPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_LINEAR_TOPIC, 10);
-        angularPub = rosnode->create_publisher<riptide_msgs2::msg::ControllerCommand>(CONTROL_ANGULAR_TOPIC, 10);
-        odomSub = rosnode->create_subscription<nav_msgs::msg::Odometry>(ODOMETRY_TOPIC, 10,
+        linearPub = RosEntityCache::publisher<riptide_msgs2::msg::ControllerCommand>(rosnode, CONTROL_LINEAR_TOPIC, 10);
+        angularPub = RosEntityCache::publisher<riptide_msgs2::msg::ControllerCommand>(rosnode, CONTROL_ANGULAR_TOPIC, 10);
+        odomSource = RosEntityCache::subscription<nav_msgs::msg::Odometry>(rosnode, ODOMETRY_TOPIC, 10);
+        odomListener = odomSource->listen(
             [this](nav_msgs::msg::Odometry::SharedPtr msg) {
                 std::lock_guard<std::mutex> lock(mutex);
                 if (!active) return;
@@ -149,5 +150,6 @@ private:
     nav_msgs::msg::Odometry odom;
     geometry_msgs::msg::Point position;
     rclcpp::Publisher<riptide_msgs2::msg::ControllerCommand>::SharedPtr linearPub, angularPub;
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSub;
+    std::shared_ptr<SharedSubscription<nav_msgs::msg::Odometry>> odomSource;
+    RosListenerPtr odomListener;
 };

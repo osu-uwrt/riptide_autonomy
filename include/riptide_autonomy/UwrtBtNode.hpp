@@ -1,6 +1,7 @@
 #pragma once
 
 #include "riptide_autonomy/autonomy_base.hpp"
+#include "riptide_autonomy/RosEntityCache.hpp"
 
 class UwrtBtNode {
     public:

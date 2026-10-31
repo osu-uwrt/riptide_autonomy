@@ -37,7 +37,7 @@ class CallStartBinaryClassifierService : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         srvName = tryGetRequiredInput<std::string>(this, "srv_name", "/some_srv");
-        client = rosnode->create_client<StartBinaryClassifier>(srvName);
+        client = RosEntityCache::client<StartBinaryClassifier>(rosnode, srvName);
         
         //wait for client
         if(!client->wait_for_service(1s)) {

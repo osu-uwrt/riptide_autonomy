@@ -30,17 +30,11 @@ class GetActuatorStatus : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        statusSub = rosnode->create_subscription<riptide_msgs2::msg::ActuatorStatus>(
-            ACTUATOR_STATUS_TOPIC,
-            rclcpp::SensorDataQoS(),
-            std::bind(&GetActuatorStatus::statusCb, this, _1)
-        );
+        statusSource = RosEntityCache::subscription<riptide_msgs2::msg::ActuatorStatus>(rosnode, ACTUATOR_STATUS_TOPIC, rclcpp::SensorDataQoS());
+        statusListener = statusSource->listen(std::bind(&GetActuatorStatus::statusCb, this, _1));
 
-        busySub = rosnode->create_subscription<std_msgs::msg::Bool>(
-            ACTUATOR_BUSY_TOPIC,
-            rclcpp::SensorDataQoS(),
-            std::bind(&GetActuatorStatus::busyCb, this, _1)
-        );
+        busySource = RosEntityCache::subscription<std_msgs::msg::Bool>(rosnode, ACTUATOR_BUSY_TOPIC, rclcpp::SensorDataQoS());
+        busyListener = busySource->listen(std::bind(&GetActuatorStatus::busyCb, this, _1));
     }
 
     /**
@@ -95,8 +89,9 @@ class GetActuatorStatus : public UWRTActionNode {
     riptide_msgs2::msg::ActuatorStatus latestStatus;
     std_msgs::msg::Bool latestBusy;
 
-    rclcpp::Subscription<riptide_msgs2::msg::ActuatorStatus>::SharedPtr statusSub;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr busySub;
+    std::shared_ptr<SharedSubscription<riptide_msgs2::msg::ActuatorStatus>> statusSource;
+    std::shared_ptr<SharedSubscription<std_msgs::msg::Bool>> busySource;
+    RosListenerPtr statusListener, busyListener;
 
     rclcpp::Time startTime;
 

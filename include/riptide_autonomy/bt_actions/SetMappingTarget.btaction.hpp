@@ -30,7 +30,7 @@ class SetMappingTarget : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        client = rosNode()->create_client<MappingTarget>(MAPPING_SERVER_NAME);
+        client = RosEntityCache::client<MappingTarget>(rosNode(), MAPPING_SERVER_NAME);
     }
 
     /**

@@ -37,7 +37,8 @@ class getCovariance : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         topicName = "mapping/" + tryGetRequiredInput<std::string>(this, "Target", "ERROR_VALUE");
-        subscriber = rosnode->create_subscription<Cov>(topicName,  rclcpp::SensorDataQoS(), std::bind(&getCovariance::topic_callback, this, _1));
+        source = RosEntityCache::subscription<Cov>(rosnode, topicName, rclcpp::SensorDataQoS());
+        listener = source->listen(std::bind(&getCovariance::topic_callback, this, _1));
         
         msgReceived = false;
         startTime = rosnode->get_clock()->now();
@@ -88,8 +89,9 @@ class getCovariance : public UWRTActionNode {
     }
 
     bool msgReceived;
-    rclcpp::Subscription<Cov>::SharedPtr subscriber;
+    std::shared_ptr<SharedSubscription<Cov>> source;
     double error;
     rclcpp::Time startTime;
     std::string topicName;
+    RosListenerPtr listener;
 };

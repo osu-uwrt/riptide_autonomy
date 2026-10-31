@@ -28,11 +28,8 @@ class GetOdometry : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        sub = rosnode->create_subscription<nav_msgs::msg::Odometry>(
-            ODOMETRY_TOPIC, 
-            10, 
-            std::bind(&GetOdometry::odomCallback, this, _1)
-        );
+        odomSource = RosEntityCache::subscription<nav_msgs::msg::Odometry>(rosnode, ODOMETRY_TOPIC, 10);
+        listener = odomSource->listen(std::bind(&GetOdometry::odomCallback, this, _1));
     }
 
     /**
@@ -87,6 +84,7 @@ class GetOdometry : public UWRTActionNode {
 
     bool msgReceived = false;
     nav_msgs::msg::Odometry odom;
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub;
+    std::shared_ptr<SharedSubscription<nav_msgs::msg::Odometry>> odomSource;
     rclcpp::Time startTime;
+    RosListenerPtr listener;
 };

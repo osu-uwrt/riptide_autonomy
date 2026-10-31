@@ -44,8 +44,9 @@ class PublishEKFPose : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override {
-        poseClient = rosnode->create_client<SetPose>(SET_POSE_SERVER_NAME);
-        odomSub = rosnode->create_subscription<Odometry>(ODOMETRY_TOPIC, 10,std::bind(&PublishEKFPose::recieveOdom, this, _1));
+        poseClient = RosEntityCache::client<SetPose>(rosnode, SET_POSE_SERVER_NAME);
+        odomSource = RosEntityCache::subscription<Odometry>(rosnode, ODOMETRY_TOPIC, 10);
+        odomListener = odomSource->listen(std::bind(&PublishEKFPose::recieveOdom, this, _1));
                
     }
 
@@ -240,7 +241,7 @@ class PublishEKFPose : public UWRTActionNode {
         }
 
         rclcpp::Client<SetPose>::SharedPtr poseClient;
-        rclcpp::Subscription<Odometry>::SharedPtr odomSub;
+        std::shared_ptr<SharedSubscription<Odometry>> odomSource;
         std::unique_ptr<rclcpp::Client<SetPose>::FutureAndRequestId> result;
         geometry_msgs::msg::PoseWithCovarianceStamped requestedPose;
         std::chrono::steady_clock::time_point startTime;
@@ -251,5 +252,6 @@ class PublishEKFPose : public UWRTActionNode {
 
         Odometry odom_msg;
         bool odom_recieved = false;
+        RosListenerPtr odomListener;
 
 };

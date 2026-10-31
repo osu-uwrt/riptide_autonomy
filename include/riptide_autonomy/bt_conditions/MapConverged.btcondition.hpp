@@ -89,15 +89,18 @@ class MapConverged : public UWRTConditionNode {
         if(subs.count(object)) {
             return;
         }
-        subs[object] = rosNode()->create_subscription<Cov>("mapping/" + object, rclcpp::SensorDataQoS(),
+        auto source = RosEntityCache::subscription<Cov>(rosNode(), "mapping/" + object, rclcpp::SensorDataQoS());
+        sources[object] = source;
+        subs[object] = source->listen(
             [this, object](const Cov::SharedPtr msg) {
                 latest[object] = {rosNode()->get_clock()->now(), error(*msg)};
             });
     }
 
-    std::unordered_map<std::string, rclcpp::Subscription<Cov>::SharedPtr> subs;
+    std::unordered_map<std::string, std::shared_ptr<SharedSubscription<Cov>>> sources;
     std::unordered_map<std::string, Estimate> latest;
     std::optional<rclcpp::Time> lastTick;
     rclcpp::Time since;
     std::string checking;
+    std::unordered_map<std::string, RosListenerPtr> subs;
 };

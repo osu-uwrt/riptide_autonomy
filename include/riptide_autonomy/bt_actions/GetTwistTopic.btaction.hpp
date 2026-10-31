@@ -47,10 +47,8 @@ class GetTwistTopic : public UWRTActionNode {
         }
 
         msgReceived = false;
-        twistSub = rosNode()->create_subscription<geometry_msgs::msg::Twist>(
-            topic,
-            10,
-            std::bind(&GetTwistTopic::twistCb, this, _1));
+        twistSource = RosEntityCache::subscription<geometry_msgs::msg::Twist>(rosNode(), topic, 10);
+        twistListener = twistSource->listen(std::bind(&GetTwistTopic::twistCb, this, _1));
         
         startTime = rosNode()->get_clock()->now();
 
@@ -100,5 +98,6 @@ class GetTwistTopic : public UWRTActionNode {
     geometry_msgs::msg::Twist latestMsg;
     bool msgReceived;
     rclcpp::Time startTime;
-    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr twistSub;
+    std::shared_ptr<SharedSubscription<geometry_msgs::msg::Twist>> twistSource;
+    RosListenerPtr twistListener;
 };

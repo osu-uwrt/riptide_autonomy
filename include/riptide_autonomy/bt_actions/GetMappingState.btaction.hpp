@@ -29,7 +29,8 @@ class GetMappingState : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        _sub = rosNode()->create_subscription<riptide_msgs2::msg::MappingTargetInfo>(MAPPING_TARGET_INFO_TOPIC, 10, std::bind(&GetMappingState::infoCb, this, _1));
+        _source = RosEntityCache::subscription<riptide_msgs2::msg::MappingTargetInfo>(rosNode(), MAPPING_TARGET_INFO_TOPIC, 10);
+        _listener = _source->listen(std::bind(&GetMappingState::infoCb, this, _1));
     }
 
     /**
@@ -84,5 +85,6 @@ class GetMappingState : public UWRTActionNode {
     bool _hasMsg;
     rclcpp::Time _startTime;
     riptide_msgs2::msg::MappingTargetInfo _latestMsg;
-    rclcpp::Subscription<riptide_msgs2::msg::MappingTargetInfo>::SharedPtr _sub;
+    std::shared_ptr<SharedSubscription<riptide_msgs2::msg::MappingTargetInfo>> _source;
+    RosListenerPtr _listener;
 };

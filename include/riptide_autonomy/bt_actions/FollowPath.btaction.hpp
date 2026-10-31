@@ -61,7 +61,7 @@ class FollowPath : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override {
-        client = rclcpp_action::create_client<Action>(rosnode, "follow_path");
+        client = RosEntityCache::actionClient<Action>(rosnode, "follow_path");
     }
 
     /**

@@ -43,8 +43,9 @@ class TriggerControllerStunt : public UWRTActionNode {
         //     }
         // }
 
-        stuntStateSub = rosnode->create_subscription<std_msgs::msg::UInt16>(STUNT_STATE_STATUS_TOPIC, 10, std::bind(&TriggerControllerStunt::running_stunt_state_cb, this, _1));
-        stuntStatePub = rosnode->create_publisher<std_msgs::msg::UInt16>(STUNT_STATE_TRIGGER_TOPIC, 10);
+        stuntStateSource = RosEntityCache::subscription<std_msgs::msg::UInt16>(rosnode, STUNT_STATE_STATUS_TOPIC, 10);
+        stuntStateListener = stuntStateSource->listen(std::bind(&TriggerControllerStunt::running_stunt_state_cb, this, _1));
+        stuntStatePub = RosEntityCache::publisher<std_msgs::msg::UInt16>(rosnode, STUNT_STATE_TRIGGER_TOPIC, 10);
 
 
     }
@@ -102,10 +103,11 @@ class TriggerControllerStunt : public UWRTActionNode {
         stunt_state = msg->data;
     }
 
-    rclcpp::Subscription<std_msgs::msg::UInt16>::SharedPtr stuntStateSub;
+    std::shared_ptr<SharedSubscription<std_msgs::msg::UInt16>> stuntStateSource;
     rclcpp::Publisher<std_msgs::msg::UInt16>::SharedPtr stuntStatePub;
 
     uint16_t stunt_state = 0;
     rclcpp::Time startTime;
     uint8_t retry_count = 0;
+    RosListenerPtr stuntStateListener;
 };

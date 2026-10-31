@@ -35,7 +35,7 @@ class CallSetStringService : public UWRTActionNode {
      */
     BT::NodeStatus onStart() override {
         srvName = tryGetRequiredInput<std::string>(this, "srv_name", "/some_srv");
-        client = rosnode->create_client<SetString>(srvName);
+        client = RosEntityCache::client<SetString>(rosnode, srvName);
         
         //wait for client
         if(!client->wait_for_service(1s)) {

@@ -26,10 +26,8 @@ class WaitForDetection : public UWRTActionNode {
      * constructor or you will be very sad
      */
     void rosInit() override { 
-        sub = rosNode()->create_subscription<vision_msgs::msg::Detection3DArray>(
-            DETECTIONS_TOPIC, 
-            10,
-            std::bind(&WaitForDetection::detection3dArrayCb, this, _1));
+        source = RosEntityCache::subscription<vision_msgs::msg::Detection3DArray>(rosNode(), DETECTIONS_TOPIC, 10);
+        listener = source->listen(std::bind(&WaitForDetection::detection3dArrayCb, this, _1));
     }
 
     /**
@@ -80,5 +78,6 @@ class WaitForDetection : public UWRTActionNode {
     std::string targetObjectId;
     double timeout;
     rclcpp::Time startTime;
-    rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr sub;
+    std::shared_ptr<SharedSubscription<vision_msgs::msg::Detection3DArray>> source;
+    RosListenerPtr listener;
 };

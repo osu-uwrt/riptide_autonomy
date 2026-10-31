@@ -27,7 +27,8 @@ public:
     }
 
     void rosInit() override {
-        detectionSub = rosnode->create_subscription<vision_msgs::msg::Detection3DArray>(DETECTIONS_TOPIC, 10,
+        detectionSource = RosEntityCache::subscription<vision_msgs::msg::Detection3DArray>(rosnode, DETECTIONS_TOPIC, 10);
+        detectionListener = detectionSource->listen(
             [this](vision_msgs::msg::Detection3DArray::SharedPtr msg) { onDetections(*msg); });
     }
 
@@ -102,5 +103,6 @@ private:
 
     std::mutex mutex;
     std::unordered_map<std::string, Seen> latest;
-    rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr detectionSub;
+    std::shared_ptr<SharedSubscription<vision_msgs::msg::Detection3DArray>> detectionSource;
+    RosListenerPtr detectionListener;
 };

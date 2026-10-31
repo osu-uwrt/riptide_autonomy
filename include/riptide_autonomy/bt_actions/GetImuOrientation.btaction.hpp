@@ -43,10 +43,8 @@ class GetImuOrientation : public UWRTActionNode {
             return BT::NodeStatus::FAILURE;
         }
 
-        sub = rosNode()->create_subscription<sensor_msgs::msg::Imu>(
-            topic,
-            10,
-            std::bind(&GetImuOrientation::msgCb, this, _1));
+        source = RosEntityCache::subscription<sensor_msgs::msg::Imu>(rosNode(), topic, 10);
+        listener = source->listen(std::bind(&GetImuOrientation::msgCb, this, _1));
         
         receivedMsg = false;
         startTime = rosNode()->get_clock()->now();
@@ -64,7 +62,7 @@ class GetImuOrientation : public UWRTActionNode {
             //check if timed out
             if(rosNode()->get_clock()->now() - startTime > 3s)
             {
-                RCLCPP_ERROR(rosNode()->get_logger(), "Failed to receive quaternion on topic %s", sub->get_topic_name());
+                RCLCPP_ERROR(rosNode()->get_logger(), "Failed to receive quaternion on topic %s", source->topicName().c_str());
                 return BT::NodeStatus::FAILURE;
             }
 
@@ -96,5 +94,6 @@ class GetImuOrientation : public UWRTActionNode {
     rclcpp::Time startTime;
     bool receivedMsg;
     geometry_msgs::msg::Vector3 lastRpy;
-    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub;
+    std::shared_ptr<SharedSubscription<sensor_msgs::msg::Imu>> source;
+    RosListenerPtr listener;
 };

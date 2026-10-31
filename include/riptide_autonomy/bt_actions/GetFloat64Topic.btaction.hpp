@@ -45,7 +45,8 @@ class GetFloat64Topic : public UWRTActionNode {
         }
 
         _hasData = false;
-        _sub = rosNode()->create_subscription<std_msgs::msg::Float64>(_topic, 10, std::bind(&GetFloat64Topic::floatCb, this, _1));
+        _source = RosEntityCache::subscription<std_msgs::msg::Float64>(rosNode(), _topic, 10);
+        _listener = _source->listen(std::bind(&GetFloat64Topic::floatCb, this, _1));
         _startTime = rosNode()->get_clock()->now();
         return BT::NodeStatus::RUNNING;
     }
@@ -95,5 +96,6 @@ class GetFloat64Topic : public UWRTActionNode {
     double _data;
     std::string _topic;
     rclcpp::Time _startTime;
-    rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr _sub;
+    std::shared_ptr<SharedSubscription<std_msgs::msg::Float64>> _source;
+    RosListenerPtr _listener;
 };
