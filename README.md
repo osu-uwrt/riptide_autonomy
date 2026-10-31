@@ -1,5 +1,5 @@
 # riptide_autonomy
-This package contains OSU UWRT's competition task code. UWRT uses a behaviortree-based autonomy system, featuring the [BehaviorTree.CPP](https://behaviortree.dev) 4 library, and edits its behavior trees in the Nereus viewer's behavior tree editor. This package contains the following parts of the system:
+This package contains OSU UWRT's competition task code. UWRT uses a behaviortree-based autonomy system, featuring the [BehaviorTree.CPP](https://behaviortree.dev) 4 library, and edits its behavior trees in **notgroot**, UWRT's behavior tree editor. This package contains the following parts of the system:
 
 - All actions, conditions, and decorators used in the behavior trees
 - All behavior trees used on the robot
@@ -23,7 +23,11 @@ The **doTask** node contains an action server which allows for easy running of b
 
 ```ros2 launch riptide_autonomy2 autonomy.launch.py robot:=<robot name>```
 
-The action server should appear as ```<robot name>/autonomy/run_tree``` and ingests the ```riptide_msgs2/action/ExecuteTree``` action type (see [riptide_core](https://github.com/osu-uwrt/riptide_core) for more information). 
+The action server should appear as ```<robot name>/autonomy/run_tree``` and ingests the ```riptide_msgs2/action/ExecuteTree``` action type (see [riptide_core](https://github.com/osu-uwrt/riptide_core) for more information). ```autonomy/list_trees``` lists the missions (the files directly in *trees*).
+
+Each goal logs how long its tree took to load, split into parse, instantiate and ROS init, with its node count and the ROS entities it holds. At startup **doTask** logs the BehaviorTree.CPP version it loaded; it must be 4.10 from `ros-humble-behaviortree-cpp`, so make sure no workspace with another `behaviortree_cpp` (e.g. mercury's 4.9) is sourced after */opt/ros/humble*.
+
+The parameters `enable_groot2` (default `false`) and `groot2_port` (default `1667`) attach a `BT::Groot2Publisher` to each tree **doTask** runs, for a live view.
 
 ### Running using RViz
 Behavior trees can also be run from UWRTs MissionPanel RViz plugin (see riptide_rviz in UWRTs [riptide_gui](https://github.com/osu-uwrt/riptide_gui) repo for more information). So long as the action server is running, the MissionPanel can be used to select behavior trees found in the *trees* directory and run them with the press of a button.
@@ -31,15 +35,24 @@ Behavior trees can also be run from UWRTs MissionPanel RViz plugin (see riptide_
 ### Using the headless interface
 TODO
 
+### Shared ROS entities
+
+Every `<SubTree>` reference builds its own copy of the subtree, so a mission holds tens of thousands of nodes
+(CompTree: about 85k). The nodes get their subscriptions, publishers and clients from `RosEntityCache`
+(*include/riptide_autonomy/RosEntityCache.hpp*): one per name, type and QoS, shared by every node that uses it, and
+gone with the tree. A shared subscription hands each message to the nodes listening to it. Nodes that only want
+messages newer than their `onStart` (GetOdometry and the like) start listening on their first tick, so the thousands of
+copies that never run cost nothing. A new node should get its ROS entities the same way rather than creating its own.
+
 ### Service response scheduling
 
 `doTask` ticks the behavior tree on a worker thread and processes ROS callbacks
 with `rclcpp::executors::SingleThreadedExecutor`. The tree's ROS callbacks
 share a mutually exclusive callback group. Extra executor threads cannot run
 those callbacks concurrently, and Humble's multithreaded executor can starve
-service responses under sustained subscription traffic. Large expanded mission
-trees create subscriptions even for inactive behavior nodes, which amplifies
-this load. See the [upstream starvation investigation](https://github.com/ros2/rclcpp/pull/2702).
+service responses under sustained subscription traffic. Mission trees used to
+create a subscription per node copy, which amplified this load; they now share
+one per topic (see above). See the [upstream starvation investigation](https://github.com/ros2/rclcpp/pull/2702).
 
 The standalone `service_executor` regression checks three service endpoints
 while the client's callback group is busy with odometry subscriptions. With
@@ -78,9 +91,30 @@ UWRT's AUV has strips of LEDs in both cages to indicate robot status to swimmers
 | Fast blink green  | Tag cal success; tree starting    |
 
 ## Editing BehaviorTrees
-Open **Windows > Behavior trees** in the Nereus viewer. It edits the files in *trees* in place (open a subtree in place with
-Space, Ctrl+Enter to go to its definition), checks them as you go, and saves only the files that changed. Deploy as
-usual afterwards. Notes for writing trees by hand in BehaviorTree.CPP 4:
+Edit the trees with **notgroot**: open the *trees* directory (it recognizes a workspace by *trees/lib/node_models.xml*).
+It edits the files in place and checks every save with BehaviorTree.CPP 4.10. Deploy as usual afterwards.
+
+### The file contract with notgroot
+notgroot and this package share no code; the files are the interface. The contract is notgroot's *docs/contract.md*
+(version 2); in short:
+- **Layout.** A mission is any `*.xml` directly in *trees*: `<root BTCPP_format="4" main_tree_to_execute="ID">`, its
+  `<include>`s, then one `<BehaviorTree>` with that ID. A shared subtree is *trees/lib/<ID>.xml* with one
+  `<BehaviorTree ID="<ID>">`. A file includes exactly the subtrees its own tree uses, by paths relative to itself
+  (missions `lib/<ID>.xml`, subtree files `<ID>.xml`); a file reached by several include paths is loaded once.
+- **Node models.** *trees/lib/node_models.xml* holds the Action, Condition and Decorator entries, which
+  `updateNodeModels` regenerates from the plugins (`--check` fails when it is out of date), and the SubTree entries,
+  which notgroot owns and `updateNodeModels` keeps. Entries are sorted by ID and ports by name; SubTree ports carry no
+  `default=`. `updateNodeModels --builtins FILE` writes BehaviorTree.CPP's own models, which notgroot ships.
+- **Format.** Both sides write the same canonical XML: UTF-8 declaration, 4-space indent, one element per line,
+  attributes in their stored order, no blank lines, and comments kept verbatim. notgroot stores its metadata only as
+  `<!-- notgroot:key=value -->` comments before the element they describe, so keep comments when editing by hand or
+  with tools.
+- **Ports.** `{key}` is a blackboard key and anything else is a literal. Subtrees have isolated blackboards. Converted
+  v3 trees pass v3's empty-key remap as `{__v3_empty}`.
+- **Validation.** `TestTreesLoad` (every mission and every *lib* subtree with the real plugins) and
+  `updateNodeModels --check` are the ground truth.
+
+Notes for writing trees by hand in BehaviorTree.CPP 4:
 - A SubTree argument is `{key}` to pass a parent key, or plain text to pass that text.
 - An output port takes `{key}`; a bare name stores nothing.
 - A value that starts with `{` and ends with `}` is one key, so `"{a},{b}"` reads a key named `a},{b`: end such text with
