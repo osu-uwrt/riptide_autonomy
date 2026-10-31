@@ -28,9 +28,9 @@
                                     </RetryUntilSuccessfulOrTimeout>
                                 </Sequence>
                             </IfThenElse>
-                            <CalculateDistance dist="{dist_travelled}" x1="{old_x}" x2="{curr_x}" y1="{old_y}" y2="{curr_y}" z1="{old_z}" z2="{curr_z}"/>
+                            <CalculateDistance dist="{dist_traveled}" x1="{old_x}" x2="{curr_x}" y1="{old_y}" y2="{curr_y}" z1="{old_z}" z2="{curr_z}"/>
                             <IfThenElse name="avoid obstacle if necessary">
-                                <CompareNums a="{dist_travelled}" b="0" name="expect x meter travelled in timeout seconds" test="&lt;"/>
+                                <CompareNums a="{dist_traveled}" b="0" name="expect x meter traveled in timeout seconds" test="&lt;"/>
                                 <RetryUntilSuccessfulOrTimeout num_seconds="60">
                                     <Sequence name="if dist &lt; something, move out the way">
                                         <Info message="Detected an obstacle. Attempting to move out of the way"/>

@@ -97,7 +97,7 @@ TEST_F(BtTest, test_AddWaypoint_bad_heading) {
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::FAILURE);
 }
 
-TEST_F(BtTest, test_AddArc_approach_then_arc_looking_at_centre) {
+TEST_F(BtTest, test_AddArc_approach_then_arc_looking_at_center) {
     BT::NodeConfiguration cfg;
     cfg.input_ports["path"] = "a: 0,0,0,0;";
     cfg.input_ports["frame"] = "g";
@@ -112,7 +112,7 @@ TEST_F(BtTest, test_AddArc_approach_then_arc_looking_at_centre) {
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
     std::string out;
     ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
-    // A line to (-7, 0), then a quarter turn round (-10, 0) to (-10, 3), facing the centre throughout.
+    // A line to (-7, 0), then a quarter turn around (-10, 0) to (-10, 3), facing the center throughout.
     const std::string start = "a: 0,0,0,0; g: -7,0,-1.5,0 | heading=look_at | look_at=-10,0,-1.5; g: -10,";
     ASSERT_EQ(out.substr(0, start.size()), start);
     ASSERT_NE(out.find(",3,-1.5,0 | arc=-10,0,1.570796327 | heading=look_at | look_at=-10,0,-1.5;"), std::string::npos) << out;

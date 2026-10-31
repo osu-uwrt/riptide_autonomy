@@ -19,12 +19,12 @@
  *
  * Options after a waypoint, each "| key=value" (riptide_msgs2/PathSegment; points
  * in the waypoint's frame), say how the path gets there:
- *   arc=cx,cy,sweep       round (cx, cy) by sweep rad (+ = counterclockwise from above)
+ *   arc=cx,cy,sweep       around (cx, cy) by sweep rad (+ = counterclockwise from above)
  *   heading=path|look_at  face the direction of travel / look_at (default: blend to yaw)
  *   look_at=x,y,z         yaw_offset=rad          spin=rad (extra yaw over the leg)
  *   look_frame=frame      look_at is in this TF frame (default its origin) and the
  *                         controller keeps facing it as it moves; implies heading=look_at
- *   spin_rate=rad/m       steady spin per metre (the spin_rate port sets it for every leg)
+ *   spin_rate=rad/m       steady spin per meter (the spin_rate port sets it for every leg)
  *   yaw_frame=frame       the waypoint's roll/pitch/yaw are in this frame instead (e.g. world, to
  *                         hold a world heading at a point that follows an object frame)
  * AddWaypoint and AddArc write these.
@@ -50,7 +50,7 @@ class FollowPath : public UWRTActionNode {
             UwrtInput("min_depth", "Shallowest allowed z in world (default -0.55)"),
             UwrtInput("max_depth", "Deepest allowed z in world (default -4)"),
             UwrtInput("timeout", "Seconds before giving up (default 60)"),
-            UwrtInput("spin_rate", "Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)"),
+            UwrtInput("spin_rate", "Steady spin for the whole path, rad per meter (about rad/s / cruise speed; default 0)"),
             UwrtInput("max_speed", "Cruise speed cap for this path, m/s (default 0: the controller's own limit)")
         };
     }

@@ -10,14 +10,14 @@
         </SubTree>
         <Action ID="AddArc">
             <input_port name="approach" type="BT::AnyTypeAllowed">false: start from the previous point, no line to the arc (default true)</input_port>
-            <input_port name="cx" type="BT::AnyTypeAllowed">Centre x in frame</input_port>
-            <input_port name="cy" type="BT::AnyTypeAllowed">Centre y in frame</input_port>
+            <input_port name="cx" type="BT::AnyTypeAllowed">Center x in frame</input_port>
+            <input_port name="cy" type="BT::AnyTypeAllowed">Center y in frame</input_port>
             <input_port name="end_radius" type="BT::AnyTypeAllowed">Radius at the end (default radius; differs = spiral)</input_port>
-            <input_port name="frame" type="BT::AnyTypeAllowed">Frame of the centre and angles (default: FollowPath's frame)</input_port>
+            <input_port name="frame" type="BT::AnyTypeAllowed">Frame of the center and angles (default: FollowPath's frame)</input_port>
             <input_port name="heading" type="BT::AnyTypeAllowed">waypoint (default), path (face travel) or look_at; also the approach line's</input_port>
             <input_port name="look_frame" type="BT::AnyTypeAllowed">Face this TF frame, followed live as it moves (sets heading look_at)</input_port>
-            <input_port name="look_x" type="BT::AnyTypeAllowed">look_at point in frame (default: the centre), or in look_frame (default 0)</input_port>
-            <input_port name="look_y" type="BT::AnyTypeAllowed">look_at point in frame (default: the centre), or in look_frame (default 0)</input_port>
+            <input_port name="look_x" type="BT::AnyTypeAllowed">look_at point in frame (default: the center), or in look_frame (default 0)</input_port>
+            <input_port name="look_y" type="BT::AnyTypeAllowed">look_at point in frame (default: the center), or in look_frame (default 0)</input_port>
             <input_port name="look_z" type="BT::AnyTypeAllowed">look_at point in frame (default: z), or in look_frame (default 0)</input_port>
             <output_port name="out" type="std::string">Path with the arc appended</output_port>
             <input_port name="pan" type="BT::AnyTypeAllowed">Swing the heading this far each way along the arc (rad, needs heading path or look_at; default 0)</input_port>
@@ -25,9 +25,9 @@
             <input_port name="path" type="BT::AnyTypeAllowed">Waypoints so far (leave empty to start a new path)</input_port>
             <input_port name="radius" type="BT::AnyTypeAllowed"/>
             <input_port name="spin" type="BT::AnyTypeAllowed">Extra yaw over the arc, 6.283 = one turn (default 0)</input_port>
-            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin on the arc, rad per metre (default 0)</input_port>
+            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin on the arc, rad per meter (default 0)</input_port>
             <input_port name="start_angle" type="BT::AnyTypeAllowed">Where the arc starts, from the frame's +x (rad)</input_port>
-            <input_port name="sweep" type="BT::AnyTypeAllowed">How far round (rad, + = counterclockwise from above)</input_port>
+            <input_port name="sweep" type="BT::AnyTypeAllowed">How far around (rad, + = counterclockwise from above)</input_port>
             <input_port name="yaw" type="BT::AnyTypeAllowed">End yaw for heading waypoint (default 0)</input_port>
             <input_port name="yaw_frame" type="BT::AnyTypeAllowed">End yaw is in this frame instead of frame (e.g. world)</input_port>
             <input_port name="yaw_offset" type="BT::AnyTypeAllowed">Added to path / look_at yaw (default 0)</input_port>
@@ -45,7 +45,7 @@
             <input_port name="pitch" type="BT::AnyTypeAllowed">Pitch at this waypoint (default 0)</input_port>
             <input_port name="roll" type="BT::AnyTypeAllowed">Roll at this waypoint (default 0)</input_port>
             <input_port name="spin" type="BT::AnyTypeAllowed">Extra yaw over this leg, 6.283 = one turn (default 0)</input_port>
-            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin on this leg, rad per metre (default 0)</input_port>
+            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin on this leg, rad per meter (default 0)</input_port>
             <input_port name="x" type="BT::AnyTypeAllowed"/>
             <input_port name="y" type="BT::AnyTypeAllowed"/>
             <input_port name="yaw" type="BT::AnyTypeAllowed">End yaw for heading waypoint (default 0)</input_port>
@@ -252,7 +252,7 @@
             <input_port name="max_depth" type="BT::AnyTypeAllowed">Deepest allowed z in world (default -4)</input_port>
             <input_port name="max_speed" type="BT::AnyTypeAllowed">Cruise speed cap for this path, m/s (default 0: the controller's own limit)</input_port>
             <input_port name="min_depth" type="BT::AnyTypeAllowed">Shallowest allowed z in world (default -0.55)</input_port>
-            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)</input_port>
+            <input_port name="spin_rate" type="BT::AnyTypeAllowed">Steady spin for the whole path, rad per meter (about rad/s / cruise speed; default 0)</input_port>
             <input_port name="timeout" type="BT::AnyTypeAllowed">Seconds before giving up (default 60)</input_port>
             <input_port name="waypoints" type="BT::AnyTypeAllowed">"x,y,z,yaw; frame: x,y,z,yaw | arc=cx,cy,sweep; ..." (or x,y,z,roll,pitch,yaw); {blackboard} references allowed</input_port>
         </Action>

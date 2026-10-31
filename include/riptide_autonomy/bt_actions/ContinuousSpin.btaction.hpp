@@ -41,7 +41,7 @@ public:
                     !std::isfinite(msg->twist.twist.angular.z)) return;
                 if (initialized) {
                     // Each odometry interval must contain less than half a turn.
-                    travelled += std::remainder(rpy.z - lastYaw, TWO_PI);
+                    traveled += std::remainder(rpy.z - lastYaw, TWO_PI);
                 }
                 lastYaw = rpy.z;
                 odom = *msg;
@@ -53,7 +53,7 @@ public:
     BT::NodeStatus onStart() override {
         std::lock_guard<std::mutex> lock(mutex);
         active = initialized = received = false;
-        travelled = commanded = 0;
+        traveled = commanded = 0;
         const int cycles = tryGetRequiredInput<int>(this, "num_cycles", -1);
         rate = tryGetOptionalInput<double>(this, "yaw_rate", std::numeric_limits<double>::infinity());
         timeout = tryGetOptionalInput<double>(this, "timeout_secs", 90);
@@ -75,7 +75,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
         const auto now = Clock::now();
         if (seconds(now - started) > timeout || seconds(now - lastOdom) > odomTimeout) {
-            RCLCPP_ERROR(rosnode->get_logger(), "ContinuousSpin timed out (rotation %.3f / %.3f rad).", travelled, target);
+            RCLCPP_ERROR(rosnode->get_logger(), "ContinuousSpin timed out (rotation %.3f / %.3f rad).", traveled, target);
             holdCurrentHeading();
             active = false;
             return BT::NodeStatus::FAILURE;
@@ -92,12 +92,12 @@ public:
         const double dt = std::max(0.0, std::min(seconds(now - lastTick), 0.1));
         lastTick = now;
         const double ramped = std::isinf(rate) ? target : commanded + rate * dt;
-        commanded = std::max(0.0, std::min({target, ramped, travelled + MAX_LEAD}));
+        commanded = std::max(0.0, std::min({target, ramped, traveled + MAX_LEAD}));
         publishPosition();
         publishHeading(initialYaw + commanded);
 
         const auto rpy = toRPY(odom.pose.pose.orientation);
-        if (commanded >= target && std::abs(target - travelled) < 0.05 &&
+        if (commanded >= target && std::abs(target - traveled) < 0.05 &&
             std::abs(odom.twist.twist.angular.z) < 0.05 &&
             std::abs(rpy.x) < 0.1 && std::abs(rpy.y) < 0.1) {
             active = false;
@@ -145,7 +145,7 @@ private:
     std::mutex mutex;
     bool active = false, initialized = false, received = false;
     double rate = 0, timeout = 0, odomTimeout = 0;
-    double target = 0, travelled = 0, commanded = 0, initialYaw = 0, lastYaw = 0;
+    double target = 0, traveled = 0, commanded = 0, initialYaw = 0, lastYaw = 0;
     Clock::time_point started, lastOdom, lastTick;
     nav_msgs::msg::Odometry odom;
     geometry_msgs::msg::Point position;

@@ -128,7 +128,7 @@ void beginWaypoint(UwrtBtNode& n, std::ostringstream& out, const std::string& fr
 }
 
 // The heading options (" | heading=..."), from the node's heading ports. look_x/y/z
-// default to `look` (the arc centre for AddArc), or to look_frame's origin when set.
+// default to `look` (the arc center for AddArc), or to look_frame's origin when set.
 // extraYawOffset is added to yaw_offset and spin is scaled by spinScale (AddArc's pan pieces).
 bool appendHeading(UwrtBtNode& n, std::ostringstream& out, const double look[3], double extraYawOffset = 0, double spinScale = 1) {
     const std::string lookFrame = tryGetOptionalInput<std::string>(&n, "look_frame", "");
@@ -214,7 +214,7 @@ BT::NodeStatus addWaypoint(UwrtBtNode& n) {
 
 /**
  * @brief Appends an arc about (cx, cy) to a FollowPath waypoint string: a straight line to the
- * point `radius` from the centre at `start_angle`, then `sweep` radians round (+ = counterclockwise
+ * point `radius` from the center at `start_angle`, then `sweep` radians around (+ = counterclockwise
  * seen from above), ending at `end_radius` (a spiral if it differs) and depth z. Angles are from
  * the frame's +x axis. With `pan` the arc is split into pieces of about `pan_step` radians whose
  * yaw_offset alternates +pan, -pan, so the heading (path or look_at) swings side to side along it;
@@ -369,36 +369,36 @@ void bulkRegisterSimpleActions(BT::BehaviorTreeFactory &factory) {
             UwrtInput("look_z", "look_at point in frame, or in look_frame (default 0)"),
             UwrtInput("yaw_offset", "Added to path / look_at yaw (default 0)"),
             UwrtInput("spin", "Extra yaw over this leg, 6.283 = one turn (default 0)"),
-            UwrtInput("spin_rate", "Steady spin on this leg, rad per metre (default 0)"),
+            UwrtInput("spin_rate", "Steady spin on this leg, rad per meter (default 0)"),
             UwrtInput("yaw_frame", "roll/pitch/yaw are in this frame instead of frame (e.g. world: hold a world heading)"),
             UwrtOutput("out", "Path with this waypoint appended")
         }
     );
 
     /**
-     * Appends an arc (a line to its start, then round the centre) to a FollowPath waypoint string.
+     * Appends an arc (a line to its start, then around the center) to a FollowPath waypoint string.
      */
     registerSimpleUwrtAction(factory, "AddArc", addArc,
         {
             UwrtInput("path", "Waypoints so far (leave empty to start a new path)"),
-            UwrtInput("frame", "Frame of the centre and angles (default: FollowPath's frame)"),
-            UwrtInput("cx", "Centre x in frame"),
-            UwrtInput("cy", "Centre y in frame"),
+            UwrtInput("frame", "Frame of the center and angles (default: FollowPath's frame)"),
+            UwrtInput("cx", "Center x in frame"),
+            UwrtInput("cy", "Center y in frame"),
             UwrtInput("radius"),
             UwrtInput("start_angle", "Where the arc starts, from the frame's +x (rad)"),
-            UwrtInput("sweep", "How far round (rad, + = counterclockwise from above)"),
+            UwrtInput("sweep", "How far around (rad, + = counterclockwise from above)"),
             UwrtInput("z", "Depth in frame"),
             UwrtInput("end_radius", "Radius at the end (default radius; differs = spiral)"),
             UwrtInput("approach", "false: start from the previous point, no line to the arc (default true)"),
             UwrtInput("yaw", "End yaw for heading waypoint (default 0)"),
             UwrtInput("heading", "waypoint (default), path (face travel) or look_at; also the approach line's"),
             UwrtInput("look_frame", "Face this TF frame, followed live as it moves (sets heading look_at)"),
-            UwrtInput("look_x", "look_at point in frame (default: the centre), or in look_frame (default 0)"),
-            UwrtInput("look_y", "look_at point in frame (default: the centre), or in look_frame (default 0)"),
+            UwrtInput("look_x", "look_at point in frame (default: the center), or in look_frame (default 0)"),
+            UwrtInput("look_y", "look_at point in frame (default: the center), or in look_frame (default 0)"),
             UwrtInput("look_z", "look_at point in frame (default: z), or in look_frame (default 0)"),
             UwrtInput("yaw_offset", "Added to path / look_at yaw (default 0)"),
             UwrtInput("spin", "Extra yaw over the arc, 6.283 = one turn (default 0)"),
-            UwrtInput("spin_rate", "Steady spin on the arc, rad per metre (default 0)"),
+            UwrtInput("spin_rate", "Steady spin on the arc, rad per meter (default 0)"),
             UwrtInput("yaw_frame", "End yaw is in this frame instead of frame (e.g. world)"),
             UwrtInput("pan", "Swing the heading this far each way along the arc (rad, needs heading path or look_at; default 0)"),
             UwrtInput("pan_step", "Arc per pan piece (rad, default 0.25)"),
