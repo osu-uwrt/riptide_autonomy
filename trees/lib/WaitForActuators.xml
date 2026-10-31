@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="WaitForActuators">
+        <Fallback name="wait for not busy">
+            <RetryUntilSuccessfulOrTimeout num_seconds="{timeout_secs}">
+                <Sequence>
+                    <Info message="Waiting for actuators..."/>
+                    <Wait seconds="0.25"/>
+                    <GetActuatorStatus actuators_busy="{busy}" claw_state="{__v3_empty}" dropper_available_count="{__v3_empty}" dropper_state="{__v3_empty}" torpedo_available_count="{__v3_empty}" torpedo_state="{__v3_empty}"/>
+                    <Inverter>
+                        <IsTrue value="{busy}"/>
+                    </Inverter>
+                    <Info message="Actuators free"/>
+                </Sequence>
+            </RetryUntilSuccessfulOrTimeout>
+            <ForceFailure>
+                <Error message="Actuators busy!"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
+</root>

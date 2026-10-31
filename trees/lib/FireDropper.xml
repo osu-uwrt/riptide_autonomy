@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="CheckActuatorStates.xml"/>
+    <include path="WaitForActuators.xml"/>
+    <BehaviorTree ID="FireDropper">
+        <ForceSuccess name="REMOVE ME">
+            <Sequence>
+                <SetBlackboardV3 output_key="10" value="10"/>
+                <Info message="Attempting to fire Dropper..."/>
+                <SetBlackboardV3 output_key="dropper_srv" value="command/actuator/dropper"/>
+                <SubTree ID="CheckActuatorStates"/>
+                <SubTree ID="WaitForActuators" timeout_secs="{10}"/>
+                <GetActuatorStatus actuators_busy="{__v3_empty}" claw_state="{__v3_empty}" dropper_available_count="{droppers}" dropper_state="{__v3_empty}" torpedo_available_count="{__v3_empty}" torpedo_state="{__v3_empty}"/>
+                <Info message="{droppers} droppers available."/>
+                <Format format="{droppers}.0" out="{droppersstr}"/>
+                <IfThenElse>
+                    <CompareNums a="{droppersstr}" b="0" name="droppers available?" test="&gt;"/>
+                    <Sequence name="fire dropper">
+                        <Info message="Calling trigger service {dropper_srv}"/>
+                        <CallTriggerService srv_name="{dropper_srv}" time_limit_secs="1"/>
+                        <Wait seconds="1"/>
+                        <SubTree ID="WaitForActuators" timeout_secs="{10}"/>
+                        <Info message="Dropper fired!"/>
+                    </Sequence>
+                    <ForceFailure>
+                        <Error message="No dropper available!"/>
+                    </ForceFailure>
+                </IfThenElse>
+            </Sequence>
+        </ForceSuccess>
+    </BehaviorTree>
+</root>

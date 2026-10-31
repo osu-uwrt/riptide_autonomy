@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="SearchMpc.xml"/>
+    <include path="SetActuatorsArmed.xml"/>
+    <include path="ShootBothObjectsMpc.xml"/>
+    <BehaviorTree ID="TorpedoTreeMpc">
+        <Sequence name="TORPEDO">
+            <SetBlackboardV3 output_key="torpedo" value="torpedo"/>
+            <SetBlackboardV3 output_key="1" value="1"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 name="One full SearchMpc cycle (first, wider, closer sweeps) is about 100 s" output_key="search_timeout" value="100"/>
+            <SetBlackboardV3 output_key="target_cov" value="0.0025"/>
+            <SetBlackboardV3 output_key="min_dist" value="1"/>
+            <SetBlackboardV3 output_key="max_dist" value="2"/>
+            <SetBlackboardV3 output_key="object_name" value="torpedo"/>
+            <SetBlackboardV3 output_key="pre_torpedo_pose_frame" value="pre_torpedo_pose_frame"/>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" is_dfc="{0}"/>
+                    <SubTree ID="SearchMpc" max_dist="{max_dist}" min_dist="{min_dist}" object_name="{object_name}" target_cov="{target_cov}" timeout_secs="{search_timeout}"/>
+                </Sequence>
+            </ForceSuccess>
+            <Fallback name="Try run while armed">
+                <Sequence name="torpedo">
+                    <SetBlackboardV3 output_key="talos/torpedo_1_link" value="talos/torpedo_1_link"/>
+                    <SetBlackboardV3 output_key="talos/torpedo_0_link" value="talos/torpedo_0_link"/>
+                    <IfThenElse>
+                        <CompareNums a="{repair_mission}" b="0" test="=="/>
+                        <Sequence>
+                            <SetBlackboardV3 output_key="torpedo_first" value="blood_hole_large"/>
+                            <SetBlackboardV3 output_key="torpedo_second" value="blood_hole_small"/>
+                        </Sequence>
+                        <Sequence>
+                            <SetBlackboardV3 output_key="torpedo_first" value="fire_hole_large"/>
+                            <SetBlackboardV3 output_key="torpedo_second" value="fire_hole_small"/>
+                        </Sequence>
+                    </IfThenElse>
+                    <SubTree ID="SetActuatorsArmed" armed="{1}"/>
+                    <SubTree ID="ShootBothObjectsMpc" link_1="{talos/torpedo_0_link}" link_2="{talos/torpedo_1_link}" object_1="{torpedo_first}" object_2="{torpedo_second}" torpedo_name="{torpedo}"/>
+                </Sequence>
+                <ForceFailure>
+                    <Sequence name="handle fail">
+                        <Error message="Torpedo tree failed, disarming actuators"/>
+                        <SubTree ID="SetActuatorsArmed" armed="{0}"/>
+                    </Sequence>
+                </ForceFailure>
+            </Fallback>
+            <Sequence name="handle success">
+                <Info message="Torpedo tree succeeded, disarming torpedos"/>
+                <SubTree ID="SetActuatorsArmed" armed="{0}"/>
+            </Sequence>
+        </Sequence>
+    </BehaviorTree>
+</root>

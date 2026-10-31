@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="AlignLink.xml"/>
+    <include path="WaitForController.xml"/>
+    <include path="FireTorpedo.xml"/>
+    <BehaviorTree ID="ShootSearchedObject">
+        <Sequence name="shoot already refined object">
+            <SetBlackboardV3 output_key="ctrler_timeout" value="60"/>
+            <SetBlackboardV3 output_key="scale_trust" value="0.99"/>
+            <SetBlackboardV3 output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboardV3 output_key="shoot_prox" value="0.35"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <Format format="{object_name}_frame" out="{frame_to_shoot}"/>
+            <Info message="Attempting to shoot object {object_name}"/>
+            <SetStatus status="aligning"/>
+            <ForceSuccess>
+                <RetryUntilSuccessfulV3 num_attempts="2">
+                    <Sequence>
+                        <Math a="{shoot_prox}" b="0.5" operator="+" out="{shoot_prox_plus}"/>
+                        <SubTree ID="AlignLink" frame_name="{frame_to_shoot}" link_name="{torpedo_link_name}" prox_x="{shoot_prox_plus}" prox_z="{0}"/>
+                        <SubTree ID="AlignLink" frame_name="{frame_to_shoot}" link_name="{torpedo_link_name}" prox_x="{shoot_prox}" prox_z="{0}"/>
+                        <SubTree ID="WaitForController" dist="{ctrler_dist}" link_frame="{torpedo_link_name}" target_frame="{frame_to_shoot}" timeout="{ctrler_timeout}" trust="{scale_trust}"/>
+                    </Sequence>
+                </RetryUntilSuccessfulV3>
+            </ForceSuccess>
+            <SetStatus status="performing"/>
+            <RetryUntilSuccessfulV3 num_attempts="3">
+                <SubTree ID="FireTorpedo"/>
+            </RetryUntilSuccessfulV3>
+        </Sequence>
+    </BehaviorTree>
+</root>

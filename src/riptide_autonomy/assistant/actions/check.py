@@ -121,10 +121,10 @@ def checkFiles(args, autonomyRootLoc: str):
     
     return True
     
-#invokes the checkBT executable.
+#checks that trees/lib/node_models.xml (the editor's node list) matches the compiled nodes.
 #returns True on success, False on fail.
 def checkBT():
-    return not os.system("ros2 run riptide_autonomy2 checkBT")
+    return not os.system("ros2 run riptide_autonomy2 updateNodeModels --check")
 
 
 #invokes the test_nodes executable

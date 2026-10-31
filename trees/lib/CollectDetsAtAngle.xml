@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="PrimitiveMoveOrientation.xml"/>
+    <include path="CollectDets.xml"/>
+    <BehaviorTree ID="CollectDetsAtAngle">
+        <Fallback>
+            <Sequence>
+                <Info message="collecting dets on {target} at angle offset {rel_yaw}, target error {target_error}"/>
+                <SetBlackboardV3 output_key="15" value="15"/>
+                <SetBlackboardV3 output_key="0" value="0"/>
+                <Math a="{rel_yaw}" b="3.1415" operator="+" out="{frame_yaw}"/>
+                <getCovariance Covariance="{cov_at_start}" Target="{target}"/>
+                <CompareNums a="{cov_at_start}" b="{target_error}" name="break early if we found it" test="&gt;"/>
+                <TransformPose from_frame="{frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{goy}" out_x="{gx}" out_y="{gy}" out_z="{gz}" oy="{frame_yaw}" to_frame="world" x="0" y="0" z="0"/>
+                <SubTree ID="PrimitiveMoveOrientation" p="{0}" r="{0}" timeout="{15}" y="{goy}"/>
+                <SubTree ID="CollectDets" target="{target}" target_error="{target_error}"/>
+            </Sequence>
+            <Sequence name="check if broke because object found">
+                <getCovariance Covariance="{err_at_end}" Target="{target}"/>
+                <CompareNums a="{err_at_end}" b="{target_error}" name="break early if we found it" test="&lt;"/>
+            </Sequence>
+        </Fallback>
+    </BehaviorTree>
+</root>

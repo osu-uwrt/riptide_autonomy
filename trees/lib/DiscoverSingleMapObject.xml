@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="PrimitiveMoveOrientation.xml"/>
+    <include path="CollectDets.xml"/>
+    <BehaviorTree ID="DiscoverSingleMapObject">
+        <Sequence>
+            <Info message="discovering {target} using delta angle {delta_angle}, target error {target_error}"/>
+            <IfThenElse>
+                <CheckBlackboardExists input="{target}"/>
+                <Sequence name="Discover target">
+                    <SetBlackboardV3 output_key="15" value="15"/>
+                    <SetBlackboardV3 output_key="0" value="0"/>
+                    <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{curr_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                    <Math a="{curr_yaw}" b="{delta_angle}" operator="+" out="{targ_angle}"/>
+                    <SubTree ID="PrimitiveMoveOrientation" p="{0}" r="{0}" timeout="{15}" y="{targ_angle}"/>
+                    <SetMappingTarget lock_map="0" name="Reset mapping object" target_object="{target}" time_limit_secs="3"/>
+                    <SubTree ID="CollectDets" target="{target}" target_error="{target_error}"/>
+                    <SetBlackboardV3 output_key="discovered_object" value="{target}"/>
+                </Sequence>
+                <ForceFailure>
+                    <Info message="Skipping discovery because target is not specified."/>
+                </ForceFailure>
+            </IfThenElse>
+        </Sequence>
+    </BehaviorTree>
+</root>

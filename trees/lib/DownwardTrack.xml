@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="PrimitiveMovePosition.xml"/>
+    <BehaviorTree ID="DownwardTrack">
+        <Sequence name="Follow the detection until the estimate converges or it is lost">
+            <Info message="{object_name} in view: following the detection"/>
+            <SetBlackboardV3 output_key="dfc_link" value="talos/dfc_base_link"/>
+            <SetBlackboardV3 output_key="step_secs" value="0.5"/>
+            <RetryUntilSuccessfulOrTimeout num_seconds="30">
+                <Sequence name="re-aim at the latest estimate">
+                    <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                    <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                    <ForceSuccess>
+                        <SubTree ID="PrimitiveMovePosition" timeout="{step_secs}" x="{ax}" y="{ay}" z="{az}"/>
+                    </ForceSuccess>
+                    <getCovariance Covariance="{cov}" Target="{object_name}"/>
+                    <Fallback name="done?">
+                        <CompareNums a="{cov}" b="{target_cov}" name="estimate converged" test="&lt;"/>
+                        <Sequence name="lost it">
+                            <Inverter>
+                                <SeenRecently max_age_secs="3.0" min_score="0.2" object_name="{object_name}"/>
+                            </Inverter>
+                            <Info message="Lost sight of {object_name}; resuming the search"/>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </RetryUntilSuccessfulOrTimeout>
+        </Sequence>
+    </BehaviorTree>
+</root>

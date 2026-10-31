@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="RotateToFrame.xml"/>
+    <include path="CollectDets.xml"/>
+    <include path="CollectDetsAtAngle.xml"/>
+    <include path="PassThroughSlalom.xml"/>
+    <BehaviorTree ID="SingleSlalom">
+        <Sequence>
+            <SetBlackboardV3 output_key="srch_angle" value="0.348"/>
+            <SetBlackboardV3 output_key="target_srch_err" value="0.2"/>
+            <Format format="{slalom_type}_frame" out="{slalom_frame}"/>
+            <ForceSuccess>
+                <Sequence>
+                    <AlwaysFailure name="Comment out rotation"/>
+                    <SubTree ID="RotateToFrame" relative_yaw="{0}" target_frame="{slalom_frame}"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess>
+                <CallSetStringService data="{slalom_type}" srv_name="set_slalom_type" time_limit_secs="3"/>
+            </ForceSuccess>
+            <SetMappingTarget lock_map="0" target_object="{slalom_type}" time_limit_secs="3"/>
+            <ForceSuccess>
+                <Sequence>
+                    <AlwaysFailure name="Comment out mapping stuff"/>
+                    <Fallback>
+                        <SubTree ID="CollectDets" target="{slalom_type}" target_error="{target_srch_err}"/>
+                        <SubTree ID="CollectDetsAtAngle" frame="{slalom_frame}" rel_yaw="{srch_angle}" target="{slalom_type}" target_error="{target_srch_err}"/>
+                        <Sequence>
+                            <Math a="{srch_angle}" b="-1" operator="*" out="{neg_srch_angle}"/>
+                            <SubTree ID="CollectDetsAtAngle" frame="{slalom_frame}" rel_yaw="{neg_srch_angle}" target="{slalom_type}" target_error="{target_srch_err}"/>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </ForceSuccess>
+            <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+            <SubTree ID="PassThroughSlalom" pass_on_left="{pass_on_left}" slalom_object="{slalom_frame}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

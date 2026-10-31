@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="RelativeMove.xml"/>
+    <BehaviorTree ID="PassThroughSlalom">
+        <Sequence name="PassThruSlalom">
+            <SetBlackboardV3 output_key="3.1415" value="3.1415"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 name="Width of whole row of 3 pipes" output_key="whole_slalom_width" value="3.2"/>
+            <SetBlackboardV3 name="Space between slaloms" output_key="space_between_slaloms" value="1.5"/>
+            <Math a="{whole_slalom_width}" b="4" operator="/" out="{slalom_lat_offset_pos}"/>
+            <Math a="{space_between_slaloms}" b="2" operator="/" out="{slalom_long_offset_pos}"/>
+            <Math a="{slalom_lat_offset_pos}" b="-1" operator="*" out="{slalom_lat_offset_neg}"/>
+            <Math a="{slalom_long_offset_pos}" b="-0.5" operator="*" out="{slalom_long_offset_neg}"/>
+            <IfThenElse name="Choose lateral slalom offset">
+                <CompareNums a="{pass_on_left}" b="1" test="=="/>
+                <SetBlackboardV3 name="Negative is left bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_neg}"/>
+                <SetBlackboardV3 name="Positive is right bc we are facing the object" output_key="slalom_lat_offset" value="{slalom_lat_offset_pos}"/>
+            </IfThenElse>
+            <SubTree ID="RelativeMove" frame_name="{slalom_object}" op="{0}" or="{0}" oy="{3.1415}" x="{slalom_long_offset_pos}" y="{slalom_lat_offset}" z="{0}"/>
+            <SubTree ID="RelativeMove" frame_name="{slalom_object}" op="{0}" or="{0}" oy="{3.1415}" x="{0}" y="{slalom_lat_offset}" z="{0}"/>
+            <SubTree ID="RelativeMove" frame_name="{slalom_object}" op="{0}" or="{0}" oy="{3.1415}" x="{slalom_long_offset_neg}" y="{slalom_lat_offset}" z="{0}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

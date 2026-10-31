@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="DownwardSearchMpc.xml"/>
+    <include path="Move.xml"/>
+    <include path="WaitForController.xml"/>
+    <BehaviorTree ID="pickupObjectMpc">
+        <Sequence>
+            <SetBlackboardV3 output_key="3.1415" value="3.1415"/>
+            <Sequence name="set blackboards">
+                <Format format="{object_name}_frame" out="{object_frame}"/>
+                <SetBlackboardV3 output_key="0" value="0"/>
+                <SetBlackboardV3 output_key="1" value="1"/>
+            </Sequence>
+            <SubTree ID="SetActiveCamera" is_dfc="{1}"/>
+            <ForceSuccess>
+                <SubTree ID="DownwardSearchMpc" min_dist="{search_prox}" object_name="{object_name}" target_cov="{target_err}" timeout_sec="{search_timeout}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <Sequence name="Downward camera over it, then until its estimate is tight (at most 5 s)">
+                    <SetBlackboardV3 output_key="dfc_link" value="talos/dfc_base_link"/>
+                    <SetBlackboardV3 name="Tight enough to line the claw up on" output_key="hover_cov" value="0.0005"/>
+                    <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{object_frame}" x="0" y="0" z="0"/>
+                    <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the object" op="{link_pitch}" or="{link_roll}" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{hover_yaw}" out_x="{hover_x}" out_y="{hover_y}" out_z="{hover_z}" oy="{link_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{minisearch_prox}"/>
+                    <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the object" out="{hover_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
+                    <FollowPath frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
+                    <RetryUntilSuccessfulOrTimeout name="Until the estimate is tight" num_seconds="5">
+                        <Sequence>
+                            <Wait seconds="0.2"/>
+                            <MapConverged object="{object_name}" target_cov="{hover_cov}"/>
+                        </Sequence>
+                    </RetryUntilSuccessfulOrTimeout>
+                </Sequence>
+            </ForceSuccess>
+            <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+            <SetStatus status="aligning"/>
+            <SetBlackboardV3 name="Extra grab height for this prop (m)" output_key="grab_raise" value="0"/>
+            <Switch2 name="The bandage and plug are 22 mm shorter than the pill and nut_and_bolt: grab them 22 mm higher" case_1="bandage" case_2="plug" variable="{object_name}">
+                <SetBlackboardV3 output_key="grab_raise" value="0.022"/>
+                <SetBlackboardV3 output_key="grab_raise" value="0.022"/>
+                <AlwaysSuccess name="the pill and nut_and_bolt grab where they are"/>
+            </Switch2>
+            <Math a="{pre_overtable}" b="{grab_raise}" operator="+" out="{pre_grab_z}"/>
+            <Math a="{overtable}" b="{grab_raise}" operator="+" out="{grab_z}"/>
+            <PublishFloat32 data="{claw_open_s}" topic="{claw_topic}"/>
+            <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{aoy}" x="{ax}" y="{ay}" z="{az}"/>
+            <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="{cop}" out_or="{cor}" out_oy="{coy}" out_x="{cx}" out_y="{cy}" out_z="{cz}" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{pre_grab_z}"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{coy}" x="{cx}" y="{cy}" z="{cz}"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" dist="{ctrlr_dist}" link_frame="{claw_link}" target_frame="{object_frame}" timeout="{ctrlr_timeout}" trust="{ctrlr_trust}"/>
+            </ForceSuccess>
+            <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{claw_link}" op="0" or="0" out_op="{bop}" out_or="{bor}" out_oy="{boy}" out_x="{bx}" out_y="{by}" out_z="{bz}" oy="3.1415" reference_frame="{object_frame}" x="0" y="0" z="{grab_z}"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{boy}" x="{bx}" y="{by}" z="{bz}"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" dist="{ctrlr_dist}" link_frame="{claw_link}" target_frame="{object_frame}" timeout="{ctrlr_timeout}" trust="{ctrlr_trust}"/>
+            </ForceSuccess>
+            <SetStatus status="performing"/>
+            <PublishFloat32 data="{claw_close_s}" topic="{claw_topic}"/>
+            <Math a="{claw_close_s}" b="-1000" operator="*" out="{claw_close_ms_neg}"/>
+            <Delay delay_msec="{claw_close_ms_neg}">
+                <SubTree ID="Move" op="{0}" or="{0}" oy="{aoy}" x="{ax}" y="{ay}" z="{az}"/>
+            </Delay>
+        </Sequence>
+    </BehaviorTree>
+</root>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="TankLongitudinalFF">
+        <Sequence>
+            <Info message="Surging with power {power} for duration {duration}"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <Inverter>
+                <RetryUntilSuccessfulOrTimeout num_seconds="{duration}">
+                    <Inverter>
+                        <Sequence>
+                            <PublishToController isOrientation="0" mode="1" x="{power}" y="0" z="0"/>
+                            <Wait seconds="0.1"/>
+                        </Sequence>
+                    </Inverter>
+                </RetryUntilSuccessfulOrTimeout>
+            </Inverter>
+            <RepeatV3 name="Reset to 0" num_cycles="5">
+                <PublishToController isOrientation="0" mode="1" x="0" y="0" z="0"/>
+            </RepeatV3>
+            <Info message="Done surging."/>
+        </Sequence>
+    </BehaviorTree>
+</root>

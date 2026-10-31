@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="KillController">
+        <RepeatV3 num_cycles="5">
+            <Sequence>
+                <PublishToController isOrientation="1" mode="0" x="0" y="0" z="0"/>
+                <PublishToController isOrientation="0" mode="0" x="0" y="0" z="0"/>
+            </Sequence>
+        </RepeatV3>
+    </BehaviorTree>
+</root>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="Search.xml"/>
+    <include path="RelativeMove.xml"/>
+    <BehaviorTree ID="BuoyTree">
+        <Sequence name="buoy">
+            <SetBlackboardV3 output_key="3.1415" value="3.1415"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="min_dist" value="1"/>
+            <SetBlackboardV3 output_key="max_dist" value="2.5"/>
+            <SetBlackboardV3 output_key="circ_radius" value="1.25"/>
+            <SetBlackboardV3 output_key="iscw" value="1"/>
+            <SetBlackboardV3 output_key="target_cov" value="0.1"/>
+            <SetBlackboardV3 output_key="search_time" value="45"/>
+            <SetBlackboardV3 output_key="prop" value="buoy"/>
+            <Format format="{prop}_frame" out="{prop_frame}"/>
+            <ForceSuccess>
+                <Sequence>
+                    <SubTree ID="SetActiveCamera" is_dfc="{0}"/>
+                    <SubTree ID="Search" max_dist="{max_dist}" min_dist="{min_dist}" object_name="{prop}" target_cov="{target_cov}" timeout_secs="{search_time}"/>
+                </Sequence>
+            </ForceSuccess>
+            <Info message="BUOY TIME"/>
+            <SetStatus name="set status to aligning" status="aligning"/>
+            <IfThenElse name="which way we goin">
+                <CompareNums a="{iscw}" b="0" name="what is the value" test="=="/>
+                <SetBlackboardV3 output_key="circ_y" value="1"/>
+                <SetBlackboardV3 output_key="circ_y" value="-1"/>
+            </IfThenElse>
+            <Math a="{circ_y}" b="{circ_radius}" name="multiply by radius to get actual y" operator="*" out="{circ_y}"/>
+            <Info message="Lining up with buoy"/>
+            <SubTree ID="RelativeMove" frame_name="{prop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{circ_radius}" y="{0}" z="{0}"/>
+            <SetStatus name="performing" status="performing"/>
+            <SubTree ID="RelativeMove" frame_name="{prop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{0}" y="{circ_y}" z="{0}"/>
+            <Math a="{circ_radius}" b="-1" name="get behind buoy x" operator="*" out="{n_circ_radius}"/>
+            <SubTree ID="RelativeMove" frame_name="{prop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{n_circ_radius}" y="{0}" z="{0}"/>
+            <Math a="{circ_y}" b="-1" name="get other side of buoy y" operator="*" out="{n_circ_y}"/>
+            <SubTree ID="RelativeMove" frame_name="{prop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{0}" y="{n_circ_y}" z="{0}"/>
+            <SubTree ID="RelativeMove" frame_name="{prop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{circ_radius}" y="{0}" z="{0}"/>
+            <SetStatus name="moving to better spot" status="moving"/>
+            <SubTree ID="RelativeMove" frame_name="{prop_frame}" op="{0}" or="{0}" oy="{3.1415}" x="{0}" y="{circ_y}" z="{0}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

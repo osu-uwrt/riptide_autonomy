@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="SetClawState">
+        <Sequence>
+            <IfThenElse name="Set claw raised">
+                <Inverter name="Want claw raised">
+                    <CompareNums a="{claw_raised}" b="0" name="DONT want claw raised" test="=="/>
+                </Inverter>
+                <Info message="Setting claw raised"/>
+                <Info message="Setting claw NOT raised"/>
+            </IfThenElse>
+            <Wait name="Set claw raised" seconds="2"/>
+            <IfThenElse name="Set claw opened">
+                <Inverter name="Want claw open">
+                    <CompareNums a="{claw_opened}" b="0" name="Want claw NOT open" test="=="/>
+                </Inverter>
+                <Info message="Setting claw open"/>
+                <Info message="Setting claw NOT open"/>
+            </IfThenElse>
+            <Wait name="Setting claw open" seconds="2"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

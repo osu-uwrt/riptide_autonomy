@@ -18,7 +18,9 @@ std::shared_ptr<BT::TreeNode> BtTestTool::createLeafNodeFromConfig(std::string n
     //configure output ports to map to blackboard entries of same name
     for(auto pair : factory->manifests().at(name).ports) {
         if(pair.second.direction() == BT::PortDirection::OUTPUT) {
-            inputConfig.output_ports[pair.first] = pair.first; //maps a blackboard entry to output port. both have same name.
+            // maps the output port to the blackboard entry of the same name (BehaviorTree.CPP 4 writes outputs only
+            // through {key})
+            inputConfig.output_ports[pair.first] = "{" + pair.first + "}";
         }
     }
 

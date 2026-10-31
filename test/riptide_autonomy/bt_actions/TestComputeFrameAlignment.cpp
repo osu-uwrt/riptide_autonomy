@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 
 #define PRINT_RESULTS_OF_TEST
@@ -120,7 +121,7 @@ BT::NodeStatus testLinkAlign(
     BT::NodeStatus status = toolNode->tickUntilFinished(node);
 
     outputsSet = true;
-    BT::Blackboard::Ptr bb = node->config().blackboard;
+    BT::Blackboard::Ptr bb = std::as_const(*node).config().blackboard;
     DualVector3 baseLinkGoal;
     outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, bb, "out_x", baseLinkGoal.v1.x);
     outputsSet = outputsSet && getOutputFromBlackboard<double>(toolNode, bb, "out_y", baseLinkGoal.v1.y);

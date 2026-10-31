@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="CollectDets.xml"/>
+    <include path="RotateToFrame.xml"/>
+    <BehaviorTree ID="LockInObject">
+        <Sequence>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetMappingTarget lock_map="0" target_object="{object}" time_limit_secs="3"/>
+            <ForceSuccess name="Lock in discovered object in TF">
+                <RetryUntilSuccessfulV3 num_attempts="2">
+                    <SubTree ID="CollectDets" target="{object}" target_error="{target_error}"/>
+                </RetryUntilSuccessfulV3>
+            </ForceSuccess>
+            <Format format="{object}_frame" out="{object_frame}"/>
+            <SubTree ID="RotateToFrame" relative_yaw="{0}" target_frame="{object_frame}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

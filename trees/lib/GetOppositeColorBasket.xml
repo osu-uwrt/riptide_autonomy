@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="GetOppositeColorBasket">
+        <Sequence>
+            <Fallback>
+                <BlackboardCheckString return_on_mismatch="0" value_A="{obj}" value_B="table_spoon_pink">
+                    <SetBlackboardV3 output_key="out" value="table_basket_yellow"/>
+                </BlackboardCheckString>
+                <BlackboardCheckString return_on_mismatch="0" value_A="{obj}" value_B="table_basket_pink">
+                    <SetBlackboardV3 output_key="out" value="table_basket_yellow"/>
+                </BlackboardCheckString>
+                <BlackboardCheckString return_on_mismatch="0" value_A="{obj}" value_B="table_bottle_yellow">
+                    <SetBlackboardV3 output_key="out" value="table_basket_pink"/>
+                </BlackboardCheckString>
+                <BlackboardCheckString return_on_mismatch="0" value_A="{obj}" value_B="table_basket_yellow">
+                    <SetBlackboardV3 output_key="out" value="table_basket_pink"/>
+                </BlackboardCheckString>
+                <ForceFailure>
+                    <Error message="Unable to find basket color for object {obj}!"/>
+                </ForceFailure>
+            </Fallback>
+            <Format format="{out}_frame" out="{out_frame}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

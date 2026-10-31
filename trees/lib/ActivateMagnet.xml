@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="Move.xml"/>
+    <include path="WaitForController.xml"/>
+    <BehaviorTree ID="ActivateMagnet">
+        <Sequence>
+            <SetBlackboardV3 output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboardV3 output_key="ctrler_trust" value="0.8"/>
+            <SetBlackboardV3 output_key="ctrler_timeout" value="20"/>
+            <SetBlackboardV3 output_key="magnet_activation_s" value="2"/>
+            <SetBlackboardV3 output_key="magnet_pre_align_dist" value="0.7"/>
+            <SetBlackboardV3 output_key="magnet_align_dist" value="0.0"/>
+            <SetBlackboardV3 output_key="magnet_align_height" value="0.04"/>
+            <SetBlackboardV3 output_key="post_align_height" value="-0.8"/>
+            <SetBlackboardV3 output_key="magnet_link" value="talos/magnet_link"/>
+            <SetStatus status="aligning"/>
+            <ForceSuccess>
+                <Sequence>
+                    <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="0" reference_frame="{magnet_frame}" x="{magnet_pre_align_dist}" y="0" z="{magnet_align_height}"/>
+                    <SubTree ID="Move" op="{0}" or="{0}" oy="{aoy}" x="{ax}" y="{ay}" z="{az}"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess>
+                <Sequence>
+                    <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{magnet_link}" op="0" or="0" out_op="{bop}" out_or="{bor}" out_oy="{boy}" out_x="{bx}" out_y="{by}" out_z="{bz}" oy="0" reference_frame="{magnet_frame}" x="{magnet_align_dist}" y="0" z="{magnet_align_height}"/>
+                    <SubTree ID="Move" op="{0}" or="{0}" oy="{boy}" x="{bx}" y="{by}" z="{bz}"/>
+                    <SubTree ID="WaitForController" dist="{ctrler_dist}" link_frame="{magnet_link}" target_frame="{magnet_frame}" timeout="{ctrler_timeout}" trust="{ctrler_trust}"/>
+                </Sequence>
+            </ForceSuccess>
+            <SetStatus status="performing"/>
+            <Wait seconds="{magnet_activation_s}"/>
+            <SetStatus status="aligning"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{aoy}" x="{ax}" y="{ay}" z="{az}"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{aoy}" x="{ax}" y="{ay}" z="{post_align_height}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="DownwardTrack.xml"/>
+    <BehaviorTree ID="DownwardSearchMpc">
+        <Fallback>
+            <Sequence>
+                <Info message="Searching for {object_name} with target covarience {target_cov}"/>
+                <getCovariance Covariance="{cov}" Target="{object_name}"/>
+                <CompareNums a="{cov}" b="{target_cov}" test="&gt;"/>
+                <SetBlackboardV3 output_key="0" value="0"/>
+                <SetMappingTarget lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+                <SetBlackboardV3 name="Spiral spacing (m per turn), also its start radius" output_key="radius_step" value="0.25"/>
+                <SetStatus status="searching"/>
+                <Format format="{object_name}_frame" out="{frame}"/>
+                <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{abs_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                <TransformPose from_frame="odom" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{rel_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                <SetBlackboardV3 output_key="dfc_link" value="talos/dfc_base_link"/>
+                <ForceSuccess>
+                    <ReactiveSequence name="go to the initial guess until the object is in view">
+                        <Inverter>
+                            <SeenRecently max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                        </Inverter>
+                        <Sequence name="camera over the guess, as a path at full speed">
+                            <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                            <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the guess" op="{link_pitch}" or="{link_roll}" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{guess_yaw}" out_x="{guess_x}" out_y="{guess_y}" out_z="{guess_z}" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                            <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the guess" out="{guess_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{guess_x}" y="{guess_y}" yaw="{guess_yaw}" yaw_frame="" yaw_offset="" z="{guess_z}"/>
+                            <FollowPath frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{guess_path}"/>
+                        </Sequence>
+                    </ReactiveSequence>
+                </ForceSuccess>
+                <IfThenElse name="object in view: follow it now">
+                    <SeenRecently max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                    <SubTree ID="DownwardTrack" frame="{frame}" min_dist="{min_dist}" object_name="{object_name}" target_cov="{target_cov}"/>
+                    <AlwaysSuccess/>
+                </IfThenElse>
+                <SetBlackboardV3 output_key="dfc_link" value="talos/dfc_base_link"/>
+                <SetBlackboardV3 name="Search speed (m/s); the chase stays at full speed" output_key="search_speed" value="0.2"/>
+                <SetBlackboardV3 name="Spiral's outer radius (m); timeout_sec usually ends it first" output_key="search_radius" value="2.0"/>
+                <Math a="{search_radius}" b="{radius_step}" operator="-" out="{spiral_span}"/>
+                <Math a="{spiral_span}" b="{radius_step}" operator="/" name="turns: one radius_step apart" out="{spiral_turns}"/>
+                <Math a="{spiral_turns}" b="6.283185" operator="*" out="{spiral_sweep}"/>
+                <Fallback name="already converged by the first chase: skip the spiral">
+                    <Sequence>
+                        <getCovariance Covariance="{cov}" Target="{object_name}"/>
+                        <CompareNums a="{cov}" b="{target_cov}" test="&lt;"/>
+                    </Sequence>
+                    <RetryUntilSuccessfulOrTimeout num_seconds="{timeout_sec}">
+                        <Fallback>
+                            <Sequence>
+                                <Info message="spiraling out to {search_radius} m round {object_name}'s estimate"/>
+                                <ForceSuccess>
+                                    <ReactiveSequence name="spiral until the object is in view">
+                                        <Inverter>
+                                            <SeenRecently max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                        </Inverter>
+                                        <Sequence name="one spiral out from the guess as a single path, at the search speed">
+                                            <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                                            <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the guess" op="{link_pitch}" or="{link_roll}" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{spiral_yaw}" out_x="{spiral_wx}" out_y="{spiral_wy}" out_z="{spiral_wz}" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
+                                            <TransformPose from_frame="world" name="spiral center in the object's frame, so the path moves with its estimate" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{spiral_x}" out_y="{spiral_y}" out_z="{spiral_z}" oy="0" to_frame="{frame}" x="{spiral_wx}" y="{spiral_wy}" z="{spiral_wz}"/>
+                                            <AddArc approach="" cx="{spiral_x}" cy="{spiral_y}" end_radius="{search_radius}" frame="{frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="spiral out, heading held" out="{spiral}" path="" radius="{radius_step}" spin="" spin_rate="" start_angle="0" sweep="{spiral_sweep}" yaw="{spiral_yaw}" yaw_frame="world" yaw_offset="" z="{spiral_z}"/>
+                                            <FollowPath frame="" max_depth="-2.5" max_speed="{search_speed}" min_depth="-0.75" spin_rate="" timeout="600" waypoints="{spiral}"/>
+                                        </Sequence>
+                                    </ReactiveSequence>
+                                </ForceSuccess>
+                                <IfThenElse name="object in view: follow it now">
+                                    <SeenRecently max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                                    <SubTree ID="DownwardTrack" frame="{frame}" min_dist="{min_dist}" object_name="{object_name}" target_cov="{target_cov}"/>
+                                    <AlwaysSuccess/>
+                                </IfThenElse>
+                                <getCovariance Covariance="{cov}" Target="{object_name}"/>
+                                <Info message="object {object_name} covariance at {cov}, target is {target_cov}"/>
+                                <CompareNums a="{cov}" b="{target_cov}" name="Converged? If not (lost it, or the spiral ran out), spiral again round the estimate" test="&lt;"/>
+                            </Sequence>
+                            <Sequence>
+                                <getCovariance Covariance="{final_cov}" Target="{object_name}"/>
+                                <Info message="error is {final_cov}"/>
+                                <CompareNums a="{final_cov}" b="{target_cov}" test="&lt;"/>
+                            </Sequence>
+                        </Fallback>
+                    </RetryUntilSuccessfulOrTimeout>
+                </Fallback>
+                <Info message="{object_name} found"/>
+            </Sequence>
+            <Sequence>
+                <getCovariance Covariance="{cov}" Target="{object_name}"/>
+                <Info message="error {cov}, target: {target_cov}, tree ending"/>
+                <CompareNums a="{cov}" b="{target_cov}" test="&lt;"/>
+            </Sequence>
+        </Fallback>
+    </BehaviorTree>
+</root>

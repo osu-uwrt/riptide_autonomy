@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
@@ -19,7 +20,7 @@ BT::NodeStatus testGetTwistTopic(std::shared_ptr<BtTestTool> toolNode, const std
     BT::NodeStatus status = toolNode->tickUntilFinished(node, TESTTWIST_TIMEOUT);
 
     //node done, get result
-    auto blackboard = node->config().blackboard;
+    auto blackboard = std::as_const(*node).config().blackboard;
 
     outputSet = true;
     outputSet = outputSet && getOutputFromBlackboard<double>(toolNode, blackboard, "vel_x", receivedVal.linear.x);

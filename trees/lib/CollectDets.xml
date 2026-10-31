@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="CollectDets">
+        <Sequence>
+            <SetBlackboardV3 output_key="cov" value="5"/>
+            <Fallback>
+                <RepeatV3 name="Wait and eval dets" num_cycles="14">
+                    <Parallel failure_count="1" name="Grab detections" success_count="2">
+                        <WaitForDetection object_name="{target}" timeout_secs="4"/>
+                        <Sequence name="Wait and report error">
+                            <Wait seconds="2"/>
+                            <getCovariance Covariance="{cov}" Target="{target}"/>
+                            <Info message="Object {target} has error  {cov}"/>
+                            <CompareNums a="{cov}" b="{target_error}" name="Break if we found it" test="&gt;"/>
+                        </Sequence>
+                    </Parallel>
+                </RepeatV3>
+                <CompareNums a="{cov}" b="{target_error}" name="did we find it?" test="&lt;"/>
+                <ForceFailure>
+                    <Info message="Breaking detection collection because no detections on {target} were found."/>
+                </ForceFailure>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+</root>

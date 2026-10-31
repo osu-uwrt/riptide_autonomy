@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="PrimitiveMoveOrientation.xml"/>
+    <BehaviorTree ID="RotateToFrame">
+        <Sequence name="Rotate to face object">
+            <SetBlackboardV3 output_key="15" value="15"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <TransformPose from_frame="{target_frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{wx}" out_y="{wy}" out_z="{wz}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{__v3_empty}" x="{cx}" y="{cy}" z="{cz}"/>
+            <HeadingToPoint currX="{cx}" currY="{cy}" heading="{hdg}" targX="{wx}" targY="{wy}"/>
+            <Math a="{hdg}" b="{relative_yaw}" operator="+" out="{hdg}"/>
+            <SubTree ID="PrimitiveMoveOrientation" p="{0}" r="{0}" timeout="{15}" y="{hdg}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

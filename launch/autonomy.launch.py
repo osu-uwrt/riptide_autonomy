@@ -19,12 +19,7 @@ def generate_launch_description():
                     name='autonomy',
                     respawn=False,
                     output='screen',
-                    parameters=[
-                        {
-                            'enable_zmq': False,
-                            'enable_cout': False
-                        }
-                    ]
+                    parameters=[]
                 ),
                 Node(
                     package='riptide_hardware2',

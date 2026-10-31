@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 #include <cmath>
 
@@ -18,7 +19,7 @@ std::string addWaypointTest(std::shared_ptr<BtTestTool> toolNode, const std::str
     EXPECT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
 
     std::string out;
-    EXPECT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    EXPECT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
     return out;
 }
 
@@ -50,7 +51,7 @@ TEST_F(BtTest, test_AddWaypoint_roll_pitch) {
     auto node = toolNode->createLeafNodeFromConfig("AddWaypoint", cfg);
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
     std::string out;
-    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
     ASSERT_EQ(out, "talos/base_link: 0,0,0,3.1416,-0.7854,1.5708;");
 }
 
@@ -66,7 +67,7 @@ TEST_F(BtTest, test_AddWaypoint_heading_options) {
     auto node = toolNode->createLeafNodeFromConfig("AddWaypoint", cfg);
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
     std::string out;
-    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
     ASSERT_EQ(out, "g: 1,2,-1,0 | heading=look_at | look_at=4,0,0 | spin=6.283;");
 }
 
@@ -82,7 +83,7 @@ TEST_F(BtTest, test_AddWaypoint_yaw_frame) {
     auto node = toolNode->createLeafNodeFromConfig("AddWaypoint", cfg);
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
     std::string out;
-    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
     ASSERT_EQ(out, "pre_bin_pose_frame: 0,0,0,1.5 | yaw_frame=world;");
 }
 
@@ -110,7 +111,7 @@ TEST_F(BtTest, test_AddArc_approach_then_arc_looking_at_centre) {
     auto node = toolNode->createLeafNodeFromConfig("AddArc", cfg);
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
     std::string out;
-    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
     // A line to (-7, 0), then a quarter turn round (-10, 0) to (-10, 3), facing the centre throughout.
     const std::string start = "a: 0,0,0,0; g: -7,0,-1.5,0 | heading=look_at | look_at=-10,0,-1.5; g: -10,";
     ASSERT_EQ(out.substr(0, start.size()), start);
@@ -128,7 +129,7 @@ TEST_F(BtTest, test_AddWaypoint_empty_ports_are_defaults) {
     auto node = toolNode->createLeafNodeFromConfig("AddWaypoint", cfg);
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
     std::string out;
-    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
     ASSERT_EQ(out, "1,2,-1,0;");
 }
 
@@ -146,7 +147,7 @@ TEST_F(BtTest, test_AddArc_look_frame_defaults_to_its_origin) {
     auto node = toolNode->createLeafNodeFromConfig("AddArc", cfg);
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
     std::string out;
-    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
     const std::string look = " | heading=look_at | look_at=0,0,0 | look_frame=pole_frame;";
     ASSERT_EQ(out.find("g: -7,0,-1.5,0" + look), 0u) << out;
     ASSERT_NE(out.find("| arc=-10,0,1.570796327" + look), std::string::npos) << out;
@@ -180,7 +181,7 @@ TEST_F(BtTest, test_AddArc_pan_alternates_yaw_offset) {
     auto node = toolNode->createLeafNodeFromConfig("AddArc", cfg);
     ASSERT_EQ(toolNode->tickUntilFinished(node), BT::NodeStatus::SUCCESS);
     std::string out;
-    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, node->config().blackboard, "out", out));
+    ASSERT_TRUE(getOutputFromBlackboard<std::string>(toolNode, std::as_const(*node).config().blackboard, "out", out));
     // ceil(1 / 0.6) = 2 pairs: four quarter-radian pieces, the last ending 1 rad round
     const std::string piece = " | arc=0,0,0.25 | heading=look_at | look_at=0,0,0 | look_frame=g | yaw_offset=";
     std::size_t at = 0;

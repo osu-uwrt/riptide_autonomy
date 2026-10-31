@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="WaitForActuators.xml"/>
+    <BehaviorTree ID="FireTorpedo">
+        <ForceSuccess name="REMOVE ME">
+            <Sequence name="fire torpedo">
+                <SetBlackboardV3 output_key="torpedo_srv" value="command/actuator/torpedo"/>
+                <Info message="Calling trigger service {torpedo_srv}"/>
+                <CallTriggerService srv_name="{torpedo_srv}" time_limit_secs="1"/>
+                <Wait seconds="2"/>
+                <SubTree ID="WaitForActuators" timeout_secs="{10}"/>
+                <Info message="Torpedo fired!"/>
+            </Sequence>
+        </ForceSuccess>
+    </BehaviorTree>
+</root>

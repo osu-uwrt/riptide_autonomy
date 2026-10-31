@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
@@ -21,7 +22,7 @@ BT::NodeStatus testGetFloat64Topic(std::shared_ptr<BtTestTool> toolNode, const s
     BT::NodeStatus status = toolNode->tickUntilFinished(node, TESTBOOL_TIMEOUT);
 
     //node done, get result
-    outputSet = getOutputFromBlackboard<bool>(toolNode, node->config().blackboard, "value", receivedVal);
+    outputSet = getOutputFromBlackboard<bool>(toolNode, std::as_const(*node).config().blackboard, "value", receivedVal);
     return status;
 }
 

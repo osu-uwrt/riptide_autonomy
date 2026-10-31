@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="AlignLinkPositionOnly.xml"/>
+    <include path="WaitForController.xml"/>
+    <include path="FireDropper.xml"/>
+    <BehaviorTree ID="ShootDownwardObjectMpc">
+        <Sequence>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="overbin" value="1"/>
+            <SetBlackboardV3 output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboardV3 output_key="ctrler_trust" value="0.90"/>
+            <SetBlackboardV3 output_key="ctrler_timeout" value="30"/>
+            <Format format="{object_name}_frame" out="{object_frame}"/>
+            <Info message="Attempting to shoot {object_frame}"/>
+            <ForceSuccess>
+                <RetryUntilSuccessfulV3 num_attempts="1">
+                    <Sequence>
+                        <ForceSuccess>
+                            <Sequence name="Downward camera over it, then until its estimate is tight (at most 3 s)">
+                                <SetBlackboardV3 output_key="dfc_link" value="talos/dfc_base_link"/>
+                                <SetBlackboardV3 name="Tight enough to aim the dropper on" output_key="hover_cov" value="0.0005"/>
+                                <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{object_frame}" x="0" y="0" z="0"/>
+                                <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the object" op="{link_pitch}" or="{link_roll}" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{hover_yaw}" out_x="{hover_x}" out_y="{hover_y}" out_z="{hover_z}" oy="{link_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
+                                <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the object" out="{hover_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
+                                <FollowPath frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
+                                <RetryUntilSuccessfulOrTimeout name="Until the estimate is tight" num_seconds="3">
+                                    <Sequence>
+                                        <Wait seconds="0.2"/>
+                                        <MapConverged object="{object_name}" target_cov="{hover_cov}"/>
+                                    </Sequence>
+                                </RetryUntilSuccessfulOrTimeout>
+                            </Sequence>
+                        </ForceSuccess>
+                        <ForceSuccess>
+                            <CallTriggerService srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="1"/>
+                        </ForceSuccess>
+                        <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+                        <SetStatus status="aligning"/>
+                        <SubTree ID="AlignLinkPositionOnly" frame_name="{object_frame}" link_name="{dropper_link_name}" x="{0}" y="{0}" z="{overbin}"/>
+                        <SubTree ID="WaitForController" dist="{ctrler_dist}" link_frame="{dropper_link_name}" target_frame="{object_frame}" timeout="{ctrler_timeout}" trust="{ctrler_trust}"/>
+                    </Sequence>
+                </RetryUntilSuccessfulV3>
+            </ForceSuccess>
+            <SetStatus status="performing"/>
+            <RetryUntilSuccessfulV3 num_attempts="3">
+                <SubTree ID="FireDropper"/>
+            </RetryUntilSuccessfulV3>
+        </Sequence>
+    </BehaviorTree>
+</root>

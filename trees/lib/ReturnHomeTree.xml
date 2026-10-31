@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="RelativeMoveNoYaw.xml"/>
+    <BehaviorTree ID="ReturnHomeTree">
+        <Sequence>
+            <SetBlackboardV3 output_key="gate_align_dist" value="-1"/>
+            <SetBlackboardV3 output_key="-1.5" value="-1.5"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="1" value="1"/>
+            <SetBlackboardV3 output_key="3.1415" value="3.1415"/>
+            <SetBlackboardV3 output_key="30" value="30"/>
+            <SetBlackboardV3 output_key="gate" value="gate"/>
+            <Format format="{gate}_frame" out="{gate_frame}"/>
+            <SetBlackboardV3 output_key="undergate" value="-0.7"/>
+            <SetBlackboardV3 output_key="max_dist" value="4"/>
+            <SetBlackboardV3 output_key="min_dist" value="2"/>
+            <SetBlackboardV3 output_key="pre_return_home_frame" value="pre_return_home_frame"/>
+            <SetBlackboardV3 output_key="target_err" value="0.01"/>
+            <Info message="WINNING TIME"/>
+            <SubTree ID="RelativeMoveNoYaw" frame_name="{pre_return_home_frame}" x="{0}" y="{0}" z="{0}"/>
+            <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="{gate_align_dist}" y="{0}" z="{undergate}"/>
+            <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="{0}" y="{0}" z="{undergate}"/>
+            <SubTree ID="RelativeMoveNoYaw" frame_name="{gate_frame}" x="{1}" y="{0}" z="{undergate}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

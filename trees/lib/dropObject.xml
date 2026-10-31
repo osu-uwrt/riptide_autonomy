@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="SetActiveCamera.xml"/>
+    <include path="DownwardSearch.xml"/>
+    <include path="DownwardMove.xml"/>
+    <include path="AlignLinkPositionOnly.xml"/>
+    <include path="WaitForController.xml"/>
+    <BehaviorTree ID="dropObject">
+        <Sequence>
+            <Sequence name="set blackboards">
+                <Format format="{dropoff_name}_frame" out="{dropoff_frame}"/>
+                <SetBlackboardV3 output_key="0" value="0"/>
+                <SetBlackboardV3 output_key="1" value="1"/>
+            </Sequence>
+            <SubTree ID="SetActiveCamera" is_dfc="{1}"/>
+            <ForceSuccess>
+                <SubTree ID="DownwardSearch" min_dist="{search_prox}" object_name="{dropoff_name}" target_cov="{target_err}" timeout_sec="{search_timeout}"/>
+            </ForceSuccess>
+            <ForceSuccess>
+                <RetryUntilSuccessfulOrTimeout num_seconds="0">
+                    <SubTree ID="DownwardMove" frame="{dropoff_frame}" gx="{0}" gy="{0}" gz="{minisearch_prox}" object_name="{dropoff_name}" reset_adjust_threshold="{reset_threshold}" target_Cov="{0}"/>
+                </RetryUntilSuccessfulOrTimeout>
+            </ForceSuccess>
+            <SetStatus status="aligning"/>
+            <TransformPose from_frame="{claw_link}" name="Current claw height above the dropoff" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{claw_height}" oy="0" to_frame="{dropoff_frame}" x="0" y="0" z="0"/>
+            <SubTree ID="AlignLinkPositionOnly" frame_name="{dropoff_frame}" link_name="{claw_link}" x="{0}" y="{0}" z="{claw_height}"/>
+            <SubTree ID="AlignLinkPositionOnly" frame_name="{dropoff_frame}" link_name="{claw_link}" x="{0}" y="{0}" z="{search_prox}"/>
+            <SubTree ID="AlignLinkPositionOnly" frame_name="{dropoff_frame}" link_name="{claw_link}" x="{0}" y="{0}" z="{overtable}"/>
+            <ForceSuccess>
+                <SubTree ID="WaitForController" dist="{ctrlr_dist}" link_frame="{claw_link}" target_frame="{dropoff_frame}" timeout="{ctrlr_timeout}" trust="{ctrlr_trust}"/>
+            </ForceSuccess>
+            <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+            <SetStatus status="performing"/>
+            <PublishFloat32 data="{claw_drop_s}" topic="{claw_topic}"/>
+            <Math a="{claw_open_s}" b="1000" operator="*" out="{claw_open_ms}"/>
+            <Delay delay_msec="20">
+                <SubTree ID="AlignLinkPositionOnly" frame_name="{dropoff_frame}" link_name="{claw_link}" x="{0}" y="{0}" z="{search_prox}"/>
+            </Delay>
+            <PublishFloat32 data="{claw_close_s}" topic="{claw_topic}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

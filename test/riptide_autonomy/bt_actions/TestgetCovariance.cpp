@@ -1,3 +1,4 @@
+#include <utility>
 #include "autonomy_test/autonomy_testing.hpp"
 #include "autonomy_test/TimedPublisher.hpp"
 
@@ -16,7 +17,7 @@ BT::NodeStatus testGetCovariance(std::shared_ptr<BtTestTool> toolNode, const std
     BT::NodeStatus status = toolNode->tickUntilFinished(node, 7s);
 
     //collect results
-    outputSet = getOutputFromBlackboard<double>(toolNode, node->config().blackboard, "Covariance", covariance);
+    outputSet = getOutputFromBlackboard<double>(toolNode, std::as_const(*node).config().blackboard, "Covariance", covariance);
     return status;
 }
 

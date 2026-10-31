@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="DownwardMove.xml"/>
+    <BehaviorTree ID="DownwardMiniSearch">
+        <Sequence name="DownwardsMiniSearch">
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="a_lot" value="1000"/>
+            <SetStatus status="searching"/>
+            <RetryUntilSuccessfulOrTimeout name="DownwardsMiniSearchLoop" num_seconds="10">
+                <SubTree ID="DownwardMove" frame="{object_frame}" gx="{0}" gy="{0}" gz="{search_prox}" object_name="{object_name}" reset_adjust_threshold="{a_lot}" target_Cov="{0}"/>
+            </RetryUntilSuccessfulOrTimeout>
+        </Sequence>
+    </BehaviorTree>
+</root>

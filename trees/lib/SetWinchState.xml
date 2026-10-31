@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="SetWinchState">
+        <Sequence>
+            <IfThenElse>
+                <Inverter>
+                    <CompareNums a="{winch_extended}" b="0" test="=="/>
+                </Inverter>
+                <Info message="Setting winch state to extended"/>
+                <Info message="Setting winch state to NOT extended"/>
+            </IfThenElse>
+            <Wait seconds="1"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

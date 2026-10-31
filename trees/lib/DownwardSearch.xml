@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="DownwardMove.xml"/>
+    <include path="DownwardTrack.xml"/>
+    <BehaviorTree ID="DownwardSearch">
+        <Fallback>
+            <Sequence>
+                <Info message="Searching for {object_name} with target covarience {target_cov}"/>
+                <getCovariance Covariance="{cov}" Target="{object_name}"/>
+                <CompareNums a="{cov}" b="{target_cov}" test="&gt;"/>
+                <SetBlackboardV3 output_key="reset_adjust_threshold" value="0.1"/>
+                <SetBlackboardV3 output_key="0" value="0"/>
+                <SetMappingTarget lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+                <SetBlackboardV3 output_key="radius_step" value="0.25"/>
+                <SetStatus status="searching"/>
+                <Format format="{object_name}_frame" out="{frame}"/>
+                <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{abs_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+                <TransformPose from_frame="odom" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{rel_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                <TransformPose from_frame="{frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{before_x}" out_y="{before_y}" out_z="{before_z}" oy="0" to_frame="map" x="0" y="0" z="0"/>
+                <ForceSuccess>
+                    <ReactiveSequence name="go to the initial guess until the object is in view">
+                        <Inverter>
+                            <SeenRecently max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                        </Inverter>
+                        <SubTree ID="DownwardMove" frame="{frame}" gx="{0}" gy="{0}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                    </ReactiveSequence>
+                </ForceSuccess>
+                <IfThenElse name="object in view: follow it now">
+                    <SeenRecently max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                    <SubTree ID="DownwardTrack" frame="{frame}" min_dist="{min_dist}" object_name="{object_name}" target_cov="{target_cov}"/>
+                    <AlwaysSuccess/>
+                </IfThenElse>
+                <SetBlackboardV3 name="half the distance you want" output_key="dist" value="{radius_step}"/>
+                <SetBlackboardV3 output_key="link" value="talos/dropper_link"/>
+                <RetryUntilSuccessfulOrTimeout num_seconds="{timeout_sec}">
+                    <Fallback>
+                        <Sequence>
+                            <Info message="searching within a {dist} radius of the initial guess"/>
+                            <Math a="{dist}" b="-1" operator="*" out="{ndist}"/>
+                            <ForceSuccess>
+                                <ReactiveSequence name="spiral leg until the object is in view">
+                                    <Inverter>
+                                        <SeenRecently max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                    </Inverter>
+                                    <Fallback>
+                                        <SubTree ID="DownwardMove" frame="{frame}" gx="{dist}" gy="{ndist}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                                        <SubTree ID="DownwardMove" frame="{frame}" gx="{ndist}" gy="{ndist}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                                        <SubTree ID="DownwardMove" frame="{frame}" gx="{ndist}" gy="{dist}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                                        <SubTree ID="DownwardMove" frame="{frame}" gx="{dist}" gy="{dist}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                                    </Fallback>
+                                </ReactiveSequence>
+                            </ForceSuccess>
+                            <IfThenElse name="object in view: follow it now">
+                                <SeenRecently max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
+                                <SubTree ID="DownwardTrack" frame="{frame}" min_dist="{min_dist}" object_name="{object_name}" target_cov="{target_cov}"/>
+                                <AlwaysSuccess/>
+                            </IfThenElse>
+                            <Sequence>
+                                <Math a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
+                                <getCovariance Covariance="{cov}" Target="{object_name}"/>
+                                <Info message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
+                                <TransformPose from_frame="{frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{after_x}" out_y="{after_y}" out_z="{after_z}" oy="0" to_frame="map" x="0" y="0" z="0"/>
+                                <CalculateDistance dist="{amount_adjusted}" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
+                                <Info message="{frame} moved {amount_adjusted} meters during last loop."/>
+                                <IfThenElse name="should we reset dist">
+                                    <CompareNums a="{amount_adjusted}" b="{reset_adjust_threshold}" test="&gt;"/>
+                                    <Sequence name="reset dist">
+                                        <Info message="Detected object enough to sufficiently move. Resetting search"/>
+                                        <SetBlackboardV3 output_key="dist" value="{radius_step}"/>
+                                        <SubTree ID="DownwardMove" frame="{frame}" gx="{0}" gy="{0}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                                    </Sequence>
+                                    <AlwaysSuccess/>
+                                </IfThenElse>
+                                <IfThenElse>
+                                    <CompareNums a="{dist}" b="3" test="&gt;"/>
+                                    <Sequence>
+                                        <Info message="Got too far away from object estimate. Resetting search"/>
+                                        <SetBlackboardV3 output_key="dist" value="{radius_step}"/>
+                                        <SubTree ID="DownwardMove" frame="{frame}" gx="{0}" gy="{0}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                                    </Sequence>
+                                    <AlwaysSuccess/>
+                                </IfThenElse>
+                                <CompareNums a="{cov}" b="{target_cov}" name="Check that covariance is good" test="&lt;"/>
+                            </Sequence>
+                        </Sequence>
+                        <Sequence>
+                            <getCovariance Covariance="{final_cov}" Target="{object_name}"/>
+                            <Info message="error is {final_cov}"/>
+                            <CompareNums a="{final_cov}" b="{target_cov}" test="&lt;"/>
+                        </Sequence>
+                    </Fallback>
+                </RetryUntilSuccessfulOrTimeout>
+                <Info message="{object_name} found"/>
+            </Sequence>
+            <Sequence>
+                <getCovariance Covariance="{cov}" Target="{object_name}"/>
+                <Info message="error {cov}, target: {target_cov}, tree ending"/>
+                <CompareNums a="{cov}" b="{target_cov}" test="&lt;"/>
+            </Sequence>
+        </Fallback>
+    </BehaviorTree>
+</root>

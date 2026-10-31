@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="DownwardMiniSearch.xml"/>
+    <include path="AlignLinkPositionOnly.xml"/>
+    <include path="WaitForController.xml"/>
+    <include path="FireDropper.xml"/>
+    <BehaviorTree ID="ShootDownwardObject">
+        <Sequence>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="overbin" value="1"/>
+            <SetBlackboardV3 output_key="ctrler_dist" value="0.01"/>
+            <SetBlackboardV3 output_key="ctrler_trust" value="0.90"/>
+            <SetBlackboardV3 output_key="ctrler_timeout" value="30"/>
+            <Format format="{object_name}_frame" out="{object_frame}"/>
+            <Info message="Attempting to shoot {object_frame}"/>
+            <ForceSuccess>
+                <RetryUntilSuccessfulV3 num_attempts="1">
+                    <Sequence>
+                        <ForceSuccess>
+                            <SubTree ID="DownwardMiniSearch" object_frame="{object_frame}" object_name="{object_name}" search_prox="{search_prox}"/>
+                        </ForceSuccess>
+                        <ForceSuccess>
+                            <CallTriggerService srv_name="/talos/mapping/freeze_binary_classifier_buffer" time_limit_secs="1"/>
+                        </ForceSuccess>
+                        <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+                        <SetStatus status="aligning"/>
+                        <SubTree ID="AlignLinkPositionOnly" frame_name="{object_frame}" link_name="{dropper_link_name}" x="{0}" y="{0}" z="{overbin}"/>
+                        <SubTree ID="WaitForController" dist="{ctrler_dist}" link_frame="{dropper_link_name}" target_frame="{object_frame}" timeout="{ctrler_timeout}" trust="{ctrler_trust}"/>
+                    </Sequence>
+                </RetryUntilSuccessfulV3>
+            </ForceSuccess>
+            <SetStatus status="performing"/>
+            <RetryUntilSuccessfulV3 num_attempts="3">
+                <SubTree ID="FireDropper"/>
+            </RetryUntilSuccessfulV3>
+        </Sequence>
+    </BehaviorTree>
+</root>

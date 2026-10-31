@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="PrimitiveMovePosition.xml"/>
+    <include path="SmartMovePosition.xml"/>
+    <include path="PrimitiveMoveOrientation.xml"/>
+    <BehaviorTree ID="Move">
+        <Sequence>
+            <SetBlackboardV3 output_key="30" value="30"/>
+            <SetBlackboardV3 output_key="15" value="15"/>
+            <Info message="Moving to XYZ {x}, {y}, {z} with RPY {or}, {op}, {oy}"/>
+            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{__v3_empty}" x="{cx}" y="{cy}" z="{__v3_empty}"/>
+            <SubTree ID="PrimitiveMovePosition" timeout="{15}" x="{cx}" y="{cy}" z="{z}"/>
+            <SubTree ID="SmartMovePosition" x="{x}" y="{y}" z="{z}"/>
+            <SubTree ID="PrimitiveMoveOrientation" p="{or}" r="{op}" timeout="{30}" y="{oy}"/>
+            <Wait seconds="0"/>
+            <Info message="Move Complete."/>
+        </Sequence>
+    </BehaviorTree>
+</root>

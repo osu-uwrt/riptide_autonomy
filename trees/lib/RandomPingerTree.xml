@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="Move.xml"/>
+    <BehaviorTree ID="RandomPingerTree">
+        <Sequence>
+            <SetBlackboardV3 output_key="sample_time" value="10"/>
+            <SetBlackboardV3 output_key="0" value="0"/>
+            <SetBlackboardV3 output_key="spins" value="2"/>
+            <SetBlackboardV3 output_key="pre_torpedo_pose_frame" value="pre_torpedo_pose_frame"/>
+            <SetBlackboardV3 output_key="pre_table_pose_frame" value="pre_table_pose_frame"/>
+            <SetBlackboardV3 output_key="3.1415" value="3.1415"/>
+            <SetBlackboardV3 output_key="-3.1415" value="-3.1415"/>
+            <Info message="RANDOM PINGER TIME"/>
+            <SetMappingTarget lock_map="1" target_object="" time_limit_secs="3"/>
+            <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
+            <TransformPose from_frame="pre_torpedo_pose_frame" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{tx}" out_y="{ty}" out_z="{tz}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{yaw}" x="{tx}" y="{ty}" z="{tz}"/>
+            <Sequence>
+                <RetryUntilSuccessfulV3 num_attempts="3">
+                    <CallTriggerService srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessfulV3>
+                <Wait seconds="{sample_time}"/>
+                <RetryUntilSuccessfulV3 num_attempts="3">
+                    <CallTriggerService srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessfulV3>
+            </Sequence>
+            <TransformPose from_frame="pre_table_pose_frame" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{tx}" out_y="{ty}" out_z="{tz}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+            <SubTree ID="Move" op="{0}" or="{0}" oy="{yaw}" x="{tx}" y="{ty}" z="{tz}"/>
+            <Sequence>
+                <RetryUntilSuccessfulV3 num_attempts="3">
+                    <CallTriggerService srv_name="/talos/acoustics/start_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessfulV3>
+                <Wait seconds="{sample_time}"/>
+                <RetryUntilSuccessfulV3 num_attempts="3">
+                    <CallTriggerService srv_name="/talos/acoustics/stop_sample" time_limit_secs="3"/>
+                </RetryUntilSuccessfulV3>
+            </Sequence>
+            <GetBoolTopic topic="/talos/acoustics/buffer_0_closer" value="{is_table}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="AssertTree">
+        <Fallback>
+            <CompareNums a="{a}" b="{b}" test="{test}"/>
+            <ForceFailure>
+                <Info message="Assertion {aname} ({a} {test} {b}) failed"/>
+            </ForceFailure>
+        </Fallback>
+    </BehaviorTree>
+</root>

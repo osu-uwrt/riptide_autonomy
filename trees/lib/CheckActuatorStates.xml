@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="CheckActuatorStates">
+        <Sequence>
+            <GetActuatorStatus actuators_busy="{__v3_empty}" claw_state="{clawstate}" dropper_available_count="{__v3_empty}" dropper_state="{dropperstate}" torpedo_available_count="{__v3_empty}" torpedo_state="{torpedostate}"/>
+            <Fallback>
+                <Sequence name="Check states">
+                    <Inverter name="dropperstate not error">
+                        <CompareNums a="{dropperstate}" b="0" test="=="/>
+                    </Inverter>
+                    <Inverter name="torpedostate not error">
+                        <CompareNums a="{torpedostate}" b="0" test="=="/>
+                    </Inverter>
+                </Sequence>
+                <ForceFailure>
+                    <Error message="Check Actuators! States are problematic; dropper: {dropperstate}, torpedo: {torpedostate}"/>
+                </ForceFailure>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+</root>

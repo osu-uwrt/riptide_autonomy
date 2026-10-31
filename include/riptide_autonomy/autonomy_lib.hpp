@@ -174,12 +174,14 @@ bool getFromBlackboard(rclcpp::Node::SharedPtr rosnode, BT::Blackboard::Ptr bb, 
  */
 template<typename T>
 bool getFromBlackboard(UwrtBtNode *n, const std::string& key, T& value) {
-    if(!n->treeNode()->config().blackboard) {
+    // BehaviorTree.CPP 4 only exposes the configuration read-only to outside code.
+    const auto &config = static_cast<const BT::TreeNode *>(n->treeNode())->config();
+    if(!config.blackboard) {
         RCLCPP_ERROR(n->rosNode()->get_logger(), "Cannot get from blackboard! The passed TreeNode does not have one!");
         return false;
     }
 
-    return getFromBlackboard<T>(n->rosNode(), n->treeNode()->config().blackboard, key, value);
+    return getFromBlackboard<T>(n->rosNode(), config.blackboard, key, value);
 }
 
 

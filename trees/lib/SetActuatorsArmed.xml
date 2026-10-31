@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <BehaviorTree ID="SetActuatorsArmed">
+        <ForceSuccess name="REMOVE ME">
+            <Sequence>
+                <Info message="Setting &quot;Actuators&quot; armed state to {armed}"/>
+                <Wait seconds="1"/>
+                <CallSetBoolService data="{armed}" srv_name="command/actuator/arm" time_limit_secs="1"/>
+                <IfThenElse>
+                    <CompareNums a="{armed}" b="1" test="=="/>
+                    <Info message="&quot;ACTUATORS&quot; ARMED"/>
+                    <Info message="&quot;ACTUATORS&quot; DISARMED"/>
+                </IfThenElse>
+            </Sequence>
+        </ForceSuccess>
+    </BehaviorTree>
+</root>

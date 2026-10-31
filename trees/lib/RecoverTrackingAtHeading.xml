@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+    <include path="RotateToFrame.xml"/>
+    <BehaviorTree ID="RecoverTrackingAtHeading">
+        <Sequence name="Try to obtain surge at relative yaw">
+            <SetBlackboardV3 output_key="track_counter" value="0"/>
+            <SetBlackboardV3 output_key="num_cycles" value="5"/>
+            <Info message="Recovering surge object tracking at yaw {relative_yaw}"/>
+            <SubTree ID="RotateToFrame" relative_yaw="{relative_yaw}" target_frame="{target_obj_frame}"/>
+            <RepeatV3 num_cycles="{num_cycles}">
+                <ForceSuccess>
+                    <Sequence>
+                        <Wait seconds="0.5"/>
+                        <GetBoolTopic topic="controller/surge/tracking" value="{tracking}"/>
+                        <Info message="Tracking: {tracking}"/>
+                        <IsTrue name="Are we tracking?" value="{tracking}"/>
+                        <Math a="{track_counter}" b="1" name="Increment track counter" operator="+" out="{track_counter}"/>
+                    </Sequence>
+                </ForceSuccess>
+            </RepeatV3>
+            <Info message="Received {track_counter} / {num_cycles} successful tracks"/>
+            <CompareNums a="{track_counter}" b="2" test="&gt;"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

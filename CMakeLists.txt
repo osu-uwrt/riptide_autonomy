@@ -22,7 +22,7 @@ find_package(nav_msgs REQUIRED)
 find_package(riptide_msgs2 REQUIRED)
 find_package(robot_localization REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(behaviortree_cpp_v3 REQUIRED)
+find_package(behaviortree_cpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -71,7 +71,7 @@ set(deps
   riptide_msgs2
   robot_localization
   std_srvs
-  behaviortree_cpp_v3
+  behaviortree_cpp
   tf2
   tf2_ros
   tf2_geometry_msgs
@@ -161,48 +161,30 @@ target_compile_definitions(doTask PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 ament_target_dependencies(doTask
   ament_index_cpp
   rclcpp
-  behaviortree_cpp_v3
+  behaviortree_cpp
   rclcpp_action
   riptide_msgs2
 )
 
 #
-# BT Health Checker executable
+# Node model writer: regenerates trees/lib/node_models.xml (the editor's node list) from the plugins
 #
+add_executable(updateNodeModels src/riptide_autonomy/UpdateNodeModels.cpp)
 
-#check that we are on Ubuntu 22.04. otherwise tinyxml will be sad
-execute_process(COMMAND lsb_release -s -i
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  OUTPUT_VARIABLE OS_NAME
+target_include_directories(updateNodeModels PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+
+target_link_libraries(updateNodeModels autonomy_utils tinyxml2)
+target_compile_definitions(updateNodeModels PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
+
+ament_target_dependencies(updateNodeModels
+  behaviortree_cpp
+  tinyxml2_vendor
 )
-
-execute_process(COMMAND lsb_release -s -r
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  OUTPUT_VARIABLE OS_VERSION
+install(TARGETS updateNodeModels
+  DESTINATION lib/${PROJECT_NAME}
 )
-
-string(COMPARE EQUAL ${OS_NAME} "Ubuntu\n" OS_NAME_UBUNTU)
-string(COMPARE EQUAL ${OS_VERSION} "20.04\n" OS_VERSION_20_04)
-if((OS_NAME_UBUNTU AND OS_VERSION_20_04) OR BUILD_DEPLOY)
-  message("Skipping BT Health checker for deploy build or OS version incompatibility")
-else()
-  add_executable(checkBT src/riptide_autonomy/CheckBT.cpp)
-
-  target_include_directories(checkBT PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty>
-      $<INSTALL_INTERFACE:include>)
-
-  target_link_libraries(checkBT autonomy_utils)
-  target_compile_definitions(checkBT PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
-
-  ament_target_dependencies(checkBT
-    behaviortree_cpp_v3
-  )
-  install(TARGETS checkBT
-    DESTINATION lib/${PROJECT_NAME}
-  )
-endif()
 
 #install executable
 install(TARGETS doTask

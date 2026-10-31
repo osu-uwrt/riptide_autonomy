@@ -28,14 +28,13 @@ void initRosForTree(BT::Tree& tree, rclcpp::Node::SharedPtr rosNode) {
     UwrtBtNode::staticInit(rosNode);
 
     // give each BT node access to our RCLCPP context
-    for (auto &treeNode : tree.nodes)
-    {
+    tree.applyVisitor([&rosNode](BT::TreeNode *treeNode) {
         // Not a typo: it is "=", not "=="
-        if (auto uwrtNode = dynamic_cast<UwrtBtNode *>(treeNode.get()))
+        if (auto uwrtNode = dynamic_cast<UwrtBtNode *>(treeNode))
         {
             uwrtNode->init(rosNode);
         }
-    }
+    });
 }
 
 
