@@ -5,7 +5,7 @@
             <SetStatus status="waiting"/>
             <Info message="Waiting for kill switch insert..."/>
             <Wait seconds="5"/>
-            <RetryUntilSuccessfulV3 num_attempts="-1">
+            <RetryUntilSuccessful num_attempts="-1">
                 <Sequence>
                     <GetBoolTopic topic="state/kill" value="{kill_switch_inserted}"/>
                     <Inverter name="IsFalse">
@@ -14,7 +14,7 @@
                     <Wait seconds="1"/>
                     <Info message="KILL SWITCH INSERTED, TREE STARTING IN 5 SECONDS"/>
                 </Sequence>
-            </RetryUntilSuccessfulV3>
+            </RetryUntilSuccessful>
             <SetStatus status="starting"/>
             <Wait seconds="5"/>
         </Sequence>

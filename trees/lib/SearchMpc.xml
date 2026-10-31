@@ -2,7 +2,6 @@
 <root BTCPP_format="4">
     <BehaviorTree ID="SearchMpc">
         <Sequence name="Search while moving">
-            <SetBlackboardV3 output_key="0" value="0"/>
             <SetBlackboardV3 name="First sweep: arc each way round the estimate (rad), at max_dist" output_key="sweep_first" value="0.5"/>
             <SetBlackboardV3 name="First sweep: pan each way along the arc (rad); the forward camera's +-27 deg then sees +-dist*tan(27 deg + pan) round the estimate, +-3 m at 2 m" output_key="pan_first" value="0.5"/>
             <SetBlackboardV3 name="Wider sweeps after one that saw nothing: arc (rad), new viewing angles for a board facing another way or hidden from one side" output_key="sweep_wide" value="1.0"/>

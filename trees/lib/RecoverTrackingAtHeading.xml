@@ -7,7 +7,7 @@
             <SetBlackboardV3 output_key="num_cycles" value="5"/>
             <Info message="Recovering surge object tracking at yaw {relative_yaw}"/>
             <SubTree ID="RotateToFrame" relative_yaw="{relative_yaw}" target_frame="{target_obj_frame}"/>
-            <RepeatV3 num_cycles="{num_cycles}">
+            <Repeat num_cycles="{num_cycles}">
                 <ForceSuccess>
                     <Sequence>
                         <Wait seconds="0.5"/>
@@ -17,7 +17,7 @@
                         <Math a="{track_counter}" b="1" name="Increment track counter" operator="+" out="{track_counter}"/>
                     </Sequence>
                 </ForceSuccess>
-            </RepeatV3>
+            </Repeat>
             <Info message="Received {track_counter} / {num_cycles} successful tracks"/>
             <CompareNums a="{track_counter}" b="2" test="&gt;"/>
         </Sequence>

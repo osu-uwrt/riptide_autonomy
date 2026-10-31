@@ -4,9 +4,9 @@
         <Fallback>
             <Sequence>
                 <Info message="Attempting to notify actuators to reload..."/>
-                <RetryUntilSuccessfulV3 num_attempts="3">
+                <RetryUntilSuccessful num_attempts="3">
                     <CallTriggerService srv_name="command/actuator/notify_reload" time_limit_secs="2"/>
-                </RetryUntilSuccessfulV3>
+                </RetryUntilSuccessful>
                 <Info message="Actuator reload successful."/>
             </Sequence>
             <ForceFailure>

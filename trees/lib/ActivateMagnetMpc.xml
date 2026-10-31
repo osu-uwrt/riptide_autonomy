@@ -3,9 +3,6 @@
     <include path="WaitForController.xml"/>
     <BehaviorTree ID="ActivateMagnetMpc">
         <Sequence>
-            <SetBlackboardV3 output_key="ctrler_dist" value="0.01"/>
-            <SetBlackboardV3 output_key="ctrler_trust" value="0.8"/>
-            <SetBlackboardV3 output_key="ctrler_timeout" value="20"/>
             <SetBlackboardV3 output_key="magnet_activation_s" value="2"/>
             <SetBlackboardV3 output_key="magnet_pre_align_dist" value="0.7"/>
             <SetBlackboardV3 output_key="magnet_align_dist" value="0.0"/>
@@ -24,7 +21,7 @@
                     <FollowPath frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="One move: there, turned and at depth" spin_rate="" timeout="60" waypoints="{pre_path}"/>
                     <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="the magnet" out="{in_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bz}"/>
                     <FollowPath frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="Straight back into it" spin_rate="" timeout="30" waypoints="{in_path}"/>
-                    <SubTree ID="WaitForController" dist="{ctrler_dist}" link_frame="{magnet_link}" target_frame="{magnet_frame}" timeout="{ctrler_timeout}" trust="{ctrler_trust}"/>
+                    <SubTree ID="WaitForController" dist="0.01" link_frame="{magnet_link}" target_frame="{magnet_frame}" timeout="20" trust="0.8"/>
                 </Sequence>
             </ForceSuccess>
             <SetStatus status="performing"/>

@@ -8,7 +8,7 @@
                 <Info message="Calling trigger service {torpedo_srv}"/>
                 <CallTriggerService srv_name="{torpedo_srv}" time_limit_secs="1"/>
                 <Wait seconds="2"/>
-                <SubTree ID="WaitForActuators" timeout_secs="{10}"/>
+                <SubTree ID="WaitForActuators" timeout_secs="10"/>
                 <Info message="Torpedo fired!"/>
             </Sequence>
         </ForceSuccess>

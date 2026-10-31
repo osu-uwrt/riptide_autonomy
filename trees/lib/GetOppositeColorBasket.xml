@@ -3,18 +3,18 @@
     <BehaviorTree ID="GetOppositeColorBasket">
         <Sequence>
             <Fallback>
-                <BlackboardCheckString return_on_mismatch="0" value_A="{obj}" value_B="table_spoon_pink">
+                <Precondition if="obj == 'table_spoon_pink'" else="FAILURE">
                     <SetBlackboardV3 output_key="out" value="table_basket_yellow"/>
-                </BlackboardCheckString>
-                <BlackboardCheckString return_on_mismatch="0" value_A="{obj}" value_B="table_basket_pink">
+                </Precondition>
+                <Precondition if="obj == 'table_basket_pink'" else="FAILURE">
                     <SetBlackboardV3 output_key="out" value="table_basket_yellow"/>
-                </BlackboardCheckString>
-                <BlackboardCheckString return_on_mismatch="0" value_A="{obj}" value_B="table_bottle_yellow">
+                </Precondition>
+                <Precondition if="obj == 'table_bottle_yellow'" else="FAILURE">
                     <SetBlackboardV3 output_key="out" value="table_basket_pink"/>
-                </BlackboardCheckString>
-                <BlackboardCheckString return_on_mismatch="0" value_A="{obj}" value_B="table_basket_yellow">
+                </Precondition>
+                <Precondition if="obj == 'table_basket_yellow'" else="FAILURE">
                     <SetBlackboardV3 output_key="out" value="table_basket_pink"/>
-                </BlackboardCheckString>
+                </Precondition>
                 <ForceFailure>
                     <Error message="Unable to find basket color for object {obj}!"/>
                 </ForceFailure>

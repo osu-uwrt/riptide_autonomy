@@ -8,9 +8,9 @@
                     <Info message="Attempting to set the camera to DFC"/>
                     <Info message="Attempting to set the camera to FFC"/>
                 </IfThenElse>
-                <RetryUntilSuccessfulV3 num_attempts="3">
+                <RetryUntilSuccessful num_attempts="3">
                     <CallSetBoolService data="{is_dfc}" srv_name="set_camera_is_dfc" time_limit_secs="3"/>
-                </RetryUntilSuccessfulV3>
+                </RetryUntilSuccessful>
                 <Info message="Active camera set successfully."/>
             </Sequence>
             <ForceFailure>

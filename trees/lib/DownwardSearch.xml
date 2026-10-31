@@ -9,20 +9,19 @@
                 <getCovariance Covariance="{cov}" Target="{object_name}"/>
                 <CompareNums a="{cov}" b="{target_cov}" test="&gt;"/>
                 <SetBlackboardV3 output_key="reset_adjust_threshold" value="0.1"/>
-                <SetBlackboardV3 output_key="0" value="0"/>
                 <SetMappingTarget lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
                 <SetBlackboardV3 output_key="radius_step" value="0.25"/>
                 <SetStatus status="searching"/>
                 <Format format="{object_name}_frame" out="{frame}"/>
-                <GetOdometry op="{__v3_empty}" or="{__v3_empty}" oy="{abs_yaw}" x="{__v3_empty}" y="{__v3_empty}" z="{__v3_empty}"/>
-                <TransformPose from_frame="odom" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{rel_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
-                <TransformPose from_frame="{frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{before_x}" out_y="{before_y}" out_z="{before_z}" oy="0" to_frame="map" x="0" y="0" z="0"/>
+                <GetOdometry oy="{abs_yaw}"/>
+                <TransformPose from_frame="odom" op="0" or="0" out_oy="{rel_yaw}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                <TransformPose from_frame="{frame}" op="0" or="0" out_x="{before_x}" out_y="{before_y}" out_z="{before_z}" oy="0" to_frame="map" x="0" y="0" z="0"/>
                 <ForceSuccess>
                     <ReactiveSequence name="go to the initial guess until the object is in view">
                         <Inverter>
                             <SeenRecently max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
                         </Inverter>
-                        <SubTree ID="DownwardMove" frame="{frame}" gx="{0}" gy="{0}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                        <SubTree ID="DownwardMove" frame="{frame}" gx="0" gy="0" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
                     </ReactiveSequence>
                 </ForceSuccess>
                 <IfThenElse name="object in view: follow it now">
@@ -59,7 +58,7 @@
                                 <Math a="{dist}" b="{radius_step}" operator="+" out="{dist}"/>
                                 <getCovariance Covariance="{cov}" Target="{object_name}"/>
                                 <Info message="object {object_name} covariance at {cov}, target is {target_cov}, distance is {dist}"/>
-                                <TransformPose from_frame="{frame}" op="0" or="0" out_op="{__v3_empty}" out_or="{__v3_empty}" out_oy="{__v3_empty}" out_x="{after_x}" out_y="{after_y}" out_z="{after_z}" oy="0" to_frame="map" x="0" y="0" z="0"/>
+                                <TransformPose from_frame="{frame}" op="0" or="0" out_x="{after_x}" out_y="{after_y}" out_z="{after_z}" oy="0" to_frame="map" x="0" y="0" z="0"/>
                                 <CalculateDistance dist="{amount_adjusted}" x1="{before_x}" x2="{after_x}" y1="{before_y}" y2="{after_y}" z1="{before_z}" z2="{after_z}"/>
                                 <Info message="{frame} moved {amount_adjusted} meters during last loop."/>
                                 <IfThenElse name="should we reset dist">
@@ -67,7 +66,7 @@
                                     <Sequence name="reset dist">
                                         <Info message="Detected object enough to sufficiently move. Resetting search"/>
                                         <SetBlackboardV3 output_key="dist" value="{radius_step}"/>
-                                        <SubTree ID="DownwardMove" frame="{frame}" gx="{0}" gy="{0}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                                        <SubTree ID="DownwardMove" frame="{frame}" gx="0" gy="0" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
                                     </Sequence>
                                     <AlwaysSuccess/>
                                 </IfThenElse>
@@ -76,7 +75,7 @@
                                     <Sequence>
                                         <Info message="Got too far away from object estimate. Resetting search"/>
                                         <SetBlackboardV3 output_key="dist" value="{radius_step}"/>
-                                        <SubTree ID="DownwardMove" frame="{frame}" gx="{0}" gy="{0}" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
+                                        <SubTree ID="DownwardMove" frame="{frame}" gx="0" gy="0" gz="{min_dist}" object_name="{object_name}" reset_adjust_threshold="{reset_adjust_threshold}" target_Cov="{target_cov}"/>
                                     </Sequence>
                                     <AlwaysSuccess/>
                                 </IfThenElse>

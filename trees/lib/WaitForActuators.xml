@@ -6,7 +6,7 @@
                 <Sequence>
                     <Info message="Waiting for actuators..."/>
                     <Wait seconds="0.25"/>
-                    <GetActuatorStatus actuators_busy="{busy}" claw_state="{__v3_empty}" dropper_available_count="{__v3_empty}" dropper_state="{__v3_empty}" torpedo_available_count="{__v3_empty}" torpedo_state="{__v3_empty}"/>
+                    <GetActuatorStatus actuators_busy="{busy}"/>
                     <Inverter>
                         <IsTrue value="{busy}"/>
                     </Inverter>

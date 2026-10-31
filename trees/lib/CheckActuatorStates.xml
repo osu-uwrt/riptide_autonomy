@@ -2,7 +2,7 @@
 <root BTCPP_format="4">
     <BehaviorTree ID="CheckActuatorStates">
         <Sequence>
-            <GetActuatorStatus actuators_busy="{__v3_empty}" claw_state="{clawstate}" dropper_available_count="{__v3_empty}" dropper_state="{dropperstate}" torpedo_available_count="{__v3_empty}" torpedo_state="{torpedostate}"/>
+            <GetActuatorStatus claw_state="{clawstate}" dropper_state="{dropperstate}" torpedo_state="{torpedostate}"/>
             <Fallback>
                 <Sequence name="Check states">
                     <Inverter name="dropperstate not error">

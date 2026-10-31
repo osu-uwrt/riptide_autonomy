@@ -4,8 +4,6 @@
     <include path="SetActuatorsArmed.xml"/>
     <BehaviorTree ID="PrepForRun">
         <Sequence>
-            <SetBlackboardV3 output_key="0" value="0"/>
-            <SetBlackboardV3 output_key="1" value="1"/>
             <SetBlackboardV3 output_key="time_limit_secs" value="3"/>
             <ForceSuccess>
                 <SetMappingTarget lock_map="1" target_object="" time_limit_secs="{time_limit_secs}"/>
@@ -14,7 +12,7 @@
                 <SubTree ID="ReloadActuators"/>
             </ForceSuccess>
             <ForceSuccess>
-                <SubTree ID="SetActuatorsArmed" armed="{0}"/>
+                <SubTree ID="SetActuatorsArmed" armed="0"/>
             </ForceSuccess>
         </Sequence>
     </BehaviorTree>

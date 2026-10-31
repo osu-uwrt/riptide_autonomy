@@ -5,7 +5,6 @@
         <Sequence name="Follow the detection until the estimate converges or it is lost">
             <Info message="{object_name} in view: following the detection"/>
             <SetBlackboardV3 output_key="dfc_link" value="talos/dfc_base_link"/>
-            <SetBlackboardV3 output_key="step_secs" value="0.5"/>
             <RetryUntilSuccessfulOrTimeout num_seconds="30">
                 <Sequence name="re-aim at the object">
                     <Fallback name="at the detection itself, else the mapping estimate">
@@ -14,16 +13,16 @@
                         <Sequence name="aim at the latest detection">
                             <LatestDetection frame="world" max_age_secs="1.0" min_score="0.2" object_name="{object_name}" out_x="{det_x}" out_y="{det_y}" out_z="{det_z}"/>
                             <Math a="{det_z}" b="{min_dist}" operator="+" out="{det_above_z}"/>
-                            <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                            <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" oy="0" to_frame="world" x="0" y="0" z="0"/>
                             <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="{link_yaw}" reference_frame="world" x="{det_x}" y="{det_y}" z="{det_above_z}"/>
                         </Sequence>
                         <Sequence name="aim at the latest estimate">
-                            <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" out_x="{__v3_empty}" out_y="{__v3_empty}" out_z="{__v3_empty}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
+                            <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
                             <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
                         </Sequence>
                     </Fallback>
                     <ForceSuccess>
-                        <SubTree ID="PrimitiveMovePosition" timeout="{step_secs}" x="{ax}" y="{ay}" z="{az}"/>
+                        <SubTree ID="PrimitiveMovePosition" timeout="0.5" x="{ax}" y="{ay}" z="{az}"/>
                     </ForceSuccess>
                     <getCovariance Covariance="{cov}" Target="{object_name}"/>
                     <Fallback name="done?">
