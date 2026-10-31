@@ -96,7 +96,7 @@ It edits the files in place and checks every save with BehaviorTree.CPP 4.10. De
 
 ### The file contract with notgroot
 notgroot and this package share no code; the files are the interface. The contract is notgroot's *docs/contract.md*
-(version 2); in short:
+(version 3); in short:
 - **Layout.** A mission is any `*.xml` directly in *trees*: `<root BTCPP_format="4" main_tree_to_execute="ID">`, its
   `<include>`s, then one `<BehaviorTree>` with that ID. A shared subtree is *trees/lib/<ID>.xml* with one
   `<BehaviorTree ID="<ID>">`. A file includes exactly the subtrees its own tree uses, by paths relative to itself
@@ -116,6 +116,9 @@ notgroot and this package share no code; the files are the interface. The contra
 
 Notes for writing trees by hand in BehaviorTree.CPP 4:
 - A SubTree argument is `{key}` to pass a parent key, or plain text to pass that text.
+- BehaviorTree.CPP 4.10 types SubTree text by how it looks: `x="2"` makes the subtree's `x` an int, and a node that
+  reads it through a string port (every UWRT port) fails the whole tree's load ("port [x] was initially created with
+  type [int]"). Pass a number as `{key}` instead, as the converted trees do.
 - An output port takes `{key}`; a bare name stores nothing.
 - A value that starts with `{` and ends with `}` is one key, so `"{a},{b}"` reads a key named `a},{b`: end such text with
   another character (`"{a},{b};"`).
