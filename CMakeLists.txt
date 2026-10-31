@@ -271,7 +271,7 @@ if(AUTONOMY_BUILD_TESTS)
     )
 
     ament_target_dependencies(test_nodes ${deps})
-    target_link_libraries(test_nodes autonomy_utils)
+    target_link_libraries(test_nodes autonomy_utils tinyxml2)
 
     target_include_directories(test_nodes PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
