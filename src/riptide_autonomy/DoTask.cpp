@@ -471,5 +471,7 @@ int main(int argc, char *argv[])
     executor.add_node(node);
     executor.spin();
 
+    // the static TF listener owns a ROS node: drop it while the context is still up, or exit segfaults
+    UwrtBtNode::staticDeinit();
     rclcpp::shutdown();
 }
