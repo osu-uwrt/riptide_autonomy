@@ -88,11 +88,6 @@
         <SubTree ID="BinTreeMpc">
             <input_port name="repair_mission"/>
         </SubTree>
-        <Decorator ID="BlackboardCheckString">
-            <input_port name="return_on_mismatch" type="std::string">Status when value_A != value_B</input_port>
-            <input_port name="value_A" type="std::string"/>
-            <input_port name="value_B" type="std::string"/>
-        </Decorator>
         <SubTree ID="BuoyTree"/>
         <Action ID="CalculateDistance">
             <output_port name="dist" type="std::string"/>
@@ -482,14 +477,8 @@
             <input_port name="z"/>
         </SubTree>
         <SubTree ID="ReloadActuators"/>
-        <Decorator ID="RepeatV3">
-            <input_port name="num_cycles" type="std::string">Repeat a successful child N times (-1: forever)</input_port>
-        </Decorator>
         <Decorator ID="RetryUntilSuccessfulOrTimeout">
             <input_port name="num_seconds" type="BT::AnyTypeAllowed"/>
-        </Decorator>
-        <Decorator ID="RetryUntilSuccessfulV3">
-            <input_port name="num_attempts" type="std::string">Retry a failing child up to N times (-1: forever)</input_port>
         </Decorator>
         <SubTree ID="ReturnHomeTree"/>
         <SubTree ID="RotateToFrame">

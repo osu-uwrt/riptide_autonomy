@@ -248,8 +248,8 @@ namespace do_task
                 auto tickStatus = NodeStatus::RUNNING;
                 while (tickStatus == NodeStatus::RUNNING)
                 {
-                    // One tick of the root per loop, as BehaviorTree.CPP 3's tickRoot did (tickOnce would re-tick
-                    // at once whenever a node asks to be woken up).
+                    // One tick of the root per loop (tickOnce would re-tick at once whenever a node asks to be
+                    // woken up).
                     tickStatus = tree.tickExactlyOnce();
 
                     // check for a cancel

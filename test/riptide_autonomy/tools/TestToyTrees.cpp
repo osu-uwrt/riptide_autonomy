@@ -6,8 +6,8 @@
 
 #include <unistd.h>
 
-// Small trees for what the real missions rely on: includes, subtree remaps, the v3-behavior nodes and shared
-// ROS entities.
+// Small trees for what the real missions rely on: includes, subtree remaps, number text into subtrees, the builtin
+// decorators and shared ROS entities.
 
 namespace {
 
@@ -115,59 +115,74 @@ TEST_F(ToyTrees, test_subtree_remap_literal_vs_key) {
     EXPECT_TRUE(!peeked || peeked->value.empty());
 }
 
-// BT.CPP 4.10 types subtree text by its looks: "2" makes the subtree's key an int, and a node reading it through a
-// std::string port (every UWRT port) fails the load. Trees pass {key} instead (notgroot docs/contract.md section 5).
-TEST_F(ToyTrees, test_subtree_number_literal_fails_string_port) {
+// BT.CPP 4.10 types subtree text by its looks: "2" makes the subtree's key an int. UWRT inputs and SetBlackboardV3
+// take any type, so numbers go to subtrees as plain text; a std::string port (Info's message) still refuses them.
+TEST_F(ToyTrees, test_subtree_number_literal) {
     const std::string xml = R"(<root BTCPP_format="4" main_tree_to_execute="Main">
     <BehaviorTree ID="Main">
-        <SubTree ID="Status" status="VALUE"/>
+        <SubTree ID="Numbers" n="2" d="0.5" out="{out}"/>
     </BehaviorTree>
-    <BehaviorTree ID="Status">
-        <SetStatus status="{status}"/>
+    <BehaviorTree ID="Numbers">
+        <Sequence>
+            <CompareNums a="{n}" b="2" test="=="/>
+            <SetBlackboardV3 output_key="out" value="{d}"/>
+            READER
+        </Sequence>
     </BehaviorTree>
 </root>
 )";
-    auto withValue = [&xml](const std::string& value) {
-        return std::regex_replace(xml, std::regex("VALUE"), value);
+    auto withReader = [&xml](const std::string& reader) {
+        return std::regex_replace(xml, std::regex("READER"), reader);
     };
-    EXPECT_THROW((void)factory->createTreeFromText(withValue("2")), BT::RuntimeError);
-    EXPECT_NO_THROW((void)factory->createTreeFromText(withValue("moving")));
-    EXPECT_NO_THROW((void)factory->createTreeFromText(withValue("{some_key}")));
+    BT::Tree tree = factory->createTreeFromText(withReader("<AlwaysSuccess/>"));
+    initRosForTree(tree, toolNode);
+    ASSERT_EQ(tree.tickWhileRunning(), BT::NodeStatus::SUCCESS);
+    EXPECT_DOUBLE_EQ(tree.rootBlackboard()->get<double>("out"), 0.5);
+
+    EXPECT_THROW((void)factory->createTreeFromText(withReader("<Info message=\"{n}\"/>")), BT::RuntimeError);
 }
 
-// the v3-behavior nodes finish within one tick, as v3's did
-TEST_F(ToyTrees, test_v3_compat_nodes) {
+// the builtin decorators the trees use: Repeat and RetryUntilSuccessful return RUNNING between iterations of a child
+// that finishes in one tick (doTask ticks once per loop), and Precondition compares with a script
+TEST_F(ToyTrees, test_builtin_decorators) {
     BT::Tree tree = factory->createTreeFromText(R"(<root BTCPP_format="4" main_tree_to_execute="Main">
     <BehaviorTree ID="Main">
         <Sequence>
             <Script code="repeats := 0; retries := 0"/>
-            <RepeatV3 num_cycles="3">
+            <Repeat num_cycles="3">
                 <Script code="repeats := repeats + 1"/>
-            </RepeatV3>
+            </Repeat>
             <ForceSuccess>
-                <RetryUntilSuccessfulV3 num_attempts="4">
+                <RetryUntilSuccessful num_attempts="4">
                     <Sequence>
                         <Script code="retries := retries + 1"/>
                         <AlwaysFailure/>
                     </Sequence>
-                </RetryUntilSuccessfulV3>
+                </RetryUntilSuccessful>
             </ForceSuccess>
             <SetBlackboardV3 output_key="a" value="x"/>
             <SetBlackboardV3 output_key="copy" value="{a}"/>
-            <BlackboardCheckString value_A="{copy}" value_B="x" return_on_mismatch="FAILURE">
+            <Precondition if="copy == 'x'" else="FAILURE">
                 <SetBlackboardV3 output_key="matched" value="yes"/>
-            </BlackboardCheckString>
+            </Precondition>
             <Inverter>
-                <BlackboardCheckString value_A="{copy}" value_B="y" return_on_mismatch="FAILURE">
+                <Precondition if="copy == 'y'" else="FAILURE">
                     <AlwaysSuccess/>
-                </BlackboardCheckString>
+                </Precondition>
             </Inverter>
         </Sequence>
     </BehaviorTree>
 </root>
 )");
 
-    ASSERT_EQ(tree.tickExactlyOnce(), BT::NodeStatus::SUCCESS);
+    int ticks = 1;
+    BT::NodeStatus status = tree.tickExactlyOnce();
+    while(status == BT::NodeStatus::RUNNING && ticks < 100) {
+        status = tree.tickExactlyOnce();
+        ticks++;
+    }
+    ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+    EXPECT_EQ(ticks, 6); // one, then RUNNING after 2 repeats and 3 retries
     EXPECT_EQ(tree.rootBlackboard()->get<int>("repeats"), 3);
     EXPECT_EQ(tree.rootBlackboard()->get<int>("retries"), 4);
     EXPECT_EQ(text(tree, "matched"), "yes");
