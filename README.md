@@ -14,7 +14,6 @@ The package is split up into five main parts:
 - Custom node *tests*, which are located in *test/riptide_autonomy* and split up by node type. This is the C++ code that tests the custom node definitions. All tests are written using the GTest framework. Header files for test utilities can be found in *include/autonomy_test*.
 - The **doTask** executable, which spins up an action server that runs behavior tree XML files on the system.
 - The BT XML, located in *trees*, stores the trees run by the **doTask** executable. Each file directly in *trees* is a mission: its main tree plus `<include>`s. Every shared subtree is defined once, in *trees/lib/<ID>.xml*, which includes the subtrees it uses, so editing a subtree changes it for every mission. *trees/lib/node_models.xml* lists the custom nodes and their ports for the editor; regenerate it with `ros2 run riptide_autonomy2 updateNodeModels` after adding or changing a node.
-- The trees were converted from BehaviorTree.CPP 3 by `nereus/bt_editor/tools/bt3_to_bt4.py`. Converted trees use **SetBlackboardV3**, **RepeatV3**, **RetryUntilSuccessfulV3** and **BlackboardCheckString**, which keep v3's behavior (v4's own SetBlackboard, Repeat and RetryUntilSuccessful act differently); new trees can use either.
 - The BT assistant, located in *src/riptide_autonomy/assistant* is a useful tool for performing tedious tasks related to the package.
 
 ## Running BehaviorTrees
@@ -96,7 +95,7 @@ It edits the files in place and checks every save with BehaviorTree.CPP 4.10. De
 
 ### The file contract with notgroot
 notgroot and this package share no code; the files are the interface. The contract is notgroot's *docs/contract.md*
-(version 3); in short:
+(version 4); in short:
 - **Layout.** A mission is any `*.xml` directly in *trees*: `<root BTCPP_format="4" main_tree_to_execute="ID">`, its
   `<include>`s, then one `<BehaviorTree>` with that ID. A shared subtree is *trees/lib/<ID>.xml* with one
   `<BehaviorTree ID="<ID>">`. A file includes exactly the subtrees its own tree uses, by paths relative to itself
@@ -109,16 +108,25 @@ notgroot and this package share no code; the files are the interface. The contra
   attributes in their stored order, no blank lines, and comments kept verbatim. notgroot stores its metadata only as
   `<!-- notgroot:key=value -->` comments before the element they describe, so keep comments when editing by hand or
   with tools.
-- **Ports.** `{key}` is a blackboard key and anything else is a literal. Subtrees have isolated blackboards. Converted
-  v3 trees pass v3's empty-key remap as `{__v3_empty}`.
+- **Ports.** `{key}` is a blackboard key and anything else is a literal. Subtrees have isolated blackboards. A port
+  that is not used is left out.
+- **Numbers** are literals, also into SubTree ports (`<SubTree ID="Move" z="-1.5"/>`), never a key set to its own value.
+  BehaviorTree.CPP 4.10 types such text (`x="2"` is an int), so every UWRT input port is untyped (`BT::AnyTypeAllowed`)
+  and takes int, double or bool values; nodes still read them as text.
+- **Setting keys.** Named keys are set with **SetBlackboardV3** (`output_key` the bare key name, `value` text or `{key}`
+  to copy). 4.10's own SetBlackboard leaves a key empty when an untyped port declared it, so the trees don't use it.
+- **Loops and checks** use the builtins `Repeat`, `RetryUntilSuccessful` and `Precondition`; script code names keys bare
+  (`obj == 'table_spoon_pink'`).
 - **Validation.** `TestTreesLoad` (every mission and every *lib* subtree with the real plugins) and
   `updateNodeModels --check` are the ground truth.
 
 Notes for writing trees by hand in BehaviorTree.CPP 4:
 - A SubTree argument is `{key}` to pass a parent key, or plain text to pass that text.
-- BehaviorTree.CPP 4.10 types SubTree text by how it looks: `x="2"` makes the subtree's `x` an int, and a node that
-  reads it through a string port (every UWRT port) fails the whole tree's load ("port [x] was initially created with
-  type [int]"). Pass a number as `{key}` instead, as the converted trees do.
+- BehaviorTree.CPP 4.10 types SubTree text by how it looks: `x="2"` makes the subtree's `x` an int. UWRT inputs take it,
+  but a typed port (e.g. Info's `message`, a std::string) that reads `x` fails the whole tree's load ("port [x] was
+  initially created with type [int]"). A number read back as text from a double comes out as `%f` ("0.500000").
+- Repeat and RetryUntilSuccessful return RUNNING between iterations of a child that finishes in one tick, so a loop
+  takes one doTask tick (30 ms) per iteration and reactive parents re-check in between.
 - An output port takes `{key}`; a bare name stores nothing.
 - A value that starts with `{` and ends with `}` is one key, so `"{a},{b}"` reads a key named `a},{b`: end such text with
   another character (`"{a},{b};"`).
