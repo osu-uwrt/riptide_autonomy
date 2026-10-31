@@ -367,12 +367,12 @@ namespace do_task
             // iterate all the search dirs
             for (auto dir : treeDirs)
             {
-                // iterate the files in the search dirs and test them to see if they are xml
+                // iterate the files in the search dirs and test them to see if they are xml.
+                // Only the missions: lib/ holds subtrees and node models, not trees to run
                 for (const auto &entry : std::filesystem::directory_iterator(dir))
                 {
-                    std::string file = std::string(entry.path());
-                    if (file.find(".xml") != std::string::npos)
-                        treeFiles.push_back(file);
+                    if (entry.is_regular_file() && entry.path().extension() == ".xml")
+                        treeFiles.push_back(std::string(entry.path()));
                 }
             }
 
