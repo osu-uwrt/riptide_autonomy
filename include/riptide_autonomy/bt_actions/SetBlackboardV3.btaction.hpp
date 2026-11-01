@@ -29,7 +29,11 @@ class SetBlackboardV3 : public BT::SyncActionNode {
         }
 
         const auto &blackboard = config().blackboard;
-        const std::string valueText = config().input_ports.at("value");
+        const auto value = config().input_ports.find("value");
+        if(value == config().input_ports.end()) {
+            throw BT::RuntimeError("missing port [value]");
+        }
+        const std::string valueText = value->second;
         BT::StringView stripped;
         if(isBlackboardPointer(valueText, &stripped)) {
             const auto source = blackboard->getEntry(std::string(stripped));

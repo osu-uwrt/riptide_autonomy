@@ -2,6 +2,7 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 
+#include <mutex>
 #include <sstream>
 #include <std_msgs/msg/string.hpp>
 #include <unordered_map>
@@ -39,6 +40,7 @@ class SeenRecently : public UWRTConditionNode {
                 std::string name;
                 while(std::getline(list, name, ',')) {
                     if(!name.empty()) {
+                        std::lock_guard<std::mutex> lock(mutex);
                         lastSeen[name] = rosNode()->get_clock()->now();
                     }
                 }
@@ -48,17 +50,23 @@ class SeenRecently : public UWRTConditionNode {
     BT::NodeStatus tick() override {
         const std::string object = tryGetRequiredInput<std::string>(this, "object_name", "");
         const double max_age = tryGetRequiredInput<double>(this, "max_age_secs", 0.5);
-        const auto found = lastSeen.find(object);
-        if(found == lastSeen.end()) {
-            return BT::NodeStatus::FAILURE;
+        rclcpp::Time seen;
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            const auto found = lastSeen.find(object);
+            if(found == lastSeen.end()) {
+                return BT::NodeStatus::FAILURE;
+            }
+            seen = found->second;
         }
-        const double age = (rosNode()->get_clock()->now() - found->second).seconds();
+        const double age = (rosNode()->get_clock()->now() - seen).seconds();
         return (age >= 0 && age <= max_age) ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
     }
 
     private:
     void detection3dArrayCb(const vision_msgs::msg::Detection3DArray::SharedPtr msg) {
         const double minScore = tryGetOptionalInput<double>(this, "min_score", 0.2);
+        std::lock_guard<std::mutex> lock(mutex);
         for(const auto& detection : msg->detections) {
             for(const auto& result : detection.results) {
                 if(result.hypothesis.score >= minScore) {
@@ -68,6 +76,8 @@ class SeenRecently : public UWRTConditionNode {
         }
     }
 
+    // the callbacks run on the executor, tick() on the tree's thread
+    std::mutex mutex;
     std::unordered_map<std::string, rclcpp::Time> lastSeen;
     std::shared_ptr<SharedSubscription<vision_msgs::msg::Detection3DArray>> detectionSource;
     std::shared_ptr<SharedSubscription<std_msgs::msg::String>> fusedSource;

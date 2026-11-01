@@ -55,6 +55,8 @@ public:
         try {
             toFrame = tfBuffer->lookupTransform(frame, seen.frameId, tf2_ros::fromMsg(seen.stamp), tf2::durationFromSec(0.05));
         } catch(tf2::TransformException&) {
+            RCLCPP_WARN_THROTTLE(rosnode->get_logger(), *rosnode->get_clock(), 2000,
+                "LatestDetection: no transform at the detection's stamp, using the latest");
             if(!lookupTransform(seen.frameId, frame, toFrame)) {
                 return BT::NodeStatus::FAILURE;
             }

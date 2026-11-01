@@ -82,14 +82,15 @@ void UwrtBtNode::staticInit(rclcpp::Node::SharedPtr node) {
 
 
 void UwrtBtNode::staticDeinit() {
-    if(tfBuffer)
-    {
-        tfBuffer.reset();
-    }
-
+    // the listener feeds the buffer, so it goes first
     if(tfListener)
     {
         tfListener.reset();
+    }
+
+    if(tfBuffer)
+    {
+        tfBuffer.reset();
     }
 }
 

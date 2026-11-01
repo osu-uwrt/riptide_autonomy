@@ -4,6 +4,7 @@
 #include <riptide_msgs2/action/follow_path.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <algorithm>
+#include <atomic>
 #include <sstream>
 
 /**
@@ -220,7 +221,19 @@ class FollowPath : public UWRTActionNode {
                     "FollowPath: waiting for the follow_path server (MPC controller)");
                 return BT::NodeStatus::RUNNING;
             }
-            goalFuture = client->async_send_goal(goal);
+
+            // the client is shared with every FollowPath, so a goal cancelled before it is accepted is cancelled by
+            // handle once it is
+            cancelled = std::make_shared<std::atomic<bool>>(false);
+            rclcpp_action::Client<Action>::SendGoalOptions options;
+            options.goal_response_callback = [weakClient = std::weak_ptr<rclcpp_action::Client<Action>>(client), cancelled = cancelled](GoalHandle::SharedPtr handle) {
+                if(handle && *cancelled) {
+                    if(auto locked = weakClient.lock()) {
+                        locked->async_cancel_goal(handle);
+                    }
+                }
+            };
+            goalFuture = client->async_send_goal(goal, options);
             return BT::NodeStatus::RUNNING;
         }
 
@@ -320,8 +333,8 @@ class FollowPath : public UWRTActionNode {
             } catch(const rclcpp_action::exceptions::UnknownGoalHandleError&) {
                 // the result already came in, so the client forgot the goal; nothing to cancel
             }
-        } else if(goalFuture.valid()) { // still being accepted; this is the only path client
-            client->async_cancel_all_goals();
+        } else if(goalFuture.valid() && cancelled) { // still being accepted: cancelled when the handle arrives
+            *cancelled = true;
         }
         goalHandle.reset();
         goalFuture = {};
@@ -360,6 +373,7 @@ class FollowPath : public UWRTActionNode {
     Action::Goal goal;
     std::shared_future<GoalHandle::SharedPtr> goalFuture;
     GoalHandle::SharedPtr goalHandle;
+    std::shared_ptr<std::atomic<bool>> cancelled;
     std::shared_future<GoalHandle::WrappedResult> resultFuture;
     rclcpp::Time startTime;
     double timeout = 60, minDepth = -0.55, maxDepth = -4;

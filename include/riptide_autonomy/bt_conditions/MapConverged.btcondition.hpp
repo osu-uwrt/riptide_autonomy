@@ -3,6 +3,7 @@
 #include "riptide_autonomy/autonomy_lib.hpp"
 
 #include <cmath>
+#include <mutex>
 #include <optional>
 #include <sstream>
 #include <unordered_map>
@@ -61,6 +62,7 @@ class MapConverged : public UWRTConditionNode {
         bool converged = true;
         for(const auto& name : objects) {
             subscribe(name);
+            std::lock_guard<std::mutex> lock(mutex);
             const auto found = latest.find(name);
             converged = converged && found != latest.end() && found->second.stamp >= since && found->second.error < target;
         }
@@ -93,11 +95,14 @@ class MapConverged : public UWRTConditionNode {
         sources[object] = source;
         subs[object] = source->listen(
             [this, object](const Cov::SharedPtr msg) {
+                std::lock_guard<std::mutex> lock(mutex);
                 latest[object] = {rosNode()->get_clock()->now(), error(*msg)};
             });
     }
 
     std::unordered_map<std::string, std::shared_ptr<SharedSubscription<Cov>>> sources;
+    // the listeners run on the executor, tick() on the tree's thread
+    std::mutex mutex;
     std::unordered_map<std::string, Estimate> latest;
     std::optional<rclcpp::Time> lastTick;
     rclcpp::Time since;

@@ -32,8 +32,8 @@ using RosListenerPtr = std::unique_ptr<RosListener>;
 /**
  * @brief One subscription that hands each message to every registered listener, and keeps the latest one.
  * Get it from RosEntityCache so every node on the same topic, type and QoS shares it.
- * Callbacks run with the listener list locked: a callback must not listen, and nothing may listen while
- * holding a lock its own callback takes.
+ * Callbacks run with the listener list locked: a callback must not listen or destroy a listener (its own
+ * included), and nothing may listen while holding a lock its own callback takes.
  */
 template<typename MsgT>
 class SharedSubscription : public std::enable_shared_from_this<SharedSubscription<MsgT>> {
