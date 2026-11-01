@@ -95,7 +95,7 @@ It edits the files in place and checks every save with BehaviorTree.CPP 4.10. De
 
 ### The file contract with notgroot
 notgroot and this package share no code; the files are the interface. The contract is notgroot's *docs/contract.md*
-(version 4); in short:
+(version 6); in short:
 - **Layout.** A mission is any `*.xml` directly in *trees*: `<root BTCPP_format="4" main_tree_to_execute="ID">`, its
   `<include>`s, then one `<BehaviorTree>` with that ID. A shared subtree is *trees/lib/<ID>.xml* with one
   `<BehaviorTree ID="<ID>">`. A file includes exactly the subtrees its own tree uses, by paths relative to itself
@@ -103,16 +103,22 @@ notgroot and this package share no code; the files are the interface. The contra
 - **Node models.** *trees/lib/node_models.xml* holds the Action, Condition and Decorator entries, which
   `updateNodeModels` regenerates from the plugins (`--check` fails when it is out of date), and the SubTree entries,
   which notgroot owns and `updateNodeModels` keeps. Entries are sorted by ID and ports by name; SubTree ports carry no
-  `default=`. `updateNodeModels --builtins FILE` writes BehaviorTree.CPP's own models, which notgroot ships.
+  `default=` (`updateNodeModels --check` fails on one). `updateNodeModels --builtins FILE` writes BehaviorTree.CPP's own models, which notgroot ships.
 - **Format.** Both sides write the same canonical XML: UTF-8 declaration, 4-space indent, one element per line,
-  attributes in their stored order, no blank lines, and comments kept verbatim. notgroot stores its metadata only as
+  attributes in their stored order, no blank lines, and comments kept verbatim (those before and after the root element too). notgroot stores its metadata only as
   `<!-- notgroot:key=value -->` comments before the element they describe, so keep comments when editing by hand or
   with tools.
-- **Ports.** `{key}` is a blackboard key and anything else is a literal. Subtrees have isolated blackboards. A port
+- **Ports.** A value that starts with `{` and ends with `}` (at least three characters, spaces around it ignored) is a
+  blackboard key and anything else is a literal; `{}` is not a key. Subtrees have isolated blackboards. A port
   that is not used is left out.
 - **Numbers** are literals, also into SubTree ports (`<SubTree ID="Move" z="-1.5"/>`), never a key set to its own value.
   BehaviorTree.CPP 4.10 types such text (`x="2"` is an int), so every UWRT input port is untyped (`BT::AnyTypeAllowed`)
-  and takes int, double or bool values; nodes still read them as text.
+  and takes any text, int or double (only those two are typed; `true`, `false`, `+5` and ` 5` stay text); nodes still read
+  them as text.
+- **Globals.** Keys a tree sets before anything in it runs are notgroot's: the tree's root is wrapped in a
+  `Sequence name="globals"` right after a `<!-- notgroot:globals -->` comment, whose first child is one `Script` of
+  `name := value` statements, then the real root. `notgroot-globals` converts the setters a tree always runs first. A
+  global's text can't hold a `'`.
 - **Setting keys.** Named keys are set with **SetBlackboardV3** (`output_key` the bare key name, `value` text or `{key}`
   to copy). 4.10's own SetBlackboard leaves a key empty when an untyped port declared it, so the trees don't use it.
 - **Loops and checks** use the builtins `Repeat`, `RetryUntilSuccessful` and `Precondition`; script code names keys bare
@@ -124,9 +130,12 @@ Notes for writing trees by hand in BehaviorTree.CPP 4:
 - A SubTree argument is `{key}` to pass a parent key, or plain text to pass that text.
 - BehaviorTree.CPP 4.10 types SubTree text by how it looks: `x="2"` makes the subtree's `x` an int. UWRT inputs take it,
   but a typed port (e.g. Info's `message`, a std::string) that reads `x` fails the whole tree's load ("port [x] was
-  initially created with type [int]"). A number read back as text from a double comes out as `%f` ("0.500000").
+  initially created with type [int]"). A number read back as text from a double comes out as `%f` ("0.500000"), so only six decimals survive:
+  `x="0.0000001"` passed to a subtree and read as text becomes `0.000000`.
 - Repeat and RetryUntilSuccessful return RUNNING between iterations of a child that finishes in one tick, so a loop
   takes one doTask tick (30 ms) per iteration and reactive parents re-check in between.
+- `Precondition if="obj == 'x'"` throws on a key that was never set, which aborts the tree; the old
+  BlackboardCheckString answered FAILURE for a missing key. Set the key first.
 - An output port takes `{key}`; a bare name stores nothing.
 - A value that starts with `{` and ends with `}` is one key, so `"{a},{b}"` reads a key named `a},{b`: end such text with
   another character (`"{a},{b};"`).
