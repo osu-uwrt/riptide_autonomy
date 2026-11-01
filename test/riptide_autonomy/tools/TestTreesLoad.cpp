@@ -32,6 +32,15 @@ std::vector<std::string> treeIds(const tinyxml2::XMLElement* root) {
     return ids;
 }
 
+
+// every element of the file, children included
+void collect(const tinyxml2::XMLElement* element, std::vector<const tinyxml2::XMLElement*>& all) {
+    all.push_back(element);
+    for (auto* child = element->FirstChildElement(); child; child = child->NextSiblingElement()) {
+        collect(child, all);
+    }
+}
+
 }
 
 // Every installed tree must build with the registered nodes: catches unknown node
@@ -127,4 +136,39 @@ TEST_F(BtTest, test_missions_share_ros_entities) {
         EXPECT_LE(RosEntityCache::liveTotal(), 20u) << mission.filename() << " (" << rosNodes << " ROS nodes)";
     }
     EXPECT_EQ(RosEntityCache::liveTotal(), 0u);
+}
+
+// BT4 takes one brace level off a port value, so "{{key}}" names a key called "{key}" that nothing sets
+TEST_F(BtTest, test_no_double_brace_values) {
+    std::vector<std::filesystem::path> files = missions();
+    for (const auto& entry : std::filesystem::directory_iterator(treeDir() / "lib")) {
+        if (entry.path().extension() == ".xml" && entry.path().filename() != "node_models.xml") {
+            files.push_back(entry.path());
+        }
+    }
+    for (const auto& file : files) {
+        tinyxml2::XMLDocument doc;
+        ASSERT_EQ(doc.LoadFile(file.c_str()), tinyxml2::XML_SUCCESS) << file.filename();
+        std::vector<const tinyxml2::XMLElement*> all;
+        collect(doc.RootElement(), all);
+        for (auto* element : all) {
+            for (auto* attribute = element->FirstAttribute(); attribute; attribute = attribute->Next()) {
+                EXPECT_EQ(std::string(attribute->Value()).find("{{"), std::string::npos)
+                    << file.filename() << " line " << element->GetLineNum() << ": " << attribute->Name();
+            }
+        }
+    }
+}
+
+// The editor's contract (section 3): SubTree ports in node_models.xml carry no default=
+TEST_F(BtTest, test_subtree_models_have_no_defaults) {
+    tinyxml2::XMLDocument doc;
+    ASSERT_EQ(doc.LoadFile((treeDir() / "lib" / "node_models.xml").c_str()), tinyxml2::XML_SUCCESS);
+    auto* models = doc.RootElement()->FirstChildElement("TreeNodesModel");
+    ASSERT_NE(models, nullptr);
+    for (auto* entry = models->FirstChildElement("SubTree"); entry; entry = entry->NextSiblingElement("SubTree")) {
+        for (auto* port = entry->FirstChildElement(); port; port = port->NextSiblingElement()) {
+            EXPECT_EQ(port->Attribute("default"), nullptr) << entry->Attribute("ID") << " " << port->Attribute("name");
+        }
+    }
 }

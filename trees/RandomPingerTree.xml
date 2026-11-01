@@ -8,7 +8,7 @@
         <Sequence name="MISSION">
             <Info message="MISSION: RESCUE"/>
             <ForceSuccess>
-                <SubTree ID="RandomPingerTree" is_table="{{pinger_is_table}}"/>
+                <SubTree ID="RandomPingerTree" is_table="{pinger_is_table}"/>
             </ForceSuccess>
             <IfThenElse>
                 <Inverter>
