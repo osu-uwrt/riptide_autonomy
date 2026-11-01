@@ -214,6 +214,23 @@ std::string generate(const std::string& existingText) {
     return writeDocument(existing, model);
 }
 
+// SubTree ports that carry default= (notgroot docs/contract.md section 3 bans them), as "Subtree port"
+std::vector<std::string> subtreeDefaults(const std::string& text) {
+    std::vector<std::string> found;
+    tinyxml2::XMLDocument doc;
+    if(doc.Parse(text.c_str()) != tinyxml2::XML_SUCCESS || !modelOf(doc)) {
+        return found;
+    }
+    for(auto* e = modelOf(doc)->FirstChildElement("SubTree"); e; e = e->NextSiblingElement("SubTree")) {
+        for(auto* port = e->FirstChildElement(); port; port = port->NextSiblingElement()) {
+            if(port->Attribute("default")) {
+                found.push_back(std::string(e->Attribute("ID") ? e->Attribute("ID") : "") + " " + (port->Attribute("name") ? port->Attribute("name") : ""));
+            }
+        }
+    }
+    return found;
+}
+
 // BehaviorTree.CPP's own nodes only, for the editor (notgroot's content/builtin_models.xml)
 std::string generateBuiltins() {
     BT::BehaviorTreeFactory factory;
@@ -237,7 +254,7 @@ std::string generateBuiltins() {
 }
 
 int main(int argc, char** argv) {
-    bool check = false, builtins = false;
+    bool check = false, builtins = false, fileGiven = false;
     std::filesystem::path file = std::filesystem::path(AUTONOMY_TREE_DIR) / "lib" / "node_models.xml";
     for(int i = 1; i < argc; ++i) {
         const std::string arg = argv[i];
@@ -251,7 +268,14 @@ int main(int argc, char** argv) {
             return 0;
         } else {
             file = arg;
+            fileGiven = true;
         }
+    }
+
+    // the builtins are not the repository's node list, so never default to writing over it
+    if(builtins && !fileGiven) {
+        std::cerr << "updateNodeModels: --builtins needs a FILE\n";
+        return 2;
     }
 
     std::string existing;
@@ -263,6 +287,15 @@ int main(int argc, char** argv) {
 
     try {
         const std::string text = builtins ? generateBuiltins() : generate(existing);
+
+        const auto defaults = builtins ? std::vector<std::string>() : subtreeDefaults(text);
+        for(const auto& port : defaults) {
+            std::cerr << file.string() << ": SubTree port " << port << " has default= (the contract allows none)\n";
+        }
+        if(check && !defaults.empty()) {
+            return 1;
+        }
+
         if(text == existing) {
             std::cout << file.string() << " is up to date\n";
             return 0;
@@ -272,7 +305,12 @@ int main(int argc, char** argv) {
             return 1;
         }
         std::filesystem::create_directories(file.parent_path());
-        std::ofstream(file) << text;
+        std::ofstream out(file);
+        out << text;
+        out.close();
+        if(out.fail()) {
+            throw std::runtime_error("cannot write " + file.string());
+        }
         std::cout << "wrote " << file.string() << '\n';
         return 0;
     } catch(const std::exception& e) {

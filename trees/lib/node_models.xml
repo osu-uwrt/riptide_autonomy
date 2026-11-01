@@ -56,8 +56,8 @@
         <SubTree ID="AlignLink">
             <input_port name="frame_name">frame to align to</input_port>
             <input_port name="link_name">link to align</input_port>
-            <input_port name="prox_x" default="1">default x promity</input_port>
-            <input_port name="prox_z" default="0">default z proximity</input_port>
+            <input_port name="prox_x">default x promity</input_port>
+            <input_port name="prox_z">default z proximity</input_port>
         </SubTree>
         <SubTree ID="AlignLinkPositionOnly">
             <input_port name="frame_name"/>
@@ -378,20 +378,20 @@
         <SubTree ID="MiniSearch">
             <input_port name="object_name"/>
             <input_port name="parent_object"/>
-            <input_port name="prox_x" default="1"/>
-            <input_port name="prox_y" default="0"/>
-            <input_port name="prox_z" default="0"/>
-            <input_port name="target_cov" default="1.25"/>
-            <input_port name="timeout_secs" default="60"/>
+            <input_port name="prox_x"/>
+            <input_port name="prox_y"/>
+            <input_port name="prox_z"/>
+            <input_port name="target_cov"/>
+            <input_port name="timeout_secs"/>
         </SubTree>
         <SubTree ID="MiniSearchMpc">
             <input_port name="object_name"/>
             <input_port name="parent_object"/>
-            <input_port name="prox_x" default="1"/>
-            <input_port name="prox_y" default="0"/>
-            <input_port name="prox_z" default="0"/>
-            <input_port name="target_cov" default="1.25"/>
-            <input_port name="timeout_secs" default="60"/>
+            <input_port name="prox_x"/>
+            <input_port name="prox_y"/>
+            <input_port name="prox_z"/>
+            <input_port name="target_cov"/>
+            <input_port name="timeout_secs"/>
         </SubTree>
         <SubTree ID="Move">
             <input_port name="op"/>
@@ -415,11 +415,11 @@
         <SubTree ID="PrimitiveMoveOrientation">
             <input_port name="p"/>
             <input_port name="r"/>
-            <input_port name="timeout" default="15"/>
+            <input_port name="timeout"/>
             <input_port name="y"/>
         </SubTree>
         <SubTree ID="PrimitiveMovePosition">
-            <input_port name="timeout" default="60"/>
+            <input_port name="timeout"/>
             <input_port name="x"/>
             <input_port name="y"/>
             <input_port name="z"/>
@@ -486,18 +486,18 @@
             <inout_port name="target_frame" type="std::string"/>
         </SubTree>
         <SubTree ID="Search">
-            <input_port name="max_dist" default="4.0"/>
-            <input_port name="min_dist" default="1.75"/>
+            <input_port name="max_dist"/>
+            <input_port name="min_dist"/>
             <input_port name="object_name">Frame to search for</input_port>
-            <input_port name="target_cov" default="1.25">Target covariance to end search</input_port>
-            <input_port name="timeout_secs" default="120">Timeout for search</input_port>
+            <input_port name="target_cov">Target covariance to end search</input_port>
+            <input_port name="timeout_secs">Timeout for search</input_port>
         </SubTree>
         <SubTree ID="SearchMpc">
-            <input_port name="max_dist" default="4.0"/>
-            <input_port name="min_dist" default="1.75"/>
+            <input_port name="max_dist"/>
+            <input_port name="min_dist"/>
             <input_port name="object_name">Frame to search for</input_port>
-            <input_port name="target_cov" default="1.25">Target covariance to end search</input_port>
-            <input_port name="timeout_secs" default="120">Timeout for search</input_port>
+            <input_port name="target_cov">Target covariance to end search</input_port>
+            <input_port name="timeout_secs">Timeout for search</input_port>
         </SubTree>
         <Condition ID="SeenRecently">
             <input_port name="max_age_secs" type="BT::AnyTypeAllowed"/>
@@ -538,7 +538,7 @@
             <input_port name="link_2">Torpedo link fired at object_2</input_port>
             <input_port name="object_1"/>
             <input_port name="object_2"/>
-            <input_port name="torpedo_name" default="torpedo"/>
+            <input_port name="torpedo_name"/>
         </SubTree>
         <SubTree ID="ShootDownwardObject">
             <input_port name="dropper_link_name"/>
@@ -552,12 +552,12 @@
         </SubTree>
         <SubTree ID="ShootObject">
             <input_port name="object_name"/>
-            <input_port name="torpedo_link_name" default="talos/torpedo_link"/>
-            <input_port name="torpedo_name" default="torpedo"/>
+            <input_port name="torpedo_link_name"/>
+            <input_port name="torpedo_name"/>
         </SubTree>
         <SubTree ID="ShootSearchedObject">
             <input_port name="object_name"/>
-            <input_port name="torpedo_link_name" default="talos/torpedo_link"/>
+            <input_port name="torpedo_link_name"/>
         </SubTree>
         <SubTree ID="SingleSlalom">
             <input_port name="pass_on_left">Whether to pass on the left side of the red slalom pole</input_port>
@@ -579,7 +579,7 @@
             <input_port name="z"/>
         </SubTree>
         <SubTree ID="SmartMoveSurge">
-            <input_port name="timeout" default="60"/>
+            <input_port name="timeout"/>
             <input_port name="x"/>
             <input_port name="z"/>
         </SubTree>
@@ -595,7 +595,7 @@
             <input_port name="target_image"/>
         </SubTree>
         <SubTree ID="SurgeMove">
-            <input_port name="timeout" default="30"/>
+            <input_port name="timeout"/>
             <input_port name="x"/>
             <input_port name="z"/>
         </SubTree>
