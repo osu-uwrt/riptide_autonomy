@@ -10,6 +10,7 @@
 #include <riptide_msgs2/action/execute_tree.hpp>
 #include <riptide_msgs2/srv/list_trees.hpp>
 
+#include <atomic>
 #include <vector>
 #include <chrono>
 #include <filesystem>
@@ -155,7 +156,7 @@ namespace do_task
             (void)uuid;
 
             // test if the tree is running
-            if (executionThread.joinable())
+            if (treeRunning)
             {
                 // tree is running, so we cannot accept another
                 return rclcpp_action::GoalResponse::REJECT;
@@ -180,6 +181,9 @@ namespace do_task
 
         void handleAccepted(const std::shared_ptr<GoalHandleExecuteTree> goal_handle)
         {
+            // mark it now, so a goal that arrives before the thread starts is rejected
+            treeRunning = true;
+
             // this needs to return quickly to avoid blocking the executor, so spin up a new thread
             executionThread = std::thread{std::bind(&BTExecutor::execute, this, _1), goal_handle};
             executionThread.detach();
@@ -203,7 +207,9 @@ namespace do_task
                 // Includes resolve against the file's folder, so the path must have one.
                 parser.loadFromFile(std::filesystem::absolute(goal_handle->get_goal()->tree));
                 const auto parsed = Clock::now();
-                Tree tree = parser.instantiateTree(Blackboard::create());
+                auto blackboard = Blackboard::create();
+                blackboard->setPolymorphicCastRegistry(factory->polymorphicCastRegistryPtr());
+                Tree tree = parser.instantiateTree(blackboard);
                 tree.manifests = factory->manifests();
                 const auto instantiated = Clock::now();
                 initRosForTree(tree, this->shared_from_this());
@@ -430,9 +436,8 @@ namespace do_task
 
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr killSub;
         
-        bool 
-            treeRunning,
-            robotKilled;
+        std::atomic<bool> treeRunning;
+        bool robotKilled;
 
         // ros action and service servers
         rclcpp_action::Server<ExecuteTree>::SharedPtr actionServer;
