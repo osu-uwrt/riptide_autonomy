@@ -2070,9 +2070,49 @@
             <SetBlackboard name="Wider sweeps: arc per pan (rad)" output_key="pan_step_wide" value="0.5"/>
             <SetBlackboard name="Once seen, hold there at most this long for the map to converge (s)" output_key="hold_secs" value="8"/>
             <SetBlackboard name="0: first sweep, 1: wider and further, 2: wider and closer, then round again; moves on only after a sweep that saw nothing" output_key="stage" value="0"/>
+            <SetBlackboard name="Before any sweep: hold still facing the estimate this long (s), seeing it from where we are" output_key="look_secs" value="2"/>
+            <SetBlackboard name="Then yaw this far each way in place (rad) before the first arc" output_key="look_pan" value="0.5"/>
+            <Action ID="Math" a="{look_pan}" b="-1" operator="*" out="neg_look_pan"/>
             <Action ID="SetStatus" status="searching"/>
             <Action ID="Format" format="{object_name}_frame" out="frame"/>
             <Action ID="SetMappingTarget" lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+            <Sequence name="Look before sweeping: from where we are, face the estimate and hold, then yaw each way in place. Arcs see it from the side; this sees it square on first">
+                <Action ID="TransformPose" from_frame="talos/base_link" name="where the vehicle is now" op="0" or="0" out_op="" out_or="" out_oy="" out_x="here_x" out_y="here_y" out_z="here_z" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                <Action ID="AddWaypoint" frame="" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="here, facing the estimate" out="look_path" path="" pitch="" roll="" spin="" spin_rate="" x="{here_x}" y="{here_y}" yaw="" yaw_frame="" yaw_offset="" z="{here_z}"/>
+                <ForceSuccess>
+                    <ReactiveSequence name="Turn to face it (stops once it is seen)">
+                        <Inverter>
+                            <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                        </Inverter>
+                        <Action ID="FollowPath" frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="20" waypoints="{look_path}"/>
+                    </ReactiveSequence>
+                </ForceSuccess>
+                <ForceSuccess>
+                    <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hold still facing it" num_seconds="{look_secs}">
+                        <Sequence>
+                            <Action ID="Wait" seconds="0.2"/>
+                            <Fallback>
+                                <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
+                            </Fallback>
+                        </Sequence>
+                    </Decorator>
+                </ForceSuccess>
+                <Action ID="AddWaypoint" frame="" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="yaw one way" out="yaw_path" path="" pitch="" roll="" spin="" spin_rate="" x="{here_x}" y="{here_y}" yaw="" yaw_frame="" yaw_offset="{look_pan}" z="{here_z}"/>
+                <Action ID="AddWaypoint" frame="" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="the other way" out="yaw_path" path="{yaw_path}" pitch="" roll="" spin="" spin_rate="" x="{here_x}" y="{here_y}" yaw="" yaw_frame="" yaw_offset="{neg_look_pan}" z="{here_z}"/>
+                <Action ID="AddWaypoint" frame="" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="back to facing it" out="yaw_path" path="{yaw_path}" pitch="" roll="" spin="" spin_rate="" x="{here_x}" y="{here_y}" yaw="" yaw_frame="" yaw_offset="" z="{here_z}"/>
+                <ForceSuccess>
+                    <ReactiveSequence name="Not seen yet: yaw each way in place (stops once it is seen or the map has it)">
+                        <Inverter>
+                            <Condition ID="SeenRecently" max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                        </Inverter>
+                        <Inverter>
+                            <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
+                        </Inverter>
+                        <Action ID="FollowPath" frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{yaw_path}"/>
+                    </ReactiveSequence>
+                </ForceSuccess>
+            </Sequence>
             <ForceSuccess>
                 <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Sweep until the map has it" num_seconds="{timeout_secs}">
                     <Sequence name="One sweep">
