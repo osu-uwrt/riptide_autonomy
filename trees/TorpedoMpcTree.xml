@@ -2428,6 +2428,16 @@
                     </Sequence>
                 </RetryUntilSuccessful>
             </ForceSuccess>
+            <Action ID="SetMappingTarget" lock_map="0" name="Square on now: map the holes again so only these detections count (an earlier look from an angle is not carried into the lock)" target_object="{both_holes}" time_limit_secs="3"/>
+            <ForceSuccess>
+                <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hold square on until both holes converge on the fresh detections" num_seconds="{ms_timeout}">
+                    <Sequence>
+                        <Action ID="Wait" seconds="0.25"/>
+                        <Condition ID="MapConverged" object="{object_1}" target_cov="{target_cov}"/>
+                        <Condition ID="MapConverged" object="{object_2}" target_cov="{target_cov}"/>
+                    </Sequence>
+                </Decorator>
+            </ForceSuccess>
             <Action ID="SetMappingTarget" lock_map="1" target_object="" time_limit_secs="3"/>
             <Action ID="SetStatus" status="aligning"/>
             <ForceSuccess>
