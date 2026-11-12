@@ -1,5 +1,4 @@
 #include <behaviortree_cpp/loggers/bt_file_logger_v2.h>
-#include <behaviortree_cpp/loggers/groot2_publisher.h>
 #include <behaviortree_cpp/xml_parsing.h>
 
 #include <rclcpp/rclcpp.hpp>
@@ -101,8 +100,6 @@ namespace do_task
             declare_parameter<std::string>("log_file_dir", getEnvVar("HOME") + "/btlogs");
             declare_parameter<std::vector<std::string>>("ext_plugin_list", std::vector<std::string>());
             declare_parameter<std::vector<std::string>>("ext_tree_dirs", std::vector<std::string>());
-            declare_parameter<bool>("enable_groot2", false);
-            declare_parameter<int>("groot2_port", 1667);
             declare_parameter<bool>("enable_tree_monitor", true);
             declare_parameter<int>("tree_monitor_port", 1670);
 
@@ -249,18 +246,6 @@ namespace do_task
                 FileLogger2 fileLogger(tree, FBLFilePath);
                 UwrtLogger uwrtLogger(tree, this->shared_from_this());
                 uwrtLogger.setEnabled(true);
-
-                // live view for Groot2-compatible tools; the tree runs without it if the port is taken
-                std::unique_ptr<Groot2Publisher> groot2;
-                if(get_parameter("enable_groot2").as_bool()) {
-                    const int port = get_parameter("groot2_port").as_int();
-                    try {
-                        groot2 = std::make_unique<Groot2Publisher>(tree, port);
-                        RCLCPP_INFO(get_logger(), "DoTask: Groot2 publisher on port %d", port);
-                    } catch(const std::exception &e) {
-                        RCLCPP_WARN(get_logger(), "DoTask: no Groot2 publisher on port %d: %s", port, e.what());
-                    }
-                }
 
                 // the monitor copies the log's header, so flush it first
                 fileLogger.flush();

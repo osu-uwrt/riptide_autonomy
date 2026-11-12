@@ -26,8 +26,6 @@ The action server should appear as ```<robot name>/autonomy/run_tree``` and inge
 
 Each goal logs how long its tree took to load, split into parse, instantiate and ROS init, with its node count and the ROS entities it holds. At startup **doTask** logs the BehaviorTree.CPP version it loaded; it must be 4.10 from `ros-humble-behaviortree-cpp`, so make sure no workspace with another `behaviortree_cpp` (e.g. mercury's 4.9) is sourced after */opt/ros/humble*.
 
-The parameters `enable_groot2` (default `false`) and `groot2_port` (default `1667`) attach a `BT::Groot2Publisher` to each tree **doTask** runs, for a live view.
-
 notgroot's live view reads the **tree monitor** (*TreeMonitor.hpp*), on by default: `enable_tree_monitor` (default `true`) and `tree_monitor_port` (default `1670`). It serves the running tree's log and blackboards over ZeroMQ to any number of clients, read-only, and keeps the last run until the next one starts. If the port is taken **doTask** warns and runs trees without it. The protocol is in notgroot's *docs/contract.md* §8.
 
 ### Running using RViz
