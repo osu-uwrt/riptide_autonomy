@@ -28,6 +28,8 @@ Each goal logs how long its tree took to load, split into parse, instantiate and
 
 The parameters `enable_groot2` (default `false`) and `groot2_port` (default `1667`) attach a `BT::Groot2Publisher` to each tree **doTask** runs, for a live view.
 
+notgroot's live view reads the **tree monitor** (*TreeMonitor.hpp*), on by default: `enable_tree_monitor` (default `true`) and `tree_monitor_port` (default `1670`). It serves the running tree's log and blackboards over ZeroMQ to any number of clients, read-only, and keeps the last run until the next one starts. If the port is taken **doTask** warns and runs trees without it. The protocol is in notgroot's *docs/contract.md* §8.
+
 ### Running using RViz
 Behavior trees can also be run from UWRTs MissionPanel RViz plugin (see riptide_rviz in UWRTs [riptide_gui](https://github.com/osu-uwrt/riptide_gui) repo for more information). So long as the action server is running, the MissionPanel can be used to select behavior trees found in the *trees* directory and run them with the press of a button.
 
@@ -94,8 +96,8 @@ Edit the trees with **notgroot**: open the *trees* directory (it recognizes a wo
 It edits the files in place and checks every save with BehaviorTree.CPP 4.10. Deploy as usual afterwards.
 
 ### The file contract with notgroot
-notgroot and this package share no code; the files are the interface. The contract is notgroot's *docs/contract.md*
-(version 6); in short:
+notgroot and this package share no code; the files (and the read-only run monitor) are the interface. The contract is notgroot's *docs/contract.md*
+(version 7); in short:
 - **Layout.** A mission is any `*.xml` directly in *trees*: `<root BTCPP_format="4" main_tree_to_execute="ID">`, its
   `<include>`s, then one `<BehaviorTree>` with that ID. A shared subtree is *trees/lib/<ID>.xml* with one
   `<BehaviorTree ID="<ID>">`. A file includes exactly the subtrees its own tree uses, by paths relative to itself
@@ -125,6 +127,8 @@ notgroot and this package share no code; the files are the interface. The contra
   (`obj == 'table_spoon_pink'`).
 - **Validation.** `TestTreesLoad` (every mission and every *lib* subtree with the real plugins) and
   `updateNodeModels --check` are the ground truth.
+- **Run monitor.** Besides the files, the only channel is **doTask**'s read-only tree monitor on port 1670 (ZeroMQ
+  `RUN`, `TREE`, `TRANS` and `BB` requests), which serves each run's `.btlog` content and blackboards to notgroot.
 
 Notes for writing trees by hand in BehaviorTree.CPP 4:
 - A SubTree argument is `{key}` to pass a parent key, or plain text to pass that text.

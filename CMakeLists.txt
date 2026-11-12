@@ -28,6 +28,9 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(tinyxml2_vendor REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ZMQ REQUIRED IMPORTED_TARGET libzmq)
 
 #sm specific depends
 find_package(chameleon_tf_msgs REQUIRED)
@@ -149,13 +152,16 @@ target_link_libraries(autonomy_decorators autonomy_utils)
 #
 # Tree execution executable
 #
-add_executable(doTask src/riptide_autonomy/DoTask.cpp)
+add_executable(doTask
+  src/riptide_autonomy/DoTask.cpp
+  src/riptide_autonomy/TreeMonitor.cpp
+)
 
 target_include_directories(doTask PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(doTask autonomy_utils)
+target_link_libraries(doTask autonomy_utils PkgConfig::ZMQ ZLIB::ZLIB)
 target_compile_definitions(doTask PUBLIC AUTONOMY_PKG_NAME="${PROJECT_NAME}")
 
 ament_target_dependencies(doTask

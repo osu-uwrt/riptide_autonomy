@@ -28,6 +28,8 @@
   <depend>tinyxml2</depend>
   <depend>chameleon_tf_msgs</depend>
   <depend>nortek_dvl_msgs</depend>
+  <depend>libzmq3-dev</depend>
+  <depend>zlib</depend>
 
   <exec_depend>ros2launch</exec_depend>
 

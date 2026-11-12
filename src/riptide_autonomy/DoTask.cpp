@@ -19,6 +19,7 @@
 
 #include "riptide_autonomy/autonomy_lib.hpp"
 #include "riptide_autonomy/UWRTLogger.hpp"
+#include "riptide_autonomy/TreeMonitor.hpp"
 
 /**
  * ROS2 action server that runs behavior trees.
@@ -102,6 +103,8 @@ namespace do_task
             declare_parameter<std::vector<std::string>>("ext_tree_dirs", std::vector<std::string>());
             declare_parameter<bool>("enable_groot2", false);
             declare_parameter<int>("groot2_port", 1667);
+            declare_parameter<bool>("enable_tree_monitor", true);
+            declare_parameter<int>("tree_monitor_port", 1670);
 
             // load the params
             try
@@ -146,6 +149,19 @@ namespace do_task
             // automatically add osu-uwrt riptide autonomy and the ament index dir
             treeDirs.push_back(AUTONOMY_TREE_DIR);
             treeDirs.push_back(ament_index_cpp::get_package_share_directory(AUTONOMY_PKG_NAME) + "/trees");
+
+            // read-only live view for notgroot, kept for the whole process; trees still run if the port is taken
+            if(get_parameter("enable_tree_monitor").as_bool()) {
+                const int port = get_parameter("tree_monitor_port").as_int();
+                treeMonitor = std::make_unique<TreeMonitor>();
+                const std::string error = treeMonitor->start(port);
+                if(error.empty()) {
+                    RCLCPP_INFO(get_logger(), "DoTask: tree monitor on port %d", port);
+                } else {
+                    RCLCPP_WARN(get_logger(), "DoTask: no tree monitor on port %d: %s", port, error.c_str());
+                    treeMonitor.reset();
+                }
+            }
         }
 
         rclcpp_action::GoalResponse handleGoal(
@@ -246,6 +262,10 @@ namespace do_task
                     }
                 }
 
+                // the monitor copies the log's header, so flush it first
+                fileLogger.flush();
+                auto monitorTap = treeMonitor ? treeMonitor->beginRun(tree, goal_handle->get_goal()->tree, FBLFilePath) : nullptr;
+
                 // set up idle sleep rate
                 rclcpp::Rate loop_rate(30ms);
 
@@ -298,6 +318,9 @@ namespace do_task
                 }
 
                 RCLCPP_INFO(get_logger(), "Tree ended with status %s", resultStr.c_str());
+                if(monitorTap) {
+                    monitorTap->end(goal_handle->is_canceling() ? "CANCELED" : resultStr);
+                }
                 treeRunning = false;
 
                 //publish led command to indicate finish status
@@ -455,6 +478,9 @@ namespace do_task
 
         // cout log file location
         std::string fblDirPath;
+
+        // live view for notgroot, null when disabled or its port was taken
+        std::unique_ptr<TreeMonitor> treeMonitor;
     };
 } // namespace do_task
 
