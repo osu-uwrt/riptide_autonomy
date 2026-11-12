@@ -152,6 +152,7 @@ namespace do_task
                 const int port = get_parameter("tree_monitor_port").as_int();
                 treeMonitor = std::make_unique<TreeMonitor>();
                 const std::string error = treeMonitor->start(port);
+
                 if(error.empty()) {
                     RCLCPP_INFO(get_logger(), "DoTask: tree monitor on port %d", port);
                 } else {
@@ -216,15 +217,18 @@ namespace do_task
                 // A new parser per goal, so a subtree this file no longer defines fails to load instead of running stale.
                 using Clock = std::chrono::steady_clock;
                 const auto loadStart = Clock::now();
+
                 XMLParser parser(*factory);
                 // Includes resolve against the file's folder, so the path must have one.
                 parser.loadFromFile(std::filesystem::absolute(goal_handle->get_goal()->tree));
                 const auto parsed = Clock::now();
+
                 auto blackboard = Blackboard::create();
                 blackboard->setPolymorphicCastRegistry(factory->polymorphicCastRegistryPtr());
                 Tree tree = parser.instantiateTree(blackboard);
                 tree.manifests = factory->manifests();
                 const auto instantiated = Clock::now();
+
                 initRosForTree(tree, this->shared_from_this());
                 const auto rosReady = Clock::now();
                 logLoad(tree, loadStart, parsed, instantiated, rosReady);
