@@ -1027,7 +1027,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-2.5"/>
+            <SetBlackboard output_key="max_depth" value="-10"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
@@ -1388,7 +1388,7 @@
             <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: before" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_pos}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
             <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: through" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
             <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: after" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_neg}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
-            <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="120" waypoints="{slalom_path}"/>
+            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="" spin_rate="" timeout="120" waypoints="{slalom_path}"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">

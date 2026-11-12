@@ -52,9 +52,9 @@
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="retreat: back to pre-align" out="retreat_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="retreat: then up" out="retreat_path" path="{retreat_path}" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{post_align_height}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre-align: magnet link out on the frame&apos;s +x, facing +x" out="pre_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{az}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="One move: there, turned and at depth" spin_rate="" timeout="60" waypoints="{pre_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" max_speed="" min_depth="-0.75" name="One move: there, turned and at depth" spin_rate="" timeout="60" waypoints="{pre_path}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="the magnet" out="in_path" path="" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bz}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" name="Straight back into it" spin_rate="" timeout="30" waypoints="{in_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" max_speed="" min_depth="-0.75" name="Straight back into it" spin_rate="" timeout="30" waypoints="{in_path}"/>
                     <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="magnet_link" target_frame="magnet_frame" timeout="ctrler_timeout" trust="ctrler_trust"/>
                 </Sequence>
             </ForceSuccess>
@@ -471,7 +471,7 @@
                             <Action ID="GetOdometry" op="" or="" oy="path_yaw" x="" y="" z=""/>
                             <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
-                            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
                     <ForceSuccess>
@@ -484,7 +484,7 @@
                             <Action ID="AddWaypoint" frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
-                            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
                     <ForceSuccess>
@@ -496,7 +496,7 @@
                             <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
-                            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
                 </Sequence>
@@ -505,7 +505,7 @@
                         <Sequence name="Path: to torpedo">
                             <Action ID="SetMappingTarget" lock_map="0" name="Map the torpedo as it comes into view" target_object="torpedo" time_limit_secs="3"/>
                             <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
-                            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{transit_path}"/>
+                            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
                     <ForceSuccess>
@@ -517,7 +517,7 @@
                             <Action ID="AddWaypoint" frame="pre_torpedo_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre torpedo" out="transit_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="post_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{torp_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
-                            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
                     <ForceSuccess>
@@ -530,7 +530,7 @@
                             <Action ID="AddWaypoint" frame="pre_table_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre table" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
                             <Action ID="AddWaypoint" frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
-                            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
                         </Sequence>
                     </ForceSuccess>
                 </Sequence>
@@ -548,7 +548,7 @@
                     <Action ID="AddWaypoint" frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m before the gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="-1" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
                     <Action ID="AddWaypoint" frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
                     <Action ID="AddWaypoint" frame="gate_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m past the gate" out="transit_path" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="1" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="-0.7"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="240" waypoints="{transit_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="240" waypoints="{transit_path}"/>
                 </Sequence>
             </ForceSuccess>
             <SubTree ID="KillController"/>
@@ -910,7 +910,7 @@
                             <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{frame}" x="0" y="0" z="0"/>
                             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the guess" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="guess_yaw" out_x="guess_x" out_y="guess_y" out_z="guess_z" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
                             <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the guess" out="guess_path" path="" pitch="" roll="" spin="" spin_rate="" x="{guess_x}" y="{guess_y}" yaw="{guess_yaw}" yaw_frame="" yaw_offset="" z="{guess_z}"/>
-                            <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{guess_path}"/>
+                            <Action ID="FollowPath" frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{guess_path}"/>
                         </Sequence>
                     </ReactiveSequence>
                 </ForceSuccess>
@@ -944,7 +944,7 @@
                                             <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the guess" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="spiral_yaw" out_x="spiral_wx" out_y="spiral_wy" out_z="spiral_wz" oy="{link_yaw}" reference_frame="{frame}" x="0" y="0" z="{min_dist}"/>
                                             <Action ID="TransformPose" from_frame="world" name="spiral center in the object&apos;s frame, so the path moves with its estimate" op="0" or="0" out_op="" out_or="" out_oy="" out_x="spiral_x" out_y="spiral_y" out_z="spiral_z" oy="0" to_frame="{frame}" x="{spiral_wx}" y="{spiral_wy}" z="{spiral_wz}"/>
                                             <Action ID="AddArc" approach="" cx="{spiral_x}" cy="{spiral_y}" end_radius="{search_radius}" frame="{frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="spiral out, heading held" out="spiral" path="" radius="{radius_step}" spin="" spin_rate="" start_angle="0" sweep="{spiral_sweep}" yaw="{spiral_yaw}" yaw_frame="world" yaw_offset="" z="{spiral_z}"/>
-                                            <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="{search_speed}" min_depth="-0.75" spin_rate="" timeout="600" waypoints="{spiral}"/>
+                                            <Action ID="FollowPath" frame="" max_depth="-10" max_speed="{search_speed}" min_depth="-0.75" spin_rate="" timeout="600" waypoints="{spiral}"/>
                                         </Sequence>
                                     </ReactiveSequence>
                                 </ForceSuccess>
@@ -1058,13 +1058,13 @@
                     <Action ID="AddWaypoint" frame="talos/base_link" heading="" look_frame="" look_x="" look_y="" look_z="" name="flip step 16" out="flip_path" path="{flip_path}" pitch="" roll="3.1416" spin="" spin_rate="" x="0" y="0" yaw="3.1416" yaw_offset="" z="0"/>
                     <Action ID="AddWaypoint" frame="talos/base_link" heading="" look_frame="" look_x="" look_y="" look_z="" name="flip step 17" out="flip_path" path="{flip_path}" pitch="1.5708" roll="" spin="" spin_rate="" x="0" y="0" yaw="0.0000" yaw_offset="" z="0"/>
                     <Action ID="AddWaypoint" frame="talos/base_link" heading="" look_frame="" look_x="" look_y="" look_z="" name="flip step 18" out="flip_path" path="{flip_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="-0.0000" yaw_offset="" z="0"/>
-                    <Action ID="FollowPath" frame="" max_depth="" min_depth="" name="Flip in place (attitudes relative to the start pose)" spin_rate="" timeout="120" waypoints="{flip_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" min_depth="" name="Flip in place (attitudes relative to the start pose)" spin_rate="" timeout="120" waypoints="{flip_path}"/>
                 </Sequence>
             </ForceSuccess>
             <ForceSuccess>
                 <Sequence name="Level path">
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="start pose, level" out="level_path" path="" pitch="" roll="" spin="" spin_rate="" x="{flip_x}" y="{flip_y}" yaw="{flip_yaw}" yaw_offset="" z="{flip_z}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Level at the start pose" spin_rate="" timeout="30" waypoints="{level_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" name="Level at the start pose" spin_rate="" timeout="30" waypoints="{level_path}"/>
                 </Sequence>
             </ForceSuccess>
             <RetryUntilSuccessful num_attempts="5">
@@ -1203,7 +1203,7 @@
             <Action ID="Info" message="Performing gate task"/>
             <Action ID="AddWaypoint" frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m in front of the gate" out="gate_path" path="" pitch="" roll="" spin="" spin_rate="" x="1" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
             <Action ID="AddWaypoint" frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="gate_path" path="{gate_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
-            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Approach and enter the gate as one path" spin_rate="" timeout="60" waypoints="{gate_path}"/>
+            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" name="Approach and enter the gate as one path" spin_rate="" timeout="60" waypoints="{gate_path}"/>
             <Action ID="SetStatus" status="performing"/>
             <ForceSuccess name="Flip (under the MPC FlipTree can&apos;t set the stunt safe mode and fails); the gate exit runs either way">
                 <Sequence>
@@ -1213,7 +1213,7 @@
             </ForceSuccess>
             <SetBlackboard name="How far past the gate to go before turning for the slalom (m)" output_key="behind_gate" value="-1.0"/>
             <Action ID="AddWaypoint" frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="behind the gate" out="exit_path" path="" pitch="" roll="" spin="" spin_rate="" x="{behind_gate}" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
-            <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Straight out the back of the gate, clear of its sides" spin_rate="" timeout="30" waypoints="{exit_path}"/>
+            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" name="Straight out the back of the gate, clear of its sides" spin_rate="" timeout="30" waypoints="{exit_path}"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="GetOppositeColorBasket">
@@ -1386,7 +1386,7 @@
                     <SubTree ID="SetActiveCamera" __shared_blackboard="false" is_dfc="0"/>
                     <Action ID="TransformPose" from_frame="{magnet1_frame}" op="0" or="0" out_op="aop" out_or="aor" out_oy="aoy" out_x="ax" out_y="ay" out_z="az" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="magnet 1 search spot" out="magnet_path" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{bin_move_height}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="To magnet 1 search spot" spin_rate="" timeout="60" waypoints="{magnet_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" name="To magnet 1 search spot" spin_rate="" timeout="60" waypoints="{magnet_path}"/>
                     <SubTree ID="MiniSearchMpc" __shared_blackboard="false" object_name="magnet1" parent_object="magnet1" prox_x="search_prox_x" prox_y="0" prox_z="search_prox_z" target_cov="search_target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
@@ -1406,7 +1406,7 @@
                 <Sequence>
                     <Action ID="TransformPose" from_frame="{magnet2_frame}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="magnet 2 search spot" out="magnet_path" path="{m1_retreat}" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bin_move_height}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Retreat from magnet 1, on to the magnet 2 search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" name="Retreat from magnet 1, on to the magnet 2 search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
                     <SubTree ID="MiniSearchMpc" __shared_blackboard="false" object_name="magnet2" parent_object="magnet2" prox_x="search_prox_x" prox_y="0" prox_z="search_prox_z" target_cov="search_target_cov" timeout_secs="search_timeout"/>
                 </Sequence>
             </ForceSuccess>
@@ -1417,7 +1417,7 @@
                     <Action ID="TransformPose" from_frame="{magnet2_frame}" op="0" or="0" out_op="bop" out_or="bor" out_oy="boy" out_x="bx" out_y="by" out_z="bz" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
                     <Action ID="GetOdometry" op="" or="" oy="cur_yaw" x="" y="" z=""/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="magnet 2 search spot" out="magnet_path" path="{m2_retreat}" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{cur_yaw}" yaw_offset="" z="{bin_move_height}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" name="Retreat from magnet 2 to its search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" name="Retreat from magnet 2 to its search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
                 </Sequence>
             </ForceSuccess>
         </Sequence>
@@ -1841,7 +1841,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-2.5"/>
+            <SetBlackboard output_key="max_depth" value="-10"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
@@ -2120,14 +2120,14 @@
                                 <Inverter>
                                     <Condition ID="MapConverged" object="{object_name}" target_cov="{target_cov}"/>
                                 </Inverter>
-                                <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="90" waypoints="{sweep_path}"/>
+                                <Action ID="FollowPath" frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="90" waypoints="{sweep_path}"/>
                             </ReactiveSequence>
                         </ForceSuccess>
                         <ForceSuccess>
                             <Sequence name="Seen: chase it, then hold it centered until the map has it, or it is lost">
                                 <Condition ID="SeenRecently" max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
                                 <ForceSuccess>
-                                    <Action ID="CenterDetection" align_tolerance="" align_yaw="" base_frame="" center_depth="" depth_tolerance="" max_age_secs="" max_depth="-2.5" min_depth="-0.75" min_score="" name="Chase: move square on to it (+x along its yaw) at the range it was seen from, keeping it centered; edge detections are cut off and their centers are off" object_frame="" object_name="{object_name}" position_tolerance="" standoff="" timeout_secs="10" yaw_tolerance=""/>
+                                    <Action ID="CenterDetection" align_tolerance="" align_yaw="" base_frame="" center_depth="" depth_tolerance="" max_age_secs="" max_depth="-10" min_depth="-0.75" min_score="" name="Chase: move square on to it (+x along its yaw) at the range it was seen from, keeping it centered; edge detections are cut off and their centers are off" object_frame="" object_name="{object_name}" position_tolerance="" standoff="" timeout_secs="10" yaw_tolerance=""/>
                                 </ForceSuccess>
                                 <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Hold it centered until the map has it, or it is lost" num_seconds="{hold_secs}">
                                     <Sequence>
@@ -2289,7 +2289,7 @@
                                 <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{object_frame}" x="0" y="0" z="0"/>
                                 <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the object" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="hover_yaw" out_x="hover_x" out_y="hover_y" out_z="hover_z" oy="{link_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{search_prox}"/>
                                 <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the object" out="hover_path" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
-                                <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
+                                <Action ID="FollowPath" frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
                                 <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Until the estimate is tight" num_seconds="3">
                                     <Sequence>
                                         <Action ID="Wait" seconds="0.2"/>
@@ -2370,7 +2370,7 @@
                 <Sequence name="Stand off in front of the board">
                     <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_1}" op="0" or="0" out_op="" out_or="" out_oy="board_yaw" out_x="board_x" out_y="board_y" out_z="board_z" oy="3.1415" reference_frame="{torpedo_frame}" x="{ms_prox}" y="0" z="0"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="board standoff" out="board_path" path="" pitch="" roll="" spin="" spin_rate="" x="{board_x}" y="{board_y}" yaw="{board_yaw}" yaw_offset="" z="{board_z}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{board_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{board_path}"/>
                 </Sequence>
             </ForceSuccess>
             <Action ID="SetStatus" status="searching"/>
@@ -2394,7 +2394,7 @@
                         <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_1}" op="0" or="0" out_op="" out_or="" out_oy="s1_yaw" out_x="s1_x" out_y="s1_y" out_z="s1_z" oy="3.1415" reference_frame="{object_1_frame}" x="{shoot_prox}" y="0" z="0"/>
                         <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="hole 1 at 1.1 m" out="shot_path" path="" pitch="" roll="" spin="" spin_rate="" x="{a1_x}" y="{a1_y}" yaw="{a1_yaw}" yaw_offset="" z="{a1_z}"/>
                         <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="hole 1 at firing distance" out="shot_path" path="{shot_path}" pitch="" roll="" spin="" spin_rate="" x="{s1_x}" y="{s1_y}" yaw="{s1_yaw}" yaw_offset="" z="{s1_z}"/>
-                        <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{shot_path}"/>
+                        <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{shot_path}"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="link_1" target_frame="object_1_frame" timeout="ctrler_timeout" trust="scale_trust"/>
                     </Sequence>
                 </RetryUntilSuccessful>
@@ -2410,7 +2410,7 @@
                     <Sequence name="Slide across to hole 2 at firing distance">
                         <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{link_2}" op="0" or="0" out_op="" out_or="" out_oy="s2_yaw" out_x="s2_x" out_y="s2_y" out_z="s2_z" oy="3.1415" reference_frame="{object_2_frame}" x="{shoot_prox}" y="0" z="0"/>
                         <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="hole 2 at firing distance" out="shot_path" path="" pitch="" roll="" spin="" spin_rate="" x="{s2_x}" y="{s2_y}" yaw="{s2_yaw}" yaw_offset="" z="{s2_z}"/>
-                        <Action ID="FollowPath" frame="" max_depth="-2.5" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{shot_path}"/>
+                        <Action ID="FollowPath" frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{shot_path}"/>
                         <SubTree ID="WaitForController" __shared_blackboard="false" dist="ctrler_dist" link_frame="link_2" target_frame="object_2_frame" timeout="ctrler_timeout" trust="scale_trust"/>
                     </Sequence>
                 </RetryUntilSuccessful>
@@ -2466,7 +2466,7 @@
             <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: before" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_pos}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
             <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: through" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
             <Action ID="AddWaypoint" frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: after" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_neg}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
-            <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="120" waypoints="{slalom_path}"/>
+            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="" spin_rate="" timeout="120" waypoints="{slalom_path}"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SlalomPathMpc">
@@ -2521,7 +2521,7 @@
                 <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="exit" out="slalom_path" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{exit_x}" y="{exit_y}" yaw="{exit_yaw}" yaw_offset="" z="{exit_z}"/>
                 <AlwaysSuccess name="no exit frame, end at the slalom"/>
             </IfThenElse>
-            <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="180" waypoints="{slalom_path}"/>
+            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="" spin_rate="" timeout="180" waypoints="{slalom_path}"/>
         </Sequence>
     </BehaviorTree>
     <BehaviorTree ID="SmartMovePosition">
@@ -3235,7 +3235,7 @@
                     <Action ID="TransformPose" from_frame="{dfc_link}" op="0" or="0" out_op="link_pitch" out_or="link_roll" out_oy="link_yaw" out_x="" out_y="" out_z="" oy="0" to_frame="{object_frame}" x="0" y="0" z="0"/>
                     <Action ID="ComputeFrameAlignment" base_frame="talos/base_link" link_frame="{dfc_link}" name="camera over the object" op="{link_pitch}" or="{link_roll}" out_op="" out_or="" out_oy="hover_yaw" out_x="hover_x" out_y="hover_y" out_z="hover_z" oy="{link_yaw}" reference_frame="{object_frame}" x="0" y="0" z="{minisearch_prox}"/>
                     <Action ID="AddWaypoint" frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="over the object" out="hover_path" path="" pitch="" roll="" spin="" spin_rate="" x="{hover_x}" y="{hover_y}" yaw="{hover_yaw}" yaw_frame="" yaw_offset="" z="{hover_z}"/>
-                    <Action ID="FollowPath" frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
+                    <Action ID="FollowPath" frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{hover_path}"/>
                     <Decorator ID="RetryUntilSuccessfulOrTimeout" name="Until the estimate is tight" num_seconds="5">
                         <Sequence>
                             <Action ID="Wait" seconds="0.2"/>

@@ -80,7 +80,7 @@
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="5 front of gate, nose first" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="AddWaypoint" frame="{gate_frame}" heading="path" look_frame="" look_x="" look_y="" look_z="" name="6 back through gate" out="prequal_path" path="{prequal_path}" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                 <Action ID="SetStatus" status="performing"/>
-                <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="300" waypoints="{prequal_path}"/>
+                <Action ID="FollowPath" frame="" max_depth="-10" min_depth="" spin_rate="" timeout="300" waypoints="{prequal_path}"/>
             </Sequence>
             <SubTree ID="KillController"/>
         </Sequence>
@@ -1270,7 +1270,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.75"/>
-            <SetBlackboard output_key="max_depth" value="-6.0"/>
+            <SetBlackboard output_key="max_depth" value="-10"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>

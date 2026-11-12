@@ -30,7 +30,7 @@
             <Action ID="SetStatus" status="moving"/>
             <SubTree ID="Dive" __shared_blackboard="false" depth="depth"/>
             <Action ID="AddWaypoint" frame="map" heading="" look_frame="" look_x="" look_y="" look_z="" name="mapping origin, facing its +x" out="origin_path" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="{depth}"/>
-            <Action ID="FollowPath" frame="" max_depth="" min_depth="" spin_rate="" timeout="120" waypoints="{origin_path}"/>
+            <Action ID="FollowPath" frame="" max_depth="-10" min_depth="" spin_rate="" timeout="120" waypoints="{origin_path}"/>
             <ForceSuccess>
                 <Fallback>
                     <Sequence name="identify">
@@ -821,7 +821,7 @@
     <BehaviorTree ID="PrimitiveMovePosition">
         <Sequence>
             <SetBlackboard output_key="min_depth" value="-0.8"/>
-            <SetBlackboard output_key="max_depth" value="-4"/>
+            <SetBlackboard output_key="max_depth" value="-10"/>
             <IfThenElse name="Ensure Z deep enough">
                 <Condition ID="CompareNums" a="{z}" b="{min_depth}" name="z above 0.75..." test="&gt;"/>
                 <Sequence>
