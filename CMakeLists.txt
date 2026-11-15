@@ -177,8 +177,8 @@ execute_process(COMMAND lsb_release -s -r
   OUTPUT_VARIABLE OS_VERSION
 )
 
-string(COMPARE EQUAL ${OS_NAME} "Ubuntu\n" OS_NAME_UBUNTU)
-string(COMPARE EQUAL ${OS_VERSION} "20.04\n" OS_VERSION_20_04)
+string(COMPARE EQUAL "${OS_NAME}" "Ubuntu\n" OS_NAME_UBUNTU)
+string(COMPARE EQUAL "${OS_VERSION}" "20.04\n" OS_VERSION_20_04)
 if((OS_NAME_UBUNTU AND OS_VERSION_20_04) OR BUILD_DEPLOY)
   message("Skipping BT Health checker for deploy build or OS version incompatibility")
 else()
