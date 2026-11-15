@@ -17,9 +17,14 @@ std::string getEnvVar(const char *name)
 
 void registerPluginsForFactory(std::shared_ptr<BT::BehaviorTreeFactory> factory, const std::string& packageName) {
     std::string amentIndexPath = ament_index_cpp::get_package_prefix(packageName); // TODO Make this work to scan ament index and get to our plugin
-    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions.so");
-    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions.so");
-    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_decorators.so");
+#ifdef __APPLE__
+    const std::string ext = ".dylib"; // shared libs are .dylib on macos
+#else
+    const std::string ext = ".so";
+#endif
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_actions" + ext);
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_conditions" + ext);
+    factory->registerFromPlugin(amentIndexPath + "/lib/libautonomy_decorators" + ext);
 }
 
 
