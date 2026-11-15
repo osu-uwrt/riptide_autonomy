@@ -16,6 +16,11 @@
 
 #include <unistd.h>
 
+// macos has no HOST_NAME_MAX, posix allows up to 255
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 255
+#endif
+
 #include "riptide_autonomy/autonomy_lib.hpp"
 #include "riptide_autonomy/UWRTLogger.hpp"
 
