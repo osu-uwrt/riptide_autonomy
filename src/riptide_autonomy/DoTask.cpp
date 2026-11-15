@@ -63,6 +63,8 @@ namespace do_task
         {
             // replace the dashes with underscores, because the spec doesnt like dashes
             std::replace(hostnameInternal.begin(), hostnameInternal.end(), '-', '_');
+            // dots too (macos hostnames end in .local)
+            std::replace(hostnameInternal.begin(), hostnameInternal.end(), '.', '_');
         }
 
         // kinda important.... without this strings raise a bad_alloc
