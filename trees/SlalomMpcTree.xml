@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="BehaviorTree">
+    <include path="lib/WaitForKillSwitch.xml"/>
+    <include path="lib/PrepForRun.xml"/>
+    <include path="lib/Dive.xml"/>
+    <include path="lib/SetActiveCamera.xml"/>
+    <include path="lib/SlalomPathMpc.xml"/>
+    <include path="lib/KillController.xml"/>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence name="SLALOM MPC">
+            <Info message="MISSION: RESCUE (SLALOM ONLY)"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="PrepForRun"/>
+            <SubTree ID="Dive" depth="-0.56"/>
+            <ForceSuccess>
+                <SubTree ID="SetActiveCamera" is_dfc="0"/>
+            </ForceSuccess>
+            <SetBlackboardV3 name="Pass on the right unless the gate frames say otherwise" output_key="sla_pass_on_left" value="0"/>
+            <ForceSuccess>
+                <Sequence name="Determine pass_on_left for slalom (as GateTreeMpc does, rescue side)">
+                    <TransformPose from_frame="gate_repair_frame" op="0" or="0" out_y="{dist_prim_to_alt}" oy="0" to_frame="gate_rescue_frame" x="0" y="0" z="0"/>
+                    <IfThenElse>
+                        <CompareNums a="{dist_prim_to_alt}" b="0" name="If is positive" test="&gt;"/>
+                        <Sequence name="Should pass on left">
+                            <SetBlackboardV3 output_key="sla_pass_on_left" value="1"/>
+                            <Info message="Slalom should pass on LEFT"/>
+                        </Sequence>
+                        <Sequence name="Should pass on right">
+                            <SetBlackboardV3 output_key="sla_pass_on_left" value="0"/>
+                            <Info message="Slalom should pass on RIGHT"/>
+                        </Sequence>
+                    </IfThenElse>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="SlalomPathMpc" pass_on_left="{sla_pass_on_left}"/>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

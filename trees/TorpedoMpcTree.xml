@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="BehaviorTree">
+    <include path="lib/WaitForKillSwitch.xml"/>
+    <include path="lib/PrepForRun.xml"/>
+    <include path="lib/Dive.xml"/>
+    <include path="lib/TorpedoTreeMpc.xml"/>
+    <include path="lib/KillController.xml"/>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence name="TORPEDO MPC">
+            <Info message="MISSION: RESCUE (TORPEDO ONLY)"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="PrepForRun"/>
+            <SubTree ID="Dive" depth="-0.56"/>
+            <ForceSuccess>
+                <Sequence name="Path: to torpedo">
+                    <SetMappingTarget lock_map="0" name="Map the torpedo as it comes into view" target_object="torpedo" time_limit_secs="3"/>
+                    <AddWaypoint frame="pre_torpedo_pose_frame" heading="" look_frame="torpedo_frame" look_x="" look_y="" look_z="" name="pre torpedo, facing it on the way" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_frame="" yaw_offset="" z="0"/>
+                    <FollowPath frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="60" waypoints="{transit_path}"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="TorpedoTreeMpc" repair_mission="0"/>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

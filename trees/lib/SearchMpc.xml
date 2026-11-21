@@ -3,11 +3,49 @@
     <BehaviorTree ID="SearchMpc">
         <!-- notgroot:globals -->
         <Sequence name="globals">
-            <Script code="frame := object_name .. '_frame'; hold_secs := '8'; pan_first := '0.5'; pan_step_first := '0.25'; pan_step_wide := '0.5'; pan_wide := '0.7'; sweep_first := '0.5'; sweep_wide := '1.0'"/>
+            <Script code="frame := object_name .. '_frame'; hold_secs := '8'; look_pan := '0.5'; look_secs := '2'; pan_first := '0.5'; pan_step_first := '0.25'; pan_step_wide := '0.5'; pan_wide := '0.7'; sweep_first := '0.5'; sweep_wide := '1.0'"/>
             <Sequence name="Search while moving">
-                <SetBlackboardV3 name="0: first sweep, 1: wider and further, 2: wider and closer, then round again; moves on only after a sweep that saw nothing" output_key="stage" value="0"/>
+                <SetBlackboardV3 name="0: first sweep, 1: further back, 2: wider and closer, 3: another 0.5 m closer, then round again; moves on only after a sweep that saw nothing" output_key="stage" value="0"/>
+                <Math a="{look_pan}" b="-1" operator="*" out="{neg_look_pan}"/>
                 <SetStatus status="searching"/>
                 <SetMappingTarget lock_map="0" target_object="{object_name}" time_limit_secs="3"/>
+                <Sequence name="Look before sweeping: from where we are, face the estimate and hold, then yaw each way in place. Arcs see it from the side; this sees it square on first">
+                    <TransformPose from_frame="talos/base_link" name="where the vehicle is now" op="0" or="0" out_x="{here_x}" out_y="{here_y}" out_z="{here_z}" oy="0" to_frame="world" x="0" y="0" z="0"/>
+                    <AddWaypoint frame="" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="here, facing the estimate" out="{look_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{here_x}" y="{here_y}" yaw="" yaw_frame="" yaw_offset="" z="{here_z}"/>
+                    <ForceSuccess>
+                        <ReactiveSequence name="Turn to face it (stops once it is seen)">
+                            <Inverter>
+                                <SeenRecently max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                            </Inverter>
+                            <FollowPath frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="20" waypoints="{look_path}"/>
+                        </ReactiveSequence>
+                    </ForceSuccess>
+                    <ForceSuccess>
+                        <RetryUntilSuccessfulOrTimeout name="Hold still facing it" num_seconds="{look_secs}">
+                            <Sequence>
+                                <Wait seconds="0.2"/>
+                                <Fallback>
+                                    <SeenRecently max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                                    <MapConverged object="{object_name}" target_cov="{target_cov}"/>
+                                </Fallback>
+                            </Sequence>
+                        </RetryUntilSuccessfulOrTimeout>
+                    </ForceSuccess>
+                    <AddWaypoint frame="" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="yaw one way" out="{yaw_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{here_x}" y="{here_y}" yaw="" yaw_frame="" yaw_offset="{look_pan}" z="{here_z}"/>
+                    <AddWaypoint frame="" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="the other way" out="{yaw_path}" path="{yaw_path}" pitch="" roll="" spin="" spin_rate="" x="{here_x}" y="{here_y}" yaw="" yaw_frame="" yaw_offset="{neg_look_pan}" z="{here_z}"/>
+                    <AddWaypoint frame="" heading="" look_frame="{frame}" look_x="" look_y="" look_z="" name="back to facing it" out="{yaw_path}" path="{yaw_path}" pitch="" roll="" spin="" spin_rate="" x="{here_x}" y="{here_y}" yaw="" yaw_frame="" yaw_offset="" z="{here_z}"/>
+                    <ForceSuccess>
+                        <ReactiveSequence name="Not seen yet: yaw each way in place (stops once it is seen or the map has it)">
+                            <Inverter>
+                                <SeenRecently max_age_secs="0.5" min_score="0.2" object_name="{object_name}"/>
+                            </Inverter>
+                            <Inverter>
+                                <MapConverged object="{object_name}" target_cov="{target_cov}"/>
+                            </Inverter>
+                            <FollowPath frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="30" waypoints="{yaw_path}"/>
+                        </ReactiveSequence>
+                    </ForceSuccess>
+                </Sequence>
                 <ForceSuccess>
                     <RetryUntilSuccessfulOrTimeout name="Sweep until the map has it" num_seconds="{timeout_secs}">
                         <Sequence name="One sweep">
@@ -21,23 +59,38 @@
                                 </Sequence>
                                 <IfThenElse>
                                     <CompareNums a="{stage}" b="1" test="=="/>
-                                    <Sequence name="wider and further: more of the sides in view">
-                                        <SetBlackboardV3 output_key="sweep" value="{sweep_wide}"/>
+                                    <Sequence name="further: the first sweep's arc from farther back, panning wider">
+                                        <SetBlackboardV3 output_key="sweep" value="{sweep_first}"/>
                                         <SetBlackboardV3 output_key="pan" value="{pan_wide}"/>
                                         <SetBlackboardV3 output_key="pan_step" value="{pan_step_wide}"/>
                                         <Math a="{max_dist}" b="1.5" operator="*" out="{dist}"/>
                                     </Sequence>
-                                    <Sequence name="wider and closer: a small or hard to see target, or one beyond the estimate">
-                                        <SetBlackboardV3 output_key="sweep" value="{sweep_wide}"/>
-                                        <SetBlackboardV3 output_key="pan" value="{pan_first}"/>
-                                        <SetBlackboardV3 output_key="pan_step" value="{pan_step_wide}"/>
-                                        <Math a="{max_dist}" b="0.75" operator="*" out="{dist}"/>
-                                        <IfThenElse>
-                                            <CompareNums a="{dist}" b="{min_dist}" test="&lt;"/>
-                                            <SetBlackboardV3 output_key="dist" value="{min_dist}"/>
-                                            <AlwaysSuccess/>
-                                        </IfThenElse>
-                                    </Sequence>
+                                    <IfThenElse>
+                                        <CompareNums a="{stage}" b="2" test="=="/>
+                                        <Sequence name="wider and closer: a small or hard to see target, or one beyond the estimate">
+                                            <SetBlackboardV3 output_key="sweep" value="{sweep_wide}"/>
+                                            <SetBlackboardV3 output_key="pan" value="{pan_first}"/>
+                                            <SetBlackboardV3 output_key="pan_step" value="{pan_step_wide}"/>
+                                            <Math a="{max_dist}" b="0.75" operator="*" out="{dist}"/>
+                                            <IfThenElse>
+                                                <CompareNums a="{dist}" b="{min_dist}" test="&lt;"/>
+                                                <SetBlackboardV3 output_key="dist" value="{min_dist}"/>
+                                                <AlwaysSuccess/>
+                                            </IfThenElse>
+                                        </Sequence>
+                                        <Sequence name="closer still: the same sweep another 0.5 m in (not inside min_dist)">
+                                            <SetBlackboardV3 output_key="sweep" value="{sweep_wide}"/>
+                                            <SetBlackboardV3 output_key="pan" value="{pan_first}"/>
+                                            <SetBlackboardV3 output_key="pan_step" value="{pan_step_wide}"/>
+                                            <Math a="{max_dist}" b="0.75" operator="*" out="{closer}"/>
+                                            <Math a="{closer}" b="0.5" operator="-" out="{dist}"/>
+                                            <IfThenElse>
+                                                <CompareNums a="{dist}" b="{min_dist}" test="&lt;"/>
+                                                <SetBlackboardV3 output_key="dist" value="{min_dist}"/>
+                                                <AlwaysSuccess/>
+                                            </IfThenElse>
+                                        </Sequence>
+                                    </IfThenElse>
                                 </IfThenElse>
                             </IfThenElse>
                             <Info message="Sweeping {sweep} rad each way round {object_name}'s estimate at {dist} m, panning {pan} rad (stage {stage})"/>
@@ -55,14 +108,14 @@
                                     <Inverter>
                                         <MapConverged object="{object_name}" target_cov="{target_cov}"/>
                                     </Inverter>
-                                    <FollowPath frame="" max_depth="-2.5" max_speed="" min_depth="-0.75" spin_rate="" timeout="90" waypoints="{sweep_path}"/>
+                                    <FollowPath frame="" max_depth="-10" max_speed="" min_depth="-0.75" spin_rate="" timeout="90" waypoints="{sweep_path}"/>
                                 </ReactiveSequence>
                             </ForceSuccess>
                             <ForceSuccess>
                                 <Sequence name="Seen: chase it, then hold it centered until the map has it, or it is lost">
                                     <SeenRecently max_age_secs="1.0" min_score="0.2" object_name="{object_name}"/>
                                     <ForceSuccess>
-                                        <CenterDetection align_tolerance="" align_yaw="" base_frame="" center_depth="" depth_tolerance="" max_age_secs="" max_depth="-2.5" min_depth="-0.75" min_score="" name="Chase: move square on to it (+x along its yaw) at the range it was seen from, keeping it centered; edge detections are cut off and their centers are off" object_frame="" object_name="{object_name}" position_tolerance="" standoff="" timeout_secs="10" yaw_tolerance=""/>
+                                        <CenterDetection align_tolerance="" align_yaw="" base_frame="" center_depth="" depth_tolerance="" max_age_secs="" max_depth="-10" min_depth="-0.75" min_score="" name="Chase: move square on to it (+x along its yaw) at the range it was seen from, keeping it centered; edge detections are cut off and their centers are off" object_frame="" object_name="{object_name}" position_tolerance="" standoff="" timeout_secs="10" yaw_tolerance=""/>
                                     </ForceSuccess>
                                     <RetryUntilSuccessfulOrTimeout name="Hold it centered until the map has it, or it is lost" num_seconds="{hold_secs}">
                                         <Sequence>
@@ -87,8 +140,8 @@
                                         </Inverter>
                                         <Sequence>
                                             <Math a="{stage}" b="1" operator="+" out="{stage}"/>
-                                            <IfThenElse name="After the closer sweep, round again">
-                                                <CompareNums a="{stage}" b="2" test="&gt;"/>
+                                            <IfThenElse name="After the closest sweep, round again">
+                                                <CompareNums a="{stage}" b="3" test="&gt;"/>
                                                 <SetBlackboardV3 output_key="stage" value="0"/>
                                                 <AlwaysSuccess/>
                                             </IfThenElse>

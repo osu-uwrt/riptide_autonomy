@@ -43,7 +43,7 @@
                     <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="exit" out="{slalom_path}" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{exit_x}" y="{exit_y}" yaw="{exit_yaw}" yaw_offset="" z="{exit_z}"/>
                     <AlwaysSuccess name="no exit frame, end at the slalom"/>
                 </IfThenElse>
-                <FollowPath frame="" max_depth="" min_depth="" spin_rate="" timeout="180" waypoints="{slalom_path}"/>
+                <FollowPath frame="" max_depth="-10" min_depth="" spin_rate="" timeout="180" waypoints="{slalom_path}"/>
             </Sequence>
         </Sequence>
     </BehaviorTree>

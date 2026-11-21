@@ -22,7 +22,7 @@
                     <AddWaypoint frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="4 front of gate, nose first" out="{prequal_path}" path="{prequal_path}" spin="" spin_rate="" x="{neg_gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                     <AddWaypoint frame="{gate_frame}" heading="" look_x="" look_y="" look_z="" name="5 back through gate" out="{prequal_path}" path="{prequal_path}" spin="" spin_rate="" x="{gate_offset}" y="0" yaw="" yaw_offset="" z="0"/>
                     <SetStatus status="performing"/>
-                    <FollowPath frame="" max_depth="" min_depth="" spin_rate="{spin_rate}" timeout="300" waypoints="{prequal_path}"/>
+                    <FollowPath frame="" max_depth="-10" min_depth="" spin_rate="{spin_rate}" timeout="300" waypoints="{prequal_path}"/>
                 </Sequence>
                 <SubTree ID="KillController"/>
             </Sequence>

@@ -21,7 +21,7 @@
                         <SubTree ID="SetActiveCamera" is_dfc="0"/>
                         <TransformPose from_frame="{magnet1_frame}" op="0" or="0" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
                         <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="magnet 1 search spot" out="{magnet_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{ax}" y="{ay}" yaw="{aoy}" yaw_offset="" z="{bin_move_height}"/>
-                        <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" name="To magnet 1 search spot" spin_rate="" timeout="60" waypoints="{magnet_path}"/>
+                        <FollowPath frame="" max_depth="-10" min_depth="-0.75" name="To magnet 1 search spot" spin_rate="" timeout="60" waypoints="{magnet_path}"/>
                         <SubTree ID="MiniSearchMpc" object_name="{magnet1}" parent_object="{magnet1}" prox_x="{search_prox_x}" prox_y="0" prox_z="0.2" target_cov="1.25" timeout_secs="20"/>
                     </Sequence>
                 </ForceSuccess>
@@ -41,7 +41,7 @@
                     <Sequence>
                         <TransformPose from_frame="{magnet2_frame}" op="0" or="0" out_op="{bop}" out_or="{bor}" out_oy="{boy}" out_x="{bx}" out_y="{by}" out_z="{bz}" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
                         <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="magnet 2 search spot" out="{magnet_path}" path="{m1_retreat}" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{boy}" yaw_offset="" z="{bin_move_height}"/>
-                        <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" name="Retreat from magnet 1, on to the magnet 2 search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
+                        <FollowPath frame="" max_depth="-10" min_depth="-0.75" name="Retreat from magnet 1, on to the magnet 2 search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
                         <SubTree ID="MiniSearchMpc" object_name="{magnet2}" parent_object="{magnet2}" prox_x="{search_prox_x}" prox_y="0" prox_z="0.2" target_cov="1.25" timeout_secs="20"/>
                     </Sequence>
                 </ForceSuccess>
@@ -52,7 +52,7 @@
                         <TransformPose from_frame="{magnet2_frame}" op="0" or="0" out_op="{bop}" out_or="{bor}" out_oy="{boy}" out_x="{bx}" out_y="{by}" out_z="{bz}" oy="3.14159" to_frame="world" x="{search_prox_x}" y="0" z="0"/>
                         <GetOdometry oy="{cur_yaw}"/>
                         <AddWaypoint frame="" heading="" look_frame="" look_x="" look_y="" look_z="" name="magnet 2 search spot" out="{magnet_path}" path="{m2_retreat}" pitch="" roll="" spin="" spin_rate="" x="{bx}" y="{by}" yaw="{cur_yaw}" yaw_offset="" z="{bin_move_height}"/>
-                        <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" name="Retreat from magnet 2 to its search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
+                        <FollowPath frame="" max_depth="-10" min_depth="-0.75" name="Retreat from magnet 2 to its search spot" spin_rate="" timeout="90" waypoints="{magnet_path}"/>
                     </Sequence>
                 </ForceSuccess>
             </Sequence>

@@ -21,7 +21,7 @@
                 <SetStatus status="moving"/>
                 <SubTree ID="Dive" depth="{depth}"/>
                 <AddWaypoint frame="map" heading="" look_frame="" look_x="" look_y="" look_z="" name="mapping origin, facing its +x" out="{origin_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="0" yaw_offset="" z="{depth}"/>
-                <FollowPath frame="" max_depth="" min_depth="" spin_rate="" timeout="120" waypoints="{origin_path}"/>
+                <FollowPath frame="" max_depth="-10" min_depth="" spin_rate="" timeout="120" waypoints="{origin_path}"/>
                 <ForceSuccess>
                     <Fallback>
                         <Sequence name="identify">

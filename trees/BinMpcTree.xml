@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="BehaviorTree">
+    <include path="lib/WaitForKillSwitch.xml"/>
+    <include path="lib/PrepForRun.xml"/>
+    <include path="lib/Dive.xml"/>
+    <include path="lib/BinTreeMpc.xml"/>
+    <include path="lib/KillController.xml"/>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence name="BIN MPC">
+            <Info message="MISSION: RESCUE (BIN ONLY)"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="PrepForRun"/>
+            <SubTree ID="Dive" depth="-0.56"/>
+            <ForceSuccess>
+                <Sequence name="Path: to bins">
+                    <GetOdometry oy="{path_yaw}"/>
+                    <AddWaypoint frame="pre_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="pre bin" out="{transit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                    <AddWaypoint frame="post_bin_pose_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="post bin" out="{transit_path}" path="{transit_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="{path_yaw}" yaw_frame="world" yaw_offset="" z="0"/>
+                    <FollowPath frame="" max_depth="-10" min_depth="-0.75" spin_rate="" timeout="120" waypoints="{transit_path}"/>
+                </Sequence>
+            </ForceSuccess>
+            <ForceSuccess>
+                <SubTree ID="BinTreeMpc" repair_mission="0"/>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

@@ -9,7 +9,7 @@
             <ForceSuccess>
                 <Sequence>
                     <SubTree ID="SetActiveCamera" is_dfc="0"/>
-                    <SubTree ID="SearchMpc" max_dist="2" min_dist="1" object_name="torpedo" target_cov="0.0025" timeout_secs="100"/>
+                    <SubTree ID="SearchMpc" max_dist="2" min_dist="1" name="One full SearchMpc cycle (2 m, 3 m, 1.5 m and 1 m sweeps, ~40 s each) is about 160 s" object_name="torpedo" target_cov="0.0025" timeout_secs="180"/>
                 </Sequence>
             </ForceSuccess>
             <Fallback name="Try run while armed">

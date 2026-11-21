@@ -35,7 +35,7 @@
                 <AddWaypoint frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: before" out="{slalom_path}" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_pos}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
                 <AddWaypoint frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: through" out="{slalom_path}" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
                 <AddWaypoint frame="slalom_back_frame" heading="" look_frame="" look_x="" look_y="" look_z="" name="back gate: after" out="{slalom_path}" path="{slalom_path}" pitch="" roll="" spin="" spin_rate="" x="{slalom_long_offset_neg}" y="{slalom_lat_offset}" yaw="3.1415" yaw_offset="" z="0"/>
-                <FollowPath frame="" max_depth="" min_depth="" spin_rate="" timeout="120" waypoints="{slalom_path}"/>
+                <FollowPath frame="" max_depth="-10" min_depth="" spin_rate="" timeout="120" waypoints="{slalom_path}"/>
             </Sequence>
         </Sequence>
     </BehaviorTree>

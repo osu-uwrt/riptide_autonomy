@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="BehaviorTree">
+    <include path="lib/WaitForKillSwitch.xml"/>
+    <include path="lib/Dive.xml"/>
+    <include path="lib/FunnyFlipTreeMpc.xml"/>
+    <include path="lib/KillController.xml"/>
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence name="FUNNY FLIP MPC">
+            <Info message="MISSION: FUNNY FLIP"/>
+            <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="Dive" depth="-1.1"/>
+            <SubTree ID="FunnyFlipTreeMpc"/>
+            <SubTree ID="KillController"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

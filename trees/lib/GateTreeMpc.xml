@@ -56,7 +56,7 @@
                 <Info message="Performing gate task"/>
                 <AddWaypoint frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="1 m in front of the gate" out="{gate_path}" path="" pitch="" roll="" spin="" spin_rate="" x="1" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
                 <AddWaypoint frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="gate" out="{gate_path}" path="{gate_path}" pitch="" roll="" spin="" spin_rate="" x="0" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
-                <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" name="Approach and enter the gate as one path" spin_rate="" timeout="60" waypoints="{gate_path}"/>
+                <FollowPath frame="" max_depth="-10" min_depth="-0.75" name="Approach and enter the gate as one path" spin_rate="" timeout="60" waypoints="{gate_path}"/>
                 <SetStatus status="performing"/>
                 <ForceSuccess name="Flip (under the MPC FlipTree can't set the stunt safe mode and fails); the gate exit runs either way">
                     <Sequence>
@@ -65,7 +65,7 @@
                     </Sequence>
                 </ForceSuccess>
                 <AddWaypoint frame="{subprop_frame}" heading="" look_frame="" look_x="" look_y="" look_z="" name="behind the gate" out="{exit_path}" path="" pitch="" roll="" spin="" spin_rate="" x="{behind_gate}" y="0" yaw="3.1415" yaw_offset="" z="{undergate_depth}"/>
-                <FollowPath frame="" max_depth="-2.5" min_depth="-0.75" name="Straight out the back of the gate, clear of its sides" spin_rate="" timeout="30" waypoints="{exit_path}"/>
+                <FollowPath frame="" max_depth="-10" min_depth="-0.75" name="Straight out the back of the gate, clear of its sides" spin_rate="" timeout="30" waypoints="{exit_path}"/>
             </Sequence>
         </Sequence>
     </BehaviorTree>
