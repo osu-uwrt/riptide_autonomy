@@ -2185,8 +2185,8 @@
                             </Sequence>
                             <IfThenElse>
                                 <Condition ID="CompareNums" a="{stage}" b="1" test="=="/>
-                                <Sequence name="wider and further: more of the sides in view">
-                                    <SetBlackboard output_key="sweep" value="{sweep_wide}"/>
+                                <Sequence name="further: the first sweep's arc from farther back, panning wider">
+                                    <SetBlackboard output_key="sweep" value="{sweep_first}"/>
                                     <SetBlackboard output_key="pan" value="{pan_wide}"/>
                                     <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
                                     <Action ID="Math" a="{max_dist}" b="1.5" operator="*" out="dist"/>
