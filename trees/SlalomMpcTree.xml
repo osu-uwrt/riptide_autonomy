@@ -2096,7 +2096,7 @@
             <SetBlackboard name="First sweep: arc per pan (rad); each pan is yaw-rate limited, so fewer pans are faster" output_key="pan_step_first" value="0.25"/>
             <SetBlackboard name="Wider sweeps: arc per pan (rad)" output_key="pan_step_wide" value="0.5"/>
             <SetBlackboard name="Once seen, hold there at most this long for the map to converge (s)" output_key="hold_secs" value="8"/>
-            <SetBlackboard name="0: first sweep, 1: wider and further, 2: wider and closer, then round again; moves on only after a sweep that saw nothing" output_key="stage" value="0"/>
+            <SetBlackboard name="0: first sweep, 1: further back, 2: wider and closer, 3: another 0.5 m closer, then round again; moves on only after a sweep that saw nothing" output_key="stage" value="0"/>
             <SetBlackboard name="Before any sweep: hold still facing the estimate this long (s), seeing it from where we are" output_key="look_secs" value="2"/>
             <SetBlackboard name="Then yaw this far each way in place (rad) before the first arc" output_key="look_pan" value="0.5"/>
             <Action ID="Math" a="{look_pan}" b="-1" operator="*" out="neg_look_pan"/>
@@ -2159,17 +2159,32 @@
                                     <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
                                     <Action ID="Math" a="{max_dist}" b="1.5" operator="*" out="dist"/>
                                 </Sequence>
-                                <Sequence name="wider and closer: a small or hard to see target, or one beyond the estimate">
-                                    <SetBlackboard output_key="sweep" value="{sweep_wide}"/>
-                                    <SetBlackboard output_key="pan" value="{pan_first}"/>
-                                    <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
-                                    <Action ID="Math" a="{max_dist}" b="0.75" operator="*" out="dist"/>
-                                    <IfThenElse>
-                                        <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&lt;"/>
-                                        <SetBlackboard output_key="dist" value="{min_dist}"/>
-                                        <AlwaysSuccess/>
-                                    </IfThenElse>
-                                </Sequence>
+                                <IfThenElse>
+                                    <Condition ID="CompareNums" a="{stage}" b="2" test="=="/>
+                                    <Sequence name="wider and closer: a small or hard to see target, or one beyond the estimate">
+                                        <SetBlackboard output_key="sweep" value="{sweep_wide}"/>
+                                        <SetBlackboard output_key="pan" value="{pan_first}"/>
+                                        <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
+                                        <Action ID="Math" a="{max_dist}" b="0.75" operator="*" out="dist"/>
+                                        <IfThenElse>
+                                            <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&lt;"/>
+                                            <SetBlackboard output_key="dist" value="{min_dist}"/>
+                                            <AlwaysSuccess/>
+                                        </IfThenElse>
+                                    </Sequence>
+                                    <Sequence name="closer still: the same sweep another 0.5 m in (not inside min_dist)">
+                                        <SetBlackboard output_key="sweep" value="{sweep_wide}"/>
+                                        <SetBlackboard output_key="pan" value="{pan_first}"/>
+                                        <SetBlackboard output_key="pan_step" value="{pan_step_wide}"/>
+                                        <Action ID="Math" a="{max_dist}" b="0.75" operator="*" out="closer"/>
+                                        <Action ID="Math" a="{closer}" b="0.5" operator="-" out="dist"/>
+                                        <IfThenElse>
+                                            <Condition ID="CompareNums" a="{dist}" b="{min_dist}" test="&lt;"/>
+                                            <SetBlackboard output_key="dist" value="{min_dist}"/>
+                                            <AlwaysSuccess/>
+                                        </IfThenElse>
+                                    </Sequence>
+                                </IfThenElse>
                             </IfThenElse>
                         </IfThenElse>
                         <Action ID="Info" message="Sweeping {sweep} rad each way round {object_name}'s estimate at {dist} m, panning {pan} rad (stage {stage})"/>
@@ -2219,8 +2234,8 @@
                                     </Inverter>
                                     <Sequence>
                                         <Action ID="Math" a="{stage}" b="1" operator="+" out="stage"/>
-                                        <IfThenElse name="After the closer sweep, round again">
-                                            <Condition ID="CompareNums" a="{stage}" b="2" test="&gt;"/>
+                                        <IfThenElse name="After the closest sweep, round again">
+                                            <Condition ID="CompareNums" a="{stage}" b="3" test="&gt;"/>
                                             <SetBlackboard output_key="stage" value="0"/>
                                             <AlwaysSuccess/>
                                         </IfThenElse>
