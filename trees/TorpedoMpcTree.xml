@@ -2367,7 +2367,7 @@
             <SetBlackboard name="Board re-search: same as the torpedo tree's first search, shorter" output_key="search_min_dist" value="1"/>
             <SetBlackboard output_key="search_max_dist" value="2"/>
             <SetBlackboard output_key="search_cov" value="0.0025"/>
-            <SetBlackboard output_key="search_timeout" value="60"/>
+            <SetBlackboard name="Re-search: a full SearchMpc cycle (~160 s)" output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="target_cov" value="0.0005"/>
             <SetBlackboard name="Forward camera: the holes are mapped from it" output_key="camera_link" value="talos/ffc_base_link"/>
             <SetBlackboard name="sin(2 deg): camera this square on to the holes' normal before they are locked" output_key="square_tol" value="0.035"/>
@@ -3226,7 +3226,7 @@
             <SetBlackboard output_key="torpedo" value="torpedo"/>
             <SetBlackboard output_key="1" value="1"/>
             <SetBlackboard output_key="0" value="0"/>
-            <SetBlackboard name="One full SearchMpc cycle (first, wider, closer sweeps) is about 100 s" output_key="search_timeout" value="100"/>
+            <SetBlackboard name="One full SearchMpc cycle (2 m, 3 m, 1.5 m and 1 m sweeps, ~40 s each) is about 160 s" output_key="search_timeout" value="180"/>
             <SetBlackboard output_key="target_cov" value="0.0025"/>
             <SetBlackboard output_key="min_dist" value="1"/>
             <SetBlackboard output_key="max_dist" value="2"/>
