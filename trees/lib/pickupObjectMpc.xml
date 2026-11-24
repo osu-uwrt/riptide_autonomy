@@ -11,7 +11,7 @@
             </Sequence>
             <SubTree ID="SetActiveCamera" is_dfc="1"/>
             <ForceSuccess>
-                <SubTree ID="DownwardSearchMpc" min_dist="{search_prox}" object_name="{object_name}" target_cov="{target_err}" timeout_sec="{search_timeout}"/>
+                <SubTree ID="DownwardSearchMpc" min_dist="{search_prox}" object_name="{object_name}" spiral_spacing="{spiral_spacing}" spiral_speed="{spiral_speed}" target_cov="{target_err}" timeout_sec="{search_timeout}"/>
             </ForceSuccess>
             <ForceSuccess>
                 <Sequence name="Downward camera over it, then until its estimate is tight (at most 5 s)">

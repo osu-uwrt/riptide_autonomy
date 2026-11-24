@@ -11,9 +11,11 @@
                     <Sequence name="re-aim at the object">
                         <Fallback name="at the detection itself, else the mapping estimate">
                             <!-- A new target's mapping frame stays put until a few detections agree, so aiming at it can keep
-                             a real object at the edge of the view; aim at where the detector last saw it instead -->
+                             a real object at the edge of the view; aim at where the detector last saw it instead. With sparse
+                             detections, hold there for as long as it counts as in view (the 3 s of "lost it" below): the
+                             unconfirmed estimate can still be the prior, far from the object (11-23 pool test) -->
                             <Sequence name="aim at the latest detection">
-                                <LatestDetection frame="world" max_age_secs="1.0" min_score="0.2" object_name="{object_name}" out_x="{det_x}" out_y="{det_y}" out_z="{det_z}"/>
+                                <LatestDetection frame="world" max_age_secs="3.0" min_score="0.2" object_name="{object_name}" out_x="{det_x}" out_y="{det_y}" out_z="{det_z}"/>
                                 <Math a="{det_z}" b="{min_dist}" operator="+" out="{det_above_z}"/>
                                 <TransformPose from_frame="{dfc_link}" op="0" or="0" out_op="{link_pitch}" out_or="{link_roll}" out_oy="{link_yaw}" oy="0" to_frame="world" x="0" y="0" z="0"/>
                                 <ComputeFrameAlignment base_frame="talos/base_link" link_frame="{dfc_link}" op="{link_pitch}" or="{link_roll}" out_op="{aop}" out_or="{aor}" out_oy="{aoy}" out_x="{ax}" out_y="{ay}" out_z="{az}" oy="{link_yaw}" reference_frame="world" x="{det_x}" y="{det_y}" z="{det_above_z}"/>

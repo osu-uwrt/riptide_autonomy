@@ -26,7 +26,7 @@
                         </RetryUntilSuccessful>
                     </Sequence>
                     <ForceSuccess>
-                        <SubTree ID="DownwardSearchMpc" min_dist="2.15" object_name="{object1}" target_cov="0.02" timeout_sec="{search_timeout}"/>
+                        <SubTree ID="DownwardSearchMpc" min_dist="2.15" object_name="{object1}" spiral_spacing="0.25" spiral_speed="0.2" target_cov="0.02" timeout_sec="{search_timeout}"/>
                     </ForceSuccess>
                     <SubTree ID="SetActuatorsArmed" armed="1"/>
                     <ForceSuccess>
@@ -37,7 +37,7 @@
                     </RetryUntilSuccessful>
                     <ForceSuccess>
                         <Sequence>
-                            <SubTree ID="DownwardSearchMpc" min_dist="2.15" object_name="{object2}" target_cov="0.02" timeout_sec="{search_timeout}"/>
+                            <SubTree ID="DownwardSearchMpc" min_dist="2.15" object_name="{object2}" spiral_spacing="0.25" spiral_speed="0.2" target_cov="0.02" timeout_sec="{search_timeout}"/>
                             <SubTree ID="ShootDownwardObjectMpc" dropper_link_name="talos/droppers_link" object_name="{object2}" search_prox="2.15"/>
                         </Sequence>
                     </ForceSuccess>
