@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4" main_tree_to_execute="BehaviorTree">
     <include path="lib/WaitForKillSwitch.xml"/>
+    <include path="lib/PrepForRun.xml"/>
     <include path="lib/Dive.xml"/>
     <include path="lib/NewTableTreeMpc.xml"/>
+    <include path="lib/KillController.xml"/>
     <BehaviorTree ID="BehaviorTree">
         <Sequence name="TABLE">
             <SubTree ID="WaitForKillSwitch"/>
+            <SubTree ID="PrepForRun"/>
             <SetStatus status="moving"/>
             <SubTree ID="Dive" depth="-0.50"/>
-            <SubTree ID="NewTableTreeMpc" repair_mission="0"/>
+            <ForceSuccess>
+                <SubTree ID="NewTableTreeMpc" repair_mission="0"/>
+            </ForceSuccess>
+            <SubTree ID="KillController"/>
         </Sequence>
     </BehaviorTree>
 </root>
