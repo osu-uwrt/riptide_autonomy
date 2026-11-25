@@ -11,7 +11,7 @@
     <BehaviorTree ID="NewTableTreeMpc">
         <!-- notgroot:globals -->
         <Sequence name="globals">
-            <Script code="base_link := 'talos/base_link'; claw_link := 'talos/claw_link'; minisearch_prox := '1.5'; object_search_prox := '1'; table_spiral_spacing := '0.15'; table_spiral_speed := '0.1'"/>
+            <Script code="base_link := 'talos/base_link'; basket_search_prox := '1'; claw_link := 'talos/claw_link'; minisearch_prox := '0.5'; object_search_prox := '0.5'; table_spiral_spacing := '0.15'; table_spiral_speed := '0.1'"/>
             <Sequence name="set blackboards">
                 <SetBlackboardV3 output_key="target_err" value="0.5"/>
                 <SetBlackboardV3 output_key="num_sorts" value="0"/>
@@ -42,10 +42,10 @@
                             <Format format="{curr_drop}_frame" out="{curr_drop_frame}"/>
                             <Format format="{secondary_drop}_frame" out="{secondary_drop_frame}"/>
                             <ForceSuccess>
-                                <SubTree ID="DownwardSearchMpc" min_dist="1.5" object_name="{curr_drop}" spiral_spacing="{table_spiral_spacing}" spiral_speed="{table_spiral_speed}" target_cov="{table_cov}" timeout_sec="60"/>
+                                <SubTree ID="DownwardSearchMpc" min_dist="{basket_search_prox}" object_name="{curr_drop}" spiral_spacing="{table_spiral_spacing}" spiral_speed="{table_spiral_speed}" target_cov="{table_cov}" timeout_sec="60"/>
                             </ForceSuccess>
                             <ForceSuccess>
-                                <SubTree ID="DownwardSearchMpc" min_dist="1.5" object_name="{secondary_drop}" spiral_spacing="{table_spiral_spacing}" spiral_speed="{table_spiral_speed}" target_cov="{table_cov}" timeout_sec="60"/>
+                                <SubTree ID="DownwardSearchMpc" min_dist="{basket_search_prox}" object_name="{secondary_drop}" spiral_spacing="{table_spiral_spacing}" spiral_speed="{table_spiral_speed}" target_cov="{table_cov}" timeout_sec="60"/>
                             </ForceSuccess>
                         </Sequence>
                     </ForceSuccess>
