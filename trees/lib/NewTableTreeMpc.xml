@@ -11,7 +11,7 @@
     <BehaviorTree ID="NewTableTreeMpc">
         <!-- notgroot:globals -->
         <Sequence name="globals">
-            <Script code="base_link := 'talos/base_link'; claw_link := 'talos/claw_link'; minisearch_prox := '1.5'; object_search_prox := '1'"/>
+            <Script code="base_link := 'talos/base_link'; basket_search_prox := '1'; claw_link := 'talos/claw_link'; minisearch_prox := '0.5'; object_search_prox := '0.5'; table_spiral_spacing := '0.15'; table_spiral_speed := '0.1'"/>
             <Sequence name="set blackboards">
                 <SetBlackboardV3 output_key="target_err" value="0.5"/>
                 <SetBlackboardV3 output_key="num_sorts" value="0"/>
@@ -42,10 +42,10 @@
                             <Format format="{curr_drop}_frame" out="{curr_drop_frame}"/>
                             <Format format="{secondary_drop}_frame" out="{secondary_drop_frame}"/>
                             <ForceSuccess>
-                                <SubTree ID="DownwardSearchMpc" min_dist="1.5" object_name="{curr_drop}" target_cov="{table_cov}" timeout_sec="60"/>
+                                <SubTree ID="DownwardSearchMpc" min_dist="{basket_search_prox}" object_name="{curr_drop}" spiral_spacing="{table_spiral_spacing}" spiral_speed="{table_spiral_speed}" target_cov="{table_cov}" timeout_sec="60"/>
                             </ForceSuccess>
                             <ForceSuccess>
-                                <SubTree ID="DownwardSearchMpc" min_dist="1.5" object_name="{secondary_drop}" target_cov="{table_cov}" timeout_sec="60"/>
+                                <SubTree ID="DownwardSearchMpc" min_dist="{basket_search_prox}" object_name="{secondary_drop}" spiral_spacing="{table_spiral_spacing}" spiral_speed="{table_spiral_speed}" target_cov="{table_cov}" timeout_sec="60"/>
                             </ForceSuccess>
                         </Sequence>
                     </ForceSuccess>
@@ -79,7 +79,7 @@
                     <Sequence name="object cycles">
                         <ForceSuccess name="Object pickup and dropoff">
                             <Sequence>
-                                <SubTree ID="pickupObjectMpc" claw_close_s="-2.0" claw_link="{claw_link}" claw_open_s="2.0" claw_topic="command/actuator/claw_move_s" ctrlr_dist="0.01" ctrlr_timeout="30" ctrlr_trust="0.95" minisearch_prox="{minisearch_prox}" object_name="{curr_object}" overtable="0.0" pickup_center_x="{ax}" pickup_center_y="{ay}" pickup_center_z="{az}" pre_overtable="0.15" reset_threshold="1000" search_prox="{object_search_prox}" search_timeout="180" target_err="{target_err}"/>
+                                <SubTree ID="pickupObjectMpc" claw_close_s="-2.0" claw_link="{claw_link}" claw_open_s="2.0" claw_topic="command/actuator/claw_move_s" ctrlr_dist="0.01" ctrlr_timeout="30" ctrlr_trust="0.95" minisearch_prox="{minisearch_prox}" object_name="{curr_object}" overtable="0.0" pickup_center_x="{ax}" pickup_center_y="{ay}" pickup_center_z="{az}" pre_overtable="0.15" reset_threshold="1000" search_prox="{object_search_prox}" search_timeout="180" spiral_spacing="{table_spiral_spacing}" spiral_speed="{table_spiral_speed}" target_err="{target_err}"/>
                                 <SubTree ID="SurfaceTree"/>
                                 <SubTree ID="dropObjectMpc" claw_close_s="-2.0" claw_drop_s="0.3" claw_link="{claw_link}" claw_open_s="2.0" claw_topic="command/actuator/claw_move_s" ctrlr_dist="0.01" ctrlr_timeout="30" ctrlr_trust="0.95" dropoff_name="{curr_drop}" minisearch_prox="{minisearch_prox}" overtable="0.15" reset_threshold="1000" search_prox="{object_search_prox}" search_timeout="180" target_err="{target_err}"/>
                                 <Math a="{num_sorts}" b="1" operator="+" out="{num_sorts}"/>
