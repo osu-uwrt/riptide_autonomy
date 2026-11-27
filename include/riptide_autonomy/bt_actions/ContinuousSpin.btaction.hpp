@@ -3,9 +3,12 @@
 #include "riptide_autonomy/autonomy_lib.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <mutex>
 
 // Ramp a level yaw target while counting actual, unwrapped odometry rotation.
+// Without yaw_rate the target is only held MAX_LEAD ahead of the measured heading,
+// so the spin goes as fast as the controller follows (the MPC: its angular limits).
 class ContinuousSpin : public UWRTActionNode {
 public:
     ContinuousSpin(const std::string& name, const BT::NodeConfiguration& config)
@@ -14,7 +17,7 @@ public:
     static BT::PortsList providedPorts() {
         return {
             UwrtInput("num_cycles", "Number of full counterclockwise turns"),
-            UwrtInput("yaw_rate", "Target ramp speed in radians/second; default 0.5"),
+            UwrtInput("yaw_rate", "Target ramp speed in radians/second; unset: as fast as the controller follows"),
             UwrtInput("timeout_secs", "Overall timeout; default 90 seconds"),
             UwrtInput("odom_timeout_secs", "Odometry watchdog; default 1 second")
         };
@@ -51,13 +54,13 @@ public:
         active = initialized = received = false;
         travelled = commanded = 0;
         const int cycles = tryGetRequiredInput<int>(this, "num_cycles", -1);
-        rate = tryGetOptionalInput<double>(this, "yaw_rate", 0.5);
+        rate = tryGetOptionalInput<double>(this, "yaw_rate", std::numeric_limits<double>::infinity());
         timeout = tryGetOptionalInput<double>(this, "timeout_secs", 90);
         odomTimeout = tryGetOptionalInput<double>(this, "odom_timeout_secs", 1);
-        if (cycles < 0 || !std::isfinite(rate) || rate <= 0 ||
+        if (cycles < 0 || std::isnan(rate) || rate <= 0 ||
             !std::isfinite(timeout) || timeout <= 0 ||
             !std::isfinite(odomTimeout) || odomTimeout <= 0) {
-            RCLCPP_ERROR(rosnode->get_logger(), "ContinuousSpin requires nonnegative cycles and positive finite rate/timeouts.");
+            RCLCPP_ERROR(rosnode->get_logger(), "ContinuousSpin requires nonnegative cycles, a positive rate and positive finite timeouts.");
             return BT::NodeStatus::FAILURE;
         }
         if (cycles == 0) return BT::NodeStatus::SUCCESS;
@@ -87,7 +90,8 @@ public:
         // A late tick or a stalled robot must not let the target lap the robot.
         const double dt = std::max(0.0, std::min(seconds(now - lastTick), 0.1));
         lastTick = now;
-        commanded = std::max(0.0, std::min({target, commanded + rate * dt, travelled + MAX_LEAD}));
+        const double ramped = std::isinf(rate) ? target : commanded + rate * dt;
+        commanded = std::max(0.0, std::min({target, ramped, travelled + MAX_LEAD}));
         publishPosition();
         publishHeading(initialYaw + commanded);
 

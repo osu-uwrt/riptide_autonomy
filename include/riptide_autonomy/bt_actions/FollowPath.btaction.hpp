@@ -13,7 +13,9 @@
  * as six values. A waypoint written "some_frame: x,y,z,yaw" is in some_frame
  * instead, so one path can span several objects. {blackboard} references are
  * filled in. Depth is clamped to [max_depth, min_depth] in world like
- * PrimitiveMovePosition.
+ * PrimitiveMovePosition. Each waypoint goes to the controller in its own frame,
+ * so a path through mapping's object frames is carried along when mapping moves
+ * them (the controller resolves world and the robot's own frames once).
  *
  * Options after a waypoint, each "| key=value" (riptide_msgs2/PathSegment; points
  * in the waypoint's frame), say how the path gets there:
@@ -23,6 +25,8 @@
  *   look_frame=frame      look_at is in this TF frame (default its origin) and the
  *                         controller keeps facing it as it moves; implies heading=look_at
  *   spin_rate=rad/m       steady spin per metre (the spin_rate port sets it for every leg)
+ *   yaw_frame=frame       the waypoint's roll/pitch/yaw are in this frame instead (e.g. world, to
+ *                         hold a world heading at a point that follows an object frame)
  * AddWaypoint and AddArc write these.
  */
 class FollowPath : public UWRTActionNode {
@@ -46,7 +50,8 @@ class FollowPath : public UWRTActionNode {
             UwrtInput("min_depth", "Shallowest allowed z in world (default -0.55)"),
             UwrtInput("max_depth", "Deepest allowed z in world (default -4)"),
             UwrtInput("timeout", "Seconds before giving up (default 60)"),
-            UwrtInput("spin_rate", "Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)")
+            UwrtInput("spin_rate", "Steady spin for the whole path, rad per metre (about rad/s / cruise speed; default 0)"),
+            UwrtInput("max_speed", "Cruise speed cap for this path, m/s (default 0: the controller's own limit)")
         };
     }
 
@@ -76,6 +81,7 @@ class FollowPath : public UWRTActionNode {
         minDepth = tryGetOptionalInput<double>(this, "min_depth", -0.55);
         maxDepth = tryGetOptionalInput<double>(this, "max_depth", -4);
         const double spinRate = tryGetOptionalInput<double>(this, "spin_rate", 0);
+        goal.max_speed = tryGetOptionalInput<double>(this, "max_speed", 0);
         waypointsInFrames.clear();
 
         std::stringstream waypoints(text);
@@ -131,6 +137,10 @@ class FollowPath : public UWRTActionNode {
                 std::vector<double> numbers;
                 if(key == "look_frame") {
                     segment.lookFrame = value;
+                    continue;
+                }
+                if(key == "yaw_frame") {
+                    segment.yawFrame = value;
                     continue;
                 }
                 if(key == "heading") {
@@ -249,49 +259,49 @@ class FollowPath : public UWRTActionNode {
     }
 
     private:
-    // Puts every waypoint into world (depth-clamped) once all their frames resolve.
+    // Fills the goal once every waypoint's frame resolves: each point stays in its own frame, its depth
+    // clamped in world, and an attitude given in yaw_frame is turned into the point's frame.
     bool resolveWaypoints() {
         std::vector<geometry_msgs::msg::PoseStamped> points;
         std::vector<riptide_msgs2::msg::PathSegment> segments;
         for(const auto& [frame, local, segment] : waypointsInFrames) {
-            geometry_msgs::msg::Pose pose = local;
             riptide_msgs2::msg::PathSegment msg = segment.msg;
             msg.center = segment.center;
             msg.look_at = segment.lookAt;
             msg.look_at_frame = segment.lookFrame; // the controller resolves it, live
+
+            geometry_msgs::msg::Pose world = local;
+            geometry_msgs::msg::TransformStamped toWorld, fromWorld;
             if(frame != "world") {
-                geometry_msgs::msg::TransformStamped transform;
-                if(!lookupTransform(frame, "world", transform)) {
+                if(!lookupTransform(frame, "world", toWorld) || !lookupTransform("world", frame, fromWorld)) {
                     return false; // lookupTransform warns (throttled)
                 }
-                pose = doTransform(pose, transform);
-                const auto point = [&](const geometry_msgs::msg::Point& p) {
-                    geometry_msgs::msg::Pose in;
-                    in.position = p;
-                    in.orientation.w = 1;
-                    return doTransform(in, transform).position;
-                };
-                msg.center = point(segment.center);
-                if(segment.lookFrame.empty()) {
-                    msg.look_at = point(segment.lookAt);
-                }
-                // sweep is about the frame's +z; turn it the other way if that points down in world
-                const auto& q = transform.transform.rotation;
-                if(1 - 2 * (q.x * q.x + q.y * q.y) < 0) {
-                    msg.sweep = -msg.sweep;
-                }
+                world = doTransform(local, toWorld);
             }
-            pose.position.z = std::clamp(pose.position.z, maxDepth, minDepth);
+            const std::string& yawFrame = segment.yawFrame;
+            if(!yawFrame.empty() && yawFrame != frame) {
+                geometry_msgs::msg::Pose attitude;
+                attitude.orientation = local.orientation;
+                if(yawFrame != "world") {
+                    geometry_msgs::msg::TransformStamped yawToWorld;
+                    if(!lookupTransform(yawFrame, "world", yawToWorld)) {
+                        return false;
+                    }
+                    attitude = doTransform(attitude, yawToWorld);
+                }
+                world.orientation = attitude.orientation;
+            }
+            world.position.z = std::clamp(world.position.z, maxDepth, minDepth);
             segments.push_back(msg);
 
             geometry_msgs::msg::PoseStamped point;
-            point.header.frame_id = "world";
+            point.header.frame_id = frame;
             point.header.stamp = rosnode->get_clock()->now();
-            point.pose = pose;
+            point.pose = frame == "world" ? world : doTransform(world, fromWorld);
             points.push_back(point);
             static const char* headings[] = {"", ", heading path", ", looking at"};
             RCLCPP_INFO(rosnode->get_logger(), "FollowPath waypoint %zu (%s): XYZ %.2f, %.2f, %.2f in world%s%s%s%s",
-                points.size(), frame.c_str(), pose.position.x, pose.position.y, pose.position.z,
+                points.size(), frame.c_str(), world.position.x, world.position.y, world.position.z,
                 msg.shape == riptide_msgs2::msg::PathSegment::ARC ? ", arc" : "", headings[std::min<int>(msg.heading, 2)],
                 msg.look_at_frame.empty() ? "" : " ", msg.look_at_frame.c_str());
         }
@@ -305,7 +315,11 @@ class FollowPath : public UWRTActionNode {
             goalHandle = goalFuture.get();
         }
         if(goalHandle) {
-            client->async_cancel_goal(goalHandle);
+            try {
+                client->async_cancel_goal(goalHandle);
+            } catch(const rclcpp_action::exceptions::UnknownGoalHandleError&) {
+                // the result already came in, so the client forgot the goal; nothing to cancel
+            }
         } else if(goalFuture.valid()) { // still being accepted; this is the only path client
             client->async_cancel_all_goals();
         }
@@ -331,9 +345,10 @@ class FollowPath : public UWRTActionNode {
     }
 
     struct Segment {
-        riptide_msgs2::msg::PathSegment msg; // points filled in once resolved into world
+        riptide_msgs2::msg::PathSegment msg; // points filled in once the frames resolve
         geometry_msgs::msg::Point center, lookAt; // in the waypoint's frame (lookAt: in lookFrame if set)
         std::string lookFrame;
+        std::string yawFrame; // the waypoint's attitude is in this frame (empty: the waypoint's)
     };
     struct WaypointInFrame {
         std::string frame;
